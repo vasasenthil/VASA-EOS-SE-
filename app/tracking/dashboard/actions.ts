@@ -98,7 +98,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   }
 
   try {
-    const [implementationResult, challengesResult, stakeholdersResult] = await Promise.all([
+    const [implementationResult, challengesResult, stakeholdersResult, milestonesResult] = await Promise.all([
       supabaseAdmin!.from("policy_implementation_status").select(
         `
           id, 
@@ -114,24 +114,32 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
         `,
       ),
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
-      supabaseAdmin!
-        .from("implementation_stakeholders")
-        .select("id, stakeholder_name, stakeholder_type"), // Fetch stakeholders
+      supabaseAdmin!.from("implementation_stakeholders").select("id, stakeholder_name, stakeholder_type"),
+      supabaseAdmin!.from("implementation_milestones").select("id, status, target_date, actual_completion_date"),
     ])
 
-    const { data: implementationData, error: implementationError } = implementationResult
-    const { data: challengesData, error: challengesError } = challengesResult
-    const { data: stakeholdersData, error: stakeholdersError } = stakeholdersResult
+    const errors = [
+      { name: "implementation", error: implementationResult.error },
+      { name: "challenges", error: challengesResult.error },
+      { name: "stakeholders", error: stakeholdersResult.error },
+      { name: "milestones", error: milestonesResult.error },
+    ].filter((e) => e.error)
 
-    if (implementationError) {
-      throw implementationError
+    if (errors.length > 0) {
+      errors.forEach((e) => console.error(`Error fetching ${e.name} data:`, e.error))
+      const firstError = errors[0].error
+      if (firstError?.code === "42P01") {
+        throw new Error(
+          `Database table not found: ${firstError.message}. Please ensure all database migration scripts (001 to 005) have been run successfully.`,
+        )
+      }
+      throw new Error(`Failed to fetch data from one or more tables: ${firstError?.message}`)
     }
-    if (challengesError) {
-      console.error("Error fetching challenges data:", challengesError)
-    }
-    if (stakeholdersError) {
-      console.error("Error fetching stakeholders data:", stakeholdersError)
-    }
+
+    const { data: implementationData } = implementationResult
+    const { data: challengesData } = challengesResult
+    const { data: stakeholdersData } = stakeholdersResult
+    const { data: milestonesData } = milestonesResult
 
     if (!implementationData) {
       return {
@@ -159,7 +167,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     let criticalHighChallenges = 0
     let resolvedChallenges = 0
 
-    if (Array.isArray(challengesData) && challengesData.length > 0) {
+    if (challengesData) {
       totalOpenChallenges = challengesData.filter(
         (c) => c.status === "Open" || c.status === "In Progress" || c.status === "Escalated",
       ).length
@@ -170,10 +178,28 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     // Stakeholder Statistics
     let totalStakeholders = 0
     let uniqueStakeholderTypes = 0
-    if (Array.isArray(stakeholdersData) && stakeholdersData.length > 0) {
+    if (stakeholdersData) {
       totalStakeholders = stakeholdersData.length
       const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean)) // Filter out null/undefined types
       uniqueStakeholderTypes = types.size
+    }
+
+    // Milestone Statistics
+    let totalMilestones = 0
+    let completedMilestones = 0
+    let upcomingMilestones = 0
+    if (milestonesData) {
+      totalMilestones = milestonesData.length
+      completedMilestones = milestonesData.filter((m) => m.status === "Completed").length
+      const now = new Date()
+      const next30Days = new Date(new Date().setDate(now.getDate() + 30))
+      upcomingMilestones = milestonesData.filter((m) => {
+        if (m.status !== "Completed" && m.target_date) {
+          const targetDate = new Date(m.target_date)
+          return targetDate > new Date() && targetDate <= next30Days
+        }
+        return false
+      }).length
     }
 
     const stats: TrackerStat[] = [
@@ -213,6 +239,21 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
         title: "Unique Stakeholder Types",
         value: uniqueStakeholderTypes.toString(),
         description: "Different categories of stakeholders",
+      },
+      {
+        title: "Total Milestones",
+        value: totalMilestones.toString(),
+        description: "Defined project milestones",
+      },
+      {
+        title: "Completed Milestones",
+        value: completedMilestones.toString(),
+        description: "Milestones marked as 'Completed'",
+      },
+      {
+        title: "Upcoming Milestones",
+        value: upcomingMilestones.toString(),
+        description: "Due in the next 30 days",
       },
     ]
 
