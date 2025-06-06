@@ -17,8 +17,19 @@ import { StatCard } from "./components/stat-card"
 import { MapPlaceholder } from "./components/map-placeholder"
 import { ChartPlaceholder } from "./components/chart-placeholder"
 import { getTrackerDashboardData } from "./actions"
-import { FileText, CheckCircle, Activity, Target, Filter, ListChecks, AlertTriangle } from "lucide-react"
-import { SeedDataButtons } from "./components/seed-data-buttons" // Updated import
+import {
+  FileText,
+  CheckCircle,
+  Activity,
+  Target,
+  Filter,
+  ListChecks,
+  AlertTriangle,
+  ShieldAlert,
+  ShieldCheck,
+  ListTodo,
+} from "lucide-react" // Added new icons
+import { SeedDataButtons } from "./components/seed-data-buttons"
 
 const statusColors: { [key: string]: string } = {
   "In Progress": "bg-blue-100 text-blue-700",
@@ -37,6 +48,9 @@ const statIcons: { [key: string]: React.ElementType } = {
   "Avg. Implementation Rate": CheckCircle,
   "Active Implementations": Activity,
   "States Covered": Target,
+  "Open Challenges": ListTodo, // New Icon
+  "Critical/High Challenges": ShieldAlert, // New Icon
+  "Resolved Challenges": ShieldCheck, // New Icon
 }
 
 export default async function PolicyTrackerDashboardPage() {
@@ -87,11 +101,9 @@ export default async function PolicyTrackerDashboardPage() {
         <CardContent>
           <div className="mb-6 p-4 border rounded-lg bg-gray-50/50">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <h3 className="text-lg font-medium">Filters & Actions</h3> {/* Updated title */}
+              <h3 className="text-lg font-medium">Filters & Actions</h3>
               <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                {" "}
-                {/* Ensure buttons align well */}
-                <SeedDataButtons /> {/* Use the new component */}
+                <SeedDataButtons />
                 <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Filter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
@@ -156,7 +168,7 @@ export default async function PolicyTrackerDashboardPage() {
                     {policyProgress.length > 0 ? (
                       policyProgress.map((policy) => (
                         <TableRow key={policy.id}>
-                          <TableCell className="font-mono text-xs">{policy.id}</TableCell>
+                          <TableCell className="font-mono text-xs">{policy.id.substring(0, 8)}...</TableCell>
                           <TableCell className="font-medium max-w-xs truncate">
                             <Link href={`/policies/view/${policy.id}`} className="hover:underline" title={policy.title}>
                               {policy.title}
@@ -183,9 +195,22 @@ export default async function PolicyTrackerDashboardPage() {
                             {format(new Date(policy.lastUpdate), "dd MMM yyyy")}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" asChild>
-                              <Link href="#">Details</Link>
-                            </Button>
+                            {policy.implementation_status_id ? (
+                              <Button variant="ghost" size="sm" asChild>
+                                <Link href={`/tracking/implementations/${policy.implementation_status_id}`}>
+                                  Details
+                                </Link>
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled
+                                title="No specific implementation record ID available"
+                              >
+                                Details
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))

@@ -3,15 +3,19 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { DatabaseZap, Loader2, ListChecks } from "lucide-react" // Added ListChecks
+import { DatabaseZap, Loader2, ListChecks, AlertTriangle } from "lucide-react" // Added ListChecks
 import { seedPolicyImplementationAction } from "@/app/policies/create/actions"
-import { seedImplementationMilestonesAction } from "@/app/tracking/dashboard/actions" // New action
+import {
+  seedImplementationMilestonesAction,
+  seedImplementationChallengesAction,
+} from "@/app/tracking/dashboard/actions" // New action
 import { useToast } from "@/hooks/use-toast"
 
 export function SeedDataButtons() {
   const router = useRouter()
   const [isSeedingImplementations, startImplementationsSeedTransition] = useTransition()
   const [isSeedingMilestones, startMilestonesSeedTransition] = useTransition()
+  const [isSeedingChallenges, startChallengesSeedTransition] = useTransition()
   const { toast } = useToast()
 
   const handleSeedImplementations = async () => {
@@ -101,13 +105,59 @@ export function SeedDataButtons() {
     })
   }
 
+  const handleSeedChallenges = async () => {
+    startChallengesSeedTransition(async () => {
+      try {
+        // Fetch a few implementation_status_ids to seed challenges against
+        const { data: implStatuses, error: implStatusesError } = await (await import("@/lib/supabase/server"))
+          .supabaseAdmin!.from("policy_implementation_status")
+          .select("id")
+          .limit(15) // Fetch up to 15 implementation status IDs
+
+        if (implStatusesError || !implStatuses || implStatuses.length === 0) {
+          toast({
+            title: "Seeding Challenges Failed",
+            description:
+              "Could not fetch existing policy implementation statuses. Please seed implementation data first.",
+            variant: "destructive",
+          })
+          return
+        }
+        const implementationStatusIds = implStatuses.map((s) => s.id)
+
+        const { generateSeedChallengesData } = await import("@/scripts/seed-challenges") // Ensure path is correct
+        const challengesSeedData = generateSeedChallengesData(implementationStatusIds, 3) // Avg 3 challenges per implementation
+
+        if (challengesSeedData.length === 0) {
+          toast({
+            title: "No Challenges to Seed",
+            description: "Could not generate challenge seed data.",
+            variant: "destructive",
+          })
+          return
+        }
+
+        const result = await seedImplementationChallengesAction(challengesSeedData)
+        if (result.error) throw new Error(result.error)
+        toast({ title: "Challenge Seeding Successful", description: `${result.count} challenge entries seeded.` })
+        router.refresh()
+      } catch (error: any) {
+        toast({
+          title: "Challenge Seeding Failed",
+          description: error.message || "An error occurred.",
+          variant: "destructive",
+        })
+      }
+    })
+  }
+
   return (
     <div className="flex flex-col sm:flex-row gap-2">
       <Button
         variant="outline"
         size="sm"
         onClick={handleSeedImplementations}
-        disabled={isSeedingImplementations || isSeedingMilestones}
+        disabled={isSeedingImplementations || isSeedingMilestones || isSeedingChallenges}
         className="w-full sm:w-auto"
       >
         {isSeedingImplementations ? (
@@ -121,7 +171,7 @@ export function SeedDataButtons() {
         variant="outline"
         size="sm"
         onClick={handleSeedMilestones}
-        disabled={isSeedingMilestones || isSeedingImplementations}
+        disabled={isSeedingMilestones || isSeedingImplementations || isSeedingChallenges}
         className="w-full sm:w-auto"
       >
         {isSeedingMilestones ? (
@@ -130,6 +180,20 @@ export function SeedDataButtons() {
           <ListChecks className="mr-2 h-4 w-4" />
         )}
         {isSeedingMilestones ? "Seeding Mstns..." : "Seed Milestone Data"}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleSeedChallenges}
+        disabled={isSeedingChallenges || isSeedingImplementations || isSeedingMilestones}
+        className="w-full sm:w-auto"
+      >
+        {isSeedingChallenges ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <AlertTriangle className="mr-2 h-4 w-4" /> // Using AlertTriangle for challenges
+        )}
+        {isSeedingChallenges ? "Seeding Chlgs..." : "Seed Challenge Data"}
       </Button>
     </div>
   )
