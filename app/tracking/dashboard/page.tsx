@@ -30,6 +30,8 @@ import {
   ListTodo,
   Users,
   UserSquare,
+  Flag,
+  CalendarClock,
 } from "lucide-react"
 import { SeedDataButtons } from "./components/seed-data-buttons"
 
@@ -53,8 +55,11 @@ const statIcons: { [key: string]: React.ElementType } = {
   "Open Challenges": ListTodo,
   "Critical/High Challenges": ShieldAlert,
   "Resolved Challenges": ShieldCheck,
-  "Total Stakeholders Mapped": Users, // New Icon
-  "Unique Stakeholder Types": UserSquare, // New Icon
+  "Total Stakeholders Mapped": Users,
+  "Unique Stakeholder Types": UserSquare,
+  "Total Milestones": Flag,
+  "Completed Milestones": CheckCircle,
+  "Upcoming Milestones": CalendarClock,
 }
 
 export default async function PolicyTrackerDashboardPage() {
@@ -118,9 +123,7 @@ export default async function PolicyTrackerDashboardPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
-            {" "}
-            {/* Adjusted grid for more stats */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
             {stats.map((stat) => (
               <StatCard
                 key={stat.title}
