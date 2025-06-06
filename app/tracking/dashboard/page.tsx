@@ -16,9 +16,9 @@ import { Badge } from "@/components/ui/badge"
 import { StatCard } from "./components/stat-card"
 import { MapPlaceholder } from "./components/map-placeholder"
 import { ChartPlaceholder } from "./components/chart-placeholder"
-import { SeedImplementationsButton } from "./components/seed-button"
 import { getTrackerDashboardData } from "./actions"
 import { FileText, CheckCircle, Activity, Target, Filter, ListChecks, AlertTriangle } from "lucide-react"
+import { SeedDataButtons } from "./components/seed-data-buttons" // Updated import
 
 const statusColors: { [key: string]: string } = {
   "In Progress": "bg-blue-100 text-blue-700",
@@ -87,16 +87,18 @@ export default async function PolicyTrackerDashboardPage() {
         <CardContent>
           <div className="mb-6 p-4 border rounded-lg bg-gray-50/50">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <h3 className="text-lg font-medium">Filters</h3>
-              <div className="flex gap-2">
-                <SeedImplementationsButton />
-                <Button variant="outline" size="sm">
+              <h3 className="text-lg font-medium">Filters & Actions</h3> {/* Updated title */}
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                {" "}
+                {/* Ensure buttons align well */}
+                <SeedDataButtons /> {/* Use the new component */}
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
                   <Filter className="mr-2 h-4 w-4" /> Apply Filters
                 </Button>
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Filter controls for policy, region, status, etc. will be here.
+              Filter controls for policy, region, status, etc. will be here. Use seed buttons for development.
             </p>
           </div>
 

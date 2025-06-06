@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache" // Added revalidatePath
 
 // Define interfaces for the data we'll return
 export interface TrackerStat {
@@ -10,18 +11,30 @@ export interface TrackerStat {
 }
 
 export interface PolicyProgressItem {
-  id: string
+  id: string // policy_id
   title: string
-  status: string
-  progress: number
+  status: string // overall_status from national level or aggregated
+  progress: number // progress_percentage from national level or aggregated
   statesAffected: number
-  lastUpdate: string
+  lastUpdate: string // updated_at from policy_implementation_status
 }
 
 export interface TrackerDashboardData {
   stats: TrackerStat[]
   policyProgress: PolicyProgressItem[]
   error?: string
+}
+
+// Interface for milestone seed data
+interface ImplementationMilestoneSeed {
+  implementation_status_id: string
+  milestone_name: string
+  description?: string
+  target_date?: string
+  actual_completion_date?: string
+  status: string
+  responsible_entity?: string
+  notes?: string
 }
 
 const CRITICAL_DB_ERROR_MSG =
@@ -38,7 +51,6 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   }
 
   try {
-    // Fetch all implementation statuses and join with policies to get titles
     const { data: implementationData, error: implementationError } = await supabaseAdmin!
       .from("policy_implementation_status")
       .select(
@@ -62,7 +74,6 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       }
     }
 
-    // --- Calculate Stats ---
     const trackedPolicyIds = new Set(implementationData.map((item) => item.policy_id))
     const totalPoliciesTracked = trackedPolicyIds.size
 
@@ -91,42 +102,34 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       { title: "States Covered", value: `${statesCovered}`, description: "Unique states with implementation data" },
     ]
 
-    // --- Get Policy Progress List ---
-    // Group by policy_id to aggregate data
     const progressMap = new Map<string, PolicyProgressItem>()
 
     for (const item of implementationData) {
       if (!progressMap.has(item.policy_id)) {
         progressMap.set(item.policy_id, {
           id: item.policy_id,
-          // @ts-ignore - policies is a joined table
+          // @ts-ignore
           title: item.policies?.title || "Unknown Policy",
-          status: "N/A", // Default, will be overwritten
-          progress: 0, // Default, will be overwritten
+          status: "N/A",
+          progress: 0,
           statesAffected: 0,
           lastUpdate: item.updated_at,
         })
       }
 
       const policyEntry = progressMap.get(item.policy_id)!
-
-      // Use National level for overall status and progress if available
       if (item.region_type === "National") {
         policyEntry.status = item.overall_status
         policyEntry.progress = item.progress_percentage
       }
-
       if (item.region_type === "State") {
         policyEntry.statesAffected += 1
       }
-
-      // Keep the latest update timestamp
       if (new Date(item.updated_at) > new Date(policyEntry.lastUpdate)) {
         policyEntry.lastUpdate = item.updated_at
       }
     }
 
-    // If a policy didn't have a national entry, find the highest progress among its regions
     for (const [policyId, policyEntry] of progressMap.entries()) {
       if (policyEntry.status === "N/A") {
         const policyRegions = implementationData.filter((i) => i.policy_id === policyId)
@@ -143,7 +146,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
 
     const policyProgress: PolicyProgressItem[] = Array.from(progressMap.values())
       .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
-      .slice(0, 5) // Get top 5 most recently updated policies
+      .slice(0, 5)
 
     return {
       stats,
@@ -157,4 +160,46 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       error: `Failed to fetch dashboard data: ${error.message}`,
     }
   }
+}
+
+export async function seedImplementationMilestonesAction(
+  milestonesData: ImplementationMilestoneSeed[],
+): Promise<{ message: string; count: number; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    console.warn("seedImplementationMilestonesAction: Supabase admin client not configured.")
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  if (!milestonesData || milestonesData.length === 0) {
+    return { message: "No milestone data provided to seed.", count: 0 }
+  }
+
+  // Optional: Clear existing milestone data for the provided implementation_status_ids to avoid duplicates
+  const implementationStatusIdsToClear = [...new Set(milestonesData.map((item) => item.implementation_status_id))]
+  if (implementationStatusIdsToClear.length > 0) {
+    const { error: deleteError } = await supabaseAdmin!
+      .from("implementation_milestones")
+      .delete()
+      .in("implementation_status_id", implementationStatusIdsToClear)
+
+    if (deleteError) {
+      console.warn("Supabase error clearing existing milestone data:", deleteError.message)
+      // Not returning error here, just a warning, will proceed with insert
+    }
+  }
+
+  const { data, error } = await supabaseAdmin!.from("implementation_milestones").insert(milestonesData).select()
+
+  if (error) {
+    console.error("Supabase error seeding implementation milestones:", error)
+    return {
+      message: `Failed to seed implementation milestones. Error: ${error.message}`,
+      count: 0,
+      error: error.message,
+    }
+  }
+
+  const seededCount = data ? data.length : 0
+  revalidatePath("/tracking/dashboard") // Revalidate if milestones are shown on dashboard
+  return { message: `${seededCount} implementation milestones seeded successfully.`, count: seededCount }
 }
