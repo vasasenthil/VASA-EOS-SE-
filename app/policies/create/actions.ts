@@ -5,6 +5,21 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import type { PolicyDraft } from "./policy-form-constants"
 import { revalidatePath } from "next/cache"
 
+// Add this new interface
+interface PolicyImplementationStatusSeed {
+  policy_id: string
+  region_type: string
+  region_code?: string
+  region_name: string
+  overall_status: string
+  progress_percentage: number
+  target_completion_date?: string
+  actual_completion_date?: string
+  key_indicators?: Record<string, any>
+  summary_notes?: string
+  last_updated_by?: string
+}
+
 export interface SubmitPolicyActionState {
   message: string
   success: boolean
@@ -457,4 +472,47 @@ export async function seedPoliciesAction(count = 35): Promise<{ message: string;
   const seededCount = data ? data.length : 0
   revalidatePath("/policies")
   return { message: `${seededCount} policies seeded successfully into Supabase.`, count: seededCount }
+}
+
+export async function seedPolicyImplementationAction(
+  implementationData: PolicyImplementationStatusSeed[],
+): Promise<{ message: string; count: number; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    console.warn("seedPolicyImplementationAction: Supabase admin client not configured.", CRITICAL_DB_ERROR_MSG)
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  if (!implementationData || implementationData.length === 0) {
+    return { message: "No implementation data provided to seed.", count: 0 }
+  }
+
+  // Clear existing implementation data for the policies being seeded to avoid duplicates if re-run
+  // This is a simple clear; a more robust approach might update existing entries.
+  const policyIdsToClear = [...new Set(implementationData.map((item) => item.policy_id))]
+  if (policyIdsToClear.length > 0) {
+    const { error: deleteError } = await supabaseAdmin!
+      .from("policy_implementation_status")
+      .delete()
+      .in("policy_id", policyIdsToClear)
+
+    if (deleteError) {
+      console.error("Supabase error clearing existing implementation data:", deleteError)
+      // Proceeding with insert anyway, but log the error
+    }
+  }
+
+  const { data, error } = await supabaseAdmin!.from("policy_implementation_status").insert(implementationData).select()
+
+  if (error) {
+    console.error("Supabase error seeding policy implementation data:", error)
+    return {
+      message: `Failed to seed policy implementation data. Error: ${error.message}`,
+      count: 0,
+      error: error.message,
+    }
+  }
+
+  const seededCount = data ? data.length : 0
+  revalidatePath("/tracking/dashboard") // Revalidate the dashboard page
+  return { message: `${seededCount} policy implementation entries seeded successfully.`, count: seededCount }
 }
