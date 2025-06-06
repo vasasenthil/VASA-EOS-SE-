@@ -28,7 +28,9 @@ import {
   ShieldAlert,
   ShieldCheck,
   ListTodo,
-} from "lucide-react" // Added new icons
+  Users,
+  UserSquare,
+} from "lucide-react"
 import { SeedDataButtons } from "./components/seed-data-buttons"
 
 const statusColors: { [key: string]: string } = {
@@ -48,9 +50,11 @@ const statIcons: { [key: string]: React.ElementType } = {
   "Avg. Implementation Rate": CheckCircle,
   "Active Implementations": Activity,
   "States Covered": Target,
-  "Open Challenges": ListTodo, // New Icon
-  "Critical/High Challenges": ShieldAlert, // New Icon
-  "Resolved Challenges": ShieldCheck, // New Icon
+  "Open Challenges": ListTodo,
+  "Critical/High Challenges": ShieldAlert,
+  "Resolved Challenges": ShieldCheck,
+  "Total Stakeholders Mapped": Users, // New Icon
+  "Unique Stakeholder Types": UserSquare, // New Icon
 }
 
 export default async function PolicyTrackerDashboardPage() {
@@ -114,7 +118,9 @@ export default async function PolicyTrackerDashboardPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
+            {" "}
+            {/* Adjusted grid for more stats */}
             {stats.map((stat) => (
               <StatCard
                 key={stat.title}

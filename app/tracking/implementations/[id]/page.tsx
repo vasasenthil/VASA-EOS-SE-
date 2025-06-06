@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/breadcrumb"
 import { getImplementationStatusByIdAction } from "../../dashboard/actions"
 import { ChallengesSection } from "../../challenges/components/challenges-section"
+import { StakeholdersSection } from "../../stakeholders/components/stakeholders-section"
+import { MilestonesSection } from "../../milestones/components/milestones-section" // Import new component
 
 interface ImplementationDetailPageProps {
   params: {
@@ -184,7 +186,15 @@ export default async function ImplementationDetailPage({ params }: Implementatio
 
           <Separator className="my-8" />
 
+          <MilestonesSection implementationStatusId={implementationStatus.id} />
+
+          <Separator className="my-8" />
+
           <ChallengesSection implementationStatusId={implementationStatus.id} />
+
+          <Separator className="my-8" />
+
+          <StakeholdersSection implementationStatusId={implementationStatus.id} />
         </CardContent>
       </Card>
     </main>

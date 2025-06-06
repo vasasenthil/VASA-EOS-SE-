@@ -4,6 +4,8 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 // Import the new types
 import type { ImplementationChallenge, ImplementationChallengeInput } from "./challenges/types"
+import type { ImplementationStakeholder, ImplementationStakeholderInput } from "./stakeholders/types"
+import type { ImplementationMilestone, ImplementationMilestoneInput } from "./milestones/types"
 
 // Define interfaces for the data we'll return
 export interface TrackerStat {
@@ -29,7 +31,7 @@ export interface TrackerDashboardData {
 }
 
 // Interface for milestone seed data
-interface ImplementationMilestoneSeed {
+export interface ImplementationMilestoneSeed {
   implementation_status_id: string
   milestone_name: string
   description?: string
@@ -40,8 +42,23 @@ interface ImplementationMilestoneSeed {
   notes?: string
 }
 
-// Interface for challenge seed data (already defined, but ensure it matches the new type structure if needed)
-// We'll use ImplementationChallengeInput for adding/updating challenges.
+// Interface for stakeholder seed data
+// (This should match the structure used in the seed script, omitting implementation_status_id if it's passed separately)
+export interface StakeholderSeedInput {
+  stakeholder_name: string
+  stakeholder_type: string // Consider using the specific enum/union type if available here
+  role_in_implementation: string // Same as above
+  contact_person?: string
+  email?: string
+  phone?: string
+  engagement_level?: string
+  influence_level?: string
+  interest_level?: string
+  contribution_summary?: string
+  challenges_anticipated?: string
+  notes?: string
+  // implementation_status_id will be added by the action or is part of a larger structure
+}
 
 // Example: app/tracking/dashboard/types.ts (or similar)
 export interface PolicyImplementationStatus {
@@ -81,7 +98,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   }
 
   try {
-    const [implementationResult, challengesResult] = await Promise.all([
+    const [implementationResult, challengesResult, stakeholdersResult] = await Promise.all([
       supabaseAdmin!.from("policy_implementation_status").select(
         `
           id, 
@@ -97,17 +114,23 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
         `,
       ),
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
+      supabaseAdmin!
+        .from("implementation_stakeholders")
+        .select("id, stakeholder_name, stakeholder_type"), // Fetch stakeholders
     ])
 
     const { data: implementationData, error: implementationError } = implementationResult
     const { data: challengesData, error: challengesError } = challengesResult
+    const { data: stakeholdersData, error: stakeholdersError } = stakeholdersResult
 
     if (implementationError) {
       throw implementationError
     }
     if (challengesError) {
-      // Log challenge error but don't necessarily fail the whole dashboard if other data is available
       console.error("Error fetching challenges data:", challengesError)
+    }
+    if (stakeholdersError) {
+      console.error("Error fetching stakeholders data:", stakeholdersError)
     }
 
     if (!implementationData) {
@@ -144,6 +167,15 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       resolvedChallenges = challengesData.filter((c) => c.status === "Resolved" || c.status === "Closed").length
     }
 
+    // Stakeholder Statistics
+    let totalStakeholders = 0
+    let uniqueStakeholderTypes = 0
+    if (stakeholdersData) {
+      totalStakeholders = stakeholdersData.length
+      const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean)) // Filter out null/undefined types
+      uniqueStakeholderTypes = types.size
+    }
+
     const stats: TrackerStat[] = [
       {
         title: "Total Policies Tracked",
@@ -172,6 +204,16 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
         value: resolvedChallenges.toString(),
         description: "Challenges successfully addressed",
       },
+      {
+        title: "Total Stakeholders Mapped",
+        value: totalStakeholders.toString(),
+        description: "Across all implementations",
+      },
+      {
+        title: "Unique Stakeholder Types",
+        value: uniqueStakeholderTypes.toString(),
+        description: "Different categories of stakeholders",
+      },
     ]
 
     const progressMap = new Map<string, PolicyProgressItem>()
@@ -198,14 +240,11 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       }
       if (item.region_type === "State") {
         policyEntry.statesAffected += 1
-        // If no national ID yet, use a state ID. This logic might need refinement based on desired linking behavior.
         if (
           policyEntry.implementation_status_id === progressMap.get(item.policy_id)?.implementation_status_id &&
           item.id !== policyEntry.implementation_status_id
         ) {
-          // This means the initial ID was from a different record, potentially another state.
-          // For simplicity, we'll just use the first one encountered or national.
-          // A more robust solution might involve picking a specific state's ID or always linking to a national overview if it exists.
+          // This logic is simplified; a more robust approach might be needed for complex scenarios
         }
       }
       if (new Date(item.updated_at) > new Date(policyEntry.lastUpdate)) {
@@ -213,14 +252,10 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       }
     }
 
-    // Ensure every policy progress item has a valid implementation_status_id
-    // This loop primarily ensures that if a policy only has state-level data,
-    // one of those state-level implementation_status_ids is used for linking.
     for (const policyEntry of progressMap.values()) {
       if (!policyEntry.implementation_status_id) {
         const relatedImplementations = implementationData.filter((impl) => impl.policy_id === policyEntry.id)
         if (relatedImplementations.length > 0) {
-          // Default to the first related implementation ID if no national one was found
           policyEntry.implementation_status_id = relatedImplementations[0].id
         }
       }
@@ -236,7 +271,6 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
           )
           policyEntry.status = highestProgressRegion.overall_status
           policyEntry.progress = highestProgressRegion.progress_percentage
-          // If implementation_status_id is still the initial one, update it to the one from highest progress region
           if (policyEntry.implementation_status_id === progressMap.get(policyId)?.implementation_status_id) {
             policyEntry.implementation_status_id = highestProgressRegion.id
           }
@@ -246,7 +280,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
 
     const policyProgress: PolicyProgressItem[] = Array.from(progressMap.values())
       .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
-      .slice(0, 10) // Show more items if available
+      .slice(0, 10)
 
     return {
       stats,
@@ -471,7 +505,6 @@ export async function deleteChallengeAction(challengeId: string): Promise<Challe
   return { message: "Challenge deleted successfully.", success: true, challengeId }
 }
 
-// Add this new function at the end of the file:
 export async function getImplementationStatusByIdAction(
   implementationStatusId: string,
 ): Promise<{ implementationStatus: PolicyImplementationStatusDetail | null; error?: string }> {
@@ -510,9 +543,6 @@ export async function getImplementationStatusByIdAction(
     ...data, // Spread all fields from policy_implementation_status
     // @ts-ignore
     policy_title: data.policies?.title || "Unknown Policy",
-    // Ensure all fields from PolicyImplementationStatus are explicitly mapped if needed,
-    // or rely on spreading if the structure is identical.
-    // For example, if PolicyImplementationStatus has specific field names:
     id: data.id,
     policy_id: data.policy_id,
     region_type: data.region_type,
@@ -530,4 +560,307 @@ export async function getImplementationStatusByIdAction(
   }
 
   return { implementationStatus: implementationStatusDetail }
+}
+
+// Interface for the full stakeholder data including implementation_status_id
+export interface FullStakeholderSeedData extends StakeholderSeedInput {
+  implementation_status_id: string
+}
+
+export async function seedImplementationStakeholdersAction(
+  stakeholdersData: FullStakeholderSeedData[],
+): Promise<{ message: string; count: number; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    console.warn("seedImplementationStakeholdersAction: Supabase admin client not configured.")
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  if (!stakeholdersData || stakeholdersData.length === 0) {
+    return { message: "No stakeholder data provided to seed.", count: 0 }
+  }
+
+  // Clear existing stakeholders for the provided implementation_status_ids to avoid duplicates on re-seed
+  const implementationStatusIdsToClear = [...new Set(stakeholdersData.map((item) => item.implementation_status_id))]
+  if (implementationStatusIdsToClear.length > 0) {
+    const { error: deleteError } = await supabaseAdmin!
+      .from("implementation_stakeholders")
+      .delete()
+      .in("implementation_status_id", implementationStatusIdsToClear)
+
+    if (deleteError) {
+      // Log warning but proceed with insertion
+      console.warn("Supabase error clearing existing stakeholder data:", deleteError.message)
+    }
+  }
+
+  const { data, error } = await supabaseAdmin!.from("implementation_stakeholders").insert(stakeholdersData).select()
+
+  if (error) {
+    console.error("Supabase error seeding implementation stakeholders:", error)
+    return {
+      message: `Failed to seed implementation stakeholders. Error: ${error.message}`,
+      count: 0,
+      error: error.message,
+    }
+  }
+
+  const seededCount = data ? data.length : 0
+  revalidatePath("/tracking/dashboard") // Revalidate dashboard if it shows stakeholder counts
+  // Revalidate specific implementation pages if they show stakeholders
+  implementationStatusIdsToClear.forEach((id) => revalidatePath(`/tracking/implementations/${id}`))
+
+  return { message: `${seededCount} implementation stakeholders seeded successfully.`, count: seededCount }
+}
+
+// --- CRUD Actions for Implementation Stakeholders ---
+
+export interface StakeholderActionState {
+  message: string
+  success: boolean
+  stakeholderId?: string
+  errors?: Partial<Record<keyof ImplementationStakeholderInput | "_general", string>>
+}
+
+export async function getStakeholdersByImplementationIdAction(
+  implementationStatusId: string,
+): Promise<{ stakeholders: ImplementationStakeholder[]; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { stakeholders: [], error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("implementation_stakeholders")
+    .select("*")
+    .eq("implementation_status_id", implementationStatusId)
+    .order("stakeholder_name", { ascending: true })
+
+  if (error) {
+    console.error("Error fetching stakeholders:", error)
+    return { stakeholders: [], error: error.message }
+  }
+  return { stakeholders: data || [] }
+}
+
+export async function addStakeholderAction(
+  implementationStatusId: string,
+  stakeholderData: Omit<ImplementationStakeholderInput, "implementation_status_id">,
+): Promise<StakeholderActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
+  }
+
+  const dataToInsert: ImplementationStakeholderInput = {
+    ...stakeholderData,
+    implementation_status_id: implementationStatusId,
+  }
+
+  if (!dataToInsert.stakeholder_name || dataToInsert.stakeholder_name.trim().length < 3) {
+    return { message: "Validation failed", success: false, errors: { stakeholder_name: "Name is too short." } }
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("implementation_stakeholders")
+    .insert(dataToInsert)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error adding stakeholder:", error)
+    return {
+      message: `Failed to add stakeholder: ${error.message}`,
+      success: false,
+      errors: { _general: error.message },
+    }
+  }
+
+  revalidatePath(`/tracking/implementations/${implementationStatusId}`)
+  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  return { message: "Stakeholder added successfully.", success: true, stakeholderId: data.id }
+}
+
+export async function updateStakeholderAction(
+  stakeholderId: string,
+  stakeholderData: Partial<Omit<ImplementationStakeholderInput, "implementation_status_id">>,
+): Promise<StakeholderActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
+  }
+
+  if (stakeholderData.stakeholder_name && stakeholderData.stakeholder_name.trim().length < 3) {
+    return { message: "Validation failed", success: false, errors: { stakeholder_name: "Name is too short." } }
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("implementation_stakeholders")
+    .update(stakeholderData)
+    .eq("id", stakeholderId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating stakeholder:", error)
+    return {
+      message: `Failed to update stakeholder: ${error.message}`,
+      success: false,
+      errors: { _general: error.message },
+    }
+  }
+
+  if (data?.implementation_status_id) {
+    revalidatePath(`/tracking/implementations/${data.implementation_status_id}`)
+  }
+  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  return { message: "Stakeholder updated successfully.", success: true, stakeholderId: data.id }
+}
+
+export async function deleteStakeholderAction(stakeholderId: string): Promise<StakeholderActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false }
+  }
+
+  const { data: stakeholderToDelete, error: fetchError } = await supabaseAdmin!
+    .from("implementation_stakeholders")
+    .select("implementation_status_id")
+    .eq("id", stakeholderId)
+    .single()
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    console.error("Error fetching stakeholder before delete:", fetchError)
+  }
+
+  const { error } = await supabaseAdmin!.from("implementation_stakeholders").delete().eq("id", stakeholderId)
+
+  if (error) {
+    console.error("Error deleting stakeholder:", error)
+    return { message: `Failed to delete stakeholder: ${error.message}`, success: false }
+  }
+
+  if (stakeholderToDelete?.implementation_status_id) {
+    revalidatePath(`/tracking/implementations/${stakeholderToDelete.implementation_status_id}`)
+  }
+  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  return { message: "Stakeholder deleted successfully.", success: true, stakeholderId }
+}
+
+// --- CRUD Actions for Implementation Milestones ---
+
+export interface MilestoneActionState {
+  message: string
+  success: boolean
+  milestoneId?: string
+  errors?: Partial<Record<keyof ImplementationMilestoneInput | "_general", string>>
+}
+
+export async function getMilestonesByImplementationIdAction(
+  implementationStatusId: string,
+): Promise<{ milestones: ImplementationMilestone[]; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    return { milestones: [], error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("implementation_milestones")
+    .select("*")
+    .eq("implementation_status_id", implementationStatusId)
+    .order("target_date", { ascending: true, nullsFirst: false })
+
+  if (error) {
+    console.error("Error fetching milestones:", error)
+    return { milestones: [], error: error.message }
+  }
+  return { milestones: data || [] }
+}
+
+export async function addMilestoneAction(
+  implementationStatusId: string,
+  milestoneData: Omit<ImplementationMilestoneInput, "implementation_status_id">,
+): Promise<MilestoneActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
+  }
+
+  const dataToInsert: ImplementationMilestoneInput = {
+    ...milestoneData,
+    implementation_status_id: implementationStatusId,
+  }
+
+  if (!dataToInsert.milestone_name || dataToInsert.milestone_name.trim().length < 3) {
+    return { message: "Validation failed", success: false, errors: { milestone_name: "Name is too short." } }
+  }
+
+  const { data, error } = await supabaseAdmin!.from("implementation_milestones").insert(dataToInsert).select().single()
+
+  if (error) {
+    console.error("Error adding milestone:", error)
+    return {
+      message: `Failed to add milestone: ${error.message}`,
+      success: false,
+      errors: { _general: error.message },
+    }
+  }
+
+  revalidatePath(`/tracking/implementations/${implementationStatusId}`)
+  return { message: "Milestone added successfully.", success: true, milestoneId: data.id }
+}
+
+export async function updateMilestoneAction(
+  milestoneId: string,
+  milestoneData: Partial<Omit<ImplementationMilestoneInput, "implementation_status_id">>,
+): Promise<MilestoneActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
+  }
+
+  if (milestoneData.milestone_name && milestoneData.milestone_name.trim().length < 3) {
+    return { message: "Validation failed", success: false, errors: { milestone_name: "Name is too short." } }
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("implementation_milestones")
+    .update(milestoneData)
+    .eq("id", milestoneId)
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error updating milestone:", error)
+    return {
+      message: `Failed to update milestone: ${error.message}`,
+      success: false,
+      errors: { _general: error.message },
+    }
+  }
+
+  if (data?.implementation_status_id) {
+    revalidatePath(`/tracking/implementations/${data.implementation_status_id}`)
+  }
+  return { message: "Milestone updated successfully.", success: true, milestoneId: data.id }
+}
+
+export async function deleteMilestoneAction(milestoneId: string): Promise<MilestoneActionState> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, success: false }
+  }
+
+  const { data: milestoneToDelete, error: fetchError } = await supabaseAdmin!
+    .from("implementation_milestones")
+    .select("implementation_status_id")
+    .eq("id", milestoneId)
+    .single()
+
+  if (fetchError && fetchError.code !== "PGRST116") {
+    console.error("Error fetching milestone before delete:", fetchError)
+  }
+
+  const { error } = await supabaseAdmin!.from("implementation_milestones").delete().eq("id", milestoneId)
+
+  if (error) {
+    console.error("Error deleting milestone:", error)
+    return { message: `Failed to delete milestone: ${error.message}`, success: false }
+  }
+
+  if (milestoneToDelete?.implementation_status_id) {
+    revalidatePath(`/tracking/implementations/${milestoneToDelete.implementation_status_id}`)
+  }
+  return { message: "Milestone deleted successfully.", success: true, milestoneId }
 }
