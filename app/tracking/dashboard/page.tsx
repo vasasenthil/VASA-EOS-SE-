@@ -58,7 +58,10 @@ const statIcons: { [key: string]: React.ElementType } = {
 }
 
 export default async function PolicyTrackerDashboardPage() {
-  const { stats = [], policyProgress = [], error } = (await getTrackerDashboardData()) || {}
+  const dashboardFetchResult = await getTrackerDashboardData()
+  const stats = dashboardFetchResult?.stats || []
+  const policyProgress = dashboardFetchResult?.policyProgress || []
+  const error = dashboardFetchResult?.error
 
   if (error) {
     return (
