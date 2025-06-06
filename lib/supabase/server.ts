@@ -1,15 +1,14 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY // Corrected from SUPABASE_SERVICE_KEY
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY // Corrected variable name
 
 let supabaseAdminInstance: SupabaseClient | null = null
 
 // Attempt to initialize the client only if both environment variables are present.
-// This approach avoids throwing errors or logging loud warnings during server startup.
-if (supabaseUrl && supabaseServiceKey) {
+if (supabaseUrl && supabaseServiceRoleKey) {
   try {
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
+    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -22,7 +21,13 @@ if (supabaseUrl && supabaseServiceKey) {
   }
 } else {
   // Silently fail without creating a client instance if env vars are missing.
-  // The actions that use this client will handle the null case.
+  // Add warnings for easier debugging on the server.
+  if (!supabaseUrl) {
+    console.warn("Supabase admin client: NEXT_PUBLIC_SUPABASE_URL is not set.")
+  }
+  if (!supabaseServiceRoleKey) {
+    console.warn("Supabase admin client: SUPABASE_SERVICE_ROLE_KEY is not set.")
+  }
 }
 
 export const supabaseAdmin = supabaseAdminInstance
