@@ -159,7 +159,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     let criticalHighChallenges = 0
     let resolvedChallenges = 0
 
-    if (challengesData) {
+    if (Array.isArray(challengesData) && challengesData.length > 0) {
       totalOpenChallenges = challengesData.filter(
         (c) => c.status === "Open" || c.status === "In Progress" || c.status === "Escalated",
       ).length
@@ -170,7 +170,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     // Stakeholder Statistics
     let totalStakeholders = 0
     let uniqueStakeholderTypes = 0
-    if (stakeholdersData) {
+    if (Array.isArray(stakeholdersData) && stakeholdersData.length > 0) {
       totalStakeholders = stakeholdersData.length
       const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean)) // Filter out null/undefined types
       uniqueStakeholderTypes = types.size
