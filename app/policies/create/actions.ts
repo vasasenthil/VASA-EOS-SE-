@@ -2,7 +2,8 @@
 
 // Ensure this import is EXACTLY as follows and does NOT include getSupabaseInitializationError
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
-import type { PolicyDraft } from "./policy-form-constants"
+import { put, del } from "@vercel/blob/server"
+import type { PolicyDraft, FileMetadata } from "./policy-form-constants"
 import { revalidatePath } from "next/cache"
 // Removed: import { generateSeedPolicyData } from "../../../../scripts/seed-policies"
 // Import constants needed for inlined generation logic
@@ -85,6 +86,8 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
         name: `draft_policy_${i + 1}.pdf`,
         type: "application/pdf",
         size: Math.floor(Math.random() * 5000000) + 100000,
+        url: `https://example.com/placeholder/draft_policy_${i + 1}.pdf`, // Placeholder URL
+        uploadedAt: new Date().toISOString(),
       },
       annexures:
         Math.random() > 0.5
@@ -93,6 +96,8 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
                 name: `annexure_${i + 1}_ref.docx`,
                 type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 size: Math.floor(Math.random() * 1000000) + 50000,
+                url: `https://example.com/placeholder/annexure_${i + 1}_ref.docx`, // Placeholder URL
+                uploadedAt: new Date().toISOString(),
               },
             ]
           : null,
@@ -112,6 +117,9 @@ const mapFormDataToPolicyObject = (
 ): Omit<PolicyDraft, "id" | "createdAt" | "lastModified" | "status"> & {
   id?: string
   status?: PolicyDraft["status"]
+  // These will hold File objects if new files are uploaded, or existing metadata
+  draftPolicyDocumentForUpload?: File | null
+  annexuresForUpload?: File[] | null
 } => {
   const rawFormData: Record<string, any> = {}
   const keywords: string[] = []
@@ -124,51 +132,59 @@ const mapFormDataToPolicyObject = (
     else if (key === "targetAudience") targetAudience.push(value as string)
     else if (key === "nepThrustAreas") nepThrustAreas.push(value as string)
     else if (key === "internalReviewCommittee") internalReviewCommittee.push(value as string)
-    else if (key.startsWith("annexures_") || key === "draftPolicyDocument_") {
-      // Skip file objects for now, handle metadata separately
+    else if (key.startsWith("annexures") || key.startsWith("draftPolicyDocument")) {
+      // File inputs are handled separately below
     } else if (key !== "action" && key !== "id" && !(value instanceof File && value.size === 0)) {
       rawFormData[key] = value
     }
   })
 
+  let draftPolicyDocumentForUpload: File | null = null
   const draftPolicyDocumentFile = formData.get("draftPolicyDocument") as File | null
-  let draftPolicyDocumentData = existingPolicy?.draftPolicyDocument || null
   if (draftPolicyDocumentFile && draftPolicyDocumentFile.size > 0) {
-    draftPolicyDocumentData = {
-      name: draftPolicyDocumentFile.name,
-      type: draftPolicyDocumentFile.type,
-      size: draftPolicyDocumentFile.size,
-    }
-  } else if (formData.get("existingDraftPolicyDocumentName") && existingPolicy?.draftPolicyDocument) {
-    draftPolicyDocumentData = existingPolicy.draftPolicyDocument
+    draftPolicyDocumentForUpload = draftPolicyDocumentFile
   }
 
+  let annexuresForUpload: File[] | null = null
   const annexuresFiles = formData.getAll("annexures").filter((f) => f instanceof File && f.size > 0) as File[]
-  let annexuresData = existingPolicy?.annexures || []
   if (annexuresFiles.length > 0) {
-    annexuresData = annexuresFiles.map((file) => ({
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    }))
-  } else if (formData.getAll("existingAnnexureNames").length > 0 && existingPolicy?.annexures) {
-    annexuresData = existingPolicy.annexures
+    annexuresForUpload = annexuresFiles
+  }
+
+  // Preserve existing file metadata if no new file is uploaded
+  let finalDraftPolicyDocument = existingPolicy?.draftPolicyDocument || null
+  if (draftPolicyDocumentForUpload) {
+    // Placeholder, will be replaced by FileMetadata after upload
+    finalDraftPolicyDocument = null
+  } else if (formData.get("remove_draftPolicyDocument") === "true") {
+    finalDraftPolicyDocument = null
+  }
+
+  let finalAnnexures = existingPolicy?.annexures || null
+  if (annexuresForUpload && annexuresForUpload.length > 0) {
+    // Placeholder, will be replaced by FileMetadata[] after upload
+    finalAnnexures = []
+  } else if (formData.get("remove_annexures") === "true") {
+    finalAnnexures = null
   }
 
   return {
     title: rawFormData.title,
-    policy_domain: rawFormData.policyDomain,
+    policyDomain: rawFormData.policyDomain, // Ensure this matches form field name
     version: rawFormData.version || existingPolicy?.version || "1.0",
-    abstract_en: rawFormData.abstractEN,
-    abstract_hi: rawFormData.abstractHI,
+    abstractEN: rawFormData.abstractEN, // Ensure this matches form field name
+    abstractHI: rawFormData.abstractHI, // Ensure this matches form field name
     keywords,
-    target_audience: targetAudience,
-    lead_drafter: rawFormData.leadDrafter || existingPolicy?.leadDrafter || "System User",
-    nep_thrust_areas: nepThrustAreas,
-    nep_alignment_justification: rawFormData.nepAlignmentJustification,
-    draft_policy_document: draftPolicyDocumentData,
-    annexures: annexuresData,
-    internal_review_committee: internalReviewCommittee,
+    targetAudience,
+    leadDrafter: rawFormData.leadDrafter || existingPolicy?.leadDrafter || "System User",
+    nepThrustAreas,
+    nepAlignmentJustification: rawFormData.nepAlignmentJustification, // Ensure this matches
+    draftPolicyDocument: finalDraftPolicyDocument, // This will be updated post-upload
+    annexures: finalAnnexures, // This will be updated post-upload
+    internalReviewCommittee,
+    // Pass through file objects for the main action to handle
+    draftPolicyDocumentForUpload,
+    annexuresForUpload,
   }
 }
 
@@ -185,8 +201,8 @@ const mapDbPolicyToPolicyDraft = (dbPolicy: any): PolicyDraft => {
     leadDrafter: dbPolicy.lead_drafter,
     nepThrustAreas: dbPolicy.nep_thrust_areas || [],
     nepAlignmentJustification: dbPolicy.nep_alignment_justification,
-    draftPolicyDocument: dbPolicy.draft_policy_document,
-    annexures: dbPolicy.annexures || [],
+    draftPolicyDocument: dbPolicy.draft_policy_document as FileMetadata | null, // Cast to FileMetadata
+    annexures: dbPolicy.annexures as FileMetadata[] | null, // Cast to FileMetadata[]
     internalReviewCommittee: dbPolicy.internal_review_committee || [],
     status: dbPolicy.status,
     createdAt: dbPolicy.created_at,
@@ -208,6 +224,8 @@ export async function submitPolicyAction(
   }
 
   const policyIdFromForm = formData.get("id") as string | undefined
+  const removeDraftPolicyDocument = formData.get("remove_draftPolicyDocument") === "true"
+  const removeAnnexures = formData.get("remove_annexures") === "true"
   const actionType = formData.get("action") as "saveDraft" | "submitForReview"
 
   let existingPolicyInDb: PolicyDraft | undefined
@@ -224,7 +242,11 @@ export async function submitPolicyAction(
     if (data) existingPolicyInDb = mapDbPolicyToPolicyDraft(data)
   }
 
-  const policyDataToSave = mapFormDataToPolicyObject(formData, existingPolicyInDb)
+  const { draftPolicyDocumentForUpload, annexuresForUpload, ...policyMappedData } = mapFormDataToPolicyObject(
+    formData,
+    existingPolicyInDb,
+  )
+  let policyDataToSave: any = policyMappedData // Use 'any' temporarily, will be typed properly
 
   const errors: Partial<Record<keyof PolicyDraft | "_general", string>> = {}
   if (!policyDataToSave.title || policyDataToSave.title.trim().length < 5) {
@@ -236,7 +258,7 @@ export async function submitPolicyAction(
   if (!policyDataToSave.abstract_en || policyDataToSave.abstract_en.trim().length < 20) {
     errors.abstractEN = "Abstract (English) must be at least 20 characters long."
   }
-  if (actionType === "submitForReview" && !policyDataToSave.draft_policy_document) {
+  if (actionType === "submitForReview" && !policyDataToSave.draft_policy_document && !draftPolicyDocumentForUpload) {
     errors.draftPolicyDocument = "Draft Policy Document is required for submission."
   }
 
@@ -251,10 +273,106 @@ export async function submitPolicyAction(
   const statusToSet = actionType === "saveDraft" ? "Draft" : "Pending Internal Review"
   const currentTime = new Date().toISOString()
 
+  // --- File Upload Logic ---
+  let uploadedDraftDocMetadata: FileMetadata | null = policyDataToSave.draftPolicyDocument
+  let uploadedAnnexuresMetadata: FileMetadata[] = policyDataToSave.annexures || []
+
+  // Handle Draft Policy Document Upload/Removal
+  if (removeDraftPolicyDocument && existingPolicyInDb?.draftPolicyDocument) {
+    const existingDoc = existingPolicyInDb.draftPolicyDocument as FileMetadata
+    if (existingDoc.url) await del(existingDoc.url)
+    uploadedDraftDocMetadata = null
+  } else if (draftPolicyDocumentForUpload) {
+    if (existingPolicyInDb?.draftPolicyDocument) {
+      const existingDoc = existingPolicyInDb.draftPolicyDocument as FileMetadata
+      if (existingDoc.url) await del(existingDoc.url) // Delete old blob
+    }
+    const blob = await put(
+      `policy_documents/${policyIdFromForm || "new"}/${draftPolicyDocumentForUpload.name}`,
+      draftPolicyDocumentForUpload,
+      { access: "public", addRandomSuffix: false },
+    )
+    uploadedDraftDocMetadata = {
+      name: draftPolicyDocumentForUpload.name,
+      type: draftPolicyDocumentForUpload.type,
+      size: draftPolicyDocumentForUpload.size,
+      url: blob.url,
+      uploadedAt: new Date().toISOString(),
+    }
+  }
+
+  // Handle Annexures Upload/Removal
+  if (removeAnnexures && existingPolicyInDb?.annexures) {
+    for (const annex of existingPolicyInDb.annexures as FileMetadata[]) {
+      if (annex.url) await del(annex.url)
+    }
+    uploadedAnnexuresMetadata = []
+  } else if (annexuresForUpload && annexuresForUpload.length > 0) {
+    // If replacing, delete all old annexures first
+    if (existingPolicyInDb?.annexures && !removeAnnexures) {
+      // only delete if not explicitly removing all
+      for (const annex of existingPolicyInDb.annexures as FileMetadata[]) {
+        if (annex.url) await del(annex.url)
+      }
+    }
+    uploadedAnnexuresMetadata = [] // Reset for new uploads
+    for (const file of annexuresForUpload) {
+      const blob = await put(`policy_annexures/${policyIdFromForm || "new"}/${file.name}`, file, {
+        access: "public",
+        addRandomSuffix: false,
+      })
+      uploadedAnnexuresMetadata.push({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: blob.url,
+        uploadedAt: new Date().toISOString(),
+      })
+    }
+  }
+
+  policyDataToSave = {
+    ...policyDataToSave,
+    draft_policy_document: uploadedDraftDocMetadata,
+    annexures: uploadedAnnexuresMetadata.length > 0 ? uploadedAnnexuresMetadata : null,
+    // Map other fields from policyMappedData to Supabase column names
+    policy_domain: policyMappedData.policyDomain,
+    abstract_en: policyMappedData.abstractEN,
+    abstract_hi: policyMappedData.abstractHI,
+    target_audience: policyMappedData.targetAudience,
+    nep_thrust_areas: policyMappedData.nepThrustAreas,
+    internal_review_committee: policyMappedData.internalReviewCommittee,
+    nep_alignment_justification: policyMappedData.nepAlignmentJustification,
+  }
+  // Remove the temporary upload fields if they exist
+  delete policyDataToSave.draftPolicyDocumentForUpload
+  delete policyDataToSave.annexuresForUpload
+
+  // --- End File Upload Logic ---
+
+  const dbPayload = {
+    title: policyDataToSave.title,
+    policy_domain: policyDataToSave.policy_domain,
+    version: policyDataToSave.version,
+    abstract_en: policyDataToSave.abstract_en,
+    abstract_hi: policyDataToSave.abstract_hi,
+    keywords: policyDataToSave.keywords,
+    target_audience: policyDataToSave.target_audience,
+    lead_drafter: policyDataToSave.lead_drafter,
+    nep_thrust_areas: policyDataToSave.nep_thrust_areas,
+    nep_alignment_justification: policyDataToSave.nep_alignment_justification,
+    draft_policy_document: policyDataToSave.draft_policy_document,
+    annexures: policyDataToSave.annexures,
+    internal_review_committee: policyDataToSave.internal_review_committee,
+    status: statusToSet,
+    last_modified: currentTime,
+    ...(policyIdFromForm ? {} : { created_at: currentTime }), // Add created_at only for new policies
+  }
+
   if (policyIdFromForm) {
     const { data, error } = await supabaseAdmin!
       .from("policies")
-      .update({ ...policyDataToSave, status: statusToSet, last_modified: currentTime })
+      .update(dbPayload)
       .eq("id", policyIdFromForm)
       .select()
       .single()
@@ -272,11 +390,7 @@ export async function submitPolicyAction(
       policyId: data.id,
     }
   } else {
-    const { data, error } = await supabaseAdmin!
-      .from("policies")
-      .insert([{ ...policyDataToSave, status: statusToSet, created_at: currentTime, last_modified: currentTime }])
-      .select()
-      .single()
+    const { data, error } = await supabaseAdmin!.from("policies").insert([dbPayload]).select().single()
 
     if (error) {
       console.error("Supabase error creating policy:", error)

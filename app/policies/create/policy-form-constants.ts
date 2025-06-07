@@ -1,4 +1,4 @@
-// No changes needed to this file from the previous step
+// No changes needed to these constants
 export const POLICY_DOMAINS = [
   "Curriculum & Pedagogy",
   "Assessment & Evaluation",
@@ -48,6 +48,15 @@ export const REVIEW_COMMITTEES = [
   "Teacher Education Advisory Panel",
 ]
 
+// Updated FileMetadata type
+export interface FileMetadata {
+  name: string
+  type: string
+  size: number
+  url: string // URL from Vercel Blob
+  uploadedAt?: string // Optional: timestamp of upload
+}
+
 export interface PolicyDraft {
   id?: string
   title: string
@@ -60,8 +69,12 @@ export interface PolicyDraft {
   leadDrafter: string
   nepThrustAreas: string[]
   nepAlignmentJustification: string
-  draftPolicyDocument?: File | null | { name: string; type: string; size: number }
-  annexures?: FileList | null | { name: string; type: string; size: number }[]
+  // draftPolicyDocument can be a File object during form input,
+  // or FileMetadata when fetched from DB or after upload.
+  draftPolicyDocument?: File | FileMetadata | null
+  // annexures can be FileList during form input,
+  // or FileMetadata[] when fetched from DB or after upload.
+  annexures?: FileList | FileMetadata[] | null
   internalReviewCommittee: string[]
   status?: "Draft" | "Pending Internal Review" | "Under Stakeholder Consultation" | "Approved"
   createdAt?: string
