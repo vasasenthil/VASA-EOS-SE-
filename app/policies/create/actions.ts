@@ -4,8 +4,11 @@
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import type { PolicyDraft } from "./policy-form-constants"
 import { revalidatePath } from "next/cache"
+// Removed: import { generateSeedPolicyData } from "../../../../scripts/seed-policies"
+// Import constants needed for inlined generation logic
+import { POLICY_DOMAINS, NEP_THRUST_AREAS, TARGET_AUDIENCES, REVIEW_COMMITTEES } from "./policy-form-constants"
 
-// Add this new interface
+// Interface for PolicyImplementationStatusSeed (if needed by other actions in this file)
 interface PolicyImplementationStatusSeed {
   policy_id: string
   region_type: string
@@ -33,11 +36,76 @@ export interface DeletePolicyActionState {
   deletedPolicyId?: string
 }
 
-// This is a static string. No function is called here.
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
 
-// Helper to map form data to Supabase-compatible policy object
+// Helper function for inlined policy generation
+const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
+  const policies: PolicyDraft[] = []
+  const startDate = new Date(2023, 0, 1) // Jan 1, 2023
+  const endDate = new Date() // Today
+
+  const statuses: PolicyDraft["status"][] = [
+    "Draft",
+    "Pending Internal Review",
+    "Under Stakeholder Consultation",
+    "Approved",
+  ]
+
+  const getRandomId = () => `POL-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+  const getRandomDate = (start: Date, end: Date): string => {
+    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString()
+  }
+  const getRandomElement = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+  const getRandomElements = <T,>(arr: T[], num: number): T[] => {
+    const shuffled = [...arr].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, Math.min(num, shuffled.length))
+  }
+
+  for (let i = 0; i < count; i++) {
+    const createdAtDate = new Date(getRandomDate(startDate, endDate))
+    const lastModifiedDate = new Date(getRandomDate(createdAtDate, endDate))
+
+    const policy: PolicyDraft = {
+      id: getRandomId(),
+      title: `Sample Policy Draft #${i + 1}: Focus on ${getRandomElement(POLICY_DOMAINS).toLowerCase()}`,
+      policyDomain: getRandomElement(POLICY_DOMAINS),
+      version: `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 5)}`,
+      abstractEN: `This is a sample abstract for policy #${i + 1}. It outlines key strategies for improving ${getRandomElement(NEP_THRUST_AREAS).toLowerCase()} and targets various stakeholders including ${getRandomElements(TARGET_AUDIENCES, 2).join(" and ")}. The current status is ${statuses[i % statuses.length]}.`,
+      abstractHI: `यह नीति #${i + 1} के लिए एक नमूना सार है।`,
+      keywords: getRandomElements(
+        ["education", "reform", "digital", "skill", "assessment", "curriculum", "teacher training", "innovation"],
+        Math.floor(Math.random() * 3) + 1,
+      ),
+      targetAudience: getRandomElements(TARGET_AUDIENCES, Math.floor(Math.random() * 3) + 2),
+      leadDrafter: `User ${String.fromCharCode(65 + (i % 5))}`,
+      nepThrustAreas: getRandomElements(NEP_THRUST_AREAS, Math.floor(Math.random() * 2) + 1),
+      nepAlignmentJustification: `This policy aligns with NEP 2020 by focusing on ${getRandomElement(NEP_THRUST_AREAS)}.`,
+      draftPolicyDocument: {
+        name: `draft_policy_${i + 1}.pdf`,
+        type: "application/pdf",
+        size: Math.floor(Math.random() * 5000000) + 100000,
+      },
+      annexures:
+        Math.random() > 0.5
+          ? [
+              {
+                name: `annexure_${i + 1}_ref.docx`,
+                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                size: Math.floor(Math.random() * 1000000) + 50000,
+              },
+            ]
+          : null,
+      internalReviewCommittee: getRandomElements(REVIEW_COMMITTEES, Math.floor(Math.random() * 2) + 1),
+      status: statuses[i % statuses.length],
+      createdAt: createdAtDate.toISOString(),
+      lastModified: lastModifiedDate.toISOString(),
+    }
+    policies.push(policy)
+  }
+  return policies
+}
+
 const mapFormDataToPolicyObject = (
   formData: FormData,
   existingPolicy?: PolicyDraft,
@@ -181,11 +249,12 @@ export async function submitPolicyAction(
   }
 
   const statusToSet = actionType === "saveDraft" ? "Draft" : "Pending Internal Review"
+  const currentTime = new Date().toISOString()
 
   if (policyIdFromForm) {
     const { data, error } = await supabaseAdmin!
       .from("policies")
-      .update({ ...policyDataToSave, status: statusToSet })
+      .update({ ...policyDataToSave, status: statusToSet, last_modified: currentTime })
       .eq("id", policyIdFromForm)
       .select()
       .single()
@@ -205,7 +274,7 @@ export async function submitPolicyAction(
   } else {
     const { data, error } = await supabaseAdmin!
       .from("policies")
-      .insert([{ ...policyDataToSave, status: statusToSet }])
+      .insert([{ ...policyDataToSave, status: statusToSet, created_at: currentTime, last_modified: currentTime }])
       .select()
       .single()
 
@@ -347,6 +416,7 @@ export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | und
 
   if (error) {
     if (error.code === "PGRST116") {
+      // No rows found
       return undefined
     }
     console.error("Supabase error fetching policy by ID:", error)
@@ -386,92 +456,67 @@ export async function clearPoliciesAction(): Promise<{ message: string }> {
   return { message: "All policies cleared from database." }
 }
 
-export async function seedPoliciesAction(count = 35): Promise<{ message: string; count: number }> {
+export async function seedPoliciesAction(
+  count = 35,
+): Promise<{ message: string; count: number; success: boolean; error?: string }> {
   if (!isSupabaseAdminConfigured()) {
     console.warn("seedPoliciesAction: Supabase admin client not configured.", CRITICAL_DB_ERROR_MSG)
-    return { message: CRITICAL_DB_ERROR_MSG, count: 0 }
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, success: false, error: CRITICAL_DB_ERROR_MSG }
   }
 
-  const { POLICY_DOMAINS, NEP_THRUST_AREAS, TARGET_AUDIENCES, REVIEW_COMMITTEES } = await import(
-    "./policy-form-constants"
-  )
+  // Use the inlined generation logic
+  const policiesToSeed = generateSeedPolicyDataInline(count)
 
-  const tempPoliciesToSeed: any[] = []
-  const startDate = new Date(2023, 0, 1)
-  const endDate = new Date()
-  const statuses: PolicyDraft["status"][] = [
-    "Draft",
-    "Pending Internal Review",
-    "Under Stakeholder Consultation",
-    "Approved",
-  ]
+  const policiesForDb = policiesToSeed.map((p) => ({
+    id: p.id,
+    title: p.title,
+    policy_domain: p.policyDomain,
+    version: p.version,
+    status: p.status,
+    abstract_en: p.abstractEN,
+    abstract_hi: p.abstractHI,
+    keywords: p.keywords,
+    target_audience: p.targetAudience,
+    lead_drafter: p.leadDrafter,
+    nep_thrust_areas: p.nepThrustAreas,
+    nep_alignment_justification: p.nepAlignmentJustification,
+    draft_policy_document: p.draftPolicyDocument,
+    annexures: p.annexures,
+    internal_review_committee: p.internalReviewCommittee,
+    created_at: p.createdAt,
+    last_modified: p.lastModified,
+  }))
 
-  const getRandomDateInternal = (start: Date, end: Date): string => {
-    return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString()
-  }
-  const getRandomElement = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
-  const getRandomElements = <T,>(arr: T[], count: number): T[] => {
-    const shuffled = [...arr].sort(() => 0.5 - Math.random())
-    return shuffled.slice(0, Math.min(count, shuffled.length))
-  }
-
-  for (let i = 0; i < count; i++) {
-    const createdAtDate = getRandomDateInternal(startDate, endDate)
-    const policyDomain = getRandomElement(POLICY_DOMAINS)
-    tempPoliciesToSeed.push({
-      title: `Seeded Policy #${i + 1}: Focus on ${policyDomain.toLowerCase()}`,
-      policy_domain: policyDomain,
-      version: `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 5)}`,
-      abstract_en: `This is a sample abstract for seeded policy #${i + 1}. It outlines key strategies for improving ${getRandomElement(NEP_THRUST_AREAS).toLowerCase()} and targets various stakeholders including ${getRandomElements(TARGET_AUDIENCES, 2).join(" and ")}. The current status is ${statuses[i % statuses.length]}.`,
-      abstract_hi: `यह नीति #${i + 1} के लिए एक नमूना सार है।`,
-      keywords: getRandomElements(
-        ["education", "reform", "digital", "skill", "assessment", "curriculum", "teacher training", "innovation"],
-        Math.floor(Math.random() * 3) + 1,
-      ),
-      target_audience: getRandomElements(TARGET_AUDIENCES, Math.floor(Math.random() * 3) + 2),
-      lead_drafter: `User ${String.fromCharCode(65 + (i % 5))}`,
-      nep_thrust_areas: getRandomElements(NEP_THRUST_AREAS, Math.floor(Math.random() * 2) + 1),
-      nep_alignment_justification: `This policy aligns with NEP 2020 by focusing on ${getRandomElement(NEP_THRUST_AREAS)}.`,
-      draft_policy_document: {
-        name: `draft_policy_${i + 1}.pdf`,
-        type: "application/pdf",
-        size: Math.floor(Math.random() * 5000000) + 100000,
-      },
-      annexures:
-        Math.random() > 0.5
-          ? [
-              {
-                name: `annexure_${i + 1}_ref.docx`,
-                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                size: Math.floor(Math.random() * 1000000) + 50000,
-              },
-            ]
-          : [],
-      internal_review_committee: getRandomElements(REVIEW_COMMITTEES, Math.floor(Math.random() * 2) + 1),
-      status: statuses[i % statuses.length],
-      created_at: createdAtDate,
-    })
-  }
-
+  // Clear existing policies before seeding
   const { error: deleteError } = await supabaseAdmin!
     .from("policies")
     .delete()
-    .neq("id", "this-will-not-match-anything")
+    .neq("id", "this-will-not-match-anything-to-avoid-accidental-empty-delete")
   if (deleteError) {
     console.error("Supabase error clearing policies before seed:", deleteError)
-    return { message: `Failed to clear policies before seeding. Error: ${deleteError.message}`, count: 0 }
+    return {
+      message: `Failed to clear policies before seeding. Error: ${deleteError.message}`,
+      count: 0,
+      success: false,
+      error: deleteError.message,
+    }
   }
 
-  const { data, error: insertError } = await supabaseAdmin!.from("policies").insert(tempPoliciesToSeed).select()
+  const { data, error: insertError } = await supabaseAdmin!.from("policies").insert(policiesForDb).select()
 
   if (insertError) {
     console.error("Supabase error seeding policies:", insertError)
-    return { message: `Failed to seed policies. Error: ${insertError.message}`, count: 0 }
+    return {
+      message: `Failed to seed policies. Error: ${insertError.message}`,
+      count: 0,
+      success: false,
+      error: insertError.message,
+    }
   }
 
   const seededCount = data ? data.length : 0
   revalidatePath("/policies")
-  return { message: `${seededCount} policies seeded successfully into Supabase.`, count: seededCount }
+  return { message: `${seededCount} policies seeded successfully into Supabase.`, count: seededCount, success: true }
 }
 
 export async function seedPolicyImplementationAction(
@@ -486,8 +531,6 @@ export async function seedPolicyImplementationAction(
     return { message: "No implementation data provided to seed.", count: 0 }
   }
 
-  // Clear existing implementation data for the policies being seeded to avoid duplicates if re-run
-  // This is a simple clear; a more robust approach might update existing entries.
   const policyIdsToClear = [...new Set(implementationData.map((item) => item.policy_id))]
   if (policyIdsToClear.length > 0) {
     const { error: deleteError } = await supabaseAdmin!
@@ -497,7 +540,6 @@ export async function seedPolicyImplementationAction(
 
     if (deleteError) {
       console.error("Supabase error clearing existing implementation data:", deleteError)
-      // Proceeding with insert anyway, but log the error
     }
   }
 
@@ -513,6 +555,6 @@ export async function seedPolicyImplementationAction(
   }
 
   const seededCount = data ? data.length : 0
-  revalidatePath("/tracking/dashboard") // Revalidate the dashboard page
+  revalidatePath("/tracking/dashboard")
   return { message: `${seededCount} policy implementation entries seeded successfully.`, count: seededCount }
 }

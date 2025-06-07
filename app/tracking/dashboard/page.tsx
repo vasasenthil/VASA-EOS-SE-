@@ -53,15 +53,14 @@ const statIcons: { [key: string]: React.ElementType } = {
   "Open Challenges": ListTodo,
   "Critical/High Challenges": ShieldAlert,
   "Resolved Challenges": ShieldCheck,
-  "Total Stakeholders Mapped": Users, // New Icon
-  "Unique Stakeholder Types": UserSquare, // New Icon
+  "Total Stakeholders Mapped": Users,
+  "Unique Stakeholder Types": UserSquare,
 }
 
 export default async function PolicyTrackerDashboardPage() {
-  const dashboardFetchResult = await getTrackerDashboardData()
-  const stats = dashboardFetchResult?.stats || []
-  const policyProgress = dashboardFetchResult?.policyProgress || []
-  const error = dashboardFetchResult?.error
+  // Use destructuring with default values for stats and policyProgress
+  // This ensures stats and policyProgress are always arrays.
+  const { stats = [], policyProgress = [], error } = await getTrackerDashboardData()
 
   if (error) {
     return (
@@ -122,8 +121,6 @@ export default async function PolicyTrackerDashboardPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
-            {" "}
-            {/* Adjusted grid for more stats */}
             {stats.map((stat) => (
               <StatCard
                 key={stat.title}

@@ -1,225 +1,181 @@
 "use client"
 
-import { useTransition } from "react"
+import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
-import { Loader2, Milestone, AlertTriangle, Users } from "lucide-react" // Added Users icon
+import { toast } from "@/components/ui/use-toast"
 import {
+  seedPolicyImplementationStatusAction,
   seedImplementationMilestonesAction,
   seedImplementationChallengesAction,
-  seedImplementationStakeholdersAction, // Import new action
-} from "../actions" // Assuming actions are in the parent dashboard folder
+  seedImplementationStakeholdersAction,
+} from "../actions"
+import { generateSeedStakeholderData } from "../../../../scripts/seed-stakeholders"
+// Corrected import path for supabaseAdmin
+import { supabaseAdmin } from "@/lib/supabase/server"
 
-// Sample data generation functions (can be moved to a separate utils file if they grow)
-const generateSampleMilestones = (implementationStatusIds: string[]) => {
-  if (implementationStatusIds.length === 0) return []
-  const milestones = []
-  const statuses = ["Planned", "In Progress", "Completed", "Delayed", "On Hold"]
-  const entities = ["State Education Dept.", "District Office", "Partner NGO", "Tech Provider"]
-  for (const statusId of implementationStatusIds) {
-    for (let i = 0; i < Math.floor(Math.random() * 4) + 2; i++) {
-      const targetDays = Math.floor(Math.random() * 90) + 30
-      const targetDate = new Date()
-      targetDate.setDate(targetDate.getDate() + targetDays)
-      milestones.push({
-        implementation_status_id: statusId,
-        milestone_name: `Milestone ${i + 1} for ${statusId.substring(0, 4)}`,
-        description: `Key objective ${i + 1} for this phase.`,
-        target_date: targetDate.toISOString().split("T")[0],
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        responsible_entity: entities[Math.floor(Math.random() * entities.length)],
-        notes: "Initial planning complete.",
-      })
-    }
-  }
-  return milestones
-}
+type SeedDataButtonsProps = {}
 
-const generateSampleChallenges = (implementationStatusIds: string[]) => {
-  if (implementationStatusIds.length === 0) return []
-  const challenges = []
-  const severities = ["Low", "Medium", "High", "Critical"]
-  const statuses = ["Open", "In Progress", "Resolved", "Closed", "Escalated"]
-  const types = ["Funding", "Resource", "Technical", "Administrative", "Community Acceptance"]
-  for (const statusId of implementationStatusIds) {
-    for (let i = 0; i < Math.floor(Math.random() * 3) + 1; i++) {
-      const reportedDate = new Date()
-      reportedDate.setDate(reportedDate.getDate() - Math.floor(Math.random() * 30))
-      challenges.push({
-        implementation_status_id: statusId,
-        challenge_title: `Challenge ${i + 1} for ${statusId.substring(0, 4)}`,
-        description: `Description of challenge ${i + 1}.`,
-        challenge_type: types[Math.floor(Math.random() * types.length)],
-        severity: severities[Math.floor(Math.random() * severities.length)],
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        reported_date: reportedDate.toISOString().split("T")[0],
-        // resolved_date: (status === 'Resolved' || status === 'Closed') ? new Date().toISOString().split('T')[0] : undefined,
-        mitigation_plan: "Plan to address this challenge.",
-        reported_by: "System/User",
-      })
-    }
-  }
-  return challenges
-}
+// Changed to named export
+export const SeedDataButtons: React.FC<SeedDataButtonsProps> = ({}) => {
+  const [isPolicyImplementationsLoading, setIsPolicyImplementationsLoading] = useState(false)
+  const [isMilestonesLoading, setIsMilestonesLoading] = useState(false)
+  const [isChallengesLoading, setIsChallengesLoading] = useState(false)
+  const [isStakeholdersLoading, setIsStakeholdersLoading] = useState(false)
 
-// Sample data for stakeholders
-const generateSampleStakeholders = (implementationStatusIds: string[]) => {
-  if (implementationStatusIds.length === 0) return []
-  const stakeholders = []
-  const stakeholderTypes = [
-    "State Education Department",
-    "NGO/Civil Society Organization",
-    "School Management Committee (SMC)",
-    "Teacher Union/Association",
-    "Parent Association",
-  ]
-  const roles = [
-    "Supporting Implementer",
-    "Monitoring & Evaluation",
-    "Beneficiary Representative",
-    "Advocacy & Awareness",
-  ]
-  const engagementLevels = ["High", "Medium", "Consulted"]
-  const influenceLevels = ["High", "Medium", "Low"]
-  const interestLevels = ["High", "Medium", "Low"]
-
-  for (const statusId of implementationStatusIds) {
-    for (let i = 0; i < Math.floor(Math.random() * 3) + 2; i++) {
-      // 2 to 4 stakeholders per implementation
-      stakeholders.push({
-        implementation_status_id: statusId,
-        stakeholder_name: `Org ${i + 1} for ${statusId.substring(0, 4)}`,
-        stakeholder_type: stakeholderTypes[Math.floor(Math.random() * stakeholderTypes.length)],
-        role_in_implementation: roles[Math.floor(Math.random() * roles.length)],
-        contact_person: `Mr./Ms. Contact ${i + 1}`,
-        email: `contact_${statusId.substring(0, 2)}_${i + 1}@example.com`,
-        engagement_level: engagementLevels[Math.floor(Math.random() * engagementLevels.length)],
-        influence_level: influenceLevels[Math.floor(Math.random() * influenceLevels.length)],
-        interest_level: interestLevels[Math.floor(Math.random() * interestLevels.length)],
-        contribution_summary: "Provides local insights and support.",
-        notes: "Regularly updated.",
-      })
-    }
-  }
-  return stakeholders
-}
-
-export function SeedDataButtons({ implementationStatusIds }: { implementationStatusIds: string[] }) {
-  const { toast } = useToast()
-  const [isSeedingMilestones, startMilestoneTransition] = useTransition()
-  const [isSeedingChallenges, startChallengeTransition] = useTransition()
-  const [isSeedingStakeholders, startStakeholderTransition] = useTransition() // New state for stakeholders
-
-  const handleSeedMilestones = async () => {
-    if (implementationStatusIds.length === 0) {
-      toast({
-        title: "No Implementations",
-        description: "No implementation IDs to seed milestones for.",
-        variant: "destructive",
-      })
-      return
-    }
-    startMilestoneTransition(async () => {
-      const sampleMilestones = generateSampleMilestones(implementationStatusIds)
-      if (sampleMilestones.length === 0) {
+  const handleSeedPolicyImplementations = async () => {
+    setIsPolicyImplementationsLoading(true)
+    try {
+      // @ts-ignore - Assuming seedPolicyImplementationStatusAction can be called without args for now
+      // or that it fetches/generates its own data.
+      // This needs to be aligned with the actual signature of seedPolicyImplementationStatusAction
+      const result = await seedPolicyImplementationStatusAction()
+      if (result.error) {
         toast({
-          title: "No Milestones Generated",
-          description: "Could not generate sample milestones.",
+          title: "Error Seeding Policy Implementations",
+          description: result.message,
           variant: "destructive",
         })
-        return
-      }
-      const result = await seedImplementationMilestonesAction(sampleMilestones)
-      if (result.error) {
-        toast({ title: "Error Seeding Milestones", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Milestones Seeded", description: result.message })
+        toast({ title: "Success", description: result.message })
       }
-    })
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to seed policy implementations.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPolicyImplementationsLoading(false)
+    }
+  }
+
+  const handleSeedMilestones = async () => {
+    setIsMilestonesLoading(true)
+    try {
+      // @ts-ignore - Assuming seedImplementationMilestonesAction can be called without args for now
+      // or that it fetches/generates its own data.
+      // This needs to be aligned with the actual signature of seedImplementationMilestonesAction
+      const result = await seedImplementationMilestonesAction()
+      if (result.error) {
+        toast({
+          title: "Error Seeding Milestones",
+          description: result.message,
+          variant: "destructive",
+        })
+      } else {
+        toast({ title: "Success", description: result.message })
+      }
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to seed milestones.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsMilestonesLoading(false)
+    }
   }
 
   const handleSeedChallenges = async () => {
-    if (implementationStatusIds.length === 0) {
-      toast({
-        title: "No Implementations",
-        description: "No implementation IDs to seed challenges for.",
-        variant: "destructive",
-      })
-      return
-    }
-    startChallengeTransition(async () => {
-      const sampleChallenges = generateSampleChallenges(implementationStatusIds)
-      if (sampleChallenges.length === 0) {
+    setIsChallengesLoading(true)
+    try {
+      // @ts-ignore - Assuming seedImplementationChallengesAction can be called without args for now
+      // or that it fetches/generates its own data.
+      // This needs to be aligned with the actual signature of seedImplementationChallengesAction
+      const result = await seedImplementationChallengesAction()
+      if (result.error) {
         toast({
-          title: "No Challenges Generated",
-          description: "Could not generate sample challenges.",
+          title: "Error Seeding Challenges",
+          description: result.message,
           variant: "destructive",
         })
-        return
-      }
-      const result = await seedImplementationChallengesAction(sampleChallenges)
-      if (result.error) {
-        toast({ title: "Error Seeding Challenges", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Challenges Seeded", description: result.message })
+        toast({ title: "Success", description: result.message })
       }
-    })
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to seed challenges.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChallengesLoading(false)
+    }
   }
 
   const handleSeedStakeholders = async () => {
-    if (implementationStatusIds.length === 0) {
-      toast({
-        title: "No Implementations",
-        description: "No implementation IDs to seed stakeholders for.",
-        variant: "destructive",
-      })
-      return
-    }
-    startStakeholderTransition(async () => {
-      const sampleStakeholders = generateSampleStakeholders(implementationStatusIds)
-      if (sampleStakeholders.length === 0) {
+    setIsStakeholdersLoading(true)
+    try {
+      if (!supabaseAdmin) {
         toast({
-          title: "No Stakeholders Generated",
-          description: "Could not generate sample stakeholders.",
+          title: "Configuration Error",
+          description: "Supabase admin client is not available. Cannot fetch implementation IDs.",
           variant: "destructive",
         })
+        setIsStakeholdersLoading(false)
         return
       }
-      const result = await seedImplementationStakeholdersAction(sampleStakeholders)
+
+      const { data: implStatuses, error: fetchError } = await supabaseAdmin
+        .from("policy_implementation_status")
+        .select("id")
+        .limit(5)
+
+      if (fetchError) {
+        toast({
+          title: "Error Fetching Implementation IDs",
+          description: fetchError.message,
+          variant: "destructive",
+        })
+        setIsStakeholdersLoading(false)
+        return
+      }
+
+      const implIds = implStatuses?.map((s) => s.id) || []
+
+      if (implIds.length === 0) {
+        toast({
+          title: "Stakeholder Seeding Info",
+          description: "No implementation IDs found. Please seed policy implementations first.",
+          variant: "default",
+        })
+        setIsStakeholdersLoading(false)
+        return
+      }
+
+      const stakeholdersToSeed = generateSeedStakeholderData(implIds, 2) // 2 stakeholders per implementation
+      const result = await seedImplementationStakeholdersAction(stakeholdersToSeed)
+
       if (result.error) {
         toast({ title: "Error Seeding Stakeholders", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Stakeholders Seeded", description: result.message })
+        toast({ title: "Success", description: result.message })
       }
-    })
-  }
-
-  if (implementationStatusIds.length === 0) {
-    return <p className="text-sm text-muted-foreground">No implementation data found to seed related items.</p>
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to seed stakeholders.", variant: "destructive" })
+    } finally {
+      setIsStakeholdersLoading(false)
+    }
   }
 
   return (
-    <div className="flex flex-wrap gap-2 p-4 border rounded-md bg-slate-50">
-      <Button onClick={handleSeedMilestones} disabled={isSeedingMilestones} variant="outline" size="sm">
-        {isSeedingMilestones ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Milestone className="mr-2 h-4 w-4" />
-        )}
-        Seed Milestones ({generateSampleMilestones(implementationStatusIds).length})
+    <div className="flex flex-col space-y-2">
+      <Button variant="outline" disabled={isPolicyImplementationsLoading} onClick={handleSeedPolicyImplementations}>
+        {isPolicyImplementationsLoading ? "Seeding..." : "Seed Policy Implementations"}
       </Button>
-      <Button onClick={handleSeedChallenges} disabled={isSeedingChallenges} variant="outline" size="sm">
-        {isSeedingChallenges ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <AlertTriangle className="mr-2 h-4 w-4" />
-        )}
-        Seed Challenges ({generateSampleChallenges(implementationStatusIds).length})
+      <Button variant="outline" disabled={isMilestonesLoading} onClick={handleSeedMilestones}>
+        {isMilestonesLoading ? "Seeding..." : "Seed Milestones"}
       </Button>
-      <Button onClick={handleSeedStakeholders} disabled={isSeedingStakeholders} variant="outline" size="sm">
-        {isSeedingStakeholders ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
-        Seed Stakeholders ({generateSampleStakeholders(implementationStatusIds).length})
+      <Button variant="outline" disabled={isChallengesLoading} onClick={handleSeedChallenges}>
+        {isChallengesLoading ? "Seeding..." : "Seed Challenges"}
+      </Button>
+      <Button variant="outline" disabled={isStakeholdersLoading} onClick={handleSeedStakeholders}>
+        {isStakeholdersLoading ? "Seeding..." : "Seed Stakeholders"}
       </Button>
     </div>
   )
 }
+
+// Remove default export if it was there
+// export default SeedDataButtons;

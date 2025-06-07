@@ -4,7 +4,8 @@ import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { DatabaseZap, Loader2 } from "lucide-react"
-import { seedPoliciesAction } from "../create/actions" // Assuming path is correct
+// This import MUST point to the server actions file and import the server action
+import { seedPoliciesAction } from "../create/actions"
 import { useToast } from "@/hooks/use-toast"
 
 export function SeedDataButton() {
@@ -15,17 +16,29 @@ export function SeedDataButton() {
   const handleSeedData = () => {
     startTransition(async () => {
       try {
-        const result = await seedPoliciesAction(35) // Seed 35 policies
-        toast({
-          title: "Data Seeding Successful",
-          description: `${result.count} policies have been seeded. The page will now refresh.`,
-        })
-        router.refresh() // Refresh the current route to reflect new data
+        // Calls the server action. No direct script import here.
+        const result = await seedPoliciesAction(35) // Default count
+        if (result.success) {
+          toast({
+            title: "Data Seeding Successful",
+            description: `${result.count} policies have been seeded. The page will now refresh.`,
+          })
+          router.refresh()
+        } else {
+          toast({
+            title: "Data Seeding Failed",
+            description: result.error || "An unknown error occurred.",
+            variant: "destructive",
+          })
+        }
       } catch (error) {
         console.error("Failed to seed data:", error)
         toast({
           title: "Data Seeding Failed",
-          description: "An error occurred while trying to seed data. Check the console for details.",
+          description:
+            error instanceof Error
+              ? error.message
+              : "An error occurred while trying to seed data. Check the console for details.",
           variant: "destructive",
         })
       }

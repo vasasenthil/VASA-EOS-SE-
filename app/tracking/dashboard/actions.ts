@@ -6,6 +6,10 @@ import { revalidatePath } from "next/cache"
 import type { ImplementationChallenge, ImplementationChallengeInput } from "./challenges/types"
 import type { ImplementationStakeholder, ImplementationStakeholderInput } from "./stakeholders/types"
 import type { ImplementationMilestone, ImplementationMilestoneInput } from "./milestones/types"
+// At the top, with other interface/type imports
+import type { PolicyImplementationStatus } from "./actions" // Assuming it's defined in this file or accessible
+// Or if it's defined in a types file:
+// import type { PolicyImplementationStatus } from "./types"; // Adjust path if needed
 
 // Define interfaces for the data we'll return
 export interface TrackerStat {
@@ -61,22 +65,22 @@ export interface StakeholderSeedInput {
 }
 
 // Example: app/tracking/dashboard/types.ts (or similar)
-export interface PolicyImplementationStatus {
-  id: string
-  policy_id: string
-  region_type: string
-  region_code?: string | null
-  region_name: string
-  overall_status: string
-  progress_percentage: number
-  target_completion_date?: string | null
-  actual_completion_date?: string | null
-  key_indicators?: Record<string, any> | null
-  summary_notes?: string | null
-  last_updated_by?: string | null
-  created_at: string
-  updated_at: string
-}
+// export interface PolicyImplementationStatus {
+//   id: string
+//   policy_id: string
+//   region_type: string
+//   region_code?: string | null
+//   region_name: string
+//   overall_status: string
+//   progress_percentage: number
+//   target_completion_date?: string | null
+//   actual_completion_date?: string | null
+//   key_indicators?: Record<string, any> | null
+//   summary_notes?: string | null
+//   last_updated_by?: string | null
+//   created_at: string
+//   updated_at: string
+// }
 
 // At the top, with other interface definitions:
 export interface PolicyImplementationStatusDetail extends PolicyImplementationStatus {
@@ -101,17 +105,17 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     const [implementationResult, challengesResult, stakeholdersResult] = await Promise.all([
       supabaseAdmin!.from("policy_implementation_status").select(
         `
-          id, 
-          policy_id,
-          region_type,
-          region_name,
-          overall_status,
-          progress_percentage,
-          updated_at,
-          policies (
-            title
-          )
-        `,
+    id, 
+    policy_id,
+    region_type,
+    region_name,
+    overall_status,
+    progress_percentage,
+    updated_at,
+    policies (
+      title
+    )
+  `,
       ),
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
       supabaseAdmin!
@@ -516,11 +520,11 @@ export async function getImplementationStatusByIdAction(
     .from("policy_implementation_status")
     .select(
       `
-      *,
-      policies (
-        title
-      )
-    `,
+*,
+policies (
+  title
+)
+`,
     )
     .eq("id", implementationStatusId)
     .single()
@@ -863,4 +867,51 @@ export async function deleteMilestoneAction(milestoneId: string): Promise<Milest
     revalidatePath(`/tracking/implementations/${milestoneToDelete.implementation_status_id}`)
   }
   return { message: "Milestone deleted successfully.", success: true, milestoneId }
+}
+
+// Add this new server action:
+export async function seedPolicyImplementationStatusAction(
+  implementationStatusData: PolicyImplementationStatus[],
+): Promise<{ message: string; count: number; error?: string }> {
+  if (!isSupabaseAdminConfigured()) {
+    console.warn("seedPolicyImplementationStatusAction: Supabase admin client not configured.")
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+
+  if (!implementationStatusData || implementationStatusData.length === 0) {
+    return { message: "No policy implementation status data provided to seed.", count: 0 }
+  }
+
+  // Clear all existing data from policy_implementation_status table for simplicity during seeding
+  // For a more targeted approach, you might delete based on specific policy_ids or other criteria.
+  const { error: deleteError } = await supabaseAdmin!
+    .from("policy_implementation_status")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000") // Dummy condition to delete all rows
+
+  if (deleteError) {
+    console.warn("Supabase error clearing existing policy implementation status data:", deleteError.message)
+    // Depending on requirements, you might want to return an error here or just log and continue
+  }
+
+  const { data, error } = await supabaseAdmin!
+    .from("policy_implementation_status")
+    .insert(implementationStatusData as any[]) // Cast to any[] if type mismatch with Supabase's expected type
+    .select()
+
+  if (error) {
+    console.error("Supabase error seeding policy implementation status:", error)
+    return {
+      message: `Failed to seed policy implementation status. Error: ${error.message}`,
+      count: 0,
+      error: error.message,
+    }
+  }
+
+  const seededCount = data ? data.length : 0
+  revalidatePath("/tracking/dashboard")
+  // Revalidate any other paths that display policy implementation status data
+  // e.g., revalidatePath("/tracking/implementations") or specific policy pages
+
+  return { message: `${seededCount} policy implementation status entries seeded successfully.`, count: seededCount }
 }
