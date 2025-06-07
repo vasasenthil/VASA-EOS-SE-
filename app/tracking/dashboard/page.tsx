@@ -15,14 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "./components/stat-card"
 import { MapPlaceholder } from "./components/map-placeholder"
-import { ChartPlaceholder } from "./components/chart-placeholder"
 import { getTrackerDashboardData } from "./actions"
 import {
   FileText,
   CheckCircle,
   Activity,
   Target,
-  Filter,
   ListChecks,
   AlertTriangle,
   ShieldAlert,
@@ -32,6 +30,7 @@ import {
   UserSquare,
 } from "lucide-react"
 import { SeedDataButtons } from "./components/seed-data-buttons"
+import { NepThrustChart } from "./components/nep-thrust-chart"
 
 const statusColors: { [key: string]: string } = {
   "In Progress": "bg-blue-100 text-blue-700",
@@ -58,9 +57,7 @@ const statIcons: { [key: string]: React.ElementType } = {
 }
 
 export default async function PolicyTrackerDashboardPage() {
-  // Use destructuring with default values for stats and policyProgress
-  // This ensures stats and policyProgress are always arrays.
-  const { stats = [], policyProgress = [], error } = await getTrackerDashboardData()
+  const { stats = [], policyProgress = [], nepThrustAreaProgress = [], error } = await getTrackerDashboardData()
 
   if (error) {
     return (
@@ -105,19 +102,8 @@ export default async function PolicyTrackerDashboardPage() {
           <CardDescription>Overview of national education policy implementation progress.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 p-4 border rounded-lg bg-gray-50/50">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <h3 className="text-lg font-medium">Filters & Actions</h3>
-              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                <SeedDataButtons />
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <Filter className="mr-2 h-4 w-4" /> Apply Filters
-                </Button>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Filter controls for policy, region, status, etc. will be here. Use seed buttons for development.
-            </p>
+          <div className="mb-6">
+            <SeedDataButtons />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
@@ -132,10 +118,11 @@ export default async function PolicyTrackerDashboardPage() {
             ))}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 mb-6">
-            <Card>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
+            <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Implementation Hotspots</CardTitle>
+                <CardDescription>Geographical overview of policy implementation.</CardDescription>
               </CardHeader>
               <CardContent>
                 <MapPlaceholder />
@@ -144,9 +131,10 @@ export default async function PolicyTrackerDashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Progress by NEP Thrust Area</CardTitle>
+                <CardDescription>Average implementation progress per thrust area.</CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartPlaceholder title="NEP Thrust Area Progress" className="min-h-[300px]" />
+                <NepThrustChart data={nepThrustAreaProgress} />
               </CardContent>
             </Card>
           </div>
