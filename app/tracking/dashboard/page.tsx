@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "./components/stat-card"
-import { getTrackerDashboardData } from "./actions"
+import { getTrackerDashboardData, type DashboardFiltersType } from "./actions"
 import {
   FileText,
   CheckCircle,
@@ -31,6 +31,7 @@ import {
 import { SeedDataButtons } from "./components/seed-data-buttons"
 import { NepThrustChart } from "./components/nep-thrust-chart"
 import { InteractiveMapIndia } from "./components/interactive-map-india"
+import { DashboardFilters } from "./components/dashboard-filters"
 
 const statusColors: { [key: string]: string } = {
   "In Progress": "bg-blue-100 text-blue-700",
@@ -56,16 +57,32 @@ const statIcons: { [key: string]: React.ElementType } = {
   "Unique Stakeholder Types": UserSquare,
 }
 
-export default async function PolicyTrackerDashboardPage() {
+interface PolicyTrackerDashboardPageProps {
+  searchParams?: {
+    status?: string
+    regionType?: string
+    // Add other potential search params here
+  }
+}
+
+export default async function PolicyTrackerDashboardPage({ searchParams }: PolicyTrackerDashboardPageProps) {
+  const currentFilters: DashboardFiltersType = {
+    status: searchParams?.status,
+    regionType: searchParams?.regionType,
+  }
+
   const {
     stats = [],
     policyProgress = [],
     nepThrustAreaProgress = [],
     stateImplementationProgress = [],
+    distinctStatuses = [],
+    distinctRegionTypes = [],
     error,
-  } = await getTrackerDashboardData()
+  } = await getTrackerDashboardData(currentFilters)
 
-  if (error) {
+  if (error && !stats.length && !policyProgress.length) {
+    // Show error only if no data could be fetched at all
     return (
       <main className="container mx-auto p-4 md:p-8">
         <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-md">
@@ -108,9 +125,23 @@ export default async function PolicyTrackerDashboardPage() {
           <CardDescription>Overview of national education policy implementation progress.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
+          <div className="mb-6 space-y-4">
+            <DashboardFilters
+              distinctStatuses={distinctStatuses}
+              distinctRegionTypes={distinctRegionTypes}
+              currentFilters={currentFilters}
+            />
             <SeedDataButtons />
           </div>
+
+          {error &&
+            (stats.length > 0 || policyProgress.length > 0) && ( // Show non-critical error if some data is still displayed
+              <div className="mb-4 p-3 border border-yellow-300 bg-yellow-50 text-yellow-700 rounded-md text-sm">
+                <p>
+                  <strong>Note:</strong> {error}
+                </p>
+              </div>
+            )}
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6">
             {stats.map((stat) => (
@@ -217,7 +248,8 @@ export default async function PolicyTrackerDashboardPage() {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center h-24">
-                          No implementation data found. Try seeding data.
+                          No implementation data found for the selected filters. Try adjusting filters or seeding more
+                          data.
                         </TableCell>
                       </TableRow>
                     )}

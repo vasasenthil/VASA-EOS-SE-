@@ -42,11 +42,19 @@ export interface StateImplementationProgress {
   policiesTracked: number
 }
 
+export interface DashboardFiltersType {
+  status?: string
+  regionType?: string
+  // Add more filters here as needed, e.g., policyId?: string, dateRange?: { from?: Date, to?: Date }
+}
+
 export interface TrackerDashboardData {
   stats: TrackerStat[]
   policyProgress: PolicyProgressItem[]
   nepThrustAreaProgress: NepThrustAreaProgress[]
-  stateImplementationProgress: StateImplementationProgress[] // Add this line
+  stateImplementationProgress: StateImplementationProgress[]
+  distinctStatuses: string[]
+  distinctRegionTypes: string[]
   error?: string
 }
 
@@ -59,64 +67,89 @@ export interface PolicyImplementationStatusDetail extends PolicyImplementationSt
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
 
-export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
+export async function getTrackerDashboardData(filters?: DashboardFiltersType): Promise<TrackerDashboardData> {
   if (!isSupabaseAdminConfigured()) {
     console.warn("getTrackerDashboardData: Supabase admin client not configured.")
     return {
       stats: [],
       policyProgress: [],
       nepThrustAreaProgress: [],
-      stateImplementationProgress: [], // Add this line
+      stateImplementationProgress: [],
+      distinctStatuses: [],
+      distinctRegionTypes: [],
       error: CRITICAL_DB_ERROR_MSG,
     }
   }
 
   try {
-    const [implementationResult, challengesResult, stakeholdersResult] = await Promise.all([
-      supabaseAdmin!.from("policy_implementation_status").select(
-        `
-id, 
-policy_id,
-region_type,
-region_name,
-overall_status,
-progress_percentage,
-updated_at,
-policies (
-title,
-nep_thrust_areas
-)
-`,
-      ),
-      supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
-      supabaseAdmin!.from("implementation_stakeholders").select("id, stakeholder_name, stakeholder_type"),
-    ])
+    let query = supabaseAdmin!.from("policy_implementation_status").select(
+      `
+      id, 
+      policy_id,
+      region_type,
+      region_name,
+      overall_status,
+      progress_percentage,
+      updated_at,
+      policies (
+        title,
+        nep_thrust_areas
+      )
+    `,
+    )
+
+    if (filters?.status) {
+      query = query.eq("overall_status", filters.status)
+    }
+    if (filters?.regionType) {
+      query = query.eq("region_type", filters.regionType)
+    }
+
+    const [implementationResult, challengesResult, stakeholdersResult, distinctStatusResult, distinctRegionTypeResult] =
+      await Promise.all([
+        query, // Use the modified query
+        supabaseAdmin!
+          .from("implementation_challenges")
+          .select("id, severity, status, reported_date, resolved_date"), // Consider filtering these too if relevant
+        supabaseAdmin!
+          .from("implementation_stakeholders")
+          .select("id, stakeholder_name, stakeholder_type"), // Consider filtering these too
+        supabaseAdmin!.from("policy_implementation_status").select("overall_status", { count: "exact", head: false }),
+        supabaseAdmin!.from("policy_implementation_status").select("region_type", { count: "exact", head: false }),
+      ])
 
     const { data: implementationData, error: implementationError } = implementationResult
     const { data: challengesData, error: challengesError } = challengesResult
     const { data: stakeholdersData, error: stakeholdersError } = stakeholdersResult
+    const { data: distinctStatusData, error: distinctStatusError } = distinctStatusResult
+    const { data: distinctRegionTypeData, error: distinctRegionTypeError } = distinctRegionTypeResult
 
-    if (implementationError) {
-      throw implementationError
-    }
-    if (challengesError) {
-      console.error("Error fetching challenges data:", challengesError)
-    }
-    if (stakeholdersError) {
-      console.error("Error fetching stakeholders data:", stakeholdersError)
-    }
+    if (implementationError) throw implementationError
+    if (challengesError) console.error("Error fetching challenges data:", challengesError)
+    if (stakeholdersError) console.error("Error fetching stakeholders data:", stakeholdersError)
+    if (distinctStatusError) console.error("Error fetching distinct statuses:", distinctStatusError)
+    if (distinctRegionTypeError) console.error("Error fetching distinct region types:", distinctRegionTypeError)
+
+    const distinctStatuses = distinctStatusData
+      ? [...new Set(distinctStatusData.map((item: any) => item.overall_status).filter(Boolean))]
+      : []
+    const distinctRegionTypes = distinctRegionTypeData
+      ? [...new Set(distinctRegionTypeData.map((item: any) => item.region_type).filter(Boolean))]
+      : []
 
     if (!implementationData) {
       return {
         stats: [],
         policyProgress: [],
         nepThrustAreaProgress: [],
-        stateImplementationProgress: [], // Add this line
-        error: "No implementation data found.",
+        stateImplementationProgress: [],
+        distinctStatuses,
+        distinctRegionTypes,
+        error: "No implementation data found for the selected filters.",
       }
     }
 
-    // --- Stats and Policy Progress Calculation (remains the same) ---
+    // --- Stats and Policy Progress Calculation (remains largely the same, but now operates on filtered data) ---
     const trackedPolicyIds = new Set(implementationData.map((item) => item.policy_id))
     const totalPoliciesTracked = trackedPolicyIds.size
     const totalProgress = implementationData.reduce((acc, item) => acc + (item.progress_percentage || 0), 0)
@@ -126,23 +159,29 @@ nep_thrust_areas
     const statesCovered = new Set(
       implementationData.filter((item) => item.region_type === "State").map((item) => item.region_name),
     ).size
+
     let totalOpenChallenges = 0
     let criticalHighChallenges = 0
     let resolvedChallenges = 0
     if (challengesData) {
+      // Note: challengesData is not filtered by policy status/region type yet.
+      // This might be desired, or you might want to filter challenges based on associated implementation_status_id
       totalOpenChallenges = challengesData.filter(
         (c) => c.status === "Open" || c.status === "In Progress" || c.status === "Escalated",
       ).length
       criticalHighChallenges = challengesData.filter((c) => c.severity === "Critical" || c.severity === "High").length
       resolvedChallenges = challengesData.filter((c) => c.status === "Resolved" || c.status === "Closed").length
     }
+
     let totalStakeholders = 0
     let uniqueStakeholderTypes = 0
     if (stakeholdersData) {
+      // Similar to challenges, stakeholdersData is not filtered yet.
       totalStakeholders = stakeholdersData.length
       const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean))
       uniqueStakeholderTypes = types.size
     }
+
     const stats: TrackerStat[] = [
       {
         title: "Total Policies Tracked",
@@ -182,6 +221,7 @@ nep_thrust_areas
         description: "Different categories of stakeholders",
       },
     ]
+
     const progressMap = new Map<string, PolicyProgressItem>()
     for (const item of implementationData) {
       if (!progressMap.has(item.policy_id)) {
@@ -239,7 +279,6 @@ nep_thrust_areas
 
     // --- NEP Thrust Area Progress Calculation ---
     const thrustAreaProgressMap = new Map<string, { totalProgress: number; count: number }>()
-
     for (const item of implementationData) {
       // @ts-ignore
       const thrustAreas = item.policies?.nep_thrust_areas
@@ -252,7 +291,6 @@ nep_thrust_areas
         }
       }
     }
-
     const nepThrustAreaProgress: NepThrustAreaProgress[] = Array.from(thrustAreaProgressMap.entries())
       .map(([name, data]) => ({
         name,
@@ -260,10 +298,8 @@ nep_thrust_areas
       }))
       .sort((a, b) => b.value - a.value)
 
-    // Add this logic to calculate stateImplementationProgress
-
+    // --- State Implementation Progress Calculation ---
     const stateProgressMap = new Map<string, { totalProgress: number; count: number; policies: Set<string> }>()
-
     implementationData
       .filter((item) => item.region_type === "State" && item.region_name)
       .forEach((item) => {
@@ -277,10 +313,9 @@ nep_thrust_areas
         stateData.count += 1
         stateData.policies.add(item.policy_id)
       })
-
     const stateImplementationProgress: StateImplementationProgress[] = Array.from(stateProgressMap.entries())
       .map(([name, data]) => ({
-        id: name.toUpperCase().replace(/\s+/g, "_"), // Create a simple ID from name
+        id: name.toUpperCase().replace(/\s+/g, "_"),
         name,
         value: data.count > 0 ? Math.round(data.totalProgress / data.count) : 0,
         policiesTracked: data.policies.size,
@@ -291,7 +326,9 @@ nep_thrust_areas
       stats,
       policyProgress,
       nepThrustAreaProgress,
-      stateImplementationProgress, // Add this line
+      stateImplementationProgress,
+      distinctStatuses,
+      distinctRegionTypes,
     }
   } catch (error: any) {
     console.error("Error fetching tracker dashboard data:", error)
@@ -299,7 +336,9 @@ nep_thrust_areas
       stats: [],
       policyProgress: [],
       nepThrustAreaProgress: [],
-      stateImplementationProgress: [], // Add this line
+      stateImplementationProgress: [],
+      distinctStatuses: [],
+      distinctRegionTypes: [],
       error: `Failed to fetch dashboard data: ${error.message}`,
     }
   }
@@ -774,8 +813,6 @@ export async function deleteStakeholderAction(stakeholderId: string): Promise<St
   return { message: "Stakeholder deleted successfully.", success: true, stakeholderId }
 }
 
-// --- CRUD Actions for Implementation Milestones ---
-// ... (getMilestonesByImplementationIdAction, addMilestoneAction, updateMilestoneAction, deleteMilestoneAction remain the same) ...
 export interface MilestoneActionState {
   message: string
   success: boolean
