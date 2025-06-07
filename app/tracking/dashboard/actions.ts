@@ -35,10 +35,18 @@ export interface NepThrustAreaProgress {
   value: number
 }
 
+export interface StateImplementationProgress {
+  id: string // Typically the state name or a unique ID for the state
+  name: string
+  value: number // Average progress percentage
+  policiesTracked: number
+}
+
 export interface TrackerDashboardData {
   stats: TrackerStat[]
   policyProgress: PolicyProgressItem[]
   nepThrustAreaProgress: NepThrustAreaProgress[]
+  stateImplementationProgress: StateImplementationProgress[] // Add this line
   error?: string
 }
 
@@ -58,6 +66,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       stats: [],
       policyProgress: [],
       nepThrustAreaProgress: [],
+      stateImplementationProgress: [], // Add this line
       error: CRITICAL_DB_ERROR_MSG,
     }
   }
@@ -66,18 +75,18 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
     const [implementationResult, challengesResult, stakeholdersResult] = await Promise.all([
       supabaseAdmin!.from("policy_implementation_status").select(
         `
-    id, 
-    policy_id,
-    region_type,
-    region_name,
-    overall_status,
-    progress_percentage,
-    updated_at,
-    policies (
-      title,
-      nep_thrust_areas
-    )
-  `,
+id, 
+policy_id,
+region_type,
+region_name,
+overall_status,
+progress_percentage,
+updated_at,
+policies (
+title,
+nep_thrust_areas
+)
+`,
       ),
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
       supabaseAdmin!.from("implementation_stakeholders").select("id, stakeholder_name, stakeholder_type"),
@@ -102,6 +111,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
         stats: [],
         policyProgress: [],
         nepThrustAreaProgress: [],
+        stateImplementationProgress: [], // Add this line
         error: "No implementation data found.",
       }
     }
@@ -250,10 +260,38 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       }))
       .sort((a, b) => b.value - a.value)
 
+    // Add this logic to calculate stateImplementationProgress
+
+    const stateProgressMap = new Map<string, { totalProgress: number; count: number; policies: Set<string> }>()
+
+    implementationData
+      .filter((item) => item.region_type === "State" && item.region_name)
+      .forEach((item) => {
+        const stateName = item.region_name!
+        let stateData = stateProgressMap.get(stateName)
+        if (!stateData) {
+          stateData = { totalProgress: 0, count: 0, policies: new Set() }
+          stateProgressMap.set(stateName, stateData)
+        }
+        stateData.totalProgress += item.progress_percentage || 0
+        stateData.count += 1
+        stateData.policies.add(item.policy_id)
+      })
+
+    const stateImplementationProgress: StateImplementationProgress[] = Array.from(stateProgressMap.entries())
+      .map(([name, data]) => ({
+        id: name.toUpperCase().replace(/\s+/g, "_"), // Create a simple ID from name
+        name,
+        value: data.count > 0 ? Math.round(data.totalProgress / data.count) : 0,
+        policiesTracked: data.policies.size,
+      }))
+      .sort((a, b) => b.value - a.value)
+
     return {
       stats,
       policyProgress,
       nepThrustAreaProgress,
+      stateImplementationProgress, // Add this line
     }
   } catch (error: any) {
     console.error("Error fetching tracker dashboard data:", error)
@@ -261,6 +299,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       stats: [],
       policyProgress: [],
       nepThrustAreaProgress: [],
+      stateImplementationProgress: [], // Add this line
       error: `Failed to fetch dashboard data: ${error.message}`,
     }
   }
@@ -563,7 +602,7 @@ export async function getImplementationStatusByIdAction(
       `
 *,
 policies (
-  title
+title
 )
 `,
     )

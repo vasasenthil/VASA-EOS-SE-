@@ -14,7 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "./components/stat-card"
-import { MapPlaceholder } from "./components/map-placeholder"
 import { getTrackerDashboardData } from "./actions"
 import {
   FileText,
@@ -31,6 +30,7 @@ import {
 } from "lucide-react"
 import { SeedDataButtons } from "./components/seed-data-buttons"
 import { NepThrustChart } from "./components/nep-thrust-chart"
+import { InteractiveMapIndia } from "./components/interactive-map-india"
 
 const statusColors: { [key: string]: string } = {
   "In Progress": "bg-blue-100 text-blue-700",
@@ -57,7 +57,13 @@ const statIcons: { [key: string]: React.ElementType } = {
 }
 
 export default async function PolicyTrackerDashboardPage() {
-  const { stats = [], policyProgress = [], nepThrustAreaProgress = [], error } = await getTrackerDashboardData()
+  const {
+    stats = [],
+    policyProgress = [],
+    nepThrustAreaProgress = [],
+    stateImplementationProgress = [],
+    error,
+  } = await getTrackerDashboardData()
 
   if (error) {
     return (
@@ -124,8 +130,8 @@ export default async function PolicyTrackerDashboardPage() {
                 <CardTitle>Implementation Hotspots</CardTitle>
                 <CardDescription>Geographical overview of policy implementation.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <MapPlaceholder />
+              <CardContent className="min-h-[400px] flex items-center justify-center">
+                <InteractiveMapIndia data={stateImplementationProgress} />
               </CardContent>
             </Card>
             <Card>
