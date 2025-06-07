@@ -1,4 +1,6 @@
-interface ImplementationMilestoneSeed {
+import type { ImplementationMilestoneSeed } from "@/app/tracking/dashboard/actions"
+
+interface ImplementationMilestoneSeedOld {
   implementation_status_id: string // UUID of the parent policy_implementation_status record
   milestone_name: string
   description?: string
@@ -18,8 +20,8 @@ const getRandomDateInRange = (start: Date, end: Date): string => {
 const generateSeedMilestonesData = (
   implementationStatusIds: string[],
   milestonesPerImplementation = 3,
-): ImplementationMilestoneSeed[] => {
-  const milestonesData: ImplementationMilestoneSeed[] = []
+): ImplementationMilestoneSeedOld[] => {
+  const milestonesData: ImplementationMilestoneSeedOld[] = []
   const milestoneNames = [
     "Initial Planning & Resource Allocation",
     "Stakeholder Consultation Phase 1",
@@ -33,7 +35,7 @@ const generateSeedMilestonesData = (
     "Final Evaluation Report",
     "Knowledge Dissemination Activities",
   ]
-  const statuses: ImplementationMilestoneSeed["status"][] = [
+  const statuses: ImplementationMilestoneSeedOld["status"][] = [
     "Pending",
     "In Progress",
     "Completed",
@@ -95,6 +97,37 @@ const generateSeedMilestonesData = (
     }
   }
   return milestonesData
+}
+
+export function generateSampleMilestones(
+  implementationStatusIds: string[],
+  countPerImpl = 0,
+): ImplementationMilestoneSeed[] {
+  if (implementationStatusIds.length === 0) return []
+  const milestones: ImplementationMilestoneSeed[] = []
+  const statuses = ["Planned", "In Progress", "Completed", "Delayed", "On Hold"]
+  const entities = ["State Education Dept.", "District Office", "Partner NGO", "Tech Provider"]
+
+  // If countPerImpl is 0 or not provided, generate a random number of milestones per implementation status
+  const milestonesToGenerate = countPerImpl > 0 ? countPerImpl : Math.floor(Math.random() * 3) + 2 // 2 to 4 if random
+
+  for (const statusId of implementationStatusIds) {
+    for (let i = 0; i < milestonesToGenerate; i++) {
+      const targetDays = Math.floor(Math.random() * 90) + 30
+      const targetDate = new Date()
+      targetDate.setDate(targetDate.getDate() + targetDays)
+      milestones.push({
+        implementation_status_id: statusId,
+        milestone_name: `Milestone ${i + 1} for ${statusId.substring(0, 4)}`,
+        description: `Key objective ${i + 1} for this phase.`,
+        target_date: targetDate.toISOString().split("T")[0],
+        status: statuses[Math.floor(Math.random() * statuses.length)] as any, // TODO: Fix type issue
+        responsible_entity: entities[Math.floor(Math.random() * entities.length)],
+        notes: "Initial planning complete.",
+      })
+    }
+  }
+  return milestones
 }
 
 // Main execution for the script

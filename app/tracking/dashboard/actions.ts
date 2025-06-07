@@ -2,14 +2,16 @@
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-// Import the new types
-import type { ImplementationChallenge, ImplementationChallengeInput } from "./challenges/types"
-import type { ImplementationStakeholder, ImplementationStakeholderInput } from "./stakeholders/types"
-import type { ImplementationMilestone, ImplementationMilestoneInput } from "./milestones/types"
-// At the top, with other interface/type imports
-import type { PolicyImplementationStatus } from "./actions" // Assuming it's defined in this file or accessible
-// Or if it's defined in a types file:
-// import type { PolicyImplementationStatus } from "./types"; // Adjust path if needed
+import type { ImplementationChallenge, ImplementationChallengeInput } from "../challenges/types"
+import type { ImplementationStakeholder, ImplementationStakeholderInput } from "../stakeholders/types"
+import type { ImplementationMilestone, ImplementationMilestoneInput } from "../milestones/types"
+import type { PolicyImplementationStatus } from "./actions" // Self-reference for type
+
+// Import data generation functions
+import { generateSeedPolicyImplementationData } from "../../../../scripts/seed-policy-implementation"
+import { generateSampleMilestones } from "../../../../scripts/seed-milestones"
+import { generateSampleChallenges } from "../../../../scripts/seed-challenges"
+import { generateSeedStakeholderData } from "../../../../scripts/seed-stakeholders"
 
 // Define interfaces for the data we'll return
 export interface TrackerStat {
@@ -25,7 +27,7 @@ export interface PolicyProgressItem {
   progress: number // progress_percentage from national level or aggregated
   statesAffected: number
   lastUpdate: string // updated_at from policy_implementation_status
-  implementation_status_id: string // Add this to link to the detail page
+  implementation_status_id: string
 }
 
 export interface TrackerDashboardData {
@@ -34,63 +36,16 @@ export interface TrackerDashboardData {
   error?: string
 }
 
-// Interface for milestone seed data
-export interface ImplementationMilestoneSeed {
-  implementation_status_id: string
-  milestone_name: string
-  description?: string
-  target_date?: string
-  actual_completion_date?: string
-  status: string
-  responsible_entity?: string
-  notes?: string
-}
+export interface ImplementationMilestoneSeed extends ImplementationMilestoneInput {} // Alias for clarity if needed
 
-// Interface for stakeholder seed data
-// (This should match the structure used in the seed script, omitting implementation_status_id if it's passed separately)
-export interface StakeholderSeedInput {
-  stakeholder_name: string
-  stakeholder_type: string // Consider using the specific enum/union type if available here
-  role_in_implementation: string // Same as above
-  contact_person?: string
-  email?: string
-  phone?: string
-  engagement_level?: string
-  influence_level?: string
-  interest_level?: string
-  contribution_summary?: string
-  challenges_anticipated?: string
-  notes?: string
-  // implementation_status_id will be added by the action or is part of a larger structure
-}
-
-// Example: app/tracking/dashboard/types.ts (or similar)
-// export interface PolicyImplementationStatus {
-//   id: string
-//   policy_id: string
-//   region_type: string
-//   region_code?: string | null
-//   region_name: string
-//   overall_status: string
-//   progress_percentage: number
-//   target_completion_date?: string | null
-//   actual_completion_date?: string | null
-//   key_indicators?: Record<string, any> | null
-//   summary_notes?: string | null
-//   last_updated_by?: string | null
-//   created_at: string
-//   updated_at: string
-// }
-
-// At the top, with other interface definitions:
 export interface PolicyImplementationStatusDetail extends PolicyImplementationStatus {
-  // Assuming PolicyImplementationStatus is already defined or imported
   policy_title?: string
 }
 
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
 
+// ... (getTrackerDashboardData remains the same) ...
 export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   if (!isSupabaseAdminConfigured()) {
     console.warn("getTrackerDashboardData: Supabase admin client not configured.")
@@ -118,9 +73,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   `,
       ),
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
-      supabaseAdmin!
-        .from("implementation_stakeholders")
-        .select("id, stakeholder_name, stakeholder_type"), // Fetch stakeholders
+      supabaseAdmin!.from("implementation_stakeholders").select("id, stakeholder_name, stakeholder_type"),
     ])
 
     const { data: implementationData, error: implementationError } = implementationResult
@@ -158,7 +111,6 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       implementationData.filter((item) => item.region_type === "State").map((item) => item.region_name),
     ).size
 
-    // Challenge Statistics
     let totalOpenChallenges = 0
     let criticalHighChallenges = 0
     let resolvedChallenges = 0
@@ -171,12 +123,11 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       resolvedChallenges = challengesData.filter((c) => c.status === "Resolved" || c.status === "Closed").length
     }
 
-    // Stakeholder Statistics
     let totalStakeholders = 0
     let uniqueStakeholderTypes = 0
     if (stakeholdersData) {
       totalStakeholders = stakeholdersData.length
-      const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean)) // Filter out null/undefined types
+      const types = new Set(stakeholdersData.map((s) => s.stakeholder_type).filter(Boolean))
       uniqueStakeholderTypes = types.size
     }
 
@@ -232,7 +183,7 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
           progress: 0,
           statesAffected: 0,
           lastUpdate: item.updated_at,
-          implementation_status_id: item.id, // Store the first encountered implementation_status_id for this policy
+          implementation_status_id: item.id,
         })
       }
 
@@ -240,16 +191,10 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
       if (item.region_type === "National") {
         policyEntry.status = item.overall_status
         policyEntry.progress = item.progress_percentage
-        policyEntry.implementation_status_id = item.id // Prefer national level ID if available
+        policyEntry.implementation_status_id = item.id
       }
       if (item.region_type === "State") {
         policyEntry.statesAffected += 1
-        if (
-          policyEntry.implementation_status_id === progressMap.get(item.policy_id)?.implementation_status_id &&
-          item.id !== policyEntry.implementation_status_id
-        ) {
-          // This logic is simplified; a more robust approach might be needed for complex scenarios
-        }
       }
       if (new Date(item.updated_at) > new Date(policyEntry.lastUpdate)) {
         policyEntry.lastUpdate = item.updated_at
@@ -300,90 +245,167 @@ export async function getTrackerDashboardData(): Promise<TrackerDashboardData> {
   }
 }
 
-export async function seedImplementationMilestonesAction(
-  milestonesData: ImplementationMilestoneSeed[],
-): Promise<{ message: string; count: number; error?: string }> {
+export async function seedPolicyImplementationStatusAction(): Promise<{
+  message: string
+  count: number
+  error?: string
+}> {
   if (!isSupabaseAdminConfigured()) {
-    console.warn("seedImplementationMilestonesAction: Supabase admin client not configured.")
     return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
   }
+  try {
+    const { data: policies, error: policyError } = await supabaseAdmin!.from("policies").select("id").limit(10) // Fetch up to 10 policy IDs to seed for
 
-  if (!milestonesData || milestonesData.length === 0) {
-    return { message: "No milestone data provided to seed.", count: 0 }
-  }
-
-  const implementationStatusIdsToClear = [...new Set(milestonesData.map((item) => item.implementation_status_id))]
-  if (implementationStatusIdsToClear.length > 0) {
-    const { error: deleteError } = await supabaseAdmin!
-      .from("implementation_milestones")
-      .delete()
-      .in("implementation_status_id", implementationStatusIdsToClear)
-
-    if (deleteError) {
-      console.warn("Supabase error clearing existing milestone data:", deleteError.message)
+    if (policyError) throw policyError
+    if (!policies || policies.length === 0) {
+      return { message: "No policies found to seed implementation status for. Seed policies first.", count: 0 }
     }
-  }
+    const policyIds = policies.map((p) => p.id)
+    const implementationStatusData = generateSeedPolicyImplementationData(policyIds)
 
-  const { data, error } = await supabaseAdmin!.from("implementation_milestones").insert(milestonesData).select()
-
-  if (error) {
-    console.error("Supabase error seeding implementation milestones:", error)
-    return {
-      message: `Failed to seed implementation milestones. Error: ${error.message}`,
-      count: 0,
-      error: error.message,
+    if (!implementationStatusData || implementationStatusData.length === 0) {
+      return { message: "No policy implementation status data generated.", count: 0 }
     }
-  }
 
-  const seededCount = data ? data.length : 0
-  revalidatePath("/tracking/dashboard")
-  return { message: `${seededCount} implementation milestones seeded successfully.`, count: seededCount }
+    await supabaseAdmin!.from("policy_implementation_status").delete().neq("id", "00000000-0000-0000-0000-000000000000")
+    const { data, error } = await supabaseAdmin!
+      .from("policy_implementation_status")
+      .insert(implementationStatusData as any[])
+      .select()
+
+    if (error) throw error
+    const seededCount = data ? data.length : 0
+    revalidatePath("/tracking/dashboard")
+    return { message: `${seededCount} policy implementation status entries seeded.`, count: seededCount }
+  } catch (error: any) {
+    console.error("Error in seedPolicyImplementationStatusAction:", error)
+    return { message: `Failed to seed: ${error.message}`, count: 0, error: error.message }
+  }
 }
 
-export async function seedImplementationChallengesAction(
-  challengesData: ImplementationChallengeInput[], // Use ImplementationChallengeInput
-): Promise<{ message: string; count: number; error?: string }> {
+export async function seedImplementationMilestonesAction(): Promise<{
+  message: string
+  count: number
+  error?: string
+}> {
   if (!isSupabaseAdminConfigured()) {
-    console.warn("seedImplementationChallengesAction: Supabase admin client not configured.")
     return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
   }
+  try {
+    const { data: implStatuses, error: implStatusError } = await supabaseAdmin!
+      .from("policy_implementation_status")
+      .select("id")
+      .limit(10)
 
-  if (!challengesData || challengesData.length === 0) {
-    return { message: "No challenge data provided to seed.", count: 0 }
-  }
-
-  const implementationStatusIdsToClear = [...new Set(challengesData.map((item) => item.implementation_status_id))]
-  if (implementationStatusIdsToClear.length > 0) {
-    const { error: deleteError } = await supabaseAdmin!
-      .from("implementation_challenges")
-      .delete()
-      .in("implementation_status_id", implementationStatusIdsToClear)
-
-    if (deleteError) {
-      console.warn("Supabase error clearing existing challenge data:", deleteError.message)
+    if (implStatusError) throw implStatusError
+    if (!implStatuses || implStatuses.length === 0) {
+      return { message: "No implementation statuses found. Seed them first.", count: 0 }
     }
-  }
+    const implStatusIds = implStatuses.map((s) => s.id)
+    const milestonesData = generateSampleMilestones(implStatusIds, 3) // Generate 3 milestones per status
 
-  const { data, error } = await supabaseAdmin!.from("implementation_challenges").insert(challengesData).select()
-
-  if (error) {
-    console.error("Supabase error seeding implementation challenges:", error)
-    return {
-      message: `Failed to seed implementation challenges. Error: ${error.message}`,
-      count: 0,
-      error: error.message,
+    if (!milestonesData || milestonesData.length === 0) {
+      return { message: "No milestone data generated.", count: 0 }
     }
-  }
 
-  const seededCount = data ? data.length : 0
-  revalidatePath("/tracking/dashboard")
-  revalidatePath("/tracking/challenges") // Assuming challenges might have their own page or section
-  revalidatePath("/tracking/implementations") // Revalidate implementations path
-  return { message: `${seededCount} implementation challenges seeded successfully.`, count: seededCount }
+    await supabaseAdmin!.from("implementation_milestones").delete().in("implementation_status_id", implStatusIds)
+    const { data, error } = await supabaseAdmin!.from("implementation_milestones").insert(milestonesData).select()
+
+    if (error) throw error
+    const seededCount = data ? data.length : 0
+    revalidatePath("/tracking/dashboard")
+    implStatusIds.forEach((id) => revalidatePath(`/tracking/implementations/${id}`))
+    return { message: `${seededCount} implementation milestones seeded.`, count: seededCount }
+  } catch (error: any) {
+    console.error("Error in seedImplementationMilestonesAction:", error)
+    return { message: `Failed to seed milestones: ${error.message}`, count: 0, error: error.message }
+  }
+}
+
+export async function seedImplementationChallengesAction(): Promise<{
+  message: string
+  count: number
+  error?: string
+}> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+  try {
+    const { data: implStatuses, error: implStatusError } = await supabaseAdmin!
+      .from("policy_implementation_status")
+      .select("id")
+      .limit(10)
+
+    if (implStatusError) throw implStatusError
+    if (!implStatuses || implStatuses.length === 0) {
+      return { message: "No implementation statuses found. Seed them first.", count: 0 }
+    }
+    const implStatusIds = implStatuses.map((s) => s.id)
+    const challengesData = generateSampleChallenges(implStatusIds, 2) // Generate 2 challenges per status
+
+    if (!challengesData || challengesData.length === 0) {
+      return { message: "No challenge data generated.", count: 0 }
+    }
+
+    await supabaseAdmin!.from("implementation_challenges").delete().in("implementation_status_id", implStatusIds)
+    const { data, error } = await supabaseAdmin!.from("implementation_challenges").insert(challengesData).select()
+
+    if (error) throw error
+    const seededCount = data ? data.length : 0
+    revalidatePath("/tracking/dashboard")
+    implStatusIds.forEach((id) => revalidatePath(`/tracking/implementations/${id}`))
+    return { message: `${seededCount} implementation challenges seeded.`, count: seededCount }
+  } catch (error: any) {
+    console.error("Error in seedImplementationChallengesAction:", error)
+    return { message: `Failed to seed challenges: ${error.message}`, count: 0, error: error.message }
+  }
+}
+
+export interface FullStakeholderSeedData extends ImplementationStakeholderInput {
+  implementation_status_id: string
+}
+
+export async function seedImplementationStakeholdersAction(): Promise<{
+  message: string
+  count: number
+  error?: string
+}> {
+  if (!isSupabaseAdminConfigured()) {
+    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
+  }
+  try {
+    const { data: implStatuses, error: implStatusError } = await supabaseAdmin!
+      .from("policy_implementation_status")
+      .select("id")
+      .limit(10)
+
+    if (implStatusError) throw implStatusError
+    if (!implStatuses || implStatuses.length === 0) {
+      return { message: "No implementation statuses found. Seed them first.", count: 0 }
+    }
+    const implStatusIds = implStatuses.map((s) => s.id)
+    const stakeholdersData = generateSeedStakeholderData(implStatusIds, 2) // Generate 2 stakeholders per status
+
+    if (!stakeholdersData || stakeholdersData.length === 0) {
+      return { message: "No stakeholder data generated.", count: 0 }
+    }
+
+    await supabaseAdmin!.from("implementation_stakeholders").delete().in("implementation_status_id", implStatusIds)
+    const { data, error } = await supabaseAdmin!.from("implementation_stakeholders").insert(stakeholdersData).select()
+
+    if (error) throw error
+    const seededCount = data ? data.length : 0
+    revalidatePath("/tracking/dashboard")
+    implStatusIds.forEach((id) => revalidatePath(`/tracking/implementations/${id}`))
+    return { message: `${seededCount} implementation stakeholders seeded.`, count: seededCount }
+  } catch (error: any) {
+    console.error("Error in seedImplementationStakeholdersAction:", error)
+    return { message: `Failed to seed stakeholders: ${error.message}`, count: 0, error: error.message }
+  }
 }
 
 // --- CRUD Actions for Implementation Challenges ---
-
+// ... (addChallengeAction, getChallengesByImplementationIdAction, updateChallengeAction, deleteChallengeAction remain the same) ...
 export interface ChallengeActionState {
   message: string
   success: boolean
@@ -404,7 +426,6 @@ export async function addChallengeAction(
     implementation_status_id: implementationStatusId,
   }
 
-  // Basic validation (can be expanded)
   if (!dataToInsert.challenge_title || dataToInsert.challenge_title.trim().length < 3) {
     return { message: "Validation failed", success: false, errors: { challenge_title: "Title is too short." } }
   }
@@ -416,8 +437,8 @@ export async function addChallengeAction(
     return { message: `Failed to add challenge: ${error.message}`, success: false, errors: { _general: error.message } }
   }
 
-  revalidatePath(`/tracking/dashboard`) // Or a more specific path if challenges are displayed per implementation
-  revalidatePath(`/tracking/implementations/${implementationStatusId}`) // Example path
+  revalidatePath(`/tracking/dashboard`)
+  revalidatePath(`/tracking/implementations/${implementationStatusId}`)
   return { message: "Challenge added successfully.", success: true, challengeId: data.id }
 }
 
@@ -449,7 +470,6 @@ export async function updateChallengeAction(
     return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
 
-  // Basic validation
   if (challengeData.challenge_title && challengeData.challenge_title.trim().length < 3) {
     return { message: "Validation failed", success: false, errors: { challenge_title: "Title is too short." } }
   }
@@ -482,7 +502,6 @@ export async function deleteChallengeAction(challengeId: string): Promise<Challe
     return { message: CRITICAL_DB_ERROR_MSG, success: false }
   }
 
-  // Optionally, first fetch the challenge to get implementation_status_id for revalidation
   const { data: challengeToDelete, error: fetchError } = await supabaseAdmin!
     .from("implementation_challenges")
     .select("implementation_status_id")
@@ -490,9 +509,7 @@ export async function deleteChallengeAction(challengeId: string): Promise<Challe
     .single()
 
   if (fetchError && fetchError.code !== "PGRST116") {
-    // PGRST116 means no rows found, which is fine if already deleted
     console.error("Error fetching challenge before delete:", fetchError)
-    // Decide if this is critical or if delete should proceed
   }
 
   const { error } = await supabaseAdmin!.from("implementation_challenges").delete().eq("id", challengeId)
@@ -509,6 +526,8 @@ export async function deleteChallengeAction(challengeId: string): Promise<Challe
   return { message: "Challenge deleted successfully.", success: true, challengeId }
 }
 
+// --- getImplementationStatusByIdAction ---
+// ... (remains the same) ...
 export async function getImplementationStatusByIdAction(
   implementationStatusId: string,
 ): Promise<{ implementationStatus: PolicyImplementationStatusDetail | null; error?: string }> {
@@ -531,7 +550,6 @@ policies (
 
   if (error) {
     if (error.code === "PGRST116") {
-      // Not found
       return { implementationStatus: null, error: "Implementation status not found." }
     }
     console.error("Error fetching implementation status by ID:", error)
@@ -542,9 +560,8 @@ policies (
     return { implementationStatus: null, error: "Implementation status not found." }
   }
 
-  // Map to PolicyImplementationStatusDetail
   const implementationStatusDetail: PolicyImplementationStatusDetail = {
-    ...data, // Spread all fields from policy_implementation_status
+    ...data,
     // @ts-ignore
     policy_title: data.policies?.title || "Unknown Policy",
     id: data.id,
@@ -566,58 +583,8 @@ policies (
   return { implementationStatus: implementationStatusDetail }
 }
 
-// Interface for the full stakeholder data including implementation_status_id
-export interface FullStakeholderSeedData extends StakeholderSeedInput {
-  implementation_status_id: string
-}
-
-export async function seedImplementationStakeholdersAction(
-  stakeholdersData: FullStakeholderSeedData[],
-): Promise<{ message: string; count: number; error?: string }> {
-  if (!isSupabaseAdminConfigured()) {
-    console.warn("seedImplementationStakeholdersAction: Supabase admin client not configured.")
-    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
-  }
-
-  if (!stakeholdersData || stakeholdersData.length === 0) {
-    return { message: "No stakeholder data provided to seed.", count: 0 }
-  }
-
-  // Clear existing stakeholders for the provided implementation_status_ids to avoid duplicates on re-seed
-  const implementationStatusIdsToClear = [...new Set(stakeholdersData.map((item) => item.implementation_status_id))]
-  if (implementationStatusIdsToClear.length > 0) {
-    const { error: deleteError } = await supabaseAdmin!
-      .from("implementation_stakeholders")
-      .delete()
-      .in("implementation_status_id", implementationStatusIdsToClear)
-
-    if (deleteError) {
-      // Log warning but proceed with insertion
-      console.warn("Supabase error clearing existing stakeholder data:", deleteError.message)
-    }
-  }
-
-  const { data, error } = await supabaseAdmin!.from("implementation_stakeholders").insert(stakeholdersData).select()
-
-  if (error) {
-    console.error("Supabase error seeding implementation stakeholders:", error)
-    return {
-      message: `Failed to seed implementation stakeholders. Error: ${error.message}`,
-      count: 0,
-      error: error.message,
-    }
-  }
-
-  const seededCount = data ? data.length : 0
-  revalidatePath("/tracking/dashboard") // Revalidate dashboard if it shows stakeholder counts
-  // Revalidate specific implementation pages if they show stakeholders
-  implementationStatusIdsToClear.forEach((id) => revalidatePath(`/tracking/implementations/${id}`))
-
-  return { message: `${seededCount} implementation stakeholders seeded successfully.`, count: seededCount }
-}
-
 // --- CRUD Actions for Implementation Stakeholders ---
-
+// ... (getStakeholdersByImplementationIdAction, addStakeholderAction, updateStakeholderAction, deleteStakeholderAction remain the same) ...
 export interface StakeholderActionState {
   message: string
   success: boolean
@@ -678,7 +645,7 @@ export async function addStakeholderAction(
   }
 
   revalidatePath(`/tracking/implementations/${implementationStatusId}`)
-  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  revalidatePath(`/tracking/dashboard`)
   return { message: "Stakeholder added successfully.", success: true, stakeholderId: data.id }
 }
 
@@ -713,7 +680,7 @@ export async function updateStakeholderAction(
   if (data?.implementation_status_id) {
     revalidatePath(`/tracking/implementations/${data.implementation_status_id}`)
   }
-  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  revalidatePath(`/tracking/dashboard`)
   return { message: "Stakeholder updated successfully.", success: true, stakeholderId: data.id }
 }
 
@@ -742,12 +709,12 @@ export async function deleteStakeholderAction(stakeholderId: string): Promise<St
   if (stakeholderToDelete?.implementation_status_id) {
     revalidatePath(`/tracking/implementations/${stakeholderToDelete.implementation_status_id}`)
   }
-  revalidatePath(`/tracking/dashboard`) // Also revalidate dashboard for stats
+  revalidatePath(`/tracking/dashboard`)
   return { message: "Stakeholder deleted successfully.", success: true, stakeholderId }
 }
 
 // --- CRUD Actions for Implementation Milestones ---
-
+// ... (getMilestonesByImplementationIdAction, addMilestoneAction, updateMilestoneAction, deleteMilestoneAction remain the same) ...
 export interface MilestoneActionState {
   message: string
   success: boolean
@@ -867,51 +834,4 @@ export async function deleteMilestoneAction(milestoneId: string): Promise<Milest
     revalidatePath(`/tracking/implementations/${milestoneToDelete.implementation_status_id}`)
   }
   return { message: "Milestone deleted successfully.", success: true, milestoneId }
-}
-
-// Add this new server action:
-export async function seedPolicyImplementationStatusAction(
-  implementationStatusData: PolicyImplementationStatus[],
-): Promise<{ message: string; count: number; error?: string }> {
-  if (!isSupabaseAdminConfigured()) {
-    console.warn("seedPolicyImplementationStatusAction: Supabase admin client not configured.")
-    return { message: CRITICAL_DB_ERROR_MSG, count: 0, error: CRITICAL_DB_ERROR_MSG }
-  }
-
-  if (!implementationStatusData || implementationStatusData.length === 0) {
-    return { message: "No policy implementation status data provided to seed.", count: 0 }
-  }
-
-  // Clear all existing data from policy_implementation_status table for simplicity during seeding
-  // For a more targeted approach, you might delete based on specific policy_ids or other criteria.
-  const { error: deleteError } = await supabaseAdmin!
-    .from("policy_implementation_status")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000") // Dummy condition to delete all rows
-
-  if (deleteError) {
-    console.warn("Supabase error clearing existing policy implementation status data:", deleteError.message)
-    // Depending on requirements, you might want to return an error here or just log and continue
-  }
-
-  const { data, error } = await supabaseAdmin!
-    .from("policy_implementation_status")
-    .insert(implementationStatusData as any[]) // Cast to any[] if type mismatch with Supabase's expected type
-    .select()
-
-  if (error) {
-    console.error("Supabase error seeding policy implementation status:", error)
-    return {
-      message: `Failed to seed policy implementation status. Error: ${error.message}`,
-      count: 0,
-      error: error.message,
-    }
-  }
-
-  const seededCount = data ? data.length : 0
-  revalidatePath("/tracking/dashboard")
-  // Revalidate any other paths that display policy implementation status data
-  // e.g., revalidatePath("/tracking/implementations") or specific policy pages
-
-  return { message: `${seededCount} policy implementation status entries seeded successfully.`, count: seededCount }
 }

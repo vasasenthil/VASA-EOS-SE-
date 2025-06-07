@@ -1,181 +1,116 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import type React from "react" // Ensure React is imported if FC is used or for JSX
+import { useTransition } from "react" // Added useTransition
 import { Button } from "@/components/ui/button"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast" // Corrected path for useToast
+import { Loader2, DatabaseZap, MilestoneIcon, AlertTriangle, Users } from "lucide-react" // Added icons
+
 import {
   seedPolicyImplementationStatusAction,
   seedImplementationMilestonesAction,
   seedImplementationChallengesAction,
   seedImplementationStakeholdersAction,
 } from "../actions"
-import { generateSeedStakeholderData } from "../../../../scripts/seed-stakeholders"
-// Corrected import path for supabaseAdmin
-import { supabaseAdmin } from "@/lib/supabase/server"
 
-type SeedDataButtonsProps = {}
+// This component no longer needs to import data generation functions or supabaseAdmin
 
-// Changed to named export
-export const SeedDataButtons: React.FC<SeedDataButtonsProps> = ({}) => {
-  const [isPolicyImplementationsLoading, setIsPolicyImplementationsLoading] = useState(false)
-  const [isMilestonesLoading, setIsMilestonesLoading] = useState(false)
-  const [isChallengesLoading, setIsChallengesLoading] = useState(false)
-  const [isStakeholdersLoading, setIsStakeholdersLoading] = useState(false)
+export const SeedDataButtons: React.FC = () => {
+  const { toast } = useToast()
+  const [isSeedingPolicyImplementations, startPolicyImplTransition] = useTransition()
+  const [isSeedingMilestones, startMilestoneTransition] = useTransition()
+  const [isSeedingChallenges, startChallengeTransition] = useTransition()
+  const [isSeedingStakeholders, startStakeholderTransition] = useTransition()
 
-  const handleSeedPolicyImplementations = async () => {
-    setIsPolicyImplementationsLoading(true)
-    try {
-      // @ts-ignore - Assuming seedPolicyImplementationStatusAction can be called without args for now
-      // or that it fetches/generates its own data.
-      // This needs to be aligned with the actual signature of seedPolicyImplementationStatusAction
+  const handleSeedPolicyImplementations = () => {
+    startPolicyImplTransition(async () => {
       const result = await seedPolicyImplementationStatusAction()
       if (result.error) {
-        toast({
-          title: "Error Seeding Policy Implementations",
-          description: result.message,
-          variant: "destructive",
-        })
+        toast({ title: "Error Seeding Policy Implementations", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Success", description: result.message })
+        toast({ title: "Policy Implementations Seeded", description: result.message })
       }
-    } catch (e: any) {
-      toast({
-        title: "Error",
-        description: e.message || "Failed to seed policy implementations.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsPolicyImplementationsLoading(false)
-    }
+    })
   }
 
-  const handleSeedMilestones = async () => {
-    setIsMilestonesLoading(true)
-    try {
-      // @ts-ignore - Assuming seedImplementationMilestonesAction can be called without args for now
-      // or that it fetches/generates its own data.
-      // This needs to be aligned with the actual signature of seedImplementationMilestonesAction
+  const handleSeedMilestones = () => {
+    startMilestoneTransition(async () => {
       const result = await seedImplementationMilestonesAction()
       if (result.error) {
-        toast({
-          title: "Error Seeding Milestones",
-          description: result.message,
-          variant: "destructive",
-        })
+        toast({ title: "Error Seeding Milestones", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Success", description: result.message })
+        toast({ title: "Milestones Seeded", description: result.message })
       }
-    } catch (e: any) {
-      toast({
-        title: "Error",
-        description: e.message || "Failed to seed milestones.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsMilestonesLoading(false)
-    }
+    })
   }
 
-  const handleSeedChallenges = async () => {
-    setIsChallengesLoading(true)
-    try {
-      // @ts-ignore - Assuming seedImplementationChallengesAction can be called without args for now
-      // or that it fetches/generates its own data.
-      // This needs to be aligned with the actual signature of seedImplementationChallengesAction
+  const handleSeedChallenges = () => {
+    startChallengeTransition(async () => {
       const result = await seedImplementationChallengesAction()
       if (result.error) {
-        toast({
-          title: "Error Seeding Challenges",
-          description: result.message,
-          variant: "destructive",
-        })
+        toast({ title: "Error Seeding Challenges", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Success", description: result.message })
+        toast({ title: "Challenges Seeded", description: result.message })
       }
-    } catch (e: any) {
-      toast({
-        title: "Error",
-        description: e.message || "Failed to seed challenges.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsChallengesLoading(false)
-    }
+    })
   }
 
-  const handleSeedStakeholders = async () => {
-    setIsStakeholdersLoading(true)
-    try {
-      if (!supabaseAdmin) {
-        toast({
-          title: "Configuration Error",
-          description: "Supabase admin client is not available. Cannot fetch implementation IDs.",
-          variant: "destructive",
-        })
-        setIsStakeholdersLoading(false)
-        return
-      }
-
-      const { data: implStatuses, error: fetchError } = await supabaseAdmin
-        .from("policy_implementation_status")
-        .select("id")
-        .limit(5)
-
-      if (fetchError) {
-        toast({
-          title: "Error Fetching Implementation IDs",
-          description: fetchError.message,
-          variant: "destructive",
-        })
-        setIsStakeholdersLoading(false)
-        return
-      }
-
-      const implIds = implStatuses?.map((s) => s.id) || []
-
-      if (implIds.length === 0) {
-        toast({
-          title: "Stakeholder Seeding Info",
-          description: "No implementation IDs found. Please seed policy implementations first.",
-          variant: "default",
-        })
-        setIsStakeholdersLoading(false)
-        return
-      }
-
-      const stakeholdersToSeed = generateSeedStakeholderData(implIds, 2) // 2 stakeholders per implementation
-      const result = await seedImplementationStakeholdersAction(stakeholdersToSeed)
-
+  const handleSeedStakeholders = () => {
+    startStakeholderTransition(async () => {
+      const result = await seedImplementationStakeholdersAction()
       if (result.error) {
         toast({ title: "Error Seeding Stakeholders", description: result.message, variant: "destructive" })
       } else {
-        toast({ title: "Success", description: result.message })
+        toast({ title: "Stakeholders Seeded", description: result.message })
       }
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message || "Failed to seed stakeholders.", variant: "destructive" })
-    } finally {
-      setIsStakeholdersLoading(false)
-    }
+    })
   }
 
   return (
-    <div className="flex flex-col space-y-2">
-      <Button variant="outline" disabled={isPolicyImplementationsLoading} onClick={handleSeedPolicyImplementations}>
-        {isPolicyImplementationsLoading ? "Seeding..." : "Seed Policy Implementations"}
-      </Button>
-      <Button variant="outline" disabled={isMilestonesLoading} onClick={handleSeedMilestones}>
-        {isMilestonesLoading ? "Seeding..." : "Seed Milestones"}
-      </Button>
-      <Button variant="outline" disabled={isChallengesLoading} onClick={handleSeedChallenges}>
-        {isChallengesLoading ? "Seeding..." : "Seed Challenges"}
-      </Button>
-      <Button variant="outline" disabled={isStakeholdersLoading} onClick={handleSeedStakeholders}>
-        {isStakeholdersLoading ? "Seeding..." : "Seed Stakeholders"}
-      </Button>
+    <div className="p-4 border rounded-md bg-slate-50 dark:bg-slate-800">
+      <h3 className="text-lg font-semibold mb-3 text-slate-700 dark:text-slate-200">Development: Seed Data</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Button
+          onClick={handleSeedPolicyImplementations}
+          disabled={isSeedingPolicyImplementations}
+          variant="outline"
+          className="w-full"
+        >
+          {isSeedingPolicyImplementations ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <DatabaseZap className="mr-2 h-4 w-4" />
+          )}
+          Seed Policy Implementations
+        </Button>
+        <Button onClick={handleSeedMilestones} disabled={isSeedingMilestones} variant="outline" className="w-full">
+          {isSeedingMilestones ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <MilestoneIcon className="mr-2 h-4 w-4" />
+          )}
+          Seed Milestones
+        </Button>
+        <Button onClick={handleSeedChallenges} disabled={isSeedingChallenges} variant="outline" className="w-full">
+          {isSeedingChallenges ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <AlertTriangle className="mr-2 h-4 w-4" />
+          )}
+          Seed Challenges
+        </Button>
+        <Button onClick={handleSeedStakeholders} disabled={isSeedingStakeholders} variant="outline" className="w-full">
+          {isSeedingStakeholders ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Users className="mr-2 h-4 w-4" />
+          )}
+          Seed Stakeholders
+        </Button>
+      </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
+        Note: Seeding will clear existing related data for the generated items.
+      </p>
     </div>
   )
 }
-
-// Remove default export if it was there
-// export default SeedDataButtons;

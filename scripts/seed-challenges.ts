@@ -1,3 +1,5 @@
+import type { ImplementationChallengeInput } from "@/app/tracking/challenges/types"
+
 interface ImplementationChallengeSeed {
   implementation_status_id: string // UUID of the parent policy_implementation_status record
   challenge_title: string
@@ -90,6 +92,44 @@ const generateSeedChallengesData = (
     }
   }
   return challengesData
+}
+
+export function generateSampleChallenges(
+  implementationStatusIds: string[],
+  countPerImpl = 0,
+): ImplementationChallengeInput[] {
+  if (implementationStatusIds.length === 0) return []
+  const challenges: ImplementationChallengeInput[] = []
+  const severities = ["Low", "Medium", "High", "Critical"]
+  const statuses = ["Open", "In Progress", "Resolved", "Closed", "Escalated"]
+  const types = ["Funding", "Resource", "Technical", "Administrative", "Community Acceptance"]
+
+  // If countPerImpl is 0 or not provided, generate a random number of challenges per implementation status
+  const challengesToGenerate = countPerImpl > 0 ? countPerImpl : Math.floor(Math.random() * 2) + 1 // 1 to 2 if random
+
+  for (const statusId of implementationStatusIds) {
+    for (let i = 0; i < challengesToGenerate; i++) {
+      const reportedDate = new Date()
+      reportedDate.setDate(reportedDate.getDate() - Math.floor(Math.random() * 30))
+      const currentStatus = statuses[Math.floor(Math.random() * statuses.length)]
+      challenges.push({
+        implementation_status_id: statusId,
+        challenge_title: `Challenge ${i + 1} for ${statusId.substring(0, 4)}`,
+        description: `Description of challenge ${i + 1}.`,
+        challenge_type: types[Math.floor(Math.random() * types.length)],
+        severity: severities[Math.floor(Math.random() * severities.length)],
+        status: currentStatus,
+        reported_date: reportedDate.toISOString().split("T")[0],
+        resolved_date:
+          currentStatus === "Resolved" || currentStatus === "Closed"
+            ? new Date().toISOString().split("T")[0]
+            : undefined,
+        mitigation_plan: "Plan to address this challenge.",
+        reported_by: "System/User",
+      })
+    }
+  }
+  return challenges
 }
 
 // Main execution for the script
