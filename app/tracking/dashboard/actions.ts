@@ -8,10 +8,10 @@ import type { ImplementationMilestone, ImplementationMilestoneInput } from "../m
 import type { PolicyImplementationStatus } from "./actions" // Self-reference for type
 
 // Import data generation functions
-import { generateSeedPolicyImplementationData } from "../../../../scripts/seed-policy-implementation"
-import { generateSampleMilestones } from "../../../../scripts/seed-milestones"
-import { generateSampleChallenges } from "../../../../scripts/seed-challenges"
-import { generateSeedStakeholderData } from "../../../../scripts/seed-stakeholders"
+import { generateSeedPolicyImplementationData } from "@/scripts/seed-policy-implementation"
+import { generateSampleMilestones } from "@/scripts/seed-milestones"
+import { generateSampleChallenges } from "@/scripts/seed-challenges"
+import { generateSeedStakeholderData } from "@/scripts/seed-stakeholders"
 
 // Define interfaces for the data we'll return
 export interface TrackerStat {
