@@ -1,3 +1,5 @@
+"use client"
+
 import { Tabs } from "@/components/ui/tabs"
 import type React from "react"
 import Link from "next/link"
@@ -231,56 +233,88 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
                 <FileText className="mr-2 h-5 w-5 text-green-600" />
                 Documents
               </h2>
-              <DetailItem label="Draft Policy Document">
-                {policy.draftPolicyDocument &&
-                typeof policy.draftPolicyDocument === "object" &&
-                "name" in policy.draftPolicyDocument ? (
-                  <div className="mt-1 p-3 border rounded-md bg-gray-50 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-5 w-5 text-gray-600" />
-                      <span className="text-sm text-gray-700">{policy.draftPolicyDocument.name}</span>
-                      <Badge variant="outline">{formatFileSize(policy.draftPolicyDocument.size)}</Badge>
-                    </div>
-                    <a
-                      href="#" // TODO: Replace with actual download link/API endpoint
-                      download={policy.draftPolicyDocument.name}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 py-2 text-primary underline-offset-4 hover:underline"
-                      // This className mimics <Button variant="link" size="sm">
-                      // In a real scenario, this might trigger a server action or link to a signed URL
-                    >
-                      Download Document
-                    </a>
-                  </div>
-                ) : (
-                  <p className="mt-1 text-md text-gray-500">No draft document uploaded.</p>
-                )}
-              </DetailItem>
-
-              <DetailItem label="Annexures/References">
-                {policy.annexures && Array.isArray(policy.annexures) && policy.annexures.length > 0 ? (
-                  <div className="mt-1 space-y-2">
-                    {policy.annexures.map((annex, index) => (
-                      <div key={index} className="p-3 border rounded-md bg-gray-50 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="h-5 w-5 text-gray-600" />
-                          <span className="text-sm text-gray-700">{annex.name}</span>
-                          <Badge variant="outline">{formatFileSize(annex.size)}</Badge>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Draft Policy Document</h4>
+                  {policy.draftPolicyDocument &&
+                  typeof policy.draftPolicyDocument === "object" &&
+                  "name" in policy.draftPolicyDocument ? (
+                    <Card className="bg-gray-50 p-3">
+                      <CardContent className="p-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-6 w-6 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">{policy.draftPolicyDocument.name}</p>
+                              <p className="text-xs text-gray-500">
+                                Type: {policy.draftPolicyDocument.type || "N/A"} | Size:{" "}
+                                {formatFileSize(policy.draftPolicyDocument.size)}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Placeholder Download Link */}
+                          <Button variant="link" size="sm" asChild>
+                            <a
+                              href="#"
+                              onClick={(e) => e.preventDefault()} // Prevent navigation
+                              title={`Download ${policy.draftPolicyDocument.name} (Placeholder)`}
+                              aria-label={`Download ${policy.draftPolicyDocument.name} (Placeholder)`}
+                            >
+                              Download
+                            </a>
+                          </Button>
                         </div>
-                        <a
-                          href="#" // TODO: Replace with actual download link/API endpoint for this annex
-                          download={annex.name}
-                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-9 px-3 py-2 text-primary underline-offset-4 hover:underline"
-                          // This className mimics <Button variant="link" size="sm">
-                        >
-                          Download Annex
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-1 text-md text-gray-500">No annexures uploaded.</p>
-                )}
-              </DetailItem>
+                        <p className="mt-2 text-xs text-gray-400 italic">
+                          Note: Actual file download requires file storage integration.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-500">No draft document uploaded.</p>
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-1">Annexures/References</h4>
+                  {policy.annexures && Array.isArray(policy.annexures) && policy.annexures.length > 0 ? (
+                    <div className="space-y-3">
+                      {policy.annexures.map((annex, index) => (
+                        <Card key={index} className="bg-gray-50 p-3">
+                          <CardContent className="p-0">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="h-6 w-6 text-blue-600" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">{annex.name}</p>
+                                  <p className="text-xs text-gray-500">
+                                    Type: {annex.type || "N/A"} | Size: {formatFileSize(annex.size)}
+                                  </p>
+                                </div>
+                              </div>
+                              {/* Placeholder Download Link */}
+                              <Button variant="link" size="sm" asChild>
+                                <a
+                                  href="#"
+                                  onClick={(e) => e.preventDefault()} // Prevent navigation
+                                  title={`Download ${annex.name} (Placeholder)`}
+                                  aria-label={`Download ${annex.name} (Placeholder)`}
+                                >
+                                  Download
+                                </a>
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      <p className="mt-2 text-xs text-gray-400 italic">
+                        Note: Actual file downloads require file storage integration.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-gray-500">No annexures uploaded.</p>
+                  )}
+                </div>
+              </div>
             </section>
             <Separator className="my-6" />
             <section aria-labelledby="consultation-review-heading">
