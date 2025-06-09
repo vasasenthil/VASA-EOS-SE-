@@ -38,6 +38,8 @@ export interface Role {
 
   // Optional hydrated fields
   permissions?: Permission[]
+  permissions_count?: number // Count of permissions assigned
+  assigned_user_count?: number // Count of users assigned this role
 }
 
 export interface Permission {
@@ -47,6 +49,8 @@ export interface Permission {
   description?: string | null
   created_at: string
   updated_at: string
+  // Optional hydrated fields
+  assigned_roles_count?: number // Count of roles this permission is assigned to
 }
 
 export interface RolePermission {
@@ -79,6 +83,15 @@ export interface OrganizationalUnitInput
     OrganizationalUnit,
     "id" | "created_at" | "updated_at" | "tier" | "parent_ou" | "child_ous" | "user_count"
   > {}
+
+export interface RoleInput
+  extends Omit<
+    Role,
+    "id" | "created_at" | "updated_at" | "permissions" | "permissions_count" | "assigned_user_count"
+  > {}
+
+export interface PermissionInput
+  extends Omit<Permission, "id" | "created_at" | "updated_at" | "assigned_roles_count"> {}
 
 // Constants for known role names (useful in code)
 export const SYSTEM_ROLES = {
