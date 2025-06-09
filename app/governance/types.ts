@@ -63,6 +63,17 @@ export interface RolePermission {
   permission?: Permission
 }
 
+// Represents a user from auth.users table, for joining purposes
+export interface AuthUser {
+  id: string // UUID
+  email?: string | null
+  // Add other fields you might want from auth.users, e.g., raw_user_meta_data for name
+  raw_user_meta_data?: {
+    name?: string
+    avatar_url?: string
+  } | null
+}
+
 export interface UserOUAssignment {
   id: string // UUID
   user_id: string // UUID from auth.users
@@ -72,7 +83,7 @@ export interface UserOUAssignment {
   assigned_at: string
 
   // Optional hydrated fields
-  user_email?: string // If joining with auth.users
+  user?: AuthUser // Hydrated user details
   organizational_unit?: OrganizationalUnit
   role?: Role
 }
@@ -92,6 +103,9 @@ export interface RoleInput
 
 export interface PermissionInput
   extends Omit<Permission, "id" | "created_at" | "updated_at" | "assigned_roles_count"> {}
+
+export interface UserOUAssignmentInput
+  extends Omit<UserOUAssignment, "id" | "assigned_at" | "user" | "organizational_unit" | "role"> {}
 
 // Constants for known role names (useful in code)
 export const SYSTEM_ROLES = {
