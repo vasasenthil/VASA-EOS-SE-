@@ -1,3 +1,14 @@
+export const POLICY_STATUSES = [
+  "Draft",
+  "Pending Internal Review",
+  "Under Stakeholder Consultation",
+  "Approved",
+  "Rejected",
+  "Archived",
+] as const // Use 'as const' for stricter typing
+
+export type PolicyStatus = (typeof POLICY_STATUSES)[number]
+
 // No changes needed to these constants
 export const POLICY_DOMAINS = [
   "Curriculum & Pedagogy",
@@ -53,8 +64,9 @@ export interface FileMetadata {
   name: string
   type: string
   size: number
-  url: string // URL from Vercel Blob
+  url: string // URL from Vercel Blob OR a placeholder for Next.js
   uploadedAt?: string // Optional: timestamp of upload
+  isPlaceholder?: boolean // Flag to indicate if this is a simulated file for Next.js
 }
 
 export interface PolicyDraft {
@@ -69,14 +81,10 @@ export interface PolicyDraft {
   leadDrafter: string
   nepThrustAreas: string[]
   nepAlignmentJustification: string
-  // draftPolicyDocument can be a File object during form input,
-  // or FileMetadata when fetched from DB or after upload.
   draftPolicyDocument?: File | FileMetadata | null
-  // annexures can be FileList during form input,
-  // or FileMetadata[] when fetched from DB or after upload.
   annexures?: FileList | FileMetadata[] | null
   internalReviewCommittee: string[]
-  status?: "Draft" | "Pending Internal Review" | "Under Stakeholder Consultation" | "Approved"
+  status?: PolicyStatus // Changed from "Draft" | "Pending Internal Review" | ...
   createdAt?: string
   lastModified?: string
 }

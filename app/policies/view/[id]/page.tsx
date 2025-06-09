@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Edit3, FileText, CheckCircle, Clock, Users, BookOpen, Target, Tag } from "lucide-react"
+import { Edit3, FileText, CheckCircle, Clock, Users, BookOpen, Target, Tag, ShieldCheck } from "lucide-react" // Added ShieldCheck
 import { getPolicyByIdAction } from "../../create/actions"
 import type { PolicyDraft } from "../../create/policy-form-constants"
 import { format } from "date-fns"
@@ -20,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { PolicyStatusUpdater } from "../../components/policy-status-updater" // Import the new component
 
 interface ViewPolicyPageProps {
   params: {
@@ -41,7 +42,7 @@ const DetailItem: React.FC<{ label: string; value?: string | string[] | null; ch
   children,
 }) => (
   <div className="mb-4">
-    <h4 className="text-sm font-medium text-gray-500">{label}</h4> {/* Changed from h3 to h4 */}
+    <h4 className="text-sm font-medium text-gray-500">{label}</h4>
     {value && typeof value === "string" && <p className="mt-1 text-md text-gray-800 whitespace-pre-wrap">{value}</p>}
     {value && Array.isArray(value) && value.length > 0 && (
       <div className="mt-1 flex flex-wrap gap-2">
@@ -74,8 +75,31 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
         return <Users className="h-5 w-5 text-purple-600 mr-2" />
       case "Approved":
         return <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+      case "Archived":
+        return <ShieldCheck className="h-5 w-5 text-gray-500 mr-2" />
+      case "Rejected":
+        return <FileText className="h-5 w-5 text-red-500 mr-2" /> // Example, choose appropriate
       default:
         return <FileText className="h-5 w-5 text-gray-600 mr-2" />
+    }
+  }
+
+  const getStatusBadgeVariant = (status?: PolicyDraft["status"]) => {
+    switch (status) {
+      case "Draft":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300"
+      case "Pending Internal Review":
+        return "bg-blue-100 text-blue-700 border-blue-300"
+      case "Under Stakeholder Consultation":
+        return "bg-purple-100 text-purple-700 border-purple-300"
+      case "Approved":
+        return "bg-green-100 text-green-700 border-green-300"
+      case "Archived":
+        return "bg-gray-100 text-gray-700 border-gray-300"
+      case "Rejected":
+        return "bg-red-100 text-red-700 border-red-300"
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-300"
     }
   }
 
@@ -108,31 +132,24 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
             {getStatusIcon(policy.status)}
             <Badge
               variant={policy.status === "Approved" ? "default" : "secondary"}
-              className={
-                policy.status === "Approved"
-                  ? "bg-green-100 text-green-700 border-green-300"
-                  : policy.status === "Pending Internal Review"
-                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                    : policy.status === "Draft"
-                      ? "bg-yellow-100 text-yellow-700 border-yellow-300"
-                      : "bg-purple-100 text-purple-700 border-purple-300"
-              }
+              className={getStatusBadgeVariant(policy.status)}
             >
               {policy.status || "N/A"}
             </Badge>
           </div>
           <CardTitle as="h1" className="text-3xl font-bold text-gray-800">
             {policy.title}
-          </CardTitle>{" "}
-          {/* Changed to h1 */}
+          </CardTitle>
           <CardDescription className="text-md text-gray-600">
             Policy ID: {policy.id} | Version: {policy.version}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* PolicyStatusUpdater integrated here */}
+          {policy.id && policy.status && <PolicyStatusUpdater policyId={policy.id} currentStatus={policy.status} />}
+          <Separator className="my-6" />
+
           <Tabs defaultValue="details">
-            {" "}
-            {/* Tabs component seems unused here, consider removing if not planned */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <DetailItem label="Policy Domain" value={policy.policyDomain} />
               <DetailItem label="Lead Drafter" value={policy.leadDrafter} />
@@ -143,8 +160,6 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
                 Abstract (English)
               </h2>
               <DetailItem label="Summary">
-                {" "}
-                {/* Label changed for clarity as heading is now separate */}
                 <p className="mt-1 text-md text-gray-800 bg-white p-3 rounded-md border border-gray-200 whitespace-pre-wrap">
                   {policy.abstractEN || "N/A"}
                 </p>
@@ -158,8 +173,6 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
                     Abstract (Hindi)
                   </h2>
                   <DetailItem label="सारांश">
-                    {" "}
-                    {/* Label changed for clarity */}
                     <p className="mt-1 text-md text-gray-800 bg-white p-3 rounded-md border border-gray-200 whitespace-pre-wrap">
                       {policy.abstractHI}
                     </p>
@@ -252,21 +265,28 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
                               </p>
                             </div>
                           </div>
-                          {/* Placeholder Download Link */}
                           <Button variant="link" size="sm" asChild>
                             <a
-                              href="#"
-                              onClick={(e) => e.preventDefault()} // Prevent navigation
-                              title={`Download ${policy.draftPolicyDocument.name} (Placeholder)`}
-                              aria-label={`Download ${policy.draftPolicyDocument.name} (Placeholder)`}
+                              href={policy.draftPolicyDocument.url || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={!policy.draftPolicyDocument.isPlaceholder}
+                              title={`Download ${policy.draftPolicyDocument.name}${policy.draftPolicyDocument.isPlaceholder ? " (Simulated)" : ""}`}
+                              aria-label={`Download ${policy.draftPolicyDocument.name}${policy.draftPolicyDocument.isPlaceholder ? " (Simulated)" : ""}`}
+                              onClick={(e) => {
+                                if (policy.draftPolicyDocument.isPlaceholder) e.preventDefault()
+                              }}
                             >
                               Download
                             </a>
                           </Button>
                         </div>
-                        <p className="mt-2 text-xs text-gray-400 italic">
-                          Note: Actual file download requires file storage integration.
-                        </p>
+                        {policy.draftPolicyDocument.isPlaceholder && (
+                          <p className="mt-2 text-xs text-gray-400 italic">
+                            Note: This is a simulated file. Actual download requires deployment and file storage
+                            integration.
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   ) : (
@@ -291,24 +311,33 @@ export default async function ViewPolicyPage({ params }: ViewPolicyPageProps) {
                                   </p>
                                 </div>
                               </div>
-                              {/* Placeholder Download Link */}
                               <Button variant="link" size="sm" asChild>
                                 <a
-                                  href="#"
-                                  onClick={(e) => e.preventDefault()} // Prevent navigation
-                                  title={`Download ${annex.name} (Placeholder)`}
-                                  aria-label={`Download ${annex.name} (Placeholder)`}
+                                  href={annex.url || "#"}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={!annex.isPlaceholder}
+                                  title={`Download ${annex.name}${annex.isPlaceholder ? " (Simulated)" : ""}`}
+                                  aria-label={`Download ${annex.name}${annex.isPlaceholder ? " (Simulated)" : ""}`}
+                                  onClick={(e) => {
+                                    if (annex.isPlaceholder) e.preventDefault()
+                                  }}
                                 >
                                   Download
                                 </a>
                               </Button>
                             </div>
+                            {annex.isPlaceholder && (
+                              <p className="mt-1 text-xs text-gray-400 italic">Simulated file.</p>
+                            )}
                           </CardContent>
                         </Card>
                       ))}
-                      <p className="mt-2 text-xs text-gray-400 italic">
-                        Note: Actual file downloads require file storage integration.
-                      </p>
+                      {policy.annexures.some((a) => a.isPlaceholder) && (
+                        <p className="mt-2 text-xs text-gray-400 italic">
+                          Note: Actual file downloads require deployment and file storage integration.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-1 text-sm text-gray-500">No annexures uploaded.</p>
