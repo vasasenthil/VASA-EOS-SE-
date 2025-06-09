@@ -10,6 +10,8 @@ import { PERMISSIONS } from "@/app/governance/types"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertTriangle } from "lucide-react"
 
 export default function OrganizationalUnitsPage() {
   return (
@@ -24,16 +26,28 @@ export default function OrganizationalUnitsPage() {
 async function OULoader() {
   const userId = await getUserIdFromAction()
   if (!userId) {
-    return <div>You must be logged in to view this page.</div>
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Authentication Required</AlertTitle>
+        <AlertDescription>You must be logged in to view this page.</AlertDescription>
+      </Alert>
+    )
   }
 
-  const canView = await hasPermission({
+  const canViewPage = await hasPermission({
     userId,
     permissionString: PERMISSIONS.GOVERNANCE_VIEW, // A general view permission
   })
 
-  if (!canView) {
-    return <div>You do not have permission to view this page.</div>
+  if (!canViewPage) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Access Denied</AlertTitle>
+        <AlertDescription>You do not have permission to view this page.</AlertDescription>
+      </Alert>
+    )
   }
 
   const canManageOUs = await hasPermission({
@@ -41,7 +55,7 @@ async function OULoader() {
     permissionString: PERMISSIONS.OUS_MANAGE,
   })
 
-  const ous = await getOUs()
+  const ous = await getOUs() // Fetches { includeTier: true, includeUserCount: true } by default from actions/get-ous.ts
   const tiers = await getTiers()
 
   return (
@@ -57,7 +71,7 @@ async function OULoader() {
           </Button>
         )}
       </div>
-      <OrganizationalUnitTable ous={ous} />
+      <OrganizationalUnitTable ous={ous} canManageOUs={canManageOUs} />
 
       <div className="mt-12">
         <h2 className="text-xl font-bold tracking-tight">Governance Tiers</h2>
@@ -81,16 +95,41 @@ function OULoaderSkeleton() {
         <Skeleton className="h-10 w-24" />
       </div>
       <div className="rounded-md border">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+        {/* Table Header Skeleton */}
+        <div className="flex border-b p-4">
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 w-20" /> {/* Users column */}
+          <Skeleton className="h-5 w-28" /> {/* Actions column */}
+        </div>
+        {/* Table Body Skeleton Rows */}
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="flex border-b p-4">
+            <Skeleton className="h-5 flex-1" />
+            <Skeleton className="h-5 flex-1" />
+            <Skeleton className="h-5 flex-1" />
+            <Skeleton className="h-5 flex-1" />
+            <Skeleton className="h-5 w-20" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+        ))}
       </div>
       <div className="mt-12">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="mt-2 h-4 w-80" />
         <div className="mt-4 rounded-md border">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
+          <div className="flex border-b p-4">
+            <Skeleton className="h-5 flex-1" />
+            <Skeleton className="h-5 flex-1" />
+          </div>
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex border-b p-4">
+              <Skeleton className="h-5 flex-1" />
+              <Skeleton className="h-5 flex-1" />
+            </div>
+          ))}
         </div>
       </div>
     </div>

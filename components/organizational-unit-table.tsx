@@ -1,14 +1,18 @@
 import type { OrganizationalUnit } from "@/app/governance/types"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Pencil } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { DeleteOUButton } from "@/app/governance/organizational-units/components/delete-ou-button" // Import the new component
 
 interface OrganizationalUnitTableProps {
   ous: { success: boolean; data?: OrganizationalUnit[]; error?: string }
+  canManageOUs: boolean // Add prop to control edit/delete actions
 }
 
-export function OrganizationalUnitTable({ ous }: OrganizationalUnitTableProps) {
+export function OrganizationalUnitTable({ ous, canManageOUs }: OrganizationalUnitTableProps) {
   if (!ous.success) {
     return (
       <Alert variant="destructive">
@@ -39,6 +43,7 @@ export function OrganizationalUnitTable({ ous }: OrganizationalUnitTableProps) {
             <TableHead>Parent OU</TableHead>
             <TableHead>Region Code</TableHead>
             <TableHead className="text-center">Users</TableHead>
+            {canManageOUs && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -51,6 +56,17 @@ export function OrganizationalUnitTable({ ous }: OrganizationalUnitTableProps) {
               <TableCell className="text-center">
                 <Badge variant="secondary">{ou.user_count || 0}</Badge>
               </TableCell>
+              {canManageOUs && (
+                <TableCell className="text-right space-x-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/governance/organizational-units/edit/${ou.id}`}>
+                      <Pencil className="mr-1 h-3 w-3" />
+                      Edit
+                    </Link>
+                  </Button>
+                  <DeleteOUButton ouId={ou.id} ouName={ou.name} canManageOUs={canManageOUs} />
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
