@@ -2,18 +2,19 @@
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation" // Import redirect
 import type { OrganizationalUnit, OrganizationalUnitInput, GovernanceTier } from "../types"
 
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
 
-const GOVERNANCE_BASE_PATH = "/admin/governance/ous" // Adjust if your admin path is different
+const GOVERNANCE_BASE_PATH = "/governance/organizational-units" // Main listing page
 
 export interface OUActionState<T = OrganizationalUnit | OrganizationalUnit[] | null> {
   success: boolean
   message: string
   data?: T
-  errors?: Partial<Record<keyof OrganizationalUnitInput | "_general", string>>
+  errors?: Partial<Record<keyof OrganizationalUnitInput | "metadata_json" | "_general", string>>
 }
 
 // Helper to map DB OU to OrganizationalUnit type
@@ -31,7 +32,6 @@ const mapDbOUToType = (dbOu: any): OrganizationalUnit => ({
   updated_at: dbOu.updated_at,
   tier: dbOu.governance_tiers
     ? {
-        // Handle joined tier data
         id: dbOu.governance_tiers.id,
         name: dbOu.governance_tiers.name,
         level_order: dbOu.governance_tiers.level_order,
@@ -41,6 +41,8 @@ const mapDbOUToType = (dbOu: any): OrganizationalUnit => ({
       }
     : undefined,
   user_count: dbOu.user_count !== undefined ? Number(dbOu.user_count) : undefined,
+  // parent_ou is not typically joined in list views, but could be for detail views
+  parent_ou: dbOu.parent_organizational_units ? mapDbOUToType(dbOu.parent_organizational_units) : undefined,
 })
 
 export async function createOrganizationalUnitAction(
@@ -50,7 +52,7 @@ export async function createOrganizationalUnitAction(
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
 
-  const errors: Partial<Record<keyof OrganizationalUnitInput, string>> = {}
+  const errors: Partial<Record<keyof OrganizationalUnitInput | "metadata_json", string>> = {}
   if (!ouData.name || ouData.name.trim().length < 3) {
     errors.name = "OU Name must be at least 3 characters long."
   }
@@ -81,15 +83,30 @@ export async function createOrganizationalUnitAction(
 
     if (error) {
       console.error("Error creating OU:", error)
+      // Check for unique constraint violation on name (if you add one)
+      // if (error.code === '23505' && error.details?.includes('name')) {
+      //   return { success: false, message: "An OU with this name already exists.", errors: { name: "Name already taken." }};
+      // }
       return { success: false, message: `Failed to create OU: ${error.message}`, errors: { _general: error.message } }
     }
 
-    revalidatePath(GOVERNANCE_BASE_PATH)
+    revalidatePath(GOVERNANCE_BASE_PATH, "layout") // Revalidate the layout to update counts/lists
     if (data.parent_ou_id) {
-      revalidatePath(`${GOVERNANCE_BASE_PATH}/${data.parent_ou_id}`) // Revalidate parent if it has a detail page
+      revalidatePath(`${GOVERNANCE_BASE_PATH}/view/${data.parent_ou_id}`) // Hypothetical parent detail page
     }
+    // Redirect after successful creation
+    redirect(GOVERNANCE_BASE_PATH) // This will navigate the user to the OU list page
+
+    // Note: redirect() throws an error to stop execution and trigger navigation,
+    // so the return statement below might not be reached in the success case.
+    // However, to satisfy TypeScript, we can keep it.
+    // The OUActionState now includes "metadata_json" in its error type.
     return { success: true, message: "Organizational Unit created successfully.", data: mapDbOUToType(data) }
   } catch (e: any) {
+    if (e.message === "NEXT_REDIRECT") {
+      // Check if the error is due to redirect
+      throw e // Re-throw to let Next.js handle the redirect
+    }
     console.error("Unexpected error creating OU:", e)
     return { success: false, message: `An unexpected error occurred: ${e.message}`, errors: { _general: e.message } }
   }
@@ -97,29 +114,29 @@ export async function createOrganizationalUnitAction(
 
 export async function getOrganizationalUnitsAction(params?: {
   tierId?: number
-  parentId?: string | null // Use null for root OUs
+  parentId?: string | null
   includeTier?: boolean
   includeUserCount?: boolean
+  includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
   }
 
   try {
-    let query = supabaseAdmin!
-      .from("organizational_units")
-      .select(`
-        *,
-        ${params?.includeTier ? "governance_tiers(*)" : ""}
-        ${params?.includeUserCount ? ", user_count:user_ou_assignments(count)" : ""}
-      `)
-      .order("name", { ascending: true })
+    const selectString = `
+      *,
+      ${params?.includeTier ? "governance_tiers(*)" : ""}
+      ${params?.includeUserCount ? ", user_count:user_ou_assignments(count)" : ""}
+      ${params?.includeParentOU ? ', parent_organizational_units:organizational_units!parent_ou_id(*${params.includeTier ? ", governance_tiers(*)' : ""})" : ""}
+    `
+
+    let query = supabaseAdmin!.from("organizational_units").select(selectString).order("name", { ascending: true })
 
     if (params?.tierId) {
       query = query.eq("tier_id", params.tierId)
     }
     if (params?.parentId !== undefined) {
-      // Check for undefined to allow explicit null
       if (params.parentId === null) {
         query = query.is("parent_ou_id", null)
       } else {
@@ -154,17 +171,12 @@ export async function getOrganizationalUnitByIdAction(
   }
 
   try {
-    // Base query
     const selectQuery = `
       *,
       ${params?.includeTier ? "governance_tiers(*)" : ""}
       ${params?.includeUserCount ? ", user_count:user_ou_assignments(count)" : ""}
+      ${params?.includeParent ? ', parent_organizational_units:organizational_units!parent_ou_id(*${params.includeTier ? ", governance_tiers(*)' : ""})" : ""}
     `
-
-    // Note: Supabase doesn't directly support recursive CTEs for deep hierarchy in a single query easily via JS client.
-    // Fetching parent and direct children separately if requested.
-    // For full hierarchy, multiple queries or a db function would be better.
-
     const { data: ouData, error: ouError } = await supabaseAdmin!
       .from("organizational_units")
       .select(selectQuery)
@@ -173,7 +185,6 @@ export async function getOrganizationalUnitByIdAction(
 
     if (ouError) {
       if (ouError.code === "PGRST116") {
-        // Not found
         return { success: false, message: "Organizational Unit not found." }
       }
       console.error("Error fetching OU by ID:", ouError)
@@ -181,16 +192,6 @@ export async function getOrganizationalUnitByIdAction(
     }
 
     const finalOU = mapDbOUToType(ouData)
-
-    if (params?.includeParent && finalOU.parent_ou_id) {
-      const { data: parentData, error: parentError } = await supabaseAdmin!
-        .from("organizational_units")
-        .select(`*, ${params.includeTier ? "governance_tiers(*)" : ""}`)
-        .eq("id", finalOU.parent_ou_id)
-        .single()
-      if (parentError) console.error("Error fetching parent OU:", parentError)
-      else if (parentData) finalOU.parent_ou = mapDbOUToType(parentData)
-    }
 
     if (params?.includeChildren) {
       const { data: childrenData, error: childrenError } = await supabaseAdmin!
@@ -220,21 +221,19 @@ export async function updateOrganizationalUnitAction(
     return { success: false, message: "OU ID is required for update." }
   }
 
-  const errors: Partial<Record<keyof OrganizationalUnitInput, string>> = {}
+  const errors: Partial<Record<keyof OrganizationalUnitInput | "metadata_json", string>> = {}
   if (ouData.name && ouData.name.trim().length < 3) {
     errors.name = "OU Name must be at least 3 characters long."
   }
-  // Add more validation as needed
 
   if (Object.keys(errors).length > 0) {
     return { success: false, message: "Validation failed.", errors }
   }
 
-  // Construct payload carefully to only include provided fields
   const updatePayload: Record<string, any> = {}
   if (ouData.name !== undefined) updatePayload.name = ouData.name
   if (ouData.tier_id !== undefined) updatePayload.tier_id = ouData.tier_id
-  if (ouData.parent_ou_id !== undefined) updatePayload.parent_ou_id = ouData.parent_ou_id // Allow setting to null
+  if (ouData.parent_ou_id !== undefined) updatePayload.parent_ou_id = ouData.parent_ou_id
   if (ouData.region_code !== undefined) updatePayload.region_code = ouData.region_code
   if (ouData.contact_email !== undefined) updatePayload.contact_email = ouData.contact_email
   if (ouData.contact_phone !== undefined) updatePayload.contact_phone = ouData.contact_phone
@@ -242,16 +241,23 @@ export async function updateOrganizationalUnitAction(
   if (ouData.metadata !== undefined) updatePayload.metadata = ouData.metadata
 
   if (Object.keys(updatePayload).length === 0) {
+    // Fetch current data to return if no changes
+    const currentDataResult = await getOrganizationalUnitByIdAction(id, { includeTier: true })
+    if (currentDataResult.success && currentDataResult.data) {
+      return { success: true, message: "No changes detected.", data: currentDataResult.data }
+    }
     return { success: false, message: "No fields provided for update." }
   }
-  updatePayload.updated_at = new Date().toISOString() // Manually set updated_at if not using db trigger for this
+  updatePayload.updated_at = new Date().toISOString()
 
   try {
     const { data, error } = await supabaseAdmin!
       .from("organizational_units")
       .update(updatePayload)
       .eq("id", id)
-      .select()
+      .select(
+        `*, governance_tiers(*), parent_organizational_units:organizational_units!parent_ou_id(*, governance_tiers(*))`,
+      ) // Fetch related data
       .single()
 
     if (error) {
@@ -260,16 +266,18 @@ export async function updateOrganizationalUnitAction(
       return { success: false, message: `Failed to update OU: ${error.message}`, errors: { _general: error.message } }
     }
 
-    revalidatePath(GOVERNANCE_BASE_PATH)
-    revalidatePath(`${GOVERNANCE_BASE_PATH}/${id}`)
-    if (data.parent_ou_id) revalidatePath(`${GOVERNANCE_BASE_PATH}/${data.parent_ou_id}`)
-    if (ouData.parent_ou_id && ouData.parent_ou_id !== data.parent_ou_id) {
-      // if parent changed
-      revalidatePath(`${GOVERNANCE_BASE_PATH}/${ouData.parent_ou_id}`)
-    }
+    revalidatePath(GOVERNANCE_BASE_PATH, "layout")
+    revalidatePath(`${GOVERNANCE_BASE_PATH}/view/${id}`) // Hypothetical detail page
+    if (data.parent_ou_id) revalidatePath(`${GOVERNANCE_BASE_PATH}/view/${data.parent_ou_id}`)
+
+    // Redirect after successful update
+    redirect(GOVERNANCE_BASE_PATH)
 
     return { success: true, message: "Organizational Unit updated successfully.", data: mapDbOUToType(data) }
   } catch (e: any) {
+    if (e.message === "NEXT_REDIRECT") {
+      throw e
+    }
     console.error("Unexpected error updating OU:", e)
     return { success: false, message: `An unexpected error occurred: ${e.message}`, errors: { _general: e.message } }
   }
@@ -284,7 +292,6 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
   }
 
   try {
-    // Check for child OUs first to prevent orphaned records if DB constraints don't cascade
     const { count: childCount, error: childError } = await supabaseAdmin!
       .from("organizational_units")
       .select("id", { count: "exact", head: true })
@@ -301,7 +308,6 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
       }
     }
 
-    // Check for assigned users
     const { count: userCount, error: userError } = await supabaseAdmin!
       .from("user_ou_assignments")
       .select("id", { count: "exact", head: true })
@@ -325,7 +331,6 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
       .single()
 
     if (fetchError && fetchError.code !== "PGRST116") {
-      // PGRST116 is "Not Found", which is fine for delete
       console.error("Error fetching OU before delete:", fetchError)
     }
 
@@ -334,24 +339,17 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
     if (error) {
       console.error("Error deleting OU:", error)
       if (error.code === "PGRST116") return { success: false, message: "Organizational Unit not found." }
-      // Handle foreign key constraint errors (e.g., if users are still assigned and cascade isn't set up)
       if (error.code === "23503") {
-        // foreign_key_violation
         return {
           success: false,
-          message:
-            "Cannot delete OU: It is still referenced by other records (e.g., users, policies). Please remove references first.",
+          message: "Cannot delete OU: It is still referenced by other records. Please remove references first.",
         }
       }
       return { success: false, message: `Failed to delete OU: ${error.message}` }
     }
 
-    revalidatePath(GOVERNANCE_BASE_PATH)
-    revalidatePath(`${GOVERNANCE_BASE_PATH}/${id}`) // For the detail page that won't exist
-    if (ouToDelete?.parent_ou_id) {
-      revalidatePath(`${GOVERNANCE_BASE_PATH}/${ouToDelete.parent_ou_id}`) // Revalidate parent
-    }
-
+    revalidatePath(GOVERNANCE_BASE_PATH, "layout")
+    // No redirect here, typically done on client after confirmation or if page is deleted
     return { success: true, message: "Organizational Unit deleted successfully." }
   } catch (e: any) {
     console.error("Unexpected error deleting OU:", e)

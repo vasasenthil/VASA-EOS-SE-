@@ -8,40 +8,55 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/hooks/use-toast"
-import { useTransition } from "react"
-import type { OrganizationalUnit, GovernanceTier, OrganizationalUnitInput } from "@/app/governance/types"
-import {
-  createOrganizationalUnitAction,
-  updateOrganizationalUnitAction,
-} from "@/app/governance/organizational-units/actions"
-import { PERMISSIONS } from "@/app/governance/types"
-import { hasPermission } from "@/app/governance/rbac"
+import { toast } from "@/components/ui/use-toast"
+import { useRouter } from "next/navigation" // For client-side navigation if needed
+import { useEffect, useState, useTransition } from "react"
+
+import type { OrganizationalUnit, GovernanceTier, OrganizationalUnitInput } from "../../types"
+import { createOrganizationalUnitAction, updateOrganizationalUnitAction } from "../actions"
 
 const ouFormSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters.").max(255),
-  tier_id: z.coerce.number().int().positive("Governance Tier is required."),
-  parent_ou_id: z.string().uuid("Invalid Parent OU ID.").nullable().optional(),
+  name: z.string().min(3, { message: "OU Name must be at least 3 characters." }).max(100),
+  tier_id: z.coerce.number({ required_error: "Governance Tier is required." }),
+  parent_ou_id: z.string().uuid().nullable().optional(),
   region_code: z.string().max(50).optional().nullable(),
-  contact_email: z.string().email("Invalid email address.").optional().nullable(),
-  contact_phone: z.string().max(50).optional().nullable(),
-  address: z.string().max(1000).optional().nullable(),
-  // metadata: z.record(z.any()).optional().nullable(), // For simplicity, metadata is not in the form yet
+  contact_email: z.string().email({ message: "Invalid email address." }).optional().nullable(),
+  contact_phone: z.string().max(20).optional().nullable(),
+  address: z.string().max(255).optional().nullable(),
+  // metadata: z.record(z.any()).optional().nullable(), // For simplicity, handling metadata as JSON string for now
+  metadata_json: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val.trim() === "") return true
+        try {
+          JSON.parse(val)
+          return true
+        } catch (e) {
+          return false
+        }
+      },
+      { message: "Invalid JSON format for metadata." },
+    )
+    .nullable(),
 })
 
-export type OUFormValues = z.infer<typeof ouFormSchema>
+type OUFormValues = z.infer<typeof ouFormSchema>
 
 interface OUFormProps {
+  initialData?: OrganizationalUnit | null
   tiers: GovernanceTier[]
   allOUs: OrganizationalUnit[] // For parent OU selection
-  initialData?: OrganizationalUnit | null
-  onSuccess: () => void
-  onCancel: () => void
-  userId: string | null // For permission check
+  userId: string // For client-side permission check (UX)
+  canManage: boolean // Pre-checked permission from server
 }
 
-export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId }: OUFormProps) {
+export function OUForm({ initialData, tiers, allOUs, userId, canManage }: OUFormProps) {
+  const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [selectedTierId, setSelectedTierId] = useState<number | undefined>(initialData?.tier_id)
+  const [filteredParentOUs, setFilteredParentOUs] = useState<OrganizationalUnit[]>([])
 
   const form = useForm<OUFormValues>({
     resolver: zodResolver(ouFormSchema),
@@ -53,77 +68,98 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
       contact_email: initialData?.contact_email || "",
       contact_phone: initialData?.contact_phone || "",
       address: initialData?.address || "",
+      metadata_json: initialData?.metadata ? JSON.stringify(initialData.metadata, null, 2) : "",
     },
   })
 
+  useEffect(() => {
+    if (selectedTierId) {
+      const currentTier = tiers.find((t) => t.id === selectedTierId)
+      if (currentTier) {
+        // Parent OUs should be from a tier with a lower level_order (i.e., higher in hierarchy)
+        const parentTiers = tiers.filter((t) => t.level_order < currentTier.level_order)
+        const parentTierIds = parentTiers.map((t) => t.id)
+        setFilteredParentOUs(allOUs.filter((ou) => parentTierIds.includes(ou.tier_id)))
+      } else {
+        setFilteredParentOUs([])
+      }
+    } else {
+      setFilteredParentOUs([])
+    }
+  }, [selectedTierId, tiers, allOUs])
+
   const onSubmit = async (values: OUFormValues) => {
-    if (!userId) {
-      toast({ title: "Error", description: "User not authenticated.", variant: "destructive" })
-      return
-    }
-
-    const canManage = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE })
     if (!canManage) {
-      toast({ title: "Permission Denied", description: "You cannot create or update OUs.", variant: "destructive" })
+      toast({
+        title: "Permission Denied",
+        description: "You do not have permission to perform this action.",
+        variant: "destructive",
+      })
       return
     }
 
-    const ouInput: OrganizationalUnitInput = {
+    // Client-side check (UX enhancement, server is authoritative)
+    // const hasManagePermission = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE });
+    // if (!hasManagePermission) {
+    //   toast({ title: "Permission Denied", description: "You do not have permission to manage OUs.", variant: "destructive" });
+    //   return;
+    // }
+
+    const ouInputData: OrganizationalUnitInput = {
       name: values.name,
       tier_id: values.tier_id,
-      parent_ou_id: values.parent_ou_id || null, // Ensure null if empty string
+      parent_ou_id: values.parent_ou_id || null,
       region_code: values.region_code || null,
       contact_email: values.contact_email || null,
       contact_phone: values.contact_phone || null,
       address: values.address || null,
-      metadata: initialData?.metadata || null, // Preserve existing metadata if any
+      metadata: values.metadata_json ? JSON.parse(values.metadata_json) : null,
     }
 
     startTransition(async () => {
       let result
       if (initialData) {
-        result = await updateOrganizationalUnitAction(initialData.id, ouInput)
+        result = await updateOrganizationalUnitAction(initialData.id, ouInputData)
       } else {
-        result = await createOrganizationalUnitAction(ouInput)
+        result = await createOrganizationalUnitAction(ouInputData)
       }
 
       if (result.success) {
-        toast({ title: "Success", description: result.message })
-        onSuccess()
+        toast({
+          title: initialData ? "OU Updated" : "OU Created",
+          description: result.message,
+        })
+        // Server action should handle redirection. If not, uncomment and use:
+        // router.push("/governance/organizational-units");
+        // router.refresh(); // To ensure fresh data on the list page
       } else {
         toast({
           title: "Error",
-          description: result.error || (initialData ? "Failed to update OU." : "Failed to create OU."),
+          description: result.message || "An unexpected error occurred.",
           variant: "destructive",
         })
+        if (result.errors) {
+          Object.entries(result.errors).forEach(([field, message]) => {
+            form.setError(field as keyof OUFormValues, { type: "manual", message })
+          })
+        }
       }
     })
   }
 
-  const selectedTierId = form.watch("tier_id")
-  const selectedTier = tiers.find((t) => t.id === selectedTierId)
-
-  // Filter potential parent OUs: must be from a tier with a lower level_order (i.e., higher in hierarchy)
-  // than the currently selected tier for the OU being created/edited.
-  const potentialParentOUs = selectedTier
-    ? allOUs.filter((ou) => {
-        const parentTier = tiers.find((t) => t.id === ou.tier_id)
-        return parentTier && parentTier.level_order < selectedTier.level_order
-      })
-    : []
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>OU Name</FormLabel>
+              <FormLabel>Organizational Unit Name</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Ministry of Education, State Dept. of School Education" {...field} />
+                <Input placeholder="e.g., National Ministry of Education" {...field} />
               </FormControl>
+              <FormDescription>The official name of the organizational unit.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -135,10 +171,16 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
           render={({ field }) => (
             <FormItem>
               <FormLabel>Governance Tier</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(Number(value))
+                  setSelectedTierId(Number(value))
+                }}
+                defaultValue={field.value?.toString()}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a tier" />
+                    <SelectValue placeholder="Select a governance tier" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -149,49 +191,44 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
                   ))}
                 </SelectContent>
               </Select>
+              <FormDescription>Assign this OU to a governance tier.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {selectedTierId && (
-          <FormField
-            control={form.control}
-            name="parent_ou_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Parent OU (Optional)</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value || ""}
-                  disabled={potentialParentOUs.length === 0}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          potentialParentOUs.length > 0 ? "Select a parent OU" : "No eligible parent OUs for this tier"
-                        }
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">
-                      <em>None (Root for its hierarchy within this tier or global root)</em>
+        <FormField
+          control={form.control}
+          name="parent_ou_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Parent Organizational Unit (Optional)</FormLabel>
+              <Select
+                onValueChange={(value) => field.onChange(value === "null" ? null : value)}
+                defaultValue={field.value || "null"}
+                disabled={!selectedTierId || filteredParentOUs.length === 0}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a parent OU" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="null">No Parent (Root Level for this branch)</SelectItem>
+                  {filteredParentOUs.map((ou) => (
+                    <SelectItem key={ou.id} value={ou.id}>
+                      {ou.name} ({ou.tier?.name})
                     </SelectItem>
-                    {potentialParentOUs.map((ou) => (
-                      <SelectItem key={ou.id} value={ou.id}>
-                        {ou.name} ({tiers.find((t) => t.id === ou.tier_id)?.name})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>Select a parent OU from a higher governance tier.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Select a parent OU if this unit reports to another. Parents must be from a higher tier.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -200,11 +237,9 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
             <FormItem>
               <FormLabel>Region Code (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., State Code, District Code" {...field} value={field.value || ""} />
+                <Input placeholder="e.g., NDL, MH, UP" {...field} value={field.value || ""} />
               </FormControl>
-              <FormDescription>
-                Unique code for the region if applicable (e.g., state code, district LGD code).
-              </FormDescription>
+              <FormDescription>A code for the region, if applicable (e.g., state code, district code).</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -217,7 +252,7 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
             <FormItem>
               <FormLabel>Contact Email (Optional)</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="ou-contact@example.com" {...field} value={field.value || ""} />
+                <Input type="email" placeholder="e.g., contact@education.gov.in" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -231,7 +266,7 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
             <FormItem>
               <FormLabel>Contact Phone (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="+91-XXX-XXXXXXX" {...field} value={field.value || ""} />
+                <Input placeholder="e.g., +91-11-12345678" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -245,21 +280,37 @@ export function OUForm({ tiers, allOUs, initialData, onSuccess, onCancel, userId
             <FormItem>
               <FormLabel>Address (Optional)</FormLabel>
               <FormControl>
-                <Textarea placeholder="Full address of the OU office" {...field} value={field.value || ""} />
+                <Textarea placeholder="Full address of the organizational unit" {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? (initialData ? "Saving..." : "Creating...") : initialData ? "Save Changes" : "Create OU"}
-          </Button>
-        </div>
+        <FormField
+          control={form.control}
+          name="metadata_json"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Additional Metadata (JSON format, Optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder='e.g., { "established_year": 1980, "head_office": "New Delhi" }'
+                  {...field}
+                  value={field.value || ""}
+                  rows={5}
+                />
+              </FormControl>
+              <FormDescription>Enter any additional structured data as a valid JSON object.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isPending || !canManage}>
+          {isPending ? (initialData ? "Updating..." : "Creating...") : initialData ? "Save Changes" : "Create OU"}
+        </Button>
+        {!canManage && <p className="text-sm text-destructive mt-2">You do not have permission to manage OUs.</p>}
       </form>
     </Form>
   )
