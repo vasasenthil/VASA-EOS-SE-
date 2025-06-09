@@ -9,7 +9,7 @@ interface UserAssignmentsClientPageProps {
   user: AuthUser
   initialAssignments: UserOUAssignment[]
   organizationalUnits: OrganizationalUnit[]
-  roles: Role[]
+  roles: Role[] // This 'roles' prop contains all available roles
   canManage: boolean
 }
 
@@ -17,7 +17,7 @@ export default function UserAssignmentsClientPage({
   user,
   initialAssignments,
   organizationalUnits,
-  roles,
+  roles, // Pass all roles down
   canManage,
 }: UserAssignmentsClientPageProps) {
   return (
@@ -33,7 +33,12 @@ export default function UserAssignmentsClientPage({
               <div className="flow-root">
                 <ul role="list" className="-my-4 divide-y divide-border">
                   {initialAssignments.map((assignment) => (
-                    <AssignmentListItem key={assignment.id} assignment={assignment} canManage={canManage} />
+                    <AssignmentListItem
+                      key={assignment.id}
+                      assignment={assignment}
+                      allRoles={roles} // Pass allRoles to each list item
+                      canManage={canManage}
+                    />
                   ))}
                 </ul>
               </div>
@@ -57,10 +62,7 @@ export default function UserAssignmentsClientPage({
               <AddAssignmentForm
                 userId={user.id}
                 organizationalUnits={organizationalUnits}
-                roles={roles}
-                // Filter out OUs the user is already in to prevent duplicate assignments
-                // Note: A user can have multiple roles in the same OU, so this logic might need adjustment
-                // based on business rules. For now, we allow it.
+                roles={roles} // AddAssignmentForm also needs all roles
               />
             </CardContent>
           </Card>
