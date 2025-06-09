@@ -8,8 +8,7 @@ import { getSchemesAction, type GetSchemesParams } from "./actions"
 import { SchemeListItem } from "./components/scheme-list-item"
 import PaginationControls from "@/components/pagination-controls" // Assuming this component exists
 import SchemesLoading from "./loading" // Import the loading component
-// Placeholder for Filters - to be developed later
-// import SchemeFilters from './components/scheme-filters';
+import { SchemeFilters } from "./components/scheme-filters"
 
 interface SchemesPageProps {
   searchParams: GetSchemesParams
@@ -38,13 +37,7 @@ export default async function SchemesPage({ searchParams }: SchemesPageProps) {
         </PageHeaderActions>
       </PageHeader>
 
-      {/* Placeholder for Filters - to be developed later */}
-      {/* <SchemeFilters /> */}
-      <div className="mb-6 p-4 border rounded-lg bg-muted/40">
-        <p className="text-sm text-muted-foreground">
-          Filters for schemes (by category, status, issuing authority, etc.) will be available here.
-        </p>
-      </div>
+      <SchemeFilters />
 
       <Suspense fallback={<SchemesLoading />}>
         <SchemesList searchParams={searchParams} />
