@@ -16,7 +16,8 @@ interface PolicyStatusUpdaterProps {
   currentStatus: PolicyStatus
 }
 
-export function PolicyStatusUpdater({ policyId, currentStatus }: PolicyStatusUpdaterProps) {
+// Changed to default export
+export default function PolicyStatusUpdater({ policyId, currentStatus }: PolicyStatusUpdaterProps) {
   const [selectedStatus, setSelectedStatus] = useState<PolicyStatus>(currentStatus)
   const [isPending, startTransition] = useTransition()
   const { toast } = useToast()
@@ -39,8 +40,8 @@ export function PolicyStatusUpdater({ policyId, currentStatus }: PolicyStatusUpd
           title: "Status Updated",
           description: result.message,
         })
-        // No need to manually refresh router.refresh() here as revalidatePath in action should handle it.
-        // If dynamic updates on the same page are needed without full reload, consider passing a callback or using global state.
+        // Revalidating path in action should refresh data.
+        // router.refresh() could be used if specific client-side refresh is needed without full data refetch.
       } else {
         toast({
           title: "Update Failed",

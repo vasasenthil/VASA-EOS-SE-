@@ -5,11 +5,10 @@ export const POLICY_STATUSES = [
   "Approved",
   "Rejected",
   "Archived",
-] as const // Use 'as const' for stricter typing
+] as const
 
 export type PolicyStatus = (typeof POLICY_STATUSES)[number]
 
-// No changes needed to these constants
 export const POLICY_DOMAINS = [
   "Curriculum & Pedagogy",
   "Assessment & Evaluation",
@@ -59,14 +58,21 @@ export const REVIEW_COMMITTEES = [
   "Teacher Education Advisory Panel",
 ]
 
-// Updated FileMetadata type
 export interface FileMetadata {
   name: string
   type: string
   size: number
-  url: string // URL from Vercel Blob OR a placeholder for Next.js
-  uploadedAt?: string // Optional: timestamp of upload
-  isPlaceholder?: boolean // Flag to indicate if this is a simulated file for Next.js
+  url: string
+  uploadedAt?: string
+  isPlaceholder?: boolean
+}
+
+export interface VersionHistoryEntry {
+  version: string
+  status: PolicyStatus
+  modified_at: string
+  modified_by?: string // Optional: To be implemented with auth
+  summary?: string // Optional: Brief note about the change
 }
 
 export interface PolicyDraft {
@@ -84,7 +90,8 @@ export interface PolicyDraft {
   draftPolicyDocument?: File | FileMetadata | null
   annexures?: FileList | FileMetadata[] | null
   internalReviewCommittee: string[]
-  status?: PolicyStatus // Changed from "Draft" | "Pending Internal Review" | ...
+  status?: PolicyStatus
   createdAt?: string
   lastModified?: string
+  versionHistory?: VersionHistoryEntry[] // Added version history
 }

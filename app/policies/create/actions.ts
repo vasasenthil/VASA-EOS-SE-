@@ -1,15 +1,9 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
-// Conditionally import Vercel Blob for environments that support it.
-// In Next.js, these functions will be effectively stubbed.
 let put: any = async () => ({ url: "/uploads/simulated/error-put-not-loaded.txt" })
 let del: any = async () => {}
 
-// Check if we are in a Node.js-like environment (not strictly Next.js)
-// process.env.NEXT_RUNTIME is 'nodejs' or 'edge' in Vercel deployments.
-// In Next.js, it might be undefined or different.
-// A more robust check might be needed if this isn't sufficient.
 const IS_SERVER_ENVIRONMENT = typeof process !== "undefined" && process.env?.NEXT_RUNTIME
 
 if (IS_SERVER_ENVIRONMENT) {
@@ -24,7 +18,7 @@ if (IS_SERVER_ENVIRONMENT) {
   console.warn("Running in a non-server environment (likely Next.js). File operations will be simulated.")
 }
 
-import type { PolicyDraft, FileMetadata, PolicyStatus } from "./policy-form-constants" // Added PolicyStatus
+import type { PolicyDraft, FileMetadata, PolicyStatus, VersionHistoryEntry } from "./policy-form-constants"
 import { revalidatePath } from "next/cache"
 import {
   POLICY_DOMAINS,
@@ -32,7 +26,7 @@ import {
   TARGET_AUDIENCES,
   REVIEW_COMMITTEES,
   POLICY_STATUSES,
-} from "./policy-form-constants" // Added POLICY_STATUSES
+} from "./policy-form-constants"
 
 interface PolicyImplementationStatusSeed {
   policy_id: string
@@ -76,12 +70,6 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
   const policies: PolicyDraft[] = []
   const startDate = new Date(2023, 0, 1)
   const endDate = new Date()
-  // const statuses: PolicyDraft["status"][] = [ // POLICY_STATUSES is now imported
-  //   "Draft",
-  //   "Pending Internal Review",
-  //   "Under Stakeholder Consultation",
-  //   "Approved",
-  // ]
   const getRandomId = () => `POL-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
   const getRandomDate = (start: Date, end: Date): string =>
     new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString()
@@ -95,11 +83,39 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
     const createdAtDate = new Date(getRandomDate(startDate, endDate))
     const lastModifiedDate = new Date(getRandomDate(createdAtDate, endDate))
     const currentStatus = getRandomElement(POLICY_STATUSES)
+    const currentVersion = `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 5)}`
+
+    const versionHistory: VersionHistoryEntry[] = []
+    if (Math.random() > 0.3) {
+      const historyDate = new Date(createdAtDate.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      versionHistory.push({
+        version: "0.9",
+        status: "Draft",
+        modified_at: historyDate.toISOString(),
+        summary: "Initial draft creation",
+      })
+      if (currentStatus !== "Draft" && Math.random() > 0.5) {
+        const historyDate2 = new Date(createdAtDate.getTime() - Math.random() * 15 * 24 * 60 * 60 * 1000)
+        versionHistory.push({
+          version: Number.parseFloat(currentVersion) > 1 ? `${Number.parseFloat(currentVersion) - 0.1}` : "1.0",
+          status: "Pending Internal Review",
+          modified_at: historyDate2.toISOString(),
+          summary: "Submitted for internal review",
+        })
+      }
+    }
+    versionHistory.push({
+      version: currentVersion,
+      status: currentStatus,
+      modified_at: lastModifiedDate.toISOString(),
+      summary: "Current version",
+    })
+
     policies.push({
       id: getRandomId(),
       title: `Sample Policy Draft #${i + 1}: Focus on ${getRandomElement(POLICY_DOMAINS).toLowerCase()}`,
       policyDomain: getRandomElement(POLICY_DOMAINS),
-      version: `${Math.floor(Math.random() * 3) + 1}.${Math.floor(Math.random() * 5)}`,
+      version: currentVersion,
       abstractEN: `This is a sample abstract for policy #${i + 1}. It outlines key strategies for improving ${getRandomElement(NEP_THRUST_AREAS).toLowerCase()} and targets various stakeholders including ${getRandomElements(TARGET_AUDIENCES, 2).join(" and ")}. The current status is ${currentStatus}.`,
       abstractHI: `यह नीति #${i + 1} के लिए एक नमूना सार है।`,
       keywords: getRandomElements(
@@ -114,7 +130,7 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
         name: `draft_policy_${i + 1}.pdf`,
         type: "application/pdf",
         size: Math.floor(Math.random() * 5000000) + 100000,
-        url: `/uploads/simulated/draft_policy_${i + 1}.pdf`, // Simulated URL
+        url: `/uploads/simulated/draft_policy_${i + 1}.pdf`,
         uploadedAt: new Date().toISOString(),
         isPlaceholder: true,
       },
@@ -125,7 +141,7 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
                 name: `annexure_${i + 1}_ref.docx`,
                 type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 size: Math.floor(Math.random() * 1000000) + 50000,
-                url: `/uploads/simulated/annexure_${i + 1}_ref.docx`, // Simulated URL
+                url: `/uploads/simulated/annexure_${i + 1}_ref.docx`,
                 uploadedAt: new Date().toISOString(),
                 isPlaceholder: true,
               },
@@ -135,6 +151,9 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
       status: currentStatus,
       createdAt: createdAtDate.toISOString(),
       lastModified: lastModifiedDate.toISOString(),
+      versionHistory: versionHistory.sort(
+        (a, b) => new Date(b.modified_at).getTime() - new Date(a.modified_at).getTime(),
+      ),
     })
   }
   return policies
@@ -143,7 +162,10 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
 const mapFormDataToPolicyObject = (
   formData: FormData,
   existingPolicy?: PolicyDraft,
-): Omit<PolicyDraft, "id" | "createdAt" | "lastModified" | "status" | "draftPolicyDocument" | "annexures"> & {
+): Omit<
+  PolicyDraft,
+  "id" | "createdAt" | "lastModified" | "status" | "draftPolicyDocument" | "annexures" | "versionHistory"
+> & {
   id?: string
   status?: PolicyDraft["status"]
   draftPolicyDocumentForUpload?: File | null
@@ -163,7 +185,6 @@ const mapFormDataToPolicyObject = (
     else if (key === "nepThrustAreas") nepThrustAreas.push(value as string)
     else if (key === "internalReviewCommittee") internalReviewCommittee.push(value as string)
     else if (key.startsWith("annexures") || key.startsWith("draftPolicyDocument")) {
-      /* Handled below */
     } else if (key !== "action" && key !== "id" && !(value instanceof File && value.size === 0)) {
       rawFormData[key] = value
     }
@@ -210,6 +231,7 @@ const mapDbPolicyToPolicyDraft = (dbPolicy: any): PolicyDraft => ({
   createdAt: dbPolicy.created_at,
   lastModified: dbPolicy.last_modified,
   nepThrustAreas: dbPolicy.nep_thrust_areas || [],
+  versionHistory: (dbPolicy.version_history || []) as VersionHistoryEntry[],
 })
 
 export async function submitPolicyAction(
@@ -256,6 +278,7 @@ export async function submitPolicyAction(
   ) {
     errors.draftPolicyDocument = "Draft Policy Document is required for submission."
   }
+
   if (Object.keys(errors).length > 0) {
     return { message: "Validation failed.", success: false, errors }
   }
@@ -264,7 +287,6 @@ export async function submitPolicyAction(
   let finalAnnexuresMetadata: FileMetadata[] | null = existingAnnexures || null
 
   try {
-    // Handle Draft Policy Document
     if (removeDraftPolicyDocumentFlag && existingDraftPolicyDocument) {
       if (IS_SERVER_ENVIRONMENT && existingDraftPolicyDocument.url && !existingDraftPolicyDocument.isPlaceholder)
         await del(existingDraftPolicyDocument.url)
@@ -272,7 +294,6 @@ export async function submitPolicyAction(
     } else if (draftPolicyDocumentForUpload) {
       if (IS_SERVER_ENVIRONMENT && existingDraftPolicyDocument?.url && !existingDraftPolicyDocument.isPlaceholder)
         await del(existingDraftPolicyDocument.url)
-
       let blobUrl = `/uploads/simulated/${policyIdFromForm || "new_policy"}/${draftPolicyDocumentForUpload.name}`
       let isPlaceholder = true
       if (IS_SERVER_ENVIRONMENT) {
@@ -294,7 +315,6 @@ export async function submitPolicyAction(
       }
     }
 
-    // Handle Annexures
     if (removeAnnexuresFlag && existingAnnexures) {
       if (IS_SERVER_ENVIRONMENT) {
         for (const annex of existingAnnexures) if (annex.url && !annex.isPlaceholder) await del(annex.url)
@@ -304,7 +324,6 @@ export async function submitPolicyAction(
       if (IS_SERVER_ENVIRONMENT && existingAnnexures) {
         for (const annex of existingAnnexures) if (annex.url && !annex.isPlaceholder) await del(annex.url)
       }
-
       const uploadedAnnexures: FileMetadata[] = []
       for (const file of annexuresForUpload) {
         let blobUrl = `/uploads/simulated/${policyIdFromForm || "new_policy"}/${file.name}`
@@ -330,19 +349,57 @@ export async function submitPolicyAction(
     }
   } catch (blobError: any) {
     console.error("Vercel Blob operation error:", blobError)
-    // Don't fail the whole operation in Next.js if blob fails, just log it.
-    if (IS_SERVER_ENVIRONMENT) {
+    if (IS_SERVER_ENVIRONMENT)
       return {
         message: `File operation failed: ${blobError.message}`,
         success: false,
         errors: { _general: "File storage error." },
       }
-    }
     console.warn("File operation simulated due to non-server environment or error during Blob operation.")
   }
 
   const statusToSet = actionType === "saveDraft" ? "Draft" : "Pending Internal Review"
   const currentTime = new Date().toISOString()
+  let newVersionHistory: VersionHistoryEntry[] = existingPolicyInDb?.versionHistory || []
+
+  const significantChange =
+    existingPolicyInDb &&
+    (existingPolicyInDb.version !== policyDataCore.version ||
+      existingPolicyInDb.status !== statusToSet ||
+      JSON.stringify(existingPolicyInDb.draftPolicyDocument) !== JSON.stringify(finalDraftDocMetadata) ||
+      existingPolicyInDb.abstractEN !== policyDataCore.abstractEN)
+
+  if (existingPolicyInDb && significantChange) {
+    const latestHistoryEntry = newVersionHistory[0]
+    if (
+      !latestHistoryEntry ||
+      latestHistoryEntry.version !== existingPolicyInDb.version ||
+      latestHistoryEntry.status !== existingPolicyInDb.status
+    ) {
+      newVersionHistory.unshift({
+        version: existingPolicyInDb.version,
+        status: existingPolicyInDb.status || "Draft",
+        modified_at: existingPolicyInDb.lastModified || existingPolicyInDb.createdAt || currentTime,
+        summary: "Previous version before update",
+      })
+    }
+  }
+  if (!policyIdFromForm || significantChange) {
+    const currentHistoryEntry: VersionHistoryEntry = {
+      version: policyDataCore.version,
+      status: statusToSet,
+      modified_at: currentTime,
+      summary: policyIdFromForm ? "Updated to this version" : "Initial creation",
+    }
+    if (
+      newVersionHistory.length === 0 ||
+      newVersionHistory[0].version !== currentHistoryEntry.version ||
+      newVersionHistory[0].status !== currentHistoryEntry.status
+    ) {
+      newVersionHistory.unshift(currentHistoryEntry)
+    }
+  }
+  newVersionHistory = newVersionHistory.slice(0, 20)
 
   const dbPayload = {
     ...policyDataCore,
@@ -356,6 +413,7 @@ export async function submitPolicyAction(
     annexures: finalAnnexuresMetadata,
     status: statusToSet,
     last_modified: currentTime,
+    version_history: newVersionHistory,
     ...(policyIdFromForm
       ? {}
       : { created_at: currentTime, id: `POL-${Date.now()}-${Math.random().toString(36).substr(2, 4)}` }),
@@ -375,12 +433,20 @@ export async function submitPolicyAction(
     revalidatePath("/policies")
     revalidatePath(`/policies/view/${data.id}`)
     revalidatePath(`/policies/edit/${data.id}`)
-    return { message: `Policy updated. Status: ${statusToSet}. ID: ${data.id}`, success: true, policyId: data.id }
+    return {
+      message: `Policy updated. Status: ${statusToSet}. Version: ${data.version}. ID: ${data.id}`,
+      success: true,
+      policyId: data.id,
+    }
   } else {
     const { data, error } = await supabaseAdmin!.from("policies").insert([dbPayload]).select().single()
     if (error) return { message: "Failed to create policy.", success: false, errors: { _general: error.message } }
     revalidatePath("/policies")
-    return { message: `Policy created. Status: ${statusToSet}. ID: ${data.id}`, success: true, policyId: data.id }
+    return {
+      message: `Policy created. Status: ${statusToSet}. Version: ${data.version}. ID: ${data.id}`,
+      success: true,
+      policyId: data.id,
+    }
   }
 }
 
@@ -396,7 +462,7 @@ export interface PaginatedPoliciesResponse {
 const DEFAULT_ITEMS_PER_PAGE_ACTION = 10
 
 export async function getPoliciesAction(params?: {
-  sortBy?: keyof PolicyDraft | "lastModified" | "createdAt"
+  sortBy?: keyof PolicyDraft | "lastModified" | "createdAt" | "version"
   sortOrder?: "asc" | "desc"
   filterByStatus?: PolicyDraft["status"]
   filterByDomain?: string
@@ -430,6 +496,7 @@ export async function getPoliciesAction(params?: {
     status: "status",
     createdAt: "created_at",
     lastModified: "last_modified",
+    version: "version",
   }
   const dbSortBy = dbSortKeyMap[sortKey as string] || "last_modified"
   if (filterByStatus) query = query.eq("status", filterByStatus)
@@ -475,7 +542,7 @@ export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | und
   if (!isSupabaseAdminConfigured()) return undefined
   const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
   if (error) {
-    if (error.code === "PGRST116") return undefined
+    if (error.code === "PGRST116") return undefined // No row found, not an error for this function
     console.error("Supabase error fetching policy by ID:", error)
     return undefined
   }
@@ -534,7 +601,7 @@ export async function seedPoliciesAction(
     return { message: CRITICAL_DB_ERROR_MSG, count: 0, success: false, error: CRITICAL_DB_ERROR_MSG }
   }
   await clearPoliciesAction()
-  const policiesToSeed = generateSeedPolicyDataInline(count) // Uses simulated URLs
+  const policiesToSeed = generateSeedPolicyDataInline(count)
   const policiesForDb = policiesToSeed.map((p) => ({
     id: p.id,
     title: p.title,
@@ -553,6 +620,7 @@ export async function seedPoliciesAction(
     internal_review_committee: p.internalReviewCommittee,
     created_at: p.createdAt,
     last_modified: p.lastModified,
+    version_history: p.versionHistory,
   }))
   const { data, error: insertError } = await supabaseAdmin!.from("policies").insert(policiesForDb).select()
   if (insertError)
@@ -564,7 +632,11 @@ export async function seedPoliciesAction(
     }
   const seededCount = data ? data.length : 0
   revalidatePath("/policies")
-  return { message: `${seededCount} policies seeded (with simulated files).`, count: seededCount, success: true }
+  return {
+    message: `${seededCount} policies seeded (with simulated files and version history).`,
+    count: seededCount,
+    success: true,
+  }
 }
 
 export async function seedPolicyImplementationAction(
@@ -601,11 +673,41 @@ export async function updatePolicyStatusAction(
   }
 
   try {
+    const { data: existingPolicyData, error: fetchError } = await supabaseAdmin!
+      .from("policies")
+      .select("version, version_history")
+      .eq("id", policyId)
+      .single()
+
+    if (fetchError) {
+      console.error("Error fetching policy for status update:", fetchError)
+      return {
+        message: `Failed to fetch policy: ${fetchError.message}`,
+        success: false,
+        policyId,
+        newStatus,
+        error: fetchError.message,
+      }
+    }
+
+    const currentTime = new Date().toISOString()
+    let currentVersionHistory: VersionHistoryEntry[] = (existingPolicyData.version_history ||
+      []) as VersionHistoryEntry[]
+
+    currentVersionHistory.unshift({
+      version: existingPolicyData.version,
+      status: newStatus,
+      modified_at: currentTime,
+      summary: `Status changed to ${newStatus}`,
+    })
+    currentVersionHistory = currentVersionHistory.slice(0, 20)
+
     const { data, error } = await supabaseAdmin!
       .from("policies")
       .update({
         status: newStatus,
-        last_modified: new Date().toISOString(),
+        last_modified: currentTime,
+        version_history: currentVersionHistory,
       })
       .eq("id", policyId)
       .select()
@@ -624,7 +726,7 @@ export async function updatePolicyStatusAction(
 
     revalidatePath("/policies")
     revalidatePath(`/policies/view/${policyId}`)
-    revalidatePath(`/policies/edit/${policyId}`) // Also revalidate edit page if status affects it
+    revalidatePath(`/policies/edit/${policyId}`)
 
     return {
       message: `Policy status updated to "${newStatus}".`,
