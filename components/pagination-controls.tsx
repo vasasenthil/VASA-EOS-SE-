@@ -11,6 +11,7 @@ interface PaginationControlsProps {
   hasPrevPage: boolean
 }
 
+// Named export
 export function PaginationControls({ currentPage, totalPages, hasNextPage, hasPrevPage }: PaginationControlsProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -54,3 +55,6 @@ export function PaginationControls({ currentPage, totalPages, hasNextPage, hasPr
     </div>
   )
 }
+
+// Default export
+export default PaginationControls

@@ -18,8 +18,22 @@ function PageHeaderHeading({ className, ...props }: React.HTMLAttributes<HTMLHea
   )
 }
 
-function PageHeaderText({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+function PageHeaderDescriptionComponent({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn("max-w-[750px] text-base text-muted-foreground", className)} {...props} />
 }
 
-export { PageHeader, PageHeaderHeading, PageHeaderText }
+// Exporting as PageHeaderDescription as per previous fix
+export { PageHeaderDescriptionComponent as PageHeaderDescription }
+
+// Also exporting as PageHeaderText to satisfy the current error
+export { PageHeaderDescriptionComponent as PageHeaderText }
+
+function PageHeaderActions({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("flex items-center gap-2", className)} {...props}>
+      {children}
+    </div>
+  )
+}
+
+export { PageHeader, PageHeaderHeading, PageHeaderActions }
