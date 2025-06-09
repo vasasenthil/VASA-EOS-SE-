@@ -24,6 +24,8 @@ export interface OrganizationalUnit {
   tier?: GovernanceTier
   parent_ou?: OrganizationalUnit
   child_ous?: OrganizationalUnit[]
+  // Add user count for potential display
+  user_count?: number
 }
 
 export interface Role {
@@ -70,6 +72,13 @@ export interface UserOUAssignment {
   organizational_unit?: OrganizationalUnit
   role?: Role
 }
+
+// Input types for actions
+export interface OrganizationalUnitInput
+  extends Omit<
+    OrganizationalUnit,
+    "id" | "created_at" | "updated_at" | "tier" | "parent_ou" | "child_ous" | "user_count"
+  > {}
 
 // Constants for known role names (useful in code)
 export const SYSTEM_ROLES = {
