@@ -28,6 +28,10 @@ import {
   POLICY_STATUSES,
 } from "./policy-form-constants"
 
+import { hasPermission } from "@/app/governance/rbac"
+import { PERMISSIONS } from "@/app/governance/types"
+import { getUserIdFromAction } from "@/lib/auth/server"
+
 interface PolicyImplementationStatusSeed {
   policy_id: string
   region_type: string
@@ -238,12 +242,32 @@ export async function submitPolicyAction(
   prevState: SubmitPolicyActionState,
   formData: FormData,
 ): Promise<SubmitPolicyActionState> {
+  const userId = await getUserIdFromAction()
+  if (!userId) {
+    return { message: "Authentication required.", success: false, errors: { _general: "User not authenticated." } }
+  }
+
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
 
   const policyIdFromForm = formData.get("id") as string | undefined
   const actionType = formData.get("action") as "saveDraft" | "submitForReview"
+
+  const requiredPermission = policyIdFromForm ? PERMISSIONS.POLICY_UPDATE : PERMISSIONS.POLICY_CREATE
+  // TODO: Determine OU context for policy actions if policies become OU-specific.
+  // For now, checking permission without specific ouId (user needs it in any of their roles).
+  const canPerformAction = await hasPermission({ userId, permissionString: requiredPermission })
+
+  if (!canPerformAction) {
+    const actionVerb = policyIdFromForm ? "update" : "create"
+    return {
+      message: `You do not have permission to ${actionVerb} policies.`,
+      success: false,
+      errors: { _general: "Permission denied." },
+    }
+  }
+
   const removeDraftPolicyDocumentFlag = formData.get("remove_draftPolicyDocument") === "true"
   const removeAnnexuresFlag = formData.get("remove_annexures") === "true"
 
@@ -550,6 +574,17 @@ export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | und
 }
 
 export async function deletePolicyAction(policyId: string): Promise<DeletePolicyActionState> {
+  const userId = await getUserIdFromAction()
+  if (!userId) {
+    return { message: "Authentication required.", success: false }
+  }
+
+  // TODO: Determine OU context for policy deletion if policies become OU-specific.
+  const canDelete = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE })
+  if (!canDelete) {
+    return { message: "You do not have permission to delete policies.", success: false }
+  }
+
   if (!isSupabaseAdminConfigured()) return { message: CRITICAL_DB_ERROR_MSG, success: false }
   if (IS_SERVER_ENVIRONMENT) {
     try {
@@ -571,9 +606,15 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
 }
 
 export async function clearPoliciesAction(): Promise<{ message: string }> {
+  // Potentially add RBAC check here if clearing all policies is a restricted action
+  // const userId = await getUserIdFromAction();
+  // if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_CLEAR_ALL /* example */ }))) {
+  //   return { message: "Permission denied to clear all policies." };
+  // }
+
   if (!isSupabaseAdminConfigured()) return { message: CRITICAL_DB_ERROR_MSG }
   if (IS_SERVER_ENVIRONMENT) {
-    const { policies, error: fetchError } = await getPoliciesAction({ itemsPerPage: 1000 })
+    const { policies, error: fetchError } = await getPoliciesAction({ itemsPerPage: 1000 }) // Fetch all to delete blobs
     if (fetchError) console.warn(`Could not fetch policies to delete blobs: ${fetchError}. Blobs may remain.`)
     else {
       for (const policy of policies) {
@@ -588,7 +629,7 @@ export async function clearPoliciesAction(): Promise<{ message: string }> {
       }
     }
   }
-  const { error } = await supabaseAdmin!.from("policies").delete().neq("id", "dummy_id_to_clear_all")
+  const { error } = await supabaseAdmin!.from("policies").delete().neq("id", "dummy_id_to_clear_all") // Clear all
   if (error) return { message: `Failed to clear policies. Error: ${error.message}` }
   revalidatePath("/policies")
   return { message: "All policies cleared." }
@@ -597,9 +638,16 @@ export async function clearPoliciesAction(): Promise<{ message: string }> {
 export async function seedPoliciesAction(
   count = 35,
 ): Promise<{ message: string; count: number; success: boolean; error?: string }> {
+  // Potentially add RBAC check here if seeding policies is a restricted action
+  // const userId = await getUserIdFromAction();
+  // if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_SEED /* example */ }))) {
+  //   return { message: "Permission denied to seed policies.", count: 0, success: false };
+  // }
+
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, count: 0, success: false, error: CRITICAL_DB_ERROR_MSG }
   }
+  // Consider if clearPoliciesAction should also be RBAC protected if called from here
   await clearPoliciesAction()
   const policiesToSeed = generateSeedPolicyDataInline(count)
   const policiesForDb = policiesToSeed.map((p) => ({
@@ -660,16 +708,40 @@ export async function updatePolicyStatusAction(
   policyId: string,
   newStatus: PolicyStatus,
 ): Promise<UpdatePolicyStatusActionState> {
+  const userId = await getUserIdFromAction()
+  if (!userId) {
+    return { message: "Authentication required.", success: false, policyId, error: "User not authenticated." }
+  }
+
+  // TODO: Determine OU context for policy status updates if policies become OU-specific.
+  // Using POLICY_UPDATE for now, consider a more granular permission like POLICY_UPDATE_STATUS
+  const canUpdateStatus = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_UPDATE }) // Or a more specific permission
+  if (!canUpdateStatus) {
+    return {
+      message: "You do not have permission to update policy status.",
+      success: false,
+      policyId,
+      newStatus,
+      error: "Permission denied.",
+    }
+  }
+
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, success: false, policyId, error: CRITICAL_DB_ERROR_MSG }
   }
 
   if (!policyId || !newStatus) {
-    return { message: "Policy ID and new status are required.", success: false, policyId }
+    return { message: "Policy ID and new status are required.", success: false, policyId, error: "Missing parameters." }
   }
 
   if (!POLICY_STATUSES.includes(newStatus)) {
-    return { message: `Invalid status: ${newStatus}.`, success: false, policyId, newStatus }
+    return {
+      message: `Invalid status: ${newStatus}.`,
+      success: false,
+      policyId,
+      newStatus,
+      error: "Invalid status value.",
+    }
   }
 
   try {
