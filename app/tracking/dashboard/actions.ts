@@ -3,7 +3,12 @@
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ImplementationChallenge, ImplementationChallengeInput } from "../challenges/types"
-import type { ImplementationStakeholder, ImplementationStakeholderInput } from "../stakeholders/types"
+import type {
+  ImplementationStakeholder,
+  ImplementationStakeholderInput,
+  StakeholderCategory,
+  StakeholderImplementationRole,
+} from "../stakeholders/types"
 import type { ImplementationMilestone, ImplementationMilestoneInput } from "../milestones/types"
 import type { PolicyImplementationStatus } from "./actions" // Self-reference for type
 
@@ -932,4 +937,54 @@ export async function deleteMilestoneAction(milestoneId: string): Promise<Milest
     revalidatePath(`/tracking/implementations/${milestoneToDelete.implementation_status_id}`)
   }
   return { message: "Milestone deleted successfully.", success: true, milestoneId }
+}
+
+export async function getActiveStakeholderCategoriesAction(): Promise<{
+  categories: StakeholderCategory[]
+  error?: string
+}> {
+  if (!isSupabaseAdminConfigured()) {
+    return { categories: [], error: CRITICAL_DB_ERROR_MSG }
+  }
+  try {
+    const { data, error } = await supabaseAdmin!
+      .from("stakeholder_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching stakeholder categories:", error)
+      return { categories: [], error: error.message }
+    }
+    return { categories: data || [] }
+  } catch (e: any) {
+    console.error("Unexpected error in getActiveStakeholderCategoriesAction:", e.message)
+    return { categories: [], error: e.message }
+  }
+}
+
+export async function getActiveImplementationRolesAction(): Promise<{
+  roles: StakeholderImplementationRole[]
+  error?: string
+}> {
+  if (!isSupabaseAdminConfigured()) {
+    return { roles: [], error: CRITICAL_DB_ERROR_MSG }
+  }
+  try {
+    const { data, error } = await supabaseAdmin!
+      .from("stakeholder_implementation_roles")
+      .select("*")
+      .eq("is_active", true)
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("Error fetching stakeholder implementation roles:", error)
+      return { roles: [], error: error.message }
+    }
+    return { roles: data || [] }
+  } catch (e: any) {
+    console.error("Unexpected error in getActiveImplementationRolesAction:", e.message)
+    return { roles: [], error: e.message }
+  }
 }
