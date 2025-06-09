@@ -78,6 +78,29 @@ export async function getUserFromAction() {
   }
 }
 
+/**
+ * Retrieves the full authenticated user object from the current Supabase session.
+ * This is the function that was repeatedly reported as missing.
+ */
+export async function getSupabaseAuthUser() {
+  try {
+    const supabase = createSupabaseServerClient()
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+
+    if (error) {
+      console.error("Error getting Supabase auth user:", error.message)
+      return null
+    }
+    return user // Returns the full user object or null
+  } catch (e: any) {
+    console.error("Unexpected error in getSupabaseAuthUser:", e.message)
+    return null
+  }
+}
+
 // You might also want a function to get the service role client if needed for admin tasks
 // This assumes you have SUPABASE_SERVICE_ROLE_KEY set in your environment
 export function getSupabaseAdminClient() {

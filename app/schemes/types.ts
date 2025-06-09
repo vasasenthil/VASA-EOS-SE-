@@ -1,5 +1,9 @@
 import type { OrganizationalUnit, GovernanceTier } from "@/app/governance/types"
 import type { AuthUser } from "@/app/governance/types" // Assuming AuthUser is defined here
+import type { z } from "zod"
+import type { createSchemeSchema, updateSchemeSchema } from "./actions" // Assuming schemas are exported from actions
+
+export type SchemeStatus = "Proposed" | "Active" | "Inactive" | "Completed" | "Discontinued"
 
 export interface SchemeCategory {
   id: string // UUID
@@ -124,3 +128,7 @@ export type OrganizationalUnitSubtypeInput = Omit<
   OrganizationalUnitSubtype,
   "id" | "created_at" | "updated_at" | "governance_tier"
 >
+
+// Explicitly define input types if preferred over inferring in each component/action
+export type CreateSchemeInput = z.infer<typeof createSchemeSchema>
+export type UpdateSchemeInput = z.infer<typeof updateSchemeSchema>
