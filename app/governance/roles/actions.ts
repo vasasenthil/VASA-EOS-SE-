@@ -197,23 +197,30 @@ export async function getRoleByIdAction(
   }
 }
 
-export async function updateRoleAction(id: string, roleData: Partial<RoleInput>): Promise<RoleActionState<Role>> {
+export async function updateRoleAndPermissionsAction(
+  roleId: string,
+  roleData: Partial<RoleInput>,
+  permissionIds: string[],
+): Promise<RoleActionState<Role>> {
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
-  if (!id) {
+  if (!roleId) {
     return { success: false, message: "Role ID is required for update." }
   }
 
+  const supabase = supabaseAdmin!
+
+  // --- 1. Validate Role Data ---
   const errors: Partial<Record<keyof RoleInput, string>> = {}
   if (roleData.name && roleData.name.trim().length < 3) {
     errors.name = "Role Name must be at least 3 characters long."
   } else if (roleData.name) {
-    const { data: existingRole, error: fetchError } = await supabaseAdmin!
+    const { data: existingRole, error: fetchError } = await supabase
       .from("roles")
       .select("id")
       .eq("name", roleData.name.trim())
-      .neq("id", id) // Exclude the current role from the check
+      .neq("id", roleId)
       .maybeSingle()
     if (fetchError) console.error("Error checking existing role name for update:", fetchError)
     if (existingRole) errors.name = "Another role with this name already exists."
@@ -223,40 +230,43 @@ export async function updateRoleAction(id: string, roleData: Partial<RoleInput>)
     return { success: false, message: "Validation failed.", errors }
   }
 
+  // --- 2. Update Role Details ---
   const updatePayload: Record<string, any> = {}
   if (roleData.name !== undefined) updatePayload.name = roleData.name.trim()
   if (roleData.description !== undefined) updatePayload.description = roleData.description
-  // is_system_role should generally not be updatable or only by super admin
-  // if (roleData.is_system_role !== undefined) updatePayload.is_system_role = roleData.is_system_role;
 
-  if (Object.keys(updatePayload).length === 0) {
-    return { success: false, message: "No fields provided for update." }
-  }
-  updatePayload.updated_at = new Date().toISOString()
-
-  try {
-    const { data, error } = await supabaseAdmin!.from("roles").update(updatePayload).eq("id", id).select().single()
-
-    if (error) {
-      console.error("Error updating role:", error)
-      if (error.code === "PGRST116") return { success: false, message: "Role not found." }
-      if (error.code === "23505")
-        return {
-          success: false,
-          message: "Another role with this name already exists.",
-          errors: { name: "Another role with this name already exists." },
-        }
-      return { success: false, message: `Failed to update role: ${error.message}`, errors: { _general: error.message } }
+  if (Object.keys(updatePayload).length > 0) {
+    updatePayload.updated_at = new Date().toISOString()
+    const { error: updateError } = await supabase.from("roles").update(updatePayload).eq("id", roleId)
+    if (updateError) {
+      console.error("Error updating role details:", updateError)
+      return { success: false, message: `Failed to update role details: ${updateError.message}` }
     }
-
-    revalidatePath(ROLES_BASE_PATH)
-    revalidatePath(`${ROLES_BASE_PATH}/${id}`)
-    redirect(`${ROLES_BASE_PATH}/${id}`)
-    return { success: true, message: "Role updated successfully.", data: mapDbRoleToType(data) }
-  } catch (e: any) {
-    console.error("Unexpected error updating role:", e)
-    return { success: false, message: `An unexpected error occurred: ${e.message}`, errors: { _general: e.message } }
   }
+
+  // --- 3. Update Permissions (Delete all then Insert new) ---
+  // For true atomicity, this should be a database function (stored procedure).
+  try {
+    const { error: deleteError } = await supabase.from("role_permissions").delete().eq("role_id", roleId)
+    if (deleteError) throw deleteError
+
+    if (permissionIds && permissionIds.length > 0) {
+      const newRolePermissions = permissionIds.map((pid) => ({ role_id: roleId, permission_id: pid }))
+      const { error: insertError } = await supabase.from("role_permissions").insert(newRolePermissions)
+      if (insertError) throw insertError
+    }
+  } catch (e: any) {
+    console.error("Error updating role permissions:", e)
+    return { success: false, message: `Failed to update permissions: ${e.message}` }
+  }
+
+  // --- 4. Revalidate and Redirect ---
+  revalidatePath(ROLES_BASE_PATH, "layout")
+  revalidatePath(`${ROLES_BASE_PATH}/edit/${roleId}`)
+  redirect(ROLES_BASE_PATH)
+
+  // The redirect will happen before this is returned, but it's good practice.
+  return { success: true, message: "Role and permissions updated successfully." }
 }
 
 export async function deleteRoleAction(id: string): Promise<RoleActionState<null>> {
@@ -473,6 +483,6 @@ export async function getPermissionsAction(params?: {
     }
   } catch (e: any) {
     console.error("Unexpected error fetching permissions:", e)
-    return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
+    return { success: false, message: `An unexpected error occurred: ${e.message}` }
   }
 }
