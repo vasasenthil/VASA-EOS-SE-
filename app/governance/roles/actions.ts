@@ -3,6 +3,7 @@
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { Role, RoleInput, Permission, RolePermission } from "../types"
+import { redirect } from "next/navigation"
 
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
@@ -101,6 +102,7 @@ export async function createRoleAction(roleData: RoleInput): Promise<RoleActionS
     }
 
     revalidatePath(ROLES_BASE_PATH)
+    redirect(ROLES_BASE_PATH)
     return { success: true, message: "Role created successfully.", data: mapDbRoleToType(data) }
   } catch (e: any) {
     console.error("Unexpected error creating role:", e)
@@ -249,6 +251,7 @@ export async function updateRoleAction(id: string, roleData: Partial<RoleInput>)
 
     revalidatePath(ROLES_BASE_PATH)
     revalidatePath(`${ROLES_BASE_PATH}/${id}`)
+    redirect(`${ROLES_BASE_PATH}/${id}`)
     return { success: true, message: "Role updated successfully.", data: mapDbRoleToType(data) }
   } catch (e: any) {
     console.error("Unexpected error updating role:", e)
