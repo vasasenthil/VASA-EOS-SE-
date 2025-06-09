@@ -50,22 +50,24 @@ export function StakeholderListItem({ stakeholder, onEdit, onDeleted }: Stakehol
     })
   }
 
+  // Use the joined data for display, with fallbacks.
+  const categoryName = stakeholder.stakeholder_category?.name
+  const roleName = stakeholder.implementation_role?.name
+
   return (
     <Card className="mb-4 shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle className="text-lg font-semibold">{stakeholder.stakeholder_name}</CardTitle>
-            {stakeholder.stakeholder_type && (
+            {categoryName && (
               <CardDescription className="flex items-center text-sm text-gray-500">
                 <Briefcase className="w-4 h-4 mr-1.5" />
-                {stakeholder.stakeholder_type}
+                {categoryName}
               </CardDescription>
             )}
           </div>
-          {stakeholder.role_in_implementation && (
-            <Badge variant="secondary">{stakeholder.role_in_implementation}</Badge>
-          )}
+          {roleName && <Badge variant="secondary">{roleName}</Badge>}
         </div>
       </CardHeader>
       <CardContent>

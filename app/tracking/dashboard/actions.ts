@@ -8,7 +8,7 @@ import type {
   ImplementationStakeholderInput,
   StakeholderCategory,
   StakeholderImplementationRole,
-} from "../stakeholders/types" // Ensure these types are correctly imported
+} from "../stakeholders/types"
 import type { ImplementationMilestone, ImplementationMilestoneInput } from "../milestones/types"
 import type { PolicyImplementationStatus } from "./actions" // Self-reference for type
 
@@ -108,44 +108,26 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       query = query.eq("region_type", filters.regionType)
     }
 
-    // In getTrackerDashboardData, the stakeholders select might need adjustment later if we want to display category/role names
-    // For now, it selects `stakeholder_type` which might be an issue if the column was dropped.
-    // Let's assume this part of the dashboard is using a different data source or will be updated.
-    // For this specific task, we focus on the CRUD actions for stakeholders.
-    const [
-      implementationResult,
-      challengesResult,
-      /*stakeholdersResult (old)*/ distinctStatusResult,
-      distinctRegionTypeResult,
-    ] = await Promise.all([
+    const [implementationResult, challengesResult, distinctStatusResult, distinctRegionTypeResult] = await Promise.all([
       query,
       supabaseAdmin!.from("implementation_challenges").select("id, severity, status, reported_date, resolved_date"),
-      // supabaseAdmin!.from("implementation_stakeholders").select("id, stakeholder_name, stakeholder_type"), // This line might cause issues if 'stakeholder_type' column is dropped.
-      // For dashboard stats, this might need to join with categories or count differently.
-      // For now, I'll comment it out to avoid potential error if the column is indeed dropped.
-      // The stats calculation for stakeholders will need to be revisited.
-      supabaseAdmin!
-        .from("policy_implementation_status")
-        .select("overall_status", { count: "exact", head: false }),
+      supabaseAdmin!.from("policy_implementation_status").select("overall_status", { count: "exact", head: false }),
       supabaseAdmin!.from("policy_implementation_status").select("region_type", { count: "exact", head: false }),
     ])
 
-    // Fetch stakeholder data separately for stats to handle potential schema changes
     const { data: stakeholdersDataForStats, error: stakeholdersStatsError } = await supabaseAdmin!
       .from("implementation_stakeholders")
-      .select("id, stakeholder_category_id") // Select category_id for stats
+      .select("id, stakeholder_category_id")
 
     if (stakeholdersStatsError) console.error("Error fetching stakeholders data for stats:", stakeholdersStatsError)
 
     const { data: implementationData, error: implementationError } = implementationResult
     const { data: challengesData, error: challengesError } = challengesResult
-    // const { data: stakeholdersData, error: stakeholdersError } = stakeholdersResult // Old
     const { data: distinctStatusData, error: distinctStatusError } = distinctStatusResult
     const { data: distinctRegionTypeData, error: distinctRegionTypeError } = distinctRegionTypeResult
 
     if (implementationError) throw implementationError
     if (challengesError) console.error("Error fetching challenges data:", challengesError)
-    // if (stakeholdersError) console.error("Error fetching stakeholders data:", stakeholdersError) // Old
     if (distinctStatusError) console.error("Error fetching distinct statuses:", distinctStatusError)
     if (distinctRegionTypeError) console.error("Error fetching distinct region types:", distinctRegionTypeError)
 
@@ -190,7 +172,7 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
     }
 
     let totalStakeholders = 0
-    let uniqueStakeholderTypes = 0 // This will now count unique stakeholder_category_ids
+    let uniqueStakeholderTypes = 0
     if (stakeholdersDataForStats) {
       totalStakeholders = stakeholdersDataForStats.length
       const categoryIds = new Set(stakeholdersDataForStats.map((s) => s.stakeholder_category_id).filter(Boolean))
@@ -231,7 +213,7 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
         description: "Across all implementations",
       },
       {
-        title: "Unique Stakeholder Categories", // Updated title
+        title: "Unique Stakeholder Categories",
         value: uniqueStakeholderTypes.toString(),
         description: "Different categories of stakeholders",
       },
@@ -292,7 +274,6 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       .sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime())
       .slice(0, 10)
 
-    // --- NEP Thrust Area Progress Calculation ---
     const thrustAreaProgressMap = new Map<string, { totalProgress: number; count: number }>()
     for (const item of implementationData) {
       // @ts-ignore
@@ -313,7 +294,6 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       }))
       .sort((a, b) => b.value - a.value)
 
-    // --- State Implementation Progress Calculation ---
     const stateProgressMap = new Map<string, { totalProgress: number; count: number; policies: Set<string> }>()
     implementationData
       .filter((item) => item.region_type === "State" && item.region_name)
@@ -478,9 +458,6 @@ export async function seedImplementationStakeholdersAction(): Promise<{
       return { message: "No implementation statuses found. Seed them first.", count: 0 }
     }
     const implStatusIds = implStatuses.map((s) => s.id)
-    // generateSeedStakeholderData needs to be updated to provide stakeholder_category_id and implementation_role_id
-    // For now, this seed action might fail or insert incomplete data if not updated.
-    // This is outside the scope of the current step but important to note.
     const stakeholdersData = generateSeedStakeholderData(implStatusIds, 2)
     if (!stakeholdersData || stakeholdersData.length === 0) {
       return { message: "No stakeholder data generated.", count: 0 }
@@ -626,11 +603,6 @@ export async function getImplementationStatusByIdAction(
   return { implementationStatus: implementationStatusDetail }
 }
 
-// --- CRUD Actions for Implementation Stakeholders ---
-// The addStakeholderAction and updateStakeholderAction are already compatible
-// with stakeholder_category_id and implementation_role_id due to the
-// StakeholderForm now sending these fields and the database schema update.
-// The ImplementationStakeholderInput type guides what data is permissible.
 export interface StakeholderActionState {
   message: string
   success: boolean
@@ -644,23 +616,26 @@ export async function getStakeholdersByImplementationIdAction(
   if (!isSupabaseAdminConfigured()) {
     return { stakeholders: [], error: CRITICAL_DB_ERROR_MSG }
   }
-  // This select("*") will now fetch stakeholder_category_id and implementation_role_id.
-  // For displaying names, the calling component will need to either:
-  // 1. Perform joins here (more complex query string).
-  // 2. Fetch categories/roles separately and map them on the client.
-  // 3. The `ImplementationStakeholder` type has optional `stakeholder_category` and `implementation_role`
-  //    fields for hydrated data, which would be populated by joins.
+
+  // UPDATED: The select query now joins with related tables to fetch names.
   const { data, error } = await supabaseAdmin!
     .from("implementation_stakeholders")
-    .select("*") // Fetches IDs, not names of category/role
+    .select(
+      `
+      *,
+      stakeholder_category:stakeholder_categories ( id, name ),
+      implementation_role:stakeholder_implementation_roles ( id, name )
+    `,
+    )
     .eq("implementation_status_id", implementationStatusId)
     .order("stakeholder_name", { ascending: true })
 
   if (error) {
-    console.error("Error fetching stakeholders:", error)
+    console.error("Error fetching stakeholders with joins:", error)
     return { stakeholders: [], error: error.message }
   }
-  return { stakeholders: data || [] }
+  // The data is cast to ImplementationStakeholder[] which now expects the nested objects.
+  return { stakeholders: (data as ImplementationStakeholder[]) || [] }
 }
 
 export async function addStakeholderAction(
@@ -670,26 +645,18 @@ export async function addStakeholderAction(
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
-
-  // The stakeholderData from the form now includes stakeholder_category_id and implementation_role_id
   const dataToInsert: ImplementationStakeholderInput = {
     ...stakeholderData,
     implementation_status_id: implementationStatusId,
   }
-
   if (!dataToInsert.stakeholder_name || dataToInsert.stakeholder_name.trim().length < 3) {
     return { message: "Validation failed", success: false, errors: { stakeholder_name: "Name is too short." } }
   }
-
-  // Supabase insert will use the fields provided in dataToInsert.
-  // Since stakeholder_type and role_in_implementation columns were dropped,
-  // they won't be inserted, which is correct.
   const { data, error } = await supabaseAdmin!
     .from("implementation_stakeholders")
-    .insert(dataToInsert) // dataToInsert contains the new _id fields
+    .insert(dataToInsert)
     .select()
     .single()
-
   if (error) {
     console.error("Error adding stakeholder:", error)
     return {
@@ -698,9 +665,8 @@ export async function addStakeholderAction(
       errors: { _general: error.message },
     }
   }
-
   revalidatePath(`/tracking/implementations/${implementationStatusId}`)
-  revalidatePath(`/tracking/dashboard`) // Revalidate dashboard in case stats are affected
+  revalidatePath(`/tracking/dashboard`)
   return { message: "Stakeholder added successfully.", success: true, stakeholderId: data.id }
 }
 
@@ -711,20 +677,15 @@ export async function updateStakeholderAction(
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, success: false, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
-
-  // stakeholderData from the form now includes stakeholder_category_id and implementation_role_id
   if (stakeholderData.stakeholder_name && stakeholderData.stakeholder_name.trim().length < 3) {
     return { message: "Validation failed", success: false, errors: { stakeholder_name: "Name is too short." } }
   }
-
-  // Supabase update will use the fields provided in stakeholderData.
   const { data, error } = await supabaseAdmin!
     .from("implementation_stakeholders")
-    .update(stakeholderData) // stakeholderData contains the new _id fields if they are being updated
+    .update(stakeholderData)
     .eq("id", stakeholderId)
     .select()
     .single()
-
   if (error) {
     console.error("Error updating stakeholder:", error)
     return {
@@ -733,11 +694,10 @@ export async function updateStakeholderAction(
       errors: { _general: error.message },
     }
   }
-
   if (data?.implementation_status_id) {
     revalidatePath(`/tracking/implementations/${data.implementation_status_id}`)
   }
-  revalidatePath(`/tracking/dashboard`) // Revalidate dashboard in case stats are affected
+  revalidatePath(`/tracking/dashboard`)
   return { message: "Stakeholder updated successfully.", success: true, stakeholderId: data.id }
 }
 
@@ -765,7 +725,6 @@ export async function deleteStakeholderAction(stakeholderId: string): Promise<St
   return { message: "Stakeholder deleted successfully.", success: true, stakeholderId }
 }
 
-// --- Milestone CRUD Actions --- (remain unchanged)
 export interface MilestoneActionState {
   message: string
   success: boolean
@@ -863,7 +822,6 @@ export async function deleteMilestoneAction(milestoneId: string): Promise<Milest
   return { message: "Milestone deleted successfully.", success: true, milestoneId }
 }
 
-// --- Actions for fetching dynamic stakeholder attributes --- (already added in previous step)
 export async function getActiveStakeholderCategoriesAction(): Promise<{
   categories: StakeholderCategory[]
   error?: string
