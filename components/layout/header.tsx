@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Library, UserCircle, LogOut, SettingsIcon } from "lucide-react"
+import Image from "next/image"
+import { UserCircle, LogOut, SettingsIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +25,15 @@ export function Header() {
       <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <Link
           href="/policies"
-          className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors"
+          className="flex items-center gap-3 text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors" // Adjusted gap slightly
         >
-          <Library className="h-6 w-6 text-blue-600" />
+          <Image
+            src="/logos/vasa-logo.png"
+            alt="VASA Logo"
+            width={40} // Adjust width as needed
+            height={40} // Adjust height as needed
+            className="h-10 w-10" // You can use Tailwind for sizing too, ensure aspect ratio is maintained or adjust width/height props
+          />
           <span>VASA-EOS (SE) Policy Hub</span>
         </Link>
 
