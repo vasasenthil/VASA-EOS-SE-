@@ -1,21 +1,28 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
-let put: any = async () => ({ url: "/uploads/simulated/error-put-not-loaded.txt" })
-let del: any = async () => {}
+import { put as vercelBlobPut, del as vercelBlobDel } from "@vercel/blob"
+
+// Fallback/simulation functions (signatures match original intent)
+let put: any = async (pathname?: string) => {
+  console.warn(`Simulated @vercel/blob put for: ${pathname || "unknown"}`)
+  return { url: `/uploads/simulated/${pathname || "error-put-not-loaded.txt"}` }
+}
+let del: any = async (url?: string | string[]) => {
+  console.warn(`Simulated @vercel/blob del for: ${url || "unknown"}`)
+  // Simulate successful deletion, original del returned void
+}
 
 const IS_SERVER_ENVIRONMENT = typeof process !== "undefined" && process.env?.NEXT_RUNTIME
 
 if (IS_SERVER_ENVIRONMENT) {
-  try {
-    const blobUtil = await import("@vercel/blob/server")
-    put = blobUtil.put
-    del = blobUtil.del
-  } catch (e) {
-    console.warn("Could not load @vercel/blob/server. File operations will be simulated.", e)
-  }
+  // In server environments, use the actual @vercel/blob functions
+  put = vercelBlobPut
+  del = vercelBlobDel
+  // console.log("Using actual @vercel/blob functions in server environment."); // Optional: for debugging
 } else {
-  console.warn("Running in a non-server environment (likely Next.js). File operations will be simulated.")
+  // In non-server environments, the simulation functions are already set.
+  console.warn("Running in a non-server environment. @vercel/blob operations will be simulated.")
 }
 
 import type { PolicyDraft, FileMetadata, PolicyStatus, VersionHistoryEntry } from "./policy-form-constants"
