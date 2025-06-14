@@ -22,10 +22,10 @@ function PageHeaderDescriptionComponent({ className, ...props }: React.HTMLAttri
   return <p className={cn("max-w-[750px] text-base text-muted-foreground", className)} {...props} />
 }
 
-// Exporting as PageHeaderDescription as per previous fix
+// Exporting as PageHeaderDescription as per the error message
 export { PageHeaderDescriptionComponent as PageHeaderDescription }
 
-// Also exporting as PageHeaderText to satisfy the current error
+// Also exporting as PageHeaderText to satisfy all potential dependencies in your codebase
 export { PageHeaderDescriptionComponent as PageHeaderText }
 
 function PageHeaderActions({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
