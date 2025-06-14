@@ -1,6 +1,5 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useEffect } from "react"
@@ -15,12 +14,13 @@ import { loginAction, type LoginState } from "./actions"
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal } from "lucide-react"
+import { useActionState } from "react"
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
+function SubmitButton({ isPending }: { isPending: boolean }) {
+  // const { pending } = useFormStatus() // Remove this line
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? "Signing In..." : "Sign In"}
+    <Button type="submit" className="w-full" disabled={isPending}>
+      {isPending ? "Signing In..." : "Sign In"}
     </Button>
   )
 }
@@ -44,7 +44,7 @@ export default function LoginPage() {
   const messageParam = searchParams.get("message")
 
   const initialState: LoginState = { success: false, message: "", errors: null, redirectPath: null }
-  const [state, formAction] = useFormState(loginAction, initialState)
+  const [state, formAction, isFormPending] = useActionState(loginAction, initialState)
 
   useEffect(() => {
     if (state.success && state.redirectPath) {
@@ -129,7 +129,7 @@ export default function LoginPage() {
               </Select>
               {state.errors?.role && <p className="text-xs text-red-500">{state.errors.role}</p>}
             </div>
-            <SubmitButton />
+            <SubmitButton isPending={isFormPending} />
           </form>
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2">
