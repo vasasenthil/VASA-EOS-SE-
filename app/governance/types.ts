@@ -24,7 +24,6 @@ export interface OrganizationalUnit {
   tier?: GovernanceTier
   parent_ou?: OrganizationalUnit
   child_ous?: OrganizationalUnit[]
-  // Add user count for potential display
   user_count?: number
 }
 
@@ -38,8 +37,8 @@ export interface Role {
 
   // Optional hydrated fields
   permissions?: Permission[]
-  permissions_count?: number // Count of permissions assigned
-  assigned_user_count?: number // Count of users assigned this role
+  permissions_count?: number
+  assigned_user_count?: number
 }
 
 export interface Permission {
@@ -49,8 +48,7 @@ export interface Permission {
   description?: string | null
   created_at: string
   updated_at: string
-  // Optional hydrated fields
-  assigned_roles_count?: number // Count of roles this permission is assigned to
+  assigned_roles_count?: number
 }
 
 export interface RolePermission {
@@ -63,11 +61,9 @@ export interface RolePermission {
   permission?: Permission
 }
 
-// Represents a user from auth.users table, for joining purposes
 export interface AuthUser {
   id: string // UUID
   email?: string | null
-  // Add other fields you might want from auth.users, e.g., raw_user_meta_data for name
   raw_user_meta_data?: {
     name?: string
     avatar_url?: string
@@ -76,19 +72,18 @@ export interface AuthUser {
 
 export interface UserOUAssignment {
   id: string // UUID
-  user_id: string // UUID from auth.users
+  user_id: string // UUID
   ou_id: string // UUID
   role_id: string // UUID
   is_primary_assignment: boolean
   assigned_at: string
 
   // Optional hydrated fields
-  user?: AuthUser // Hydrated user details
+  user?: AuthUser
   organizational_unit?: OrganizationalUnit
   role?: Role
 }
 
-// Input types for actions
 export interface OrganizationalUnitInput
   extends Omit<
     OrganizationalUnit,

@@ -8,6 +8,11 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "pnpm": {
+    "allowed-build-scripts": [
+      "sharp"
+    ]
+  },
   "dependencies": {
     "@hookform/resolvers": "latest",
     "@radix-ui/react-accordion": "latest",
