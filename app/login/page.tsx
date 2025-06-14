@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { loginAction, type LoginState } from "./actions"
-import { useToast } from "@/components/ui/use-toast" // Or your custom toast hook
+import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal } from "lucide-react"
 
@@ -24,6 +24,17 @@ function SubmitButton() {
     </Button>
   )
 }
+
+// Define roles for the dropdown
+const userRoles = [
+  { value: "STUDENT", label: "Student" },
+  { value: "TEACHER", label: "Teacher" },
+  { value: "PRINCIPAL", label: "Principal" },
+  { value: "SUBJECT_INCHARGE", label: "Subject Incharge" },
+  { value: "ACADEMIC_HEAD", label: "Academic Head" },
+  { value: "INSTITUTION_HEAD", label: "Institution Head" },
+  { value: "ADMIN", label: "System Admin" }, // Assuming 'ADMIN' maps to System Admin
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -40,7 +51,6 @@ export default function LoginPage() {
       toast({ title: "Login Successful", description: state.message })
       router.push(state.redirectPath)
     } else if (!state.success && state.message && state.message !== "") {
-      // Only show toast for actual error messages from the action, not initial state
       if (
         state.errors ||
         state.message.toLowerCase().includes("failed") ||
@@ -110,9 +120,11 @@ export default function LoginPage() {
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                  <SelectItem value="TEACHER">Teacher</SelectItem>
-                  <SelectItem value="ADMIN">Administrator</SelectItem>
+                  {userRoles.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {state.errors?.role && <p className="text-xs text-red-500">{state.errors.role}</p>}
@@ -124,9 +136,6 @@ export default function LoginPage() {
           <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
             Forgot your password?
           </Link>
-          {/* <Link href="/register" className="text-sm text-muted-foreground hover:text-primary">
-            Don&apos;t have an account? Sign Up
-          </Link> */}
         </CardFooter>
       </Card>
     </div>

@@ -4,8 +4,6 @@ import { z } from "zod"
 import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 
-// Helper to create Supabase client within server actions
-// Ensure this matches or is consistent with your lib/supabase/server.ts or lib/auth/server.ts
 const createClient = () => {
   const cookieStore = cookies()
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -16,29 +14,31 @@ const createClient = () => {
       set(name: string, value: string, options: CookieOptions) {
         try {
           cookieStore.set({ name, value, ...options })
-        } catch (error) {
-          // The `set` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
-        }
+        } catch (error) {}
       },
       remove(name: string, options: CookieOptions) {
         try {
           cookieStore.set({ name, value: "", ...options })
-        } catch (error) {
-          // The `delete` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
-        }
+        } catch (error) {}
       },
     },
   })
 }
 
+const userRolesEnum = z.enum([
+  "STUDENT",
+  "TEACHER",
+  "ADMIN", // This will map to System Admin
+  "PRINCIPAL",
+  "SUBJECT_INCHARGE",
+  "ACADEMIC_HEAD",
+  "INSTITUTION_HEAD",
+])
+
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
-  password: z.string().min(1, "Password is required."), // Basic check, Supabase handles complexity
-  role: z.enum(["STUDENT", "TEACHER", "ADMIN"], { message: "Invalid role selected." }),
+  password: z.string().min(1, "Password is required."),
+  role: userRolesEnum,
 })
 
 export interface LoginState {
@@ -54,7 +54,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
-    role: formData.get("role"), // Role selected on the form
+    role: formData.get("role"),
   })
 
   if (!validatedFields.success) {
@@ -69,16 +69,14 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
-  const { email, password, role: selectedRoleOnForm } = validatedFields.data
+  const { email, password } = validatedFields.data // Role from form is validated but DB role is source of truth
 
-  // Step 1: Sign in with Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (authError || !authData.user) {
-    console.error("Supabase Auth Error:", authError?.message)
     return {
       success: false,
       message: authError?.message || "Invalid login credentials.",
@@ -86,16 +84,13 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
-  // Step 2: Fetch user profile from custom 'users' table to verify role and get redirect path
   const { data: userProfile, error: profileError } = await supabase
     .from("users")
-    .select("role") // Only fetch role for verification
+    .select("role")
     .eq("id", authData.user.id)
     .single()
 
   if (profileError || !userProfile) {
-    console.error("Profile fetch error or profile not found:", profileError?.message)
-    // Sign out the user as their profile is missing or inaccessible
     await supabase.auth.signOut()
     return {
       success: false,
@@ -104,23 +99,11 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
-  const actualUserRole = userProfile.role.toUpperCase()
+  const actualUserRole = userProfile.role.toUpperCase() as z.infer<typeof userRolesEnum>
 
-  // Optional: Verify if the role selected on the form matches the actual role in the DB.
-  // For enhanced security, you might want to enforce this.
-  // For simplicity here, we'll prioritize the DB role for redirection.
-  // if (actualUserRole !== selectedRoleOnForm.toUpperCase()) {
-  //   await supabase.auth.signOut(); // Log out if roles mismatch significantly
-  //   return {
-  //     success: false,
-  //     message: "Role selection mismatch. Please select your correct role.",
-  //     errors: { role: "Incorrect role selected for this account." },
-  //   };
-  // }
-
-  let redirectPath = "/login?error=unknown_role" // Default fallback
+  let redirectPath = "/login?error=unknown_role"
   switch (actualUserRole) {
-    case "ADMIN":
+    case "ADMIN": // System Admin
       redirectPath = "/admin/dashboard"
       break
     case "TEACHER":
@@ -129,8 +112,19 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     case "STUDENT":
       redirectPath = "/student/dashboard"
       break
+    case "PRINCIPAL":
+      redirectPath = "/principal/dashboard"
+      break
+    case "SUBJECT_INCHARGE":
+      redirectPath = "/subject-incharge/dashboard"
+      break
+    case "ACADEMIC_HEAD":
+      redirectPath = "/academic-head/dashboard"
+      break
+    case "INSTITUTION_HEAD":
+      redirectPath = "/institution-head/dashboard"
+      break
     default:
-      // If role is unknown, sign out and show error
       await supabase.auth.signOut()
       return {
         success: false,
@@ -139,17 +133,9 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
       }
   }
 
-  // Instead of returning redirectPath for client-side redirect,
-  // perform server-side redirect directly from the action.
-  // This is generally preferred for form actions that result in navigation.
-  // However, to show a success toast, client-side redirect after state update is common.
-  // For this iteration, we'll return the path and let the client handle it for the toast.
   return {
     success: true,
     message: "Login successful! Redirecting...",
     redirectPath: redirectPath,
   }
-  // If you prefer server-side redirect immediately:
-  // redirect(redirectPath);
-  // Note: if you use redirect() here, the LoginState return type isn't fully utilized for success.
 }
