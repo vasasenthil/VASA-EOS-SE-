@@ -1,21 +1,8 @@
 "use server"
 
 import { z } from "zod"
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server" // Assuming you have this for admin actions
-// import { hash } from 'bcryptjs'; // Or any other password hashing library
-
-// Placeholder for password hashing - in a real app, use a strong hashing library like bcrypt or argon2
-// For Next.js/Supabase, Supabase handles password hashing automatically if you pass the raw password to auth.signUp
-// However, if creating users directly in a 'users' table outside of Supabase Auth, you'd need to hash.
-// For this MVP, we'll assume direct insertion into our custom 'users' table and will need to hash.
-// A simple placeholder for now, **REPLACE WITH ACTUAL HASHING**
-async function hashPassword(password: string): Promise<string> {
-  // In a real app, use bcryptjs or argon2id
-  // const salt = await genSalt(10);
-  // return await hash(password, salt);
-  console.warn("Using placeholder password hashing. REPLACE in production.")
-  return `hashed_${password}` // DO NOT USE IN PRODUCTION
-}
+import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
 
 const registerUserSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters long."),
@@ -31,7 +18,7 @@ export interface RegisterUserActionState {
 }
 
 export async function registerUserAction(
-  schoolId: string, // Passed from the form component, representing the admin's school
+  schoolId: string,
   prevState: RegisterUserActionState,
   formData: FormData,
 ): Promise<RegisterUserActionState> {
@@ -65,46 +52,65 @@ export async function registerUserAction(
   const { fullName, email, password, role } = validatedFields.data
 
   try {
-    // Check if email already exists
-    const { data: existingUser, error: fetchError } = await supabaseAdmin!
-      .from("users")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle()
-
-    if (fetchError) {
-      console.error("Error checking existing user:", fetchError)
-      return { success: false, message: "Database error checking user.", errors: { _general: "Database error." } }
-    }
-
-    if (existingUser) {
-      return {
-        success: false,
-        message: "An account with this email already exists.",
-        errors: { email: "Email already in use." },
-      }
-    }
-
-    const hashedPassword = await hashPassword(password) // **REPLACE WITH SECURE HASHING**
-
-    const { error: insertError } = await supabaseAdmin!.from("users").insert({
-      full_name: fullName,
+    // Step 1: Create user in Supabase Auth
+    const { data: authUser, error: authError } = await supabaseAdmin!.auth.admin.createUser({
       email: email,
-      password_hash: hashedPassword, // Store the hashed password
-      role: role,
-      school_id: schoolId, // Associate with the admin's school
+      password: password,
+      email_confirm: true, // Auto-confirm email for simplicity in MVP by admin
+      user_metadata: {
+        full_name: fullName,
+        // You can add role here if you want it in auth.users.raw_user_meta_data
+        // initial_role: role,
+      },
     })
 
-    if (insertError) {
-      console.error("Error inserting user:", insertError)
+    if (authError) {
+      console.error("Supabase Auth error creating user:", authError)
+      // Check for common errors like email already exists
+      if (authError.message.includes("already registered")) {
+        return {
+          success: false,
+          message: "This email is already registered.",
+          errors: { email: "Email already in use." },
+        }
+      }
       return {
         success: false,
-        message: "Failed to create user in database.",
-        errors: { _general: "Database insertion error." },
+        message: `Failed to create user account: ${authError.message}`,
+        errors: { _general: "Authentication service error." },
       }
     }
 
-    // Revalidate relevant paths if needed, e.g., revalidatePath('/admin/users')
+    if (!authUser || !authUser.user) {
+      return {
+        success: false,
+        message: "User account created but no user data returned.",
+        errors: { _general: "Authentication service issue." },
+      }
+    }
+
+    // Step 2: Insert into our custom 'users' table, linking to the Auth user
+    const { error: profileInsertError } = await supabaseAdmin!.from("users").insert({
+      id: authUser.user.id, // Use the ID from Supabase Auth
+      full_name: fullName,
+      email: email, // Store email here too for easier querying if needed, ensure it's consistent
+      role: role,
+      school_id: schoolId,
+    })
+
+    if (profileInsertError) {
+      console.error("Error inserting user profile:", profileInsertError)
+      // Potentially attempt to delete the Supabase Auth user if profile creation fails (rollback)
+      await supabaseAdmin!.auth.admin.deleteUser(authUser.user.id)
+      console.warn(`Rolled back Supabase Auth user creation for ${authUser.user.id} due to profile insert error.`)
+      return {
+        success: false,
+        message: "Failed to create user profile information.",
+        errors: { _general: "Database profile insertion error." },
+      }
+    }
+
+    revalidatePath("/admin/users") // Or whatever path lists users
     return {
       success: true,
       message: `${role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()} '${fullName}' created successfully.`,
