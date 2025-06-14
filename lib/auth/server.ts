@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server" // Assuming supabaseAdmin is your service role client
+import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server"
 
 // Helper to get the Supabase server client for user session
 function createSupabaseServerClient() {
@@ -101,12 +101,53 @@ export async function getSupabaseAuthUser() {
   }
 }
 
-// You might also want a function to get the service role client if needed for admin tasks
-// This assumes you have SUPABASE_SERVICE_ROLE_KEY set in your environment
+/**
+ * Retrieves the Supabase admin client for performing privileged operations.
+ */
 export function getSupabaseAdminClient() {
   if (!isSupabaseAdminConfigured()) {
     console.warn("Supabase admin client not configured. Service role key might be missing.")
     return null
   }
   return supabaseAdmin // from @/lib/supabase/server
+}
+
+/**
+ * Retrieves the current user's role and school ID from the custom 'users' table.
+ * @param userId The ID of the user to look up.
+ * @returns An object with role and schoolId, or null if not found or an error occurs.
+ */
+export async function getUserRoleAndSchool(userId: string): Promise<{ role: string; school_id: string | null } | null> {
+  // Note: This function queries our custom 'users' table, not Supabase Auth claims.
+  // It's designed for the MVP schema.
+  try {
+    const supabase = createSupabaseServerClient()
+    const { data: userProfile, error } = await supabase
+      .from("users")
+      .select("role, school_id")
+      .eq("id", userId)
+      .single()
+
+    if (error) {
+      // It's common for .single() to error if no rows are found. We can treat this as a non-critical error.
+      if (error.code !== "PGRST116") {
+        // PGRST116 = "JSON object requested, but 0 rows returned"
+        console.error("Error fetching user role and school:", error.message)
+      }
+      return null
+    }
+
+    if (!userProfile) {
+      console.warn(`No profile found for user ID: ${userId} in custom users table.`)
+      return null
+    }
+
+    return {
+      role: userProfile.role,
+      school_id: userProfile.school_id,
+    }
+  } catch (e: any) {
+    console.error("Unexpected error in getUserRoleAndSchool:", e.message)
+    return null
+  }
 }
