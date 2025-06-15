@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:seed:users": "tsx scripts/seed-users.ts"
+    "lint": "next lint"
   },
   "pnpm": {
     "allowed-build-scripts": [
