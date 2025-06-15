@@ -5,6 +5,16 @@ import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 
 const createClient = () => {
+  console.log("--- Inside createClient for loginAction ---")
+  console.log(
+    "NEXT_PUBLIC_SUPABASE_URL for client:",
+    process.env.NEXT_PUBLIC_SUPABASE_URL ? "Exists" : "MISSING OR UNDEFINED",
+  )
+  console.log(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY for client:",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? "Exists" : "MISSING OR UNDEFINED",
+  )
+
   const cookieStore = cookies()
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -49,6 +59,11 @@ export interface LoginState {
 }
 
 export async function loginAction(prevState: LoginState, formData: FormData): Promise<LoginState> {
+  console.log("--- Inside loginAction ---")
+  console.log("Attempting to read NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log("Attempting to read NEXT_PUBLIC_SUPABASE_ANON_KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+  // The existing createClient function which uses these variables
   const supabase = createClient()
 
   const validatedFields = loginSchema.safeParse({
