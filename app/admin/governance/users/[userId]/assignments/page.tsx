@@ -14,15 +14,15 @@ export const metadata = {
   description: "Assign users to organizational units with specific roles.",
 }
 
-interface UserAssignmentsPageProps {
-  params: {
-    userId: string
-  }
-  searchParams?: { [key: string]: string | string[] | undefined }
-}
-
-export default async function UserAssignmentsPage({ params }: UserAssignmentsPageProps) {
-  const { userId: targetUserId } = params // ID of the user being managed
+// No separate UserAssignmentsPageProps interface
+export default async function UserAssignmentsPage({
+  params,
+  // searchParams, // Let's remove searchParams temporarily to isolate the 'params' issue
+}: {
+  params: { userId: string };
+  // searchParams?: { [key: string]: string | string[] | undefined };
+}) {
+  const { userId: targetUserId } = params
 
   // Get the ID of the currently authenticated administrator
   const currentAuthUserId = await getUserIdFromAction()
