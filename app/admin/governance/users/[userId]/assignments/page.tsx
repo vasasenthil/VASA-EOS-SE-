@@ -16,8 +16,9 @@ export const metadata = {
 
 interface UserAssignmentsPageProps {
   params: {
-    userId: string // This is the ID of the user whose assignments are being managed
+    userId: string
   }
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
 export default async function UserAssignmentsPage({ params }: UserAssignmentsPageProps) {
