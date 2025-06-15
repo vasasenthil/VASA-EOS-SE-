@@ -1,177 +1,199 @@
 import { createClient } from "@supabase/supabase-js"
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
-// Define UserRole here as it's not easily importable in this context
+// Define UserRole type locally if not exported from another file
 type UserRole = "STUDENT" | "TEACHER" | "SCHOOL_ADMIN" | "STATE_ADMIN"
 
-// This is your new API route handler
+const usersToSeed = [
+  {
+    email: "student1@example.com",
+    password: "password123",
+    fullName: "Alice Wonderland",
+    role: "STUDENT",
+    schoolName: "Vidya Mandir High School",
+  },
+  {
+    email: "student2@example.com",
+    password: "password123",
+    fullName: "Bob The Builder",
+    role: "STUDENT",
+    schoolName: "Jnana Prabodhini School",
+  },
+  {
+    email: "teacher1@example.com",
+    password: "password123",
+    fullName: "Charles Xavier",
+    role: "TEACHER",
+    schoolName: "Vidya Mandir High School",
+  },
+  {
+    email: "teacher2@example.com",
+    password: "password123",
+    fullName: "Diana Prince",
+    role: "TEACHER",
+    schoolName: "Jnana Prabodhini School",
+  },
+  {
+    email: "schooladmin1@example.com",
+    password: "password123",
+    fullName: "Edward Nigma",
+    role: "SCHOOL_ADMIN",
+    schoolName: "Vidya Mandir High School",
+  },
+  {
+    email: "stateadmin1@example.com",
+    password: "password123",
+    fullName: "Fiona Glenanne",
+    role: "STATE_ADMIN",
+    schoolName: null,
+  },
+  {
+    email: "principal.vmhs@example.com",
+    password: "password123",
+    fullName: "Principal VMHS",
+    role: "SCHOOL_ADMIN",
+    schoolName: "Vidya Mandir High School",
+  },
+  {
+    email: "subjectincharge.math.vmhs@example.com",
+    password: "password123",
+    fullName: "Math Incharge VMHS",
+    role: "TEACHER",
+    schoolName: "Vidya Mandir High School",
+  },
+  {
+    email: "academichead.jps@example.com",
+    password: "password123",
+    fullName: "Academic Head JPS",
+    role: "SCHOOL_ADMIN",
+    schoolName: "Jnana Prabodhini School",
+  },
+  {
+    email: "institutionhead.jps@example.com",
+    password: "password123",
+    fullName: "Institution Head JPS",
+    role: "SCHOOL_ADMIN",
+    schoolName: "Jnana Prabodhini School",
+  },
+]
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const secret = searchParams.get("secret")
 
-  // --- SECURITY CHECK ---
-  // This is a simple secret key check to prevent unauthorized access.
-  // Make sure to set SEED_SECRET in your Vercel Environment Variables.
   if (secret !== process.env.SEED_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
+  if (!supabaseUrl || !supabaseServiceKey) {
     return NextResponse.json({ error: "Supabase environment variables not set." }, { status: 500 })
   }
 
-  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+  const logs: string[] = ["Starting to seed users with robust script..."]
 
-  // --- Seeding Logic (copied from seed-users.ts) ---
-  const logs: string[] = []
-  const log = (message: string) => {
-    console.log(message)
-    logs.push(message)
+  // Ensure schools exist, or create them
+  const schoolNames = [...new Set(usersToSeed.map((u) => u.schoolName).filter(Boolean))]
+  const schoolMap = new Map<string, string>()
+
+  for (const name of schoolNames) {
+    let { data: school, error } = await supabaseAdmin.from("schools").select("id").eq("name", name).single()
+    if (error && error.code === "PGRST116") {
+      logs.push(`School '${name}' not found, creating it...`)
+      const { data: newSchool, error: createError } = await supabaseAdmin
+        .from("schools")
+        .insert({ name })
+        .select("id")
+        .single()
+      if (createError) {
+        logs.push(`Error creating school '${name}': ${createError.message}`)
+        continue
+      }
+      school = newSchool
+      logs.push(`Successfully created school '${name}'.`)
+    } else if (error) {
+      logs.push(`Error fetching school '${name}': ${error.message}`)
+      continue
+    }
+    if (school) {
+      schoolMap.set(name, school.id)
+    }
   }
 
-  try {
-    log("Starting to seed users via API route...")
+  for (const user of usersToSeed) {
+    logs.push(`\nProcessing user: ${user.email} (${user.role})`)
+    let authUserId: string | undefined
 
-    const school1Name = "Vidya Mandir High School"
-    const school2Name = "Jnana Prabodhini School"
-    let school1Id = await getSchoolIdByName(supabaseAdmin, school1Name, log)
-    let school2Id = await getSchoolIdByName(supabaseAdmin, school2Name, log)
+    // 1. Check if user exists in auth.users
+    const { data: existingAuthUser, error: getAuthUserError } = await supabaseAdmin.auth.admin.getUserByEmail(
+      user.email,
+    )
 
-    if (!school1Id) {
-      school1Id = await createSchool(supabaseAdmin, school1Name, "Maharashtra", "Pune", log)
-    }
-    if (!school2Id) {
-      school2Id = await createSchool(supabaseAdmin, school2Name, "Karnataka", "Bengaluru", log)
-    }
+    if (getAuthUserError && getAuthUserError.message.includes("User not found")) {
+      // User does not exist, create them in Auth
+      const { data: newAuthUser, error: createAuthError } = await supabaseAdmin.auth.admin.createUser({
+        email: user.email,
+        password: user.password,
+        email_confirm: true,
+        user_metadata: { full_name: user.fullName },
+      })
 
-    const usersToSeed = [
-      { email: "student1@example.com", fullName: "Alice Wonderland", role: "STUDENT", schoolName: school1Name },
-      { email: "student2@example.com", fullName: "Bob The Builder", role: "STUDENT", schoolName: school2Name },
-      { email: "teacher1@example.com", fullName: "Charles Xavier", role: "TEACHER", schoolName: school1Name },
-      { email: "teacher2@example.com", fullName: "Diana Prince", role: "TEACHER", schoolName: school2Name },
-      { email: "schooladmin1@example.com", fullName: "Edward Nigma", role: "SCHOOL_ADMIN", schoolName: school1Name },
-      { email: "stateadmin1@example.com", fullName: "Fiona Glenanne", role: "STATE_ADMIN" },
-      {
-        email: "principal.vmhs@example.com",
-        fullName: "Principal VMHS",
-        role: "SCHOOL_ADMIN",
-        schoolName: school1Name,
-      },
-      {
-        email: "subjectincharge.math.vmhs@example.com",
-        fullName: "Math Incharge VMHS",
-        role: "TEACHER",
-        schoolName: school1Name,
-      },
-      {
-        email: "academichead.jps@example.com",
-        fullName: "Academic Head JPS",
-        role: "SCHOOL_ADMIN",
-        schoolName: school2Name,
-      },
-      {
-        email: "institutionhead.jps@example.com",
-        fullName: "Institution Head JPS",
-        role: "SCHOOL_ADMIN",
-        schoolName: school2Name,
-      },
-    ]
-
-    for (const userData of usersToSeed) {
-      await processUser(supabaseAdmin, userData, { school1Id, school2Id, school1Name, school2Name }, log)
+      if (createAuthError) {
+        logs.push(`Failed to create auth user ${user.email}: ${createAuthError.message}`)
+        continue
+      }
+      authUserId = newAuthUser.user.id
+      logs.push(`Successfully created auth user for ${user.email}.`)
+    } else if (getAuthUserError) {
+      logs.push(`Error checking auth user ${user.email}: ${getAuthUserError.message}`)
+      continue
+    } else {
+      // User already exists in Auth
+      authUserId = existingAuthUser.user.id
+      logs.push(`Auth user for ${user.email} already exists.`)
     }
 
-    log("\nUser seeding script completed successfully.")
-    return NextResponse.json({ message: "Seeding completed!", logs })
-  } catch (error: any) {
-    log(`\nAn error occurred during seeding: ${error.message}`)
-    return NextResponse.json({ error: "Seeding failed.", logs, details: error.message }, { status: 500 })
-  }
-}
-
-// --- Helper Functions ---
-
-async function getSchoolIdByName(supabase: any, name: string, log: (msg: string) => void): Promise<string | null> {
-  const { data, error } = await supabase.from("schools").select("id").eq("name", name).single()
-  if (error && error.code !== "PGRST116") {
-    log(`Warning fetching school "${name}": ${error.message}.`)
-    return null
-  }
-  return data ? data.id : null
-}
-
-async function createSchool(
-  supabase: any,
-  name: string,
-  state: string,
-  city: string,
-  log: (msg: string) => void,
-): Promise<string | null> {
-  log(`School "${name}" not found, attempting to create...`)
-  const { data, error } = await supabase.from("schools").insert({ name, state, city }).select("id").single()
-  if (error) {
-    log(`Failed to create school "${name}": ${error.message}`)
-    return null
-  }
-  if (data) {
-    log(`Created school "${name}" with ID: ${data.id}`)
-    return data.id
-  }
-  return null
-}
-
-async function processUser(supabase: any, userData: any, schools: any, log: (msg: string) => void) {
-  const password = "password123"
-  log(`\nProcessing user: ${userData.email} (${userData.role})`)
-
-  const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-    email: userData.email,
-    password: password,
-    email_confirm: true,
-    user_metadata: { full_name: userData.fullName },
-  })
-
-  if (authError) {
-    if (authError.message.includes("already registered")) {
-      log(`Auth user ${userData.email} already exists. Skipping auth creation.`)
-      // If you want to be thorough, you could fetch the existing user and profile here, but for a seed script, skipping is fine.
-      return
+    if (!authUserId) {
+      logs.push(`Could not get an auth user ID for ${user.email}. Skipping profile creation.`)
+      continue
     }
-    log(`Failed to create auth user ${userData.email}: ${authError.message}`)
-    return
+
+    // 2. Check if user profile exists in public.users
+    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+      .from("users")
+      .select("id")
+      .eq("id", authUserId)
+      .single()
+
+    if (profileCheckError && profileCheckError.code !== "PGRST116") {
+      logs.push(`Error checking profile for ${user.email}: ${profileCheckError.message}`)
+      continue
+    }
+
+    if (existingProfile) {
+      logs.push(`User profile for ${user.email} already exists. Skipping.`)
+    } else {
+      // Profile does not exist, create it
+      const school_id = user.schoolName ? schoolMap.get(user.schoolName) : null
+      const { error: createProfileError } = await supabaseAdmin.from("users").insert({
+        id: authUserId,
+        email: user.email,
+        full_name: user.fullName,
+        role: user.role,
+        school_id: school_id,
+      })
+
+      if (createProfileError) {
+        logs.push(`Failed to create user profile for ${user.email}: ${createProfileError.message}`)
+      } else {
+        logs.push(`Successfully created user profile for ${user.email}.`)
+      }
+    }
   }
 
-  if (!authUser || !authUser.user) {
-    log(`Auth user ${userData.email} created but no user data returned.`)
-    return
-  }
-
-  let userSchoolId: string | null = null
-  if (userData.schoolName) {
-    if (userData.schoolName === schools.school1Name) userSchoolId = schools.school1Id
-    else if (userData.schoolName === schools.school2Name) userSchoolId = schools.school2Id
-  }
-
-  const { error: profileInsertError } = await supabase.from("users").insert({
-    id: authUser.user.id,
-    email: userData.email,
-    full_name: userData.fullName,
-    role: userData.role,
-    school_id: userData.role === "STATE_ADMIN" ? null : userSchoolId,
-  })
-
-  if (profileInsertError) {
-    log(`Failed to insert profile for ${userData.email}: ${profileInsertError.message}`)
-  } else {
-    log(`Successfully created user profile for ${userData.email}.`)
-  }
+  logs.push("\nUser seeding script completed successfully.")
+  return NextResponse.json({ message: "Seeding completed!", logs })
 }
