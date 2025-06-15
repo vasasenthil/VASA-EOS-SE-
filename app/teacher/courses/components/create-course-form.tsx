@@ -1,91 +1,88 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
-import { useEffect } from "react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
+import { createCourseAction } from "../actions/create-course-action"
 import { useToast } from "@/components/ui/use-toast"
-import { createCourseAction, type CreateCourseActionState } from "@/app/teacher/courses/actions/create-course-action"
 import { useRouter } from "next/navigation"
 
-const initialState: CreateCourseActionState = {
-  success: false,
-  message: "",
-  errors: null,
-  courseId: null,
-}
+const formSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+})
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Creating Course..." : "Create Course"}
-    </Button>
-  )
-}
-
-export function CreateCourseForm({ teacherId }: { teacherId: string }) {
+export default function CreateCourseForm() {
   const { toast } = useToast()
   const router = useRouter()
-  const [state, formAction] = useFormState(createCourseAction.bind(null, teacherId), initialState)
 
-  useEffect(() => {
-    if (state.message) {
-      if (state.success) {
-        toast({
-          title: "Success",
-          description: state.message,
-        })
-        if (state.courseId) {
-          // Redirect to manage course page or add materials page
-          router.push(`/teacher/courses/${state.courseId}/manage`)
-        } else {
-          // Optionally, clear form here if not redirecting
-          // Or redirect to a course list page
-          router.push("/teacher/courses")
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: state.message || "Failed to create course.",
-          variant: "destructive",
-        })
-      }
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const result = await createCourseAction(values)
+    if (result.success) {
+      toast({
+        title: "Success",
+        description: "Course created successfully.",
+      })
+      router.push("/teacher/dashboard")
+    } else {
+      toast({
+        title: "Error",
+        description: result.message || "Failed to create course.",
+        variant: "destructive",
+      })
     }
-  }, [state, toast, router])
+  }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Create New Course</CardTitle>
-        <CardDescription>Define the basic details for your new course.</CardDescription>
-      </CardHeader>
-      <form action={formAction}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Course Title</Label>
-            <Input id="title" name="title" placeholder="e.g., Grade 10 Mathematics" required />
-            {state.errors?.title && <p className="text-sm text-destructive">{state.errors.title}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Course Description (Optional)</Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Provide a brief overview of the course content and objectives."
-              rows={4}
-            />
-            {state.errors?.description && <p className="text-sm text-destructive">{state.errors.description}</p>}
-          </div>
-          {state.errors?._general && <p className="text-sm text-destructive">{state.errors._general}</p>}
-        </CardContent>
-        <CardFooter>
-          <SubmitButton />
-        </CardFooter>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Course Title</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Introduction to Algebra" {...field} />
+              </FormControl>
+              <FormDescription>This is the public display title for the course.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Course Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Provide a brief description of the course content and objectives." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Creating..." : "Create Course"}
+        </Button>
       </form>
-    </Card>
+    </Form>
   )
 }

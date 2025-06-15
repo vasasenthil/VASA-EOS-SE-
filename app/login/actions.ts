@@ -5,8 +5,21 @@ import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 
 const createClient = () => {
+  console.log("--- Inside createClient for loginAction ---")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  console.log("NEXT_PUBLIC_SUPABASE_URL for client:", supabaseUrl ? "Exists" : "MISSING OR UNDEFINED")
+  console.log("NEXT_PUBLIC_SUPABASE_ANON_KEY for client:", supabaseAnonKey ? "Exists" : "MISSING OR UNDEFINED")
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error("Supabase URL or Anon Key is missing. Cannot create client.")
+    // Potentially throw an error or return a specific state if this happens
+    // For now, createServerClient will likely error out if these are undefined.
+  }
+
   const cookieStore = cookies()
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  return createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value
@@ -38,7 +51,7 @@ const userRolesEnum = z.enum([
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(1, "Password is required."),
-  role: userRolesEnum,
+  role: userRolesEnum, // Role from form is for UI, DB role is source of truth
 })
 
 export interface LoginState {
@@ -49,6 +62,20 @@ export interface LoginState {
 }
 
 export async function loginAction(prevState: LoginState, formData: FormData): Promise<LoginState> {
+  console.log("--- Inside loginAction ---")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  console.log("Attempting to read NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "Exists" : "MISSING")
+  console.log("Attempting to read NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "Exists" : "MISSING")
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return {
+      success: false,
+      message: "Server configuration error. Supabase credentials missing.",
+      errors: { _general: "Server configuration error. Please contact support." },
+    }
+  }
+
   const supabase = createClient()
 
   const validatedFields = loginSchema.safeParse({
@@ -69,14 +96,16 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
-  const { email, password } = validatedFields.data // Role from form is validated but DB role is source of truth
+  const { email, password } = validatedFields.data
 
+  console.log(`Attempting login for email: ${email}`)
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
-  if (authError || !authData.user) {
+  if (authError || !authData?.user) {
+    console.error("Authentication error:", authError?.message)
     return {
       success: false,
       message: authError?.message || "Invalid login credentials.",
@@ -84,6 +113,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
+  console.log(`Authentication successful for user ID: ${authData.user.id}. Fetching profile...`)
   const { data: userProfile, error: profileError } = await supabase
     .from("users")
     .select("role")
@@ -91,7 +121,9 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     .single()
 
   if (profileError || !userProfile) {
-    await supabase.auth.signOut()
+    console.error("Error fetching user profile from 'users' table:", profileError?.message)
+    console.error("Full profileError object:", JSON.stringify(profileError, null, 2))
+    await supabase.auth.signOut() // Sign out the user if profile fetch fails
     return {
       success: false,
       message: "User profile not found or inaccessible. Please contact support.",
@@ -99,11 +131,12 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
+  console.log(`User profile fetched successfully. Role: ${userProfile.role}`)
   const actualUserRole = userProfile.role.toUpperCase() as z.infer<typeof userRolesEnum>
 
   let redirectPath = "/login?error=unknown_role"
   switch (actualUserRole) {
-    case "ADMIN": // System Admin
+    case "ADMIN":
       redirectPath = "/admin/dashboard"
       break
     case "TEACHER":
@@ -125,6 +158,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
       redirectPath = "/institution-head/dashboard"
       break
     default:
+      console.warn(`Unknown role encountered after profile fetch: ${userProfile.role}`)
       await supabase.auth.signOut()
       return {
         success: false,
@@ -133,6 +167,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
       }
   }
 
+  console.log(`Login successful! Redirecting to: ${redirectPath}`)
   return {
     success: true,
     message: "Login successful! Redirecting...",

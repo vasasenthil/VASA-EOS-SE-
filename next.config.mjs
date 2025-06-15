@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    // Optionally, you can also set this to false during debugging
+    // ignoreDuringBuilds: false, 
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false, // Changed to false
   },
+  // If you had a top-level ignoreBuildErrors, remove it or set to false
+  // ignoreBuildErrors: false, 
   images: {
     unoptimized: true,
   },
