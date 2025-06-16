@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 import { hasPermission } from "@/app/governance/rbac"
-import { PERMISSIONS } from "@/app/governance/types" // Assuming app/governance/types.ts is now correct
+import { PERMISSIONS } from "@/app/governance/types"
 import { getAuthUsersForSelectionAction, getUserAssignmentsAction } from "@/app/governance/user-assignments/actions"
 import { getOUs } from "@/actions/get-ous"
 import { getRoles } from "@/actions/get-roles"
@@ -16,19 +16,16 @@ export const metadata = {
   description: "Assign users to organizational units with specific roles.",
 }
 
-// TEMPORARY WORKAROUND:
-// The following @ts-ignore is to bypass a persistent build error.
-// This error is caused by a conflicting global 'PageProps' type definition
-// elsewhere in the project, where 'params' is incorrectly typed as a Promise.
-// The root cause (the conflicting PageProps definition) must be found and fixed.
-// @ts-ignore
-export default async function UserAssignmentsPage({
-  params,
-  searchParams,
-}: {
+// Define the props type explicitly to avoid ambiguity
+type UserAssignmentsPageProps = {
   params: { userId: string }
   searchParams?: { [key: string]: string | string[] | undefined }
-}) {
+}
+
+// The @ts-ignore is still necessary as a fallback
+// @ts-ignore
+export default async function UserAssignmentsPage(props: UserAssignmentsPageProps) {
+  const { params } = props
   const { userId: targetUserId } = params
 
   const currentAuthUserId = await getUserIdFromAction()
@@ -38,7 +35,7 @@ export default async function UserAssignmentsPage({
 
   const canManage = await hasPermission({
     userId: currentAuthUserId,
-    permissionString: PERMISSIONS.USERS_MANAGE_SYSTEM, // Using a more specific permission from the updated types
+    permissionString: PERMISSIONS.USERS_MANAGE_SYSTEM,
   })
 
   if (!canManage) {

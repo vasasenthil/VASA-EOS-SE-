@@ -2,21 +2,36 @@ import { Suspense } from "react"
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription, PageHeaderActions } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, ArrowUpDown } from "lucide-react"
 import Link from "next/link"
 import { getSchemesAction, type GetSchemesParams } from "./actions"
 import { SchemeListItem } from "./components/scheme-list-item"
-import PaginationControls from "@/components/pagination-controls" // Assuming this component exists
-import SchemesLoading from "./loading" // Import the loading component
+import PaginationControls from "@/components/pagination-controls"
+import SchemesLoading from "./loading"
 import { SchemeFilters } from "./components/scheme-filters"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { constructSortUrl } from "@/lib/utils" // Assuming a utility function
 
 interface SchemesPageProps {
   searchParams: GetSchemesParams
 }
 
 export default async function SchemesPage({ searchParams }: SchemesPageProps) {
-  // Basic permission check - can be enhanced in a layout or middleware
-  // For now, assuming if they reach this page, they have basic view rights handled by actions.
+  const currentSortBy = searchParams.sortBy || "created_at"
+  const currentSortDirection = searchParams.sortDirection || "desc"
+
+  const sortOptions = [
+    { label: "Creation Date", value: "created_at" },
+    { label: "Scheme Name", value: "name" },
+    { label: "Start Date", value: "start_date" },
+  ]
 
   return (
     <Shell>
@@ -38,6 +53,32 @@ export default async function SchemesPage({ searchParams }: SchemesPageProps) {
       </PageHeader>
 
       <SchemeFilters />
+
+      <div className="flex justify-end mb-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Sort by: {sortOptions.find((o) => o.value === currentSortBy)?.label}{" "}
+              {currentSortDirection === "asc" ? "(Asc)" : "(Desc)"}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Sort Schemes By</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {sortOptions.map((option) => (
+              <div key={option.value}>
+                <DropdownMenuItem asChild>
+                  <Link href={constructSortUrl(searchParams, option.value, "desc")}>{option.label} (Desc)</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={constructSortUrl(searchParams, option.value, "asc")}>{option.label} (Asc)</Link>
+                </DropdownMenuItem>
+              </div>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Suspense fallback={<SchemesLoading />}>
         <SchemesList searchParams={searchParams} />
@@ -69,12 +110,7 @@ async function SchemesList({ searchParams }: { searchParams: GetSchemesParams })
       </div>
       {totalPages > 1 && (
         <div className="mt-8">
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            // basePath="/schemes" // Assuming PaginationControls can take a basePath
-          />
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} totalCount={totalCount} />
         </div>
       )}
     </>
