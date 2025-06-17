@@ -16,16 +16,24 @@ export const metadata = {
   description: "Assign users to organizational units with specific roles.",
 }
 
-// Define the props type explicitly to avoid ambiguity
-type UserAssignmentsPageProps = {
-  params: { userId: string }
-  searchParams?: { [key: string]: string | string[] | undefined }
-}
+// Define the expected structure of params and searchParams internally
+type ExpectedParams = { userId: string }
+type ExpectedSearchParams = { [key: string]: string | string[] | undefined }
 
-// The @ts-ignore is still necessary as a fallback
-// @ts-ignore
-export default async function UserAssignmentsPage(props: UserAssignmentsPageProps) {
-  const { params } = props
+// HACK: Use a very generic props type to bypass the immediate PageProps constraint issue for this file.
+// The root cause (conflicting global PageProps) still needs to be found.
+export default async function UserAssignmentsPage(props: any) {
+  // Manually cast/assert the types for params and searchParams
+  const params = props.params as ExpectedParams
+  // const searchParams = props.searchParams as ExpectedSearchParams; // Uncomment if you use searchParams
+
+  if (!params || typeof params.userId !== "string") {
+    console.error("UserAssignmentsPage: Invalid params received", props.params)
+    // Handle error appropriately, maybe redirect or show an error page
+    // For now, redirecting to a generic error or users page
+    redirect("/admin/governance/users?error=invalid_page_params")
+    return null
+  }
   const { userId: targetUserId } = params
 
   const currentAuthUserId = await getUserIdFromAction()
