@@ -1,17 +1,19 @@
 // This file is for global type declarations.
 
-// Attempt to provide a correct global PageProps definition
+// Attempt to provide a more direct global PageProps definition
 // to override any conflicting types from node_modules.
 declare global {
-  namespace NextJs {
-    // Using a namespace to avoid direct global scope pollution if possible
-    interface PageProps<
-      P extends Record<string, string> = Record<string, string>, // Params
-      S extends Record<string, string | string[]> = Record<string, string | string[]>, // SearchParams
-    > {
-      params: P
-      searchParams?: S
-    }
+  /**
+   * Represents the props passed to a Next.js page component.
+   * This definition aims to be compatible with Next.js's expectations
+   * and override any conflicting global definitions.
+   */
+  type PageProps<
+    P extends Record<string, string> = Record<string, string>, // Route parameters
+    S extends Record<string, string | string[]> = Record<string, string | string[]>, // Search parameters
+  > = {
+    params: P
+    searchParams?: S
   }
 }
 
