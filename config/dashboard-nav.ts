@@ -21,6 +21,13 @@ import {
   FileLock,
   Palette,
   Layers,
+  Heart,
+  Banknote,
+  Users2,
+  CheckSquare,
+  AlertTriangle,
+  FileBarChart,
+  Globe,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -38,52 +45,26 @@ export interface NavItem {
 export const dashboardNavConfig: Record<string, NavItem[]> = {
   ADMIN: [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-    { title: "User Management", href: "/admin/users", icon: Users }, // Assuming this path exists or will be created
-    { title: "Role & Permissions", href: "/admin/roles", icon: UserCog }, // Assuming this path exists
-    { title: "Organizational Units", href: "/admin/ous", icon: Building }, // Assuming this path exists
-    { title: "System Configuration", href: "/admin/settings/system", icon: Settings },
-    {
-      title: "Data Management",
-      href: "/admin/data",
-      icon: Database,
-      items: [
-        { title: "Backups", href: "/admin/data/backups", icon: Database },
-        { title: "Integrity Checks", href: "/admin/data/integrity", icon: ShieldCheck },
-      ],
-    },
-    {
-      title: "Security & Audit",
-      href: "/admin/security",
-      icon: FileLock,
-      items: [
-        { title: "Audit Logs", href: "/admin/security/audit-logs", icon: FileText },
-        { title: "Access Control", href: "/admin/security/access-control", icon: ShieldCheck },
-      ],
-    },
-    { title: "Platform Customization", href: "/admin/customize", icon: Palette },
-    { title: "Policies Management", href: "/policies", icon: FileText },
-    { title: "Schemes Management", href: "/schemes", icon: Layers },
+    { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
+    { title: "Policies", href: "/policies", icon: FileText },
+    { title: "Schemes", href: "/schemes", icon: Layers },
+    { title: "Governance", href: "/governance/organizational-units", icon: Network },
+    { title: "Roles & Permissions", href: "/governance/roles", icon: ShieldCheck },
+    { title: "User Management", href: "/admin/governance/users", icon: Users },
+    { title: "Milestones", href: "/tracking/milestones", icon: CheckSquare },
+    { title: "Challenges", href: "/tracking/challenges", icon: AlertTriangle },
+    { title: "Stakeholders", href: "/tracking/stakeholders", icon: Users2 },
+    { title: "Reports & Analytics", href: "/tracking/reports", icon: FileBarChart },
+    { title: "Governance Overview", href: "/governance/dashboard", icon: Globe },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
-    {
-      title: "My Courses",
-      href: "/teacher/courses", // Main link for viewing courses
-      icon: BookOpen,
-      items: [
-        { title: "Create Course", href: "/teacher/courses/create", icon: BookMarked }, // Specific action
-        // { title: "View All Courses", href: "/teacher/courses", icon: BookOpen }, // Redundant if parent is the view
-      ],
-    },
-    { title: "Student Management", href: "/teacher/students", icon: Users },
-    { title: "Assignments", href: "/teacher/assignments", icon: ClipboardList },
-    { title: "Gradebook", href: "/teacher/gradebook", icon: BarChart3 },
-    { title: "Resources", href: "/teacher/resources", icon: Folder },
-    { title: "Reports", href: "/teacher/reports", icon: BarChart3 },
+    { title: "My Courses", href: "/teacher/courses", icon: BookOpen },
+    { title: "Create Course", href: "/teacher/courses/create", icon: BookMarked },
   ],
   STUDENT: [
     { title: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
-    { title: "My Courses", href: "/student/courses", icon: BookOpen }, // This is the page we just built
+    { title: "My Courses", href: "/student/courses", icon: BookOpen },
     { title: "Assignments", href: "/student/assignments", icon: ClipboardList },
     { title: "My Grades", href: "/student/grades", icon: Award },
     { title: "Resources", href: "/student/resources", icon: Folder },
@@ -91,46 +72,18 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
   ],
   PRINCIPAL: [
     { title: "Dashboard", href: "/principal/dashboard", icon: LayoutDashboard },
-    {
-      title: "Staff Management",
-      href: "/principal/staff",
-      icon: Users,
-      items: [
-        { title: "View Staff", href: "/principal/staff/view", icon: Users },
-        { title: "Assign Roles", href: "/principal/staff/assign-roles", icon: UserCog },
-      ],
-    },
-    {
-      title: "Student Management",
-      href: "/principal/students",
-      icon: GraduationCap,
-      items: [
-        { title: "View Students", href: "/principal/students/view", icon: Users },
-        { title: "Academic Progress", href: "/principal/students/progress", icon: BarChart3 },
-      ],
-    },
-    {
-      title: "Academic Oversight",
-      href: "/principal/academics",
-      icon: BookMarked,
-      items: [
-        { title: "Course Offerings", href: "/principal/academics/courses", icon: BookOpen },
-        { title: "Curriculum Status", href: "/principal/academics/curriculum", icon: FileText },
-      ],
-    },
-    { title: "School Announcements", href: "/principal/announcements", icon: Presentation },
-    {
-      title: "Reports",
-      href: "/principal/reports",
-      icon: BarChart3,
-      items: [
-        { title: "Attendance Reports", href: "/principal/reports/attendance", icon: BarChart3 },
-        { title: "Performance Reports", href: "/principal/reports/performance", icon: BarChart3 },
-      ],
-    },
+    { title: "Students (SIS)", href: "/principal/students", icon: GraduationCap },
+    { title: "Staff Management", href: "/principal/staff", icon: Users },
+    { title: "Assessment & Exams", href: "/principal/assessment", icon: ClipboardList },
+    { title: "Fee Management", href: "/principal/fee-management", icon: Banknote },
+    { title: "School Health", href: "/principal/health", icon: Heart },
+    { title: "Compliance", href: "/principal/compliance", icon: ShieldCheck },
+    { title: "Policies", href: "/policies", icon: FileText },
+    { title: "Schemes", href: "/schemes", icon: Layers },
+    { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
+    { title: "Announcements", href: "/principal/announcements", icon: Presentation },
   ],
   SUBJECT_INCHARGE: [
-    // ... (ensure icons are imported and used directly)
     { title: "Dashboard", href: "/subject-incharge/dashboard", icon: LayoutDashboard },
     { title: "Curriculum Management", href: "/subject-incharge/curriculum", icon: BookMarked },
     { title: "Resource Allocation", href: "/subject-incharge/resources", icon: Folder },
@@ -138,7 +91,6 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Student Performance", href: "/subject-incharge/students/performance", icon: BarChart3 },
   ],
   ACADEMIC_HEAD: [
-    // ... (ensure icons are imported and used directly)
     { title: "Dashboard", href: "/academic-head/dashboard", icon: LayoutDashboard },
     { title: "Curriculum Development", href: "/academic-head/curriculum", icon: BookMarked },
     { title: "Assessment & Evaluation", href: "/academic-head/assessment", icon: ClipboardList },
@@ -146,12 +98,10 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Academic Planning", href: "/academic-head/planning", icon: Target },
   ],
   INSTITUTION_HEAD: [
-    // ... (ensure icons are imported and used directly)
     { title: "Dashboard", href: "/institution-head/dashboard", icon: LayoutDashboard },
     { title: "Strategic Planning", href: "/institution-head/strategy", icon: Target },
-    { title: "Policy Management", href: "/institution-head/policies", icon: FileText }, // Assuming this path exists
+    { title: "Policy Management", href: "/institution-head/policies", icon: FileText },
     { title: "Stakeholder Management", href: "/institution-head/stakeholders", icon: Network },
     { title: "Resource Management", href: "/institution-head/resources", icon: Landmark },
   ],
-  // Add other roles if necessary, ensuring all icons are imported from lucide-react
 }
