@@ -27,6 +27,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ── Mock Data ─────────────────────────────────────────────────────────────────
 
@@ -217,7 +219,18 @@ export default async function SubjectInchargeDashboardPage() {
             <CardDescription className="text-xs">Last assessment cycle · All Maths classes</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
+            <GroupedBarChart
+              data={classPerformance.map((c) => ({ label: c.cls, avg: c.avg, pass: c.pass }))}
+              xKey="label"
+              series={[
+                { key: "avg", name: "Avg Score", color: CHART_COLORS.blue },
+                { key: "pass", name: "Pass %", color: CHART_COLORS.green },
+              ]}
+              height={280}
+              unit=""
+              xAxisAngle={-20}
+            />
+            <Table className="mt-2">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Class</TableHead>

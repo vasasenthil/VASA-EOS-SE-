@@ -37,6 +37,8 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
 } from "@/components/page-header"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ─── Static Mock Data (Module 70.5 — Teacher Level) ──────────────────────────
 
@@ -297,23 +299,17 @@ export default async function TeacherDashboardPage() {
               Class Attendance — Today
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {attendanceSummary.map((a) => (
-              <div key={a.cls} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{a.cls}</span>
-                    <StatusBadge status={a.label} />
-                  </div>
-                  <span className="text-sm font-semibold">{a.present}/{a.total}</span>
-                </div>
-                <Progress
-                  value={a.pct}
-                  className={`h-2 ${a.label === "Good" ? "[&>div]:bg-green-500" : "[&>div]:bg-yellow-500"}`}
-                />
-                <p className="text-xs text-muted-foreground text-right">{a.pct}%</p>
-              </div>
-            ))}
+          <CardContent>
+            <HorizontalBarChart
+              data={attendanceSummary.map((a) => ({
+                label: `${a.cls} (${a.present}/${a.total})`,
+                value: a.pct,
+                color: a.label === "Good" ? CHART_COLORS.green : CHART_COLORS.amber,
+              }))}
+              height={200}
+              yAxisWidth={130}
+              unit="%"
+            />
           </CardContent>
         </Card>
 
@@ -408,32 +404,17 @@ export default async function TeacherDashboardPage() {
               Lesson Plan Status — Syllabus Coverage
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-5">
-            {lessonPlans.map((lp) => (
-              <div key={lp.cls} className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{lp.cls}</span>
-                  <span className="text-sm font-semibold">{lp.pct}%</span>
-                </div>
-                <Progress
-                  value={lp.pct}
-                  className={`h-2 ${
-                    lp.pct >= 80
-                      ? "[&>div]:bg-green-500"
-                      : lp.pct >= 70
-                      ? "[&>div]:bg-blue-500"
-                      : "[&>div]:bg-yellow-500"
-                  }`}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {lp.pct >= 80
-                    ? "On track"
-                    : lp.pct >= 70
-                    ? "Progressing"
-                    : "Needs acceleration"}
-                </p>
-              </div>
-            ))}
+          <CardContent>
+            <HorizontalBarChart
+              data={lessonPlans.map((lp) => ({
+                label: lp.cls,
+                value: lp.pct,
+                color: lp.pct >= 80 ? CHART_COLORS.green : lp.pct >= 70 ? CHART_COLORS.blue : CHART_COLORS.amber,
+              }))}
+              height={200}
+              yAxisWidth={120}
+              unit="%"
+            />
           </CardContent>
         </Card>
 

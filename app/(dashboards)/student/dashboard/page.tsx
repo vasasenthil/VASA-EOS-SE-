@@ -39,6 +39,9 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
 } from "@/components/page-header"
+import { AreaChart } from "@/components/charts/area-chart"
+import { RadarChart } from "@/components/charts/radar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ─── Static Mock Data (Module 70.6 — Learner Level) ──────────────────────────
 
@@ -268,29 +271,24 @@ export default async function StudentDashboardPage() {
             </CardTitle>
             <CardDescription>Monthly attendance record</CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Month</TableHead>
-                  <TableHead className="text-center">Present</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">%</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {attendanceTrend.map((row) => (
-                  <TableRow key={row.month} className={row.status === "Excellent" ? "bg-green-50/40" : ""}>
-                    <TableCell className="text-sm font-medium whitespace-nowrap">{row.month}</TableCell>
-                    <TableCell className="text-center text-sm">{row.present}</TableCell>
-                    <TableCell className="text-center text-sm">{row.total}</TableCell>
-                    <TableCell className="text-center text-sm font-semibold">{row.pct.toFixed(1)}%</TableCell>
-                    <TableCell><StatusBadge status={row.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent>
+            <AreaChart
+              data={attendanceTrend.map((r) => ({ month: r.month.slice(0, 8), pct: r.pct }))}
+              xKey="month"
+              series={[{ key: "pct", name: "Attendance %", color: CHART_COLORS.green }]}
+              height={220}
+              unit="%"
+              yDomain={[85, 102]}
+            />
+            <div className="grid grid-cols-3 gap-2 mt-4 text-center text-xs">
+              {attendanceTrend.slice(-3).map((r) => (
+                <div key={r.month} className="rounded-lg bg-gray-50 border p-2">
+                  <div className="font-bold text-gray-800">{r.pct.toFixed(1)}%</div>
+                  <div className="text-muted-foreground">{r.month.slice(0, 8)}</div>
+                  <StatusBadge status={r.status} />
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -404,28 +402,15 @@ export default async function StudentDashboardPage() {
             </CardTitle>
             <CardDescription>NCF 2023 competency areas — current level</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {competencies.map((c) => (
-              <div key={c.area} className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{c.area}</span>
-                  <span className="text-sm font-bold">{c.pct}%</span>
-                </div>
-                <Progress
-                  value={c.pct}
-                  className={`h-2 [&>div]:${c.color}`}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {c.pct >= 85
-                    ? "Advanced — exceeding expectations"
-                    : c.pct >= 75
-                    ? "Proficient — meeting expectations"
-                    : c.pct >= 65
-                    ? "Developing — approaching expectations"
-                    : "Beginning — needs focused support"}
-                </p>
-              </div>
-            ))}
+          <CardContent>
+            <RadarChart
+              data={competencies.map((c) => ({
+                subject: c.area.split(" ").slice(0, 2).join(" "),
+                value: c.pct,
+              }))}
+              height={320}
+              color={CHART_COLORS.blue}
+            />
           </CardContent>
         </Card>
 

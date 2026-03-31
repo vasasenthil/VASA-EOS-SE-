@@ -22,8 +22,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart"
+import { StackedBarChart } from "@/components/charts/stacked-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // --- Mock KPI Data (Education Command Centre — Module 70.1) ---
 const kpiStats = [
@@ -218,19 +221,29 @@ export default function AdminDashboardPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {nepImplementation.map((item) => (
-              <div key={item.thrust} className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700 truncate max-w-[70%]">{item.thrust}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-900">{item.progress}%</span>
-                    <StatusBadge status={item.status} />
-                  </div>
-                </div>
-                <Progress value={item.progress} className="h-1.5" />
-              </div>
-            ))}
+          <CardContent className="pb-2">
+            <HorizontalBarChart
+              data={nepImplementation.map((d) => ({
+                label: d.thrust,
+                value: d.progress,
+                color:
+                  d.status === "Implemented"
+                    ? CHART_COLORS.green
+                    : d.status === "Planning"
+                    ? CHART_COLORS.amber
+                    : CHART_COLORS.blue,
+              }))}
+              height={340}
+              yAxisWidth={230}
+            />
+            <div className="flex gap-4 justify-end mt-1 flex-wrap">
+              {[["Implemented", CHART_COLORS.green], ["In Progress", CHART_COLORS.blue], ["Planning", CHART_COLORS.amber]].map(([label, color]) => (
+                <span key={label} className="flex items-center gap-1 text-xs text-gray-600">
+                  <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ background: color as string }} />
+                  {label}
+                </span>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -284,7 +297,24 @@ export default function AdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <GroupedBarChart
+              data={statePerformance.map((s) => ({
+                state: s.state.split(" ")[0],
+                "NER %": s.ner,
+                "Attendance %": s.attendance,
+                "Outcome Index": s.outcome,
+              }))}
+              xKey="state"
+              series={[
+                { key: "NER %", name: "NER %", color: CHART_COLORS.blue },
+                { key: "Attendance %", name: "Attendance %", color: CHART_COLORS.green },
+                { key: "Outcome Index", name: "Outcome Index", color: CHART_COLORS.orange },
+              ]}
+              height={280}
+              unit=""
+              xAxisAngle={-20}
+            />
+            <Table className="mt-3">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">State</TableHead>
@@ -340,18 +370,22 @@ export default function AdminDashboardPage() {
               <CardTitle className="text-base font-semibold">Scheme Fund Flow</CardTitle>
               <CardDescription className="text-xs">Utilisation vs. release (₹ Crore)</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {schemeData.map((s) => (
-                <div key={s.scheme} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-medium text-gray-700">{s.scheme}</span>
-                    <span className="text-muted-foreground">
-                      ₹{s.utilised.toLocaleString()} / ₹{s.released.toLocaleString()} Cr
-                    </span>
-                  </div>
-                  <Progress value={Math.round((s.utilised / s.released) * 100)} className="h-1.5" />
-                </div>
-              ))}
+            <CardContent className="pb-2">
+              <StackedBarChart
+                data={schemeData.map((s) => ({
+                  scheme: s.scheme.split(" ")[0],
+                  Utilised: s.utilised,
+                  Remaining: s.released - s.utilised,
+                }))}
+                xKey="scheme"
+                series={[
+                  { key: "Utilised", name: "Utilised ₹Cr", color: CHART_COLORS.green },
+                  { key: "Remaining", name: "Remaining ₹Cr", color: CHART_COLORS.slate },
+                ]}
+                height={240}
+                unit=" Cr"
+                xAxisAngle={0}
+              />
             </CardContent>
           </Card>
         </div>

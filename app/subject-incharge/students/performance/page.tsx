@@ -7,6 +7,9 @@ import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Shell } from "@/components/shell"
 import { PageHeader } from "@/components/page-header"
+import { BarChartVertical } from "@/components/charts/bar-chart-vertical"
+import { LineChart } from "@/components/charts/line-chart"
+import { CHART_COLORS, SERIES_COLORS } from "@/components/charts/chart-colors"
 
 const kpiCards = [
   { label: "Total Students (Mathematics)", value: "1,247", colour: "text-blue-600" },
@@ -152,17 +155,15 @@ export default function SubjectInchargeStudentPerformancePage() {
             <CardDescription>All 1,247 students across Class VI-XII (Mathematics)</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {gradeDistribution.map((g) => (
-                <div key={g.grade}>
-                  <div className="flex justify-between text-xs mb-0.5">
-                    <span className="font-medium text-gray-700">{g.grade}</span>
-                    <span className="text-gray-600">{g.count} students ({g.pct}%)</span>
-                  </div>
-                  <Progress value={g.pct * 2.5} className="h-2" />
-                </div>
-              ))}
-            </div>
+            <BarChartVertical
+              data={gradeDistribution.map((g) => ({
+                label: g.grade.split(" ")[0],
+                value: g.count,
+                color: g.grade.startsWith("A") ? CHART_COLORS.green : g.grade.startsWith("B") ? CHART_COLORS.blue : g.grade.startsWith("C") ? CHART_COLORS.amber : g.grade.startsWith("D") ? CHART_COLORS.orange : CHART_COLORS.red,
+              }))}
+              height={280}
+              unit=" students"
+            />
           </CardContent>
         </Card>
 
@@ -239,37 +240,23 @@ export default function SubjectInchargeStudentPerformancePage() {
           <CardDescription>FA1 → FA2 → SA1 → Projected SA2 by class</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Class</TableHead>
-                <TableHead className="text-center">FA1 %</TableHead>
-                <TableHead className="text-center">FA2 %</TableHead>
-                <TableHead className="text-center">SA1 %</TableHead>
-                <TableHead className="text-center">Proj. SA2 %</TableHead>
-                <TableHead>Trend</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {outcometrend.map((t) => {
-                const trending = t.projSa2 > t.sa1
-                return (
-                  <TableRow key={t.cls}>
-                    <TableCell className="font-medium text-sm">{t.cls}</TableCell>
-                    <TableCell className="text-center text-sm">{t.fa1}%</TableCell>
-                    <TableCell className="text-center text-sm">{t.fa2}%</TableCell>
-                    <TableCell className="text-center text-sm">{t.sa1}%</TableCell>
-                    <TableCell className="text-center text-sm font-medium text-blue-700">{t.projSa2}%</TableCell>
-                    <TableCell>
-                      {trending
-                        ? <span className="text-green-600 flex items-center gap-1 text-xs"><TrendingUp className="h-3 w-3" />Improving</span>
-                        : <span className="text-red-500 flex items-center gap-1 text-xs"><TrendingDown className="h-3 w-3" />Declining</span>}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+          <LineChart
+            data={[
+              { assessment: "FA1", ...Object.fromEntries(outcometrend.map(t => [t.cls.split(" ").slice(0,2).join(" "), t.fa1])) },
+              { assessment: "FA2", ...Object.fromEntries(outcometrend.map(t => [t.cls.split(" ").slice(0,2).join(" "), t.fa2])) },
+              { assessment: "SA1", ...Object.fromEntries(outcometrend.map(t => [t.cls.split(" ").slice(0,2).join(" "), t.sa1])) },
+              { assessment: "Proj SA2", ...Object.fromEntries(outcometrend.map(t => [t.cls.split(" ").slice(0,2).join(" "), t.projSa2])) },
+            ]}
+            xKey="assessment"
+            series={outcometrend.map((t, i) => ({
+              key: t.cls.split(" ").slice(0,2).join(" "),
+              name: t.cls,
+              color: SERIES_COLORS[i] ?? CHART_COLORS.blue,
+            }))}
+            height={360}
+            unit="%"
+            yDomain={[55, 75]}
+          />
         </CardContent>
       </Card>
 

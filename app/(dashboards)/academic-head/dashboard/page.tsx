@@ -26,6 +26,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { RadarChart } from "@/components/charts/radar-chart"
+import { LineChart } from "@/components/charts/line-chart"
+import { CHART_COLORS, SERIES_COLORS } from "@/components/charts/chart-colors"
 
 // ── Mock Data ──────────────────────────────────────────────────────────────────
 
@@ -249,19 +253,17 @@ export default async function AcademicHeadDashboardPage() {
               Teaching portion completed as of current date
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {curriculumStatus.map((s) => (
-              <div key={s.subject} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-gray-700">
-                    {s.subject}
-                    <span className="text-muted-foreground font-normal ml-1">({s.teachers} teachers)</span>
-                  </span>
-                  <span className={`font-semibold ${coverageColor(s.pct)}`}>{s.pct}%</span>
-                </div>
-                <Progress value={s.pct} className="h-2" />
-              </div>
-            ))}
+          <CardContent>
+            <HorizontalBarChart
+              data={curriculumStatus.map((s) => ({
+                label: s.subject,
+                value: s.pct,
+                color: s.pct >= 85 ? CHART_COLORS.green : s.pct >= 70 ? CHART_COLORS.blue : CHART_COLORS.amber,
+              }))}
+              height={310}
+              yAxisWidth={150}
+              unit="%"
+            />
           </CardContent>
         </Card>
 
@@ -375,18 +377,15 @@ export default async function AcademicHeadDashboardPage() {
               Framework domain coverage across curriculum
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {ncfAlignment.map((n) => (
-              <div key={n.domain} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-gray-700 leading-snug">{n.domain}</span>
-                  <span className={`font-semibold ml-2 shrink-0 ${
-                    n.pct >= 70 ? "text-green-600" : n.pct >= 55 ? "text-blue-600" : "text-yellow-600"
-                  }`}>{n.pct}%</span>
-                </div>
-                <Progress value={n.pct} className="h-2" />
-              </div>
-            ))}
+          <CardContent>
+            <RadarChart
+              data={ncfAlignment.map((n) => ({
+                subject: n.domain.split(" ").slice(0, 2).join(" "),
+                value: n.pct,
+              }))}
+              height={280}
+              color={CHART_COLORS.indigo}
+            />
           </CardContent>
         </Card>
 
@@ -399,7 +398,22 @@ export default async function AcademicHeadDashboardPage() {
             <CardDescription className="text-xs">NAS scores &amp; board results by subject</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
+            <LineChart
+              data={[
+                { class: "Class 6 NAS", ...Object.fromEntries(learningOutcomes.map(r => [r.subject, r.class6])) },
+                { class: "Class 8 NAS", ...Object.fromEntries(learningOutcomes.map(r => [r.subject, r.class8])) },
+              ]}
+              xKey="class"
+              series={learningOutcomes.map((r, i) => ({
+                key: r.subject,
+                name: r.subject,
+                color: SERIES_COLORS[i] ?? CHART_COLORS.blue,
+              }))}
+              height={240}
+              unit=""
+              yDomain={[40, 80]}
+            />
+            <Table className="mt-2">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Subject</TableHead>

@@ -29,6 +29,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { DonutChart } from "@/components/charts/donut-chart"
+import { GroupedBarChart } from "@/components/charts/grouped-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ── Mock Data ──────────────────────────────────────────────────────────────────
 
@@ -256,16 +260,16 @@ export default async function InstitutionHeadDashboardPage() {
               Progress across key pillars — percentage of schools implementing
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {policyPillars.map((p) => (
-              <div key={p.name} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-gray-700">{p.name}</span>
-                  <span className="font-semibold text-gray-900">{p.pct}%</span>
-                </div>
-                <Progress value={p.pct} className="h-2" />
-              </div>
-            ))}
+          <CardContent>
+            <HorizontalBarChart
+              data={policyPillars.map((p) => ({
+                label: p.name,
+                value: p.pct,
+                color: p.pct >= 70 ? CHART_COLORS.green : p.pct >= 55 ? CHART_COLORS.blue : CHART_COLORS.orange,
+              }))}
+              height={280}
+              yAxisWidth={220}
+            />
           </CardContent>
         </Card>
 
@@ -280,42 +284,54 @@ export default async function InstitutionHeadDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Category</TableHead>
-                  <TableHead className="text-xs text-center">Count</TableHead>
-                  <TableHead className="text-xs text-center">% of Total</TableHead>
-                  <TableHead className="text-xs text-center">Avg NER</TableHead>
-                  <TableHead className="text-xs text-center">Avg Outcome</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {schoolDistribution.map((r) => (
-                  <TableRow key={r.category} className="text-xs">
-                    <TableCell className={`font-semibold ${distCategoryColor(r.category)}`}>
-                      {r.category}
-                    </TableCell>
-                    <TableCell className="text-center">{r.count}</TableCell>
-                    <TableCell className="text-center">{r.pct}</TableCell>
-                    <TableCell className="text-center">{r.ner}%</TableCell>
-                    <TableCell className="text-center">
-                      <span
-                        className={`font-semibold ${
-                          r.outcome >= 60
-                            ? "text-green-600"
-                            : r.outcome >= 45
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {r.outcome}
-                      </span>
-                    </TableCell>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+              <DonutChart
+                data={[
+                  { name: "High Performing", value: 48, color: CHART_COLORS.green },
+                  { name: "Average Performing", value: 142, color: CHART_COLORS.blue },
+                  { name: "Needs Improvement", value: 38, color: CHART_COLORS.amber },
+                  { name: "Critical Attention", value: 20, color: CHART_COLORS.red },
+                ]}
+                height={240}
+                centerLabel="Schools"
+                centerValue="248"
+                showLegend={false}
+              />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Category</TableHead>
+                    <TableHead className="text-xs text-center">Count</TableHead>
+                    <TableHead className="text-xs text-center">Avg NER</TableHead>
+                    <TableHead className="text-xs text-center">Outcome</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {schoolDistribution.map((r) => (
+                    <TableRow key={r.category} className="text-xs">
+                      <TableCell className={`font-semibold ${distCategoryColor(r.category)}`}>
+                        {r.category}
+                      </TableCell>
+                      <TableCell className="text-center">{r.count}</TableCell>
+                      <TableCell className="text-center">{r.ner}%</TableCell>
+                      <TableCell className="text-center">
+                        <span
+                          className={`font-semibold ${
+                            r.outcome >= 60
+                              ? "text-green-600"
+                              : r.outcome >= 45
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {r.outcome}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -331,19 +347,22 @@ export default async function InstitutionHeadDashboardPage() {
             </CardTitle>
             <CardDescription className="text-xs">FY 2024-25 fund release vs utilisation</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {schemeFunds.map((s) => (
-              <div key={s.name} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-gray-700">{s.name}</span>
-                  <span className="text-muted-foreground">
-                    ₹{s.utilised}Cr / ₹{s.total}Cr —{" "}
-                    <strong className="text-gray-900">{s.pct}%</strong>
-                  </span>
-                </div>
-                <Progress value={s.pct} className="h-2" />
-              </div>
-            ))}
+          <CardContent>
+            <GroupedBarChart
+              data={schemeFunds.map((s) => ({
+                label: s.name.length > 16 ? s.name.slice(0, 14) + "…" : s.name,
+                utilised: s.utilised,
+                total: s.total,
+              }))}
+              xKey="label"
+              series={[
+                { key: "utilised", name: "Utilised (₹Cr)", color: CHART_COLORS.green },
+                { key: "total", name: "Released (₹Cr)", color: CHART_COLORS.blue },
+              ]}
+              height={220}
+              unit="Cr"
+              xAxisAngle={-20}
+            />
           </CardContent>
         </Card>
 

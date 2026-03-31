@@ -22,6 +22,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { RadarChart } from "@/components/charts/radar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // --- Mock School Operational Data (Module 70.4) ---
 const schoolStats = [
@@ -169,7 +172,17 @@ export default function PrincipalDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <HorizontalBarChart
+              data={classAttendance.map((c) => ({
+                label: c.class,
+                value: c.pct,
+                color: c.pct >= 90 ? CHART_COLORS.green : CHART_COLORS.orange,
+              }))}
+              height={240}
+              yAxisWidth={80}
+              unit="%"
+            />
+            <Table className="mt-2">
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-xs">Class</TableHead>
@@ -270,16 +283,12 @@ export default function PrincipalDashboardPage() {
             </CardTitle>
             <CardDescription className="text-xs">Subject-wise teaching portion status</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {syllabusCompletion.map((s) => (
-              <div key={s.subject} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-gray-700">{s.subject}</span>
-                  <span className="text-muted-foreground">{s.teacher} · <strong>{s.pct}%</strong></span>
-                </div>
-                <Progress value={s.pct} className="h-1.5" />
-              </div>
-            ))}
+          <CardContent>
+            <RadarChart
+              data={syllabusCompletion.map((s) => ({ subject: s.subject, value: s.pct }))}
+              height={280}
+              color={CHART_COLORS.teal}
+            />
           </CardContent>
         </Card>
 

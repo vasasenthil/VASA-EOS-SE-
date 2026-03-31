@@ -35,6 +35,9 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
 } from "@/components/page-header"
+import { GovernancePyramid } from "@/components/charts/governance-pyramid"
+import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ─── Mock Data ───────────────────────────────────────────────────────────────
 
@@ -361,6 +364,32 @@ export default async function GovernanceDashboardPage() {
         </div>
       </PageHeader>
 
+      {/* ── Governance Pyramid ── */}
+      <section className="mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Layers className="h-4 w-4 text-purple-600" /> 7-Tier Governance Hierarchy
+            </CardTitle>
+            <CardDescription className="text-xs">
+              VASA-EOS institutional pyramid — NEP 2020 / Samagra Shiksha alignment
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <GovernancePyramid
+              tiers={governanceTiers.map((t) => ({
+                tier: t.tier,
+                label: t.label,
+                description: t.description,
+                users: t.users,
+                institutions: t.institutions ?? "0",
+              }))}
+              className="max-w-xl mx-auto"
+            />
+          </CardContent>
+        </Card>
+      </section>
+
       {/* ── Section 1: Governance Tier Summary ── */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-gray-800 mb-1">Governance Tier Summary</h2>
@@ -514,6 +543,18 @@ export default async function GovernanceDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
+            <div className="px-6 pb-2">
+              <HorizontalBarChart
+                data={ouSummary.map((ou) => ({
+                  label: ou.type.length > 28 ? ou.type.slice(0, 26) + "…" : ou.type,
+                  value: ou.dataQuality,
+                  color: ou.dataQuality >= 90 ? CHART_COLORS.green : ou.dataQuality >= 75 ? CHART_COLORS.teal : ou.dataQuality >= 65 ? CHART_COLORS.amber : CHART_COLORS.red,
+                }))}
+                height={240}
+                yAxisWidth={200}
+                unit="%"
+              />
+            </div>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>

@@ -21,6 +21,9 @@ import {
   Flag,
   MapPin,
 } from "lucide-react"
+import { DonutChart } from "@/components/charts/donut-chart"
+import { StackedBarChart } from "@/components/charts/stacked-bar-chart"
+import { CHART_COLORS } from "@/components/charts/chart-colors"
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -318,27 +321,47 @@ export default function MilestonesPage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        {STAT_CARDS.map((card) => {
-          const Icon = card.icon
-          return (
-            <Card key={card.title} className="border shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                    <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
+      {/* Stat Cards + Donut */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4">
+          {STAT_CARDS.map((card) => {
+            const Icon = card.icon
+            return (
+              <Card key={card.title} className="border shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                      <p className={`text-3xl font-bold mt-1 ${card.color}`}>{card.value}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{card.sub}</p>
+                    </div>
+                    <div className={`rounded-lg p-2.5 ${card.bg}`}>
+                      <Icon className={`h-5 w-5 ${card.color}`} />
+                    </div>
                   </div>
-                  <div className={`rounded-lg p-2.5 ${card.bg}`}>
-                    <Icon className={`h-5 w-5 ${card.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Milestone Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DonutChart
+              data={[
+                { name: "Completed", value: 89, color: CHART_COLORS.green },
+                { name: "In Progress", value: 103, color: CHART_COLORS.amber },
+                { name: "Delayed", value: 34, color: CHART_COLORS.red },
+                { name: "Not Started", value: 21, color: CHART_COLORS.slate },
+              ]}
+              height={240}
+              centerLabel="Milestones"
+              centerValue="247"
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Milestone List Table */}
@@ -436,6 +459,25 @@ export default function MilestonesPage() {
               <CardTitle className="text-lg">State-wise Milestone Progress</CardTitle>
             </div>
           </CardHeader>
+          <CardContent>
+            <StackedBarChart
+              data={STATE_PROGRESS.map((s) => ({
+                label: s.state,
+                completed: s.completed,
+                inProgress: s.inProgress,
+                delayed: s.delayed,
+              }))}
+              xKey="label"
+              series={[
+                { key: "completed", name: "Completed %", color: CHART_COLORS.green },
+                { key: "inProgress", name: "In Progress %", color: CHART_COLORS.amber },
+                { key: "delayed", name: "Delayed %", color: CHART_COLORS.red },
+              ]}
+              height={260}
+              unit="%"
+              xAxisAngle={-25}
+            />
+          </CardContent>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
