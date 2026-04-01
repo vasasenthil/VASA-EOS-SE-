@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 
 interface HeaderUserData {
   name: string
@@ -78,6 +79,8 @@ export function Header({ userData }: HeaderProps) {
         </div>
 
         {userData && (
+          <div className="flex items-center gap-1">
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -125,6 +128,7 @@ export function Header({ userData }: HeaderProps) {
               </form>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         )}
         {!userData && (
           <Button asChild variant="outline">

@@ -94,14 +94,14 @@ const categories = [
 
 // ── Recently Generated Reports ────────────────────────────────────────────────
 const recentReports = [
-  { name: "NEP 2020 Q4 Implementation Report",         type: "Consolidated",  by: "System Auto",       date: "Apr 1, 2025",  status: "Ready", format: "PDF" },
-  { name: "State Equity Scorecard 2024–25",             type: "Consolidated",  by: "Secretary DoSEL",   date: "Mar 28, 2025", status: "Ready", format: "PDF/XLSX" },
-  { name: "RTE Compliance Report Q3 2024–25",           type: "Statutory",     by: "Compliance Engine", date: "Mar 25, 2025", status: "Ready", format: "PDF" },
-  { name: "Samagra Shiksha Physical Progress",          type: "Scheme",        by: "PAB Desk",          date: "Mar 22, 2025", status: "Ready", format: "XLSX" },
-  { name: "SDG 4 Indicator Report 2024",                type: "Statutory",     by: "System Auto",       date: "Mar 20, 2025", status: "Ready", format: "PDF" },
-  { name: "Dropout Risk Analysis — 12 States",          type: "Dynamic",       by: "DEO Analytics",     date: "Mar 18, 2025", status: "Ready", format: "PDF" },
-  { name: "Teacher Vacancy Heat Map",                   type: "Dynamic",       by: "HR Cell",           date: "Mar 15, 2025", status: "Ready", format: "PDF/XLSX" },
-  { name: "NIPUN Bharat Progress Report",               type: "Consolidated",  by: "NIPUN PMU",         date: "Mar 12, 2025", status: "Ready", format: "PDF" },
+  { name: "NEP 2020 Q4 Implementation Report",         type: "Consolidated",  by: "System Auto",       date: "Apr 1, 2025",  status: "Ready", format: "PDF",      exportId: "annual-education-performance" },
+  { name: "State Equity Scorecard 2024–25",             type: "Consolidated",  by: "Secretary DoSEL",   date: "Mar 28, 2025", status: "Ready", format: "PDF/XLSX", exportId: "quarterly-scheme-implementation" },
+  { name: "RTE Compliance Report Q3 2024–25",           type: "Statutory",     by: "Compliance Engine", date: "Mar 25, 2025", status: "Ready", format: "PDF",      exportId: "milestone-progress" },
+  { name: "Samagra Shiksha Physical Progress",          type: "Scheme",        by: "PAB Desk",          date: "Mar 22, 2025", status: "Ready", format: "XLSX",     exportId: "quarterly-scheme-implementation" },
+  { name: "SDG 4 Indicator Report 2024",                type: "Statutory",     by: "System Auto",       date: "Mar 20, 2025", status: "Ready", format: "PDF",      exportId: "stakeholder-report" },
+  { name: "Dropout Risk Analysis — 12 States",          type: "Dynamic",       by: "DEO Analytics",     date: "Mar 18, 2025", status: "Ready", format: "PDF",      exportId: "annual-education-performance" },
+  { name: "Teacher Vacancy Heat Map",                   type: "Dynamic",       by: "HR Cell",           date: "Mar 15, 2025", status: "Ready", format: "PDF/XLSX", exportId: "stakeholder-report" },
+  { name: "NIPUN Bharat Progress Report",               type: "Consolidated",  by: "NIPUN PMU",         date: "Mar 12, 2025", status: "Ready", format: "PDF",      exportId: "milestone-progress" },
 ]
 
 // ── Scheduled Auto-Reports ────────────────────────────────────────────────────
@@ -224,9 +224,14 @@ export default async function ReportsPage() {
                     <TableCell className="text-muted-foreground hidden lg:table-cell">{r.date}</TableCell>
                     <TableCell className="text-center text-gray-600">{r.format}</TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-blue-600">
+                      <a
+                        href={`/api/export/reports?reportId=${r.exportId}&format=csv`}
+                        download
+                        className="inline-flex items-center justify-center h-6 px-2 rounded text-xs text-blue-600 hover:bg-blue-50"
+                        title="Download CSV"
+                      >
                         <Download className="h-3 w-3" />
-                      </Button>
+                      </a>
                     </TableCell>
                   </TableRow>
                 ))}

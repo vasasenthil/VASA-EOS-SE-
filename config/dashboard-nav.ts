@@ -28,6 +28,10 @@ import {
   AlertTriangle,
   FileBarChart,
   Globe,
+  MessageSquare,
+  IndianRupee,
+  CalendarDays,
+  TrendingUp,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -56,6 +60,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Stakeholders", href: "/tracking/stakeholders", icon: Users2 },
     { title: "Reports & Analytics", href: "/tracking/reports", icon: FileBarChart },
     { title: "Governance Overview", href: "/governance/dashboard", icon: Globe },
+    { title: "Audit Log", href: "/admin/audit-log", icon: ShieldCheck },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
@@ -103,5 +108,12 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Policy Management", href: "/institution-head/policies", icon: FileText },
     { title: "Stakeholder Management", href: "/institution-head/stakeholders", icon: Network },
     { title: "Resource Management", href: "/institution-head/resources", icon: Landmark },
+  ],
+  PARENT: [
+    { title: "Dashboard", href: "/parent/dashboard", icon: LayoutDashboard },
+    { title: "Attendance", href: "/parent/attendance", icon: CalendarDays },
+    { title: "Performance", href: "/parent/performance", icon: TrendingUp },
+    { title: "Fee Management", href: "/parent/fees", icon: IndianRupee },
+    { title: "Communication", href: "/parent/communication", icon: MessageSquare },
   ],
 }

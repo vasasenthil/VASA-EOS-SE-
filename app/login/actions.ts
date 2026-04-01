@@ -46,6 +46,7 @@ const userRolesEnum = z.enum([
   "SUBJECT_INCHARGE",
   "ACADEMIC_HEAD",
   "INSTITUTION_HEAD",
+  "PARENT",
 ])
 
 const loginSchema = z.object({
@@ -156,6 +157,9 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
       break
     case "INSTITUTION_HEAD":
       redirectPath = "/institution-head/dashboard"
+      break
+    case "PARENT":
+      redirectPath = "/parent/dashboard"
       break
     default:
       console.warn(`Unknown role encountered after profile fetch: ${userProfile.role}`)
