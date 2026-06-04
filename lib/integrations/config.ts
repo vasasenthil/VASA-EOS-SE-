@@ -103,3 +103,13 @@ export function aadhaarBaseUrl(): string | undefined {
 export function aadhaarApiKey(): string | undefined {
   return process.env.AADHAAR_API_KEY || undefined
 }
+
+// ── APAAR identity (registry federation) ──────────────────────────────────────
+/** APAAR registry gateway origin. No safe default. */
+export function apaarBaseUrl(): string | undefined {
+  return process.env.APAAR_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the APAAR registry gateway. */
+export function apaarApiKey(): string | undefined {
+  return process.env.APAAR_API_KEY || undefined
+}

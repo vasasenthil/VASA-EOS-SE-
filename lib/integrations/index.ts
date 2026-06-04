@@ -16,11 +16,21 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveAadhaar, liveAgents, liveDbt, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
+import {
+  liveAadhaar,
+  liveAgents,
+  liveDbt,
+  liveDigiLocker,
+  liveDiksha,
+  liveIdentity,
+  liveLanguage,
+  liveUdise,
+} from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
-  identity: mockIdentity, // integrationModes.apaar === "live" ? liveApaar : mockIdentity
+  // APAAR lifelong learner identity via a configurable registry gateway.
+  identity: integrationModes.apaar === "live" ? liveIdentity : mockIdentity,
   // Aadhaar OTP auth (verify-only) via a configurable AUA/KUA gateway.
   aadhaar: integrationModes.aadhaar === "live" ? liveAadhaar : mockAadhaar,
   // DigiLocker credential vault via a configurable partner gateway (OAuth Bearer).
