@@ -21,9 +21,9 @@ import { StakeholdersSection } from "../../stakeholders/components/stakeholders-
 import { MilestonesSection } from "../../milestones/components/milestones-section" // Import new component
 
 interface ImplementationDetailPageProps {
-  params: {
+  params: Promise<{
     id: string // This will be the implementation_status_id
-  }
+  }>
 }
 
 const statusColors: { [key: string]: string } = {
@@ -55,7 +55,7 @@ const DetailItem: React.FC<{
 )
 
 export default async function ImplementationDetailPage({ params }: ImplementationDetailPageProps) {
-  const implementationStatusId = params.id
+  const { id: implementationStatusId } = await params
   const { implementationStatus, error } = await getImplementationStatusByIdAction(implementationStatusId)
 
   if (error && error === "Implementation status not found.") {

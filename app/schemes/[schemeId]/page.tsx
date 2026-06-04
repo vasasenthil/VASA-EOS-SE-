@@ -30,12 +30,13 @@ import { PERMISSIONS } from "@/app/governance/types" // Assuming PERMISSIONS are
 import { getSupabaseAuthUser } from "@/lib/auth/server"
 
 interface SchemeDetailPageProps {
-  params: {
+  params: Promise<{
     schemeId: string
-  }
+  }>
 }
 
 export default async function SchemeDetailPage({ params }: SchemeDetailPageProps) {
+  const { schemeId } = await params
   const user = await getSupabaseAuthUser()
   const canEdit = user
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL })
@@ -56,7 +57,7 @@ export default async function SchemeDetailPage({ params }: SchemeDetailPageProps
         <PageHeaderActions>
           {canEdit && (
             <Button variant="outline" asChild>
-              <Link href={`/schemes/edit/${params.schemeId}`}>
+              <Link href={`/schemes/edit/${schemeId}`}>
                 <Edit3 className="mr-2 h-4 w-4" />
                 Edit Scheme
               </Link>
@@ -66,7 +67,7 @@ export default async function SchemeDetailPage({ params }: SchemeDetailPageProps
       </PageHeader>
 
       <Suspense fallback={<SchemeDetailLoading />}>
-        <SchemeDetails schemeId={params.schemeId} />
+        <SchemeDetails schemeId={schemeId} />
       </Suspense>
     </Shell>
   )

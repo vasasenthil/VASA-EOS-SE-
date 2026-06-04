@@ -28,7 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const DEFAULT_ITEMS_PER_PAGE_PAGE = 10
 
 interface PoliciesListPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     sortBy?: keyof PolicyDraft | "lastModified" | "createdAt"
     sortOrder?: "asc" | "desc"
     filterStatus?: PolicyDraft["status"]
@@ -40,7 +40,7 @@ interface PoliciesListPageProps {
     modifiedBefore?: string
     createdAfter?: string
     createdBefore?: string
-  }
+  }>
 }
 
 interface SortableHeaderProps {
@@ -122,17 +122,18 @@ const statusStyles: Record<string, string> = {
 }
 
 export default async function PoliciesListPage({ searchParams }: PoliciesListPageProps) {
-  const sortBy = searchParams?.sortBy
-  const sortOrder = searchParams?.sortOrder
-  const filterStatus = searchParams?.filterStatus
-  const filterDomain = searchParams?.filterDomain
-  const searchQuery = searchParams?.q || ""
-  const currentPage = searchParams?.page ? Number.parseInt(searchParams.page, 10) : 1
-  const limit = searchParams?.limit ? Number.parseInt(searchParams.limit, 10) : DEFAULT_ITEMS_PER_PAGE_PAGE
-  const modifiedAfter = searchParams?.modifiedAfter
-  const modifiedBefore = searchParams?.modifiedBefore
-  const createdAfter = searchParams?.createdAfter
-  const createdBefore = searchParams?.createdBefore
+  const sp = (await searchParams) ?? {}
+  const sortBy = sp.sortBy
+  const sortOrder = sp.sortOrder
+  const filterStatus = sp.filterStatus
+  const filterDomain = sp.filterDomain
+  const searchQuery = sp.q || ""
+  const currentPage = sp.page ? Number.parseInt(sp.page as string, 10) : 1
+  const limit = sp.limit ? Number.parseInt(sp.limit as string, 10) : DEFAULT_ITEMS_PER_PAGE_PAGE
+  const modifiedAfter = sp.modifiedAfter
+  const modifiedBefore = sp.modifiedBefore
+  const createdAfter = sp.createdAfter
+  const createdBefore = sp.createdBefore
 
   const policiesResponse: PaginatedPoliciesResponse = await getPoliciesAction({
     sortBy,
@@ -160,7 +161,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
     filterStatus: filterStatus,
     filterDomain: filterDomain,
     q: searchQuery,
-    limit: searchParams?.limit,
+    limit: sp.limit,
     modifiedAfter: modifiedAfter,
     modifiedBefore: modifiedBefore,
     createdAfter: createdAfter,
@@ -374,7 +375,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
                 </div>
                 {totalPages > 1 && (
                   <div className="mt-6 flex justify-center">
-                    <PolicyPagination currentPage={currentPage} totalPages={totalPages} searchParams={searchParams} />
+                    <PolicyPagination currentPage={currentPage} totalPages={totalPages} searchParams={sp} />
                   </div>
                 )}
               </>

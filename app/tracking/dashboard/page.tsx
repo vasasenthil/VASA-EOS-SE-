@@ -58,17 +58,18 @@ const statIcons: { [key: string]: React.ElementType } = {
 }
 
 interface PolicyTrackerDashboardPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     status?: string
     regionType?: string
     // Add other potential search params here
-  }
+  }>
 }
 
 export default async function PolicyTrackerDashboardPage({ searchParams }: PolicyTrackerDashboardPageProps) {
+  const sp = await searchParams
   const currentFilters: DashboardFiltersType = {
-    status: searchParams?.status,
-    regionType: searchParams?.regionType,
+    status: sp?.status,
+    regionType: sp?.regionType,
   }
 
   const {

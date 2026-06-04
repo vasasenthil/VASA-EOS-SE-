@@ -20,12 +20,13 @@ import {
 import { constructSortUrl } from "@/lib/utils" // Assuming a utility function
 
 interface SchemesPageProps {
-  searchParams: GetSchemesParams
+  searchParams: Promise<GetSchemesParams>
 }
 
 export default async function SchemesPage({ searchParams }: SchemesPageProps) {
-  const currentSortBy = searchParams.sortBy || "created_at"
-  const currentSortDirection = searchParams.sortDirection || "desc"
+  const sp = await searchParams
+  const currentSortBy = sp.sortBy || "created_at"
+  const currentSortDirection = sp.sortDirection || "desc"
 
   const sortOptions = [
     { label: "Creation Date", value: "created_at" },
@@ -69,10 +70,10 @@ export default async function SchemesPage({ searchParams }: SchemesPageProps) {
             {sortOptions.map((option) => (
               <div key={option.value}>
                 <DropdownMenuItem asChild>
-                  <Link href={constructSortUrl(searchParams, option.value, "desc")}>{option.label} (Desc)</Link>
+                  <Link href={constructSortUrl(sp, option.value, "desc")}>{option.label} (Desc)</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href={constructSortUrl(searchParams, option.value, "asc")}>{option.label} (Asc)</Link>
+                  <Link href={constructSortUrl(sp, option.value, "asc")}>{option.label} (Asc)</Link>
                 </DropdownMenuItem>
               </div>
             ))}
@@ -81,7 +82,7 @@ export default async function SchemesPage({ searchParams }: SchemesPageProps) {
       </div>
 
       <Suspense fallback={<SchemesLoading />}>
-        <SchemesList searchParams={searchParams} />
+        <SchemesList searchParams={sp} />
       </Suspense>
     </Shell>
   )

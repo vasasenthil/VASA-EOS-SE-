@@ -17,10 +17,10 @@ export const metadata = {
 const PAGE_SIZE = 10
 
 interface UsersPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     search?: string
     page?: string
-  }
+  }>
 }
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
@@ -31,19 +31,20 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
 
   const canView = await hasPermission({
     userId: currentAuthUserId,
-    permissionString: PERMISSIONS.USERS_VIEW,
+    permissionString: PERMISSIONS.USERS_MANAGE_SYSTEM,
   })
   const canManage = await hasPermission({
     userId: currentAuthUserId,
-    permissionString: PERMISSIONS.USERS_MANAGE,
+    permissionString: PERMISSIONS.USERS_MANAGE_SYSTEM,
   })
 
   if (!canView) {
     redirect("/") // Or to an access denied page
   }
 
-  const searchTerm = searchParams?.search || ""
-  const currentPage = Number(searchParams?.page) || 1
+  const sp = await searchParams
+  const searchTerm = sp?.search || ""
+  const currentPage = Number(sp?.page) || 1
 
   const {
     data: users,
