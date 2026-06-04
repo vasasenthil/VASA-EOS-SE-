@@ -34,6 +34,10 @@ import {
   TrendingUp,
   Utensils,
   FileCheck2,
+  BedDouble,
+  Bus,
+  Stethoscope,
+  Scale,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -75,6 +79,12 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Multi-Tenancy", href: "/tenancy", icon: Network },
     { title: "Zero-Trust Security", href: "/security", icon: ShieldCheck },
     { title: "Data Platform", href: "/data-platform", icon: Database },
+    { title: "Hostel Management", href: "/hostel", icon: BedDouble },
+    { title: "Library", href: "/library", icon: BookMarked },
+    { title: "Transport", href: "/transport", icon: Bus },
+    { title: "School Health (RBSK)", href: "/rbsk", icon: Stethoscope },
+    { title: "Grievances", href: "/grievance", icon: MessageSquare },
+    { title: "Governance Framework", href: "/governance/framework", icon: Scale },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
