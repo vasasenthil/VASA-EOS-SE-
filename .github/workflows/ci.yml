@@ -68,5 +68,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Run unit tests
-        run: pnpm run test
+      - name: Run unit tests (with coverage report)
+        run: pnpm run test:coverage

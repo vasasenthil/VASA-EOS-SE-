@@ -7,12 +7,21 @@
 import { supabaseAdmin } from "@/lib/supabase/server"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+// Test-only override. Undefined means "no override" (production behaviour);
+// unit tests inject an in-memory fake here to exercise the DB code path.
+let testOverride: SupabaseClient | null | undefined
+
 /** The privileged DB client, or null when no service-role key is configured. */
 export function getDb(): SupabaseClient | null {
-  return supabaseAdmin
+  return testOverride !== undefined ? testOverride : supabaseAdmin
 }
 
 /** True when durable persistence is available. */
 export function dbReady(): boolean {
-  return supabaseAdmin !== null
+  return getDb() !== null
+}
+
+/** Test-only seam: inject a fake client (or null) to exercise the DB path. */
+export function __setTestDb(client: SupabaseClient | null | undefined): void {
+  testOverride = client
 }
