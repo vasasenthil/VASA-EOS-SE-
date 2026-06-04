@@ -38,6 +38,9 @@ import {
   Bus,
   Stethoscope,
   Scale,
+  Package,
+  Leaf,
+  Vote,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -85,6 +88,12 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "School Health (RBSK)", href: "/rbsk", icon: Stethoscope },
     { title: "Grievances", href: "/grievance", icon: MessageSquare },
     { title: "Governance Framework", href: "/governance/framework", icon: Scale },
+    { title: "School Finance", href: "/finance", icon: Banknote },
+    { title: "Inventory & Procurement", href: "/procurement", icon: Package },
+    { title: "SMC (DAO)", href: "/smc", icon: Vote },
+    { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
+    { title: "Green School / ESG", href: "/green-school", icon: Leaf },
+    { title: "Co-curricular & Sports", href: "/co-curricular", icon: Award },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
