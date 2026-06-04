@@ -3,8 +3,8 @@ import { cookies } from "next/headers"
 import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server"
 
 // Helper to get the Supabase server client for user session
-function createSupabaseServerClient() {
-  const cookieStore = cookies()
+async function createSupabaseServerClient() {
+  const cookieStore = await cookies()
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       get(name: string) {
@@ -38,7 +38,7 @@ function createSupabaseServerClient() {
  */
 export async function getUserIdFromAction(): Promise<string | null> {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const {
       data: { user },
       error,
@@ -61,7 +61,7 @@ export async function getUserIdFromAction(): Promise<string | null> {
  */
 export async function getUserFromAction() {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const {
       data: { user },
       error,
@@ -84,7 +84,7 @@ export async function getUserFromAction() {
  */
 export async function getSupabaseAuthUser() {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const {
       data: { user },
       error,
@@ -121,7 +121,7 @@ export async function getUserRoleAndSchool(userId: string): Promise<{ role: stri
   // Note: This function queries our custom 'users' table, not Supabase Auth claims.
   // It's designed for the MVP schema.
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     const { data: userProfile, error } = await supabase
       .from("users")
       .select("role, school_id")

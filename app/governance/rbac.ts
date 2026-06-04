@@ -90,7 +90,9 @@ export async function hasPermission({ userId, permissionString, ouId }: Permissi
     }
 
     for (const assignment of assignments) {
-      const role = assignment.roles // roles is not an array here due to !inner and single role per assignment
+      // Supabase types the !inner join as an array, but with a to-one FK it is a single
+      // related row at runtime; cast so field access reflects the actual shape.
+      const role = assignment.roles as any // roles is not an array here due to !inner and single role per assignment
       if (!role) continue
 
       // Check for SUPER_ADMIN override
@@ -158,7 +160,9 @@ export async function getAllUserPermissions(userId: string): Promise<string[]> {
     const permissionSet = new Set<string>()
     if (data) {
       for (const assignment of data) {
-        const role = assignment.roles
+        // Supabase types the !inner join as an array, but with a to-one FK it is a single
+      // related row at runtime; cast so field access reflects the actual shape.
+      const role = assignment.roles as any
         if (role && role.role_permissions) {
           // Check for SUPER_ADMIN
           if (role.name === SYSTEM_ROLES.SUPER_ADMIN && role.is_system_role) {

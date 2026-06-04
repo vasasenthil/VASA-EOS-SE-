@@ -15,7 +15,7 @@
     ]
   },
   "dependencies": {
-    "@hookform/resolvers": "latest",
+    "@hookform/resolvers": "^5.2.0",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -71,7 +71,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "latest",
     "vaul": "latest",
-    "zod": "latest"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22",
