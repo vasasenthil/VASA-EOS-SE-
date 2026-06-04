@@ -39,3 +39,17 @@ export function udiseBaseUrl(): string | undefined {
 export function udiseApiKey(): string | undefined {
   return process.env.UDISE_API_KEY || undefined
 }
+
+// ── AI agents (LLM) — OpenAI-compatible chat completions endpoint ─────────────
+/** Chat-completions endpoint (default: OpenAI). Point at any compatible gateway. */
+export function agentsApiUrl(): string {
+  return process.env.AGENTS_API_URL?.replace(/\/$/, "") || "https://api.openai.com/v1/chat/completions"
+}
+/** API key for the LLM endpoint (required for live agents). */
+export function agentsApiKey(): string | undefined {
+  return process.env.AGENTS_API_KEY || undefined
+}
+/** Model id for the LLM endpoint. */
+export function agentsModel(): string {
+  return process.env.AGENTS_MODEL || "gpt-4o-mini"
+}
