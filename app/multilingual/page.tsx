@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { LOCALES } from "@/lib/i18n"
 import { TranslateDemo } from "./translate-demo"
+import { I18nDemo } from "./i18n-demo"
 
 export default function MultilingualPage() {
   const tamil = LOCALES.find((l) => l.code === "ta")
@@ -47,6 +48,10 @@ export default function MultilingualPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-6">
+        <I18nDemo />
       </div>
 
       <TranslateDemo />

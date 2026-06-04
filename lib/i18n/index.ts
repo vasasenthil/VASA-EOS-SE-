@@ -25,31 +25,5 @@ export const LOCALES: LocaleDef[] = [
 
 export const DEFAULT_LOCALE: Locale = "ta"
 
-type Dict = Record<string, string>
-
-// UI strings — Tamil-first. (Subset; expands as modules land.)
-const messages: Partial<Record<Locale, Dict>> = {
-  ta: {
-    "app.title": "வாசா-EOS (பள்ளிக் கல்வி)",
-    "nav.dashboard": "டாஷ்போர்டு",
-    "nav.attendance": "வருகை",
-    "nav.fees": "கட்டணம்",
-    "nav.schemes": "திட்டங்கள்",
-    "welcome": "வரவேற்கிறோம்",
-    "language": "மொழி",
-  },
-  en: {
-    "app.title": "VASA-EOS (School Education)",
-    "nav.dashboard": "Dashboard",
-    "nav.attendance": "Attendance",
-    "nav.fees": "Fees",
-    "nav.schemes": "Schemes",
-    "welcome": "Welcome",
-    "language": "Language",
-  },
-}
-
-/** Translate a UI key; falls back to English, then the key itself. */
-export function t(locale: Locale, key: string): string {
-  return messages[locale]?.[key] ?? messages.en?.[key] ?? key
-}
+// UI string catalogues live in lib/i18n/resources.ts and are served via
+// react-i18next (see components/i18n-provider + useTranslation()).
