@@ -116,4 +116,13 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Fee Management", href: "/parent/fees", icon: IndianRupee },
     { title: "Communication", href: "/parent/communication", icon: MessageSquare },
   ],
+  CRCC: [{ title: "Dashboard", href: "/crcc/dashboard", icon: LayoutDashboard }],
+  BEO: [{ title: "Dashboard", href: "/beo/dashboard", icon: LayoutDashboard }],
+  DEO: [{ title: "Dashboard", href: "/deo/dashboard", icon: LayoutDashboard }],
+  DIRECTOR: [{ title: "Dashboard", href: "/director/dashboard", icon: LayoutDashboard }],
+  SECRETARY: [{ title: "Dashboard", href: "/secretary/dashboard", icon: LayoutDashboard }],
+  MINISTER: [{ title: "Dashboard", href: "/minister/dashboard", icon: LayoutDashboard }],
+  VENDOR: [{ title: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard }],
+  RESEARCHER: [{ title: "Dashboard", href: "/researcher/dashboard", icon: LayoutDashboard }],
+  PUBLIC: [{ title: "Dashboard", href: "/public/dashboard", icon: LayoutDashboard }],
 }
