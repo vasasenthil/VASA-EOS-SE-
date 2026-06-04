@@ -107,7 +107,7 @@ export function ChallengeForm({ implementationStatusId, challenge, onSuccess, on
   const onSubmit: SubmitHandler<ChallengeFormData> = (formData) => {
     startTransition(async () => {
       let result: ChallengeActionState
-      const challengeInputData: Omit<ImplementationChallengeInput, "implementation_status_id"> = {
+      const challengeInputData = {
         ...formData,
         // Ensure nulls are passed correctly if optional fields are empty
         description: formData.description || null,
@@ -117,7 +117,7 @@ export function ChallengeForm({ implementationStatusId, challenge, onSuccess, on
         resolution_details: formData.resolution_details || null,
         reported_by: formData.reported_by || null,
         assigned_to: formData.assigned_to || null,
-      }
+      } as Omit<ImplementationChallengeInput, "implementation_status_id">
 
       if (challenge?.id) {
         result = await updateChallengeAction(challenge.id, challengeInputData)

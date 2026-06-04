@@ -112,7 +112,7 @@ async function SchemesList({ searchParams }: { searchParams: GetSchemesParams })
       </div>
       {totalPages > 1 && (
         <div className="mt-8">
-          <PaginationControls currentPage={currentPage} totalPages={totalPages} totalCount={totalCount} />
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} hasNextPage={currentPage < totalPages} hasPrevPage={currentPage > 1} />
         </div>
       )}
     </>

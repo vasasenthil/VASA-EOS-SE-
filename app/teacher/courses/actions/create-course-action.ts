@@ -2,6 +2,7 @@
 
 import { z } from "zod"
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { getSupabaseAuthUser } from "@/lib/auth/server"
 import { revalidatePath } from "next/cache"
 
 const createCourseSchema = z.object({
@@ -17,9 +18,7 @@ export interface CreateCourseActionState {
 }
 
 export async function createCourseAction(
-  teacherId: string, // Passed from the page/form component
-  prevState: CreateCourseActionState,
-  formData: FormData,
+  values: z.infer<typeof createCourseSchema>,
 ): Promise<CreateCourseActionState> {
   if (!isSupabaseAdminConfigured()) {
     return {
@@ -29,6 +28,8 @@ export async function createCourseAction(
     }
   }
 
+  const user = await getSupabaseAuthUser()
+  const teacherId = user?.id
   if (!teacherId) {
     return {
       success: false,
@@ -37,10 +38,7 @@ export async function createCourseAction(
     }
   }
 
-  const validatedFields = createCourseSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description") || undefined, // Ensure optional fields are handled
-  })
+  const validatedFields = createCourseSchema.safeParse(values)
 
   if (!validatedFields.success) {
     const fieldErrors: Partial<Record<keyof z.infer<typeof createCourseSchema>, string>> = {}

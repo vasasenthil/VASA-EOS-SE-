@@ -1,7 +1,7 @@
 "use server"
 
 import { head } from "@vercel/blob"
-import type { BlobResult } from "@vercel/blob"
+import type { HeadBlobResult as BlobResult } from "@vercel/blob"
 
 export interface GetBlobMetadataState {
   metadata?: BlobResult | null

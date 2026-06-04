@@ -348,7 +348,7 @@ export function PolicyFilters() {
                 onChange={handleSearchInputChange}
                 className="rounded-r-none"
               />
-              <Button type="submit" onClick={handleSearchSubmit} className="rounded-l-none">
+              <Button type="submit" onClick={() => handleSearchSubmit()} className="rounded-l-none">
                 <Search className="h-4 w-4 mr-2 md:hidden" />
                 <span className="hidden md:inline">Search</span>
               </Button>
@@ -430,7 +430,7 @@ export function PolicyFilters() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="icon_xs"
+                        size="icon"
                         onClick={() => clearDateRange("created")}
                         className="h-8 w-8 p-1.5"
                         aria-label="Clear Created At date range"
@@ -472,7 +472,7 @@ export function PolicyFilters() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        size="icon_xs"
+                        size="icon"
                         onClick={() => clearDateRange("modified")}
                         className="h-8 w-8 p-1.5"
                         aria-label="Clear Modified At date range"

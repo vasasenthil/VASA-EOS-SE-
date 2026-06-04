@@ -61,7 +61,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   const totalPages = Math.ceil(totalUsers / PAGE_SIZE)
 
   return (
-    <Shell variant="sidebar">
+    <Shell>
       <PageHeader>
         <PageHeaderHeading>User Management</PageHeaderHeading>
         <PageHeaderText>A list of all the users in your account.</PageHeaderText>
@@ -69,7 +69,10 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       <div className="space-y-4">
         <SearchInput placeholder="Search by email..." />
         {success ? (
-          <UserTable users={users} canManageUsers={canManage} />
+          <UserTable
+            usersResult={{ success, message: "", data: users, total: totalUsers }}
+            canManageUsers={canManage}
+          />
         ) : (
           <div className="flex h-24 items-center justify-center rounded-md border border-dashed">
             <p className="text-sm text-destructive">{message || "Failed to load users."}</p>

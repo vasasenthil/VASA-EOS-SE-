@@ -315,7 +315,7 @@ export async function getAuthUsersForSelectionAction(params?: {
   }
   try {
     // The `auth.users` table is in the `auth` schema.
-    let query = supabaseAdmin!.from("users").select("id, email, raw_user_meta_data", { schema: "auth", count: "exact" })
+    let query = supabaseAdmin!.from("users").select("id, email, raw_user_meta_data", { count: "exact" })
 
     if (params?.searchTerm) {
       query = query.ilike("email", `%${params.searchTerm}%`) // Simple email search

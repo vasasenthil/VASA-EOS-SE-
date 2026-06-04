@@ -101,7 +101,7 @@ export default async function ImplementationDetailPage({ params }: Implementatio
             <div>
               <Badge
                 variant="outline"
-                className={`${statusColors[implementationStatus.overall_status] || statusColors.default} mb-2`}
+                className={`${statusColors[implementationStatus.overall_status || "default"] || statusColors.default} mb-2`}
               >
                 {implementationStatus.overall_status}
               </Badge>
@@ -158,7 +158,11 @@ export default async function ImplementationDetailPage({ params }: Implementatio
             <DetailItem label="Last Updated By" value={implementationStatus.last_updated_by || "N/A"} icon={Info} />
             <DetailItem
               label="Last Update On"
-              value={format(new Date(implementationStatus.updated_at), "dd MMM yyyy, HH:mm")}
+              value={
+                implementationStatus.updated_at
+                  ? format(new Date(implementationStatus.updated_at), "dd MMM yyyy, HH:mm")
+                  : "N/A"
+              }
               icon={CalendarCheck2}
             />
           </div>

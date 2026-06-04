@@ -151,7 +151,7 @@ export default function EditPolicyPage() {
     } else if (fieldName === "annexures") {
       if (fileNameToRemove && policy.annexures && Array.isArray(policy.annexures)) {
         const updatedFilesMeta = (policy.annexures as { name: string }[]).filter((f) => f.name !== fileNameToRemove)
-        setPolicy((prev) => ({ ...prev, annexures: updatedFilesMeta.length > 0 ? updatedFilesMeta : null }))
+        setPolicy((prev) => ({ ...prev, annexures: (updatedFilesMeta.length > 0 ? updatedFilesMeta : null) as any }))
       } else if (fileNameToRemove && policy.annexures instanceof FileList) {
         const updatedFiles = Array.from(policy.annexures).filter((file) => file.name !== fileNameToRemove)
         const dataTransfer = new DataTransfer()
@@ -505,7 +505,7 @@ export default function EditPolicyPage() {
                       {((policy.draftPolicyDocument &&
                         typeof policy.draftPolicyDocument === "object" &&
                         "name" in policy.draftPolicyDocument) ||
-                        policy.draftPolicyDocument instanceof File) && (
+                        (policy.draftPolicyDocument as any) instanceof File) && (
                         <Button
                           type="button"
                           variant="ghost"

@@ -150,7 +150,7 @@ export default async function PolicyTrackerDashboardPage({ searchParams }: Polic
                 key={stat.title}
                 title={stat.title}
                 value={stat.value}
-                icon={statIcons[stat.title] || FileText}
+                icon={(statIcons[stat.title] || FileText) as any}
                 description={stat.description}
               />
             ))}

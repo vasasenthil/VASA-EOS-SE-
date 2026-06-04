@@ -25,7 +25,7 @@ function SubmitButton() {
   )
 }
 
-export default function RegisterUserForm({ schoolId }: { schoolId: string }) {
+export default function RegisterUserForm({ schoolId = "" }: { schoolId?: string }) {
   const { toast } = useToast()
   const [state, formAction] = useFormState(registerUserAction.bind(null, schoolId), initialState)
 

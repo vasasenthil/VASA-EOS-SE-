@@ -1,12 +1,10 @@
 // Using a route handler for logout for simplicity with form submission
 // A server action in app/login/actions.ts or a dedicated auth actions file is also a good pattern.
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
-  const cookieStore = cookies()
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+  const supabase = await createClient()
 
   // Check if the user is currently signed in.
   const {

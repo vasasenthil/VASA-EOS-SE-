@@ -68,7 +68,7 @@ export default async function UserAssignmentsPage(props: any) {
   }
 
   return (
-    <Shell variant="sidebar">
+    <Shell>
       <PageHeader>
         <PageHeaderHeading>Manage Assignments</PageHeaderHeading>
         <PageHeaderText>

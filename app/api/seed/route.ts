@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     let authUserId: string | undefined
 
     // 1. Check if user exists in auth.users
-    const { data: existingAuthUser, error: getAuthUserError } = await supabaseAdmin.auth.admin.getUserByEmail(
+    const { data: existingAuthUser, error: getAuthUserError } = await (supabaseAdmin.auth.admin as any).getUserByEmail(
       user.email,
     )
 

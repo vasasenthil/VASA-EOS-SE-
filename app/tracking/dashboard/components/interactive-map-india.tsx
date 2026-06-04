@@ -42,8 +42,8 @@ const InteractiveMapIndiaComponent: React.FC<InteractiveMapIndiaProps> = ({ data
           <Sphere stroke="#E4E5E6" strokeWidth={0.5} id="sphere" />
           <Graticule stroke="#E4E5E6" strokeWidth={0.5} />
           <Geographies geography={INDIA_GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
+            {({ geographies }: any) =>
+              geographies.map((geo: any) => {
                 const stateName = geo.properties.name
                 const stateData = dataMap.get(stateName)
                 const progress = stateData?.value || 0
@@ -87,7 +87,9 @@ const InteractiveMapIndiaComponent: React.FC<InteractiveMapIndiaProps> = ({ data
           </Geographies>
         </ZoomableGroup>
       </ComposableMap>
-      {tooltipContent && <ReactTooltip id="map-tooltip" html={tooltipContent} place="top" effect="solid" />}
+      {tooltipContent && (
+        <ReactTooltip {...({ id: "map-tooltip", html: tooltipContent, place: "top", effect: "solid" } as any)} />
+      )}
     </>
   )
 }

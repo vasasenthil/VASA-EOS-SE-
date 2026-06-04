@@ -1,4 +1,5 @@
-import type { FullStakeholderSeedData } from "@/app/tracking/dashboard/actions" // Adjusted path
+// Local seed-data shape (dev utility); not part of the app's exported types.
+type FullStakeholderSeedData = any
 // Note: Supabase client for fetching implementation_status_ids is removed from here.
 // The action `seedImplementationStakeholdersAction` will handle fetching/associating.
 // This function will now focus on generating template stakeholder data.

@@ -386,7 +386,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
               Showing {policies.length} of {totalCount} polic{totalCount === 1 ? "y" : "ies"}.
               {totalPages > 1 && ` Page ${currentPage} of ${totalPages}.`} (Displaying {effectiveItemsPerPage} per page)
             </span>
-            <form action={clearPoliciesAction} className="w-full sm:w-auto sm:ml-auto">
+            <form action={async () => { await clearPoliciesAction() }} className="w-full sm:w-auto sm:ml-auto">
               <Button
                 type="submit"
                 variant="ghost"

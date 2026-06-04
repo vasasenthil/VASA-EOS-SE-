@@ -190,7 +190,8 @@ export default function ViewPolicyPage() {
               </Button>
               <CardTitle className="text-3xl font-bold text-gray-800">{policy.title}</CardTitle>
               <CardDescription className="text-md text-gray-600 mt-1">
-                Version: {policy.version} &bull; Last Modified: {format(new Date(policy.lastModified), "PPP p")}
+                Version: {policy.version} &bull; Last Modified:{" "}
+                {policy.lastModified ? format(new Date(policy.lastModified), "PPP p") : "N/A"}
               </CardDescription>
             </div>
             <div className="flex flex-col items-end space-y-2">
@@ -208,7 +209,7 @@ export default function ViewPolicyPage() {
         </CardHeader>
 
         <CardContent className="p-6 space-y-6">
-          <PolicyStatusUpdater policyId={policy.id} currentStatus={policy.status} />
+          <PolicyStatusUpdater policyId={policy.id ?? ""} currentStatus={policy.status ?? "Draft"} />
           <Separator />
 
           <section aria-labelledby="policy-details-heading">
@@ -256,7 +257,7 @@ export default function ViewPolicyPage() {
                   : "N/A"}
               </DetailItem>
               <DetailItem label="Created At" icon={CalendarDays}>
-                {format(new Date(policy.createdAt), "PPP p")}
+                {policy.createdAt ? format(new Date(policy.createdAt), "PPP p") : "N/A"}
               </DetailItem>
             </div>
           </section>
@@ -270,13 +271,13 @@ export default function ViewPolicyPage() {
             <div className="space-y-3">
               <div>
                 <h3 className="text-md font-medium text-gray-600 mb-1">Draft Policy Document:</h3>
-                {renderFileLink(policy.draftPolicyDocument, `policy_draft_${policy.id}.pdf`, "document")}
+                {renderFileLink(policy.draftPolicyDocument as any, `policy_draft_${policy.id}.pdf`, "document")}
               </div>
               <div>
                 <h3 className="text-md font-medium text-gray-600 mb-1">Annexures:</h3>
                 {policy.annexures && policy.annexures.length > 0 ? (
                   <ul className="list-disc list-inside space-y-2 pl-1">
-                    {policy.annexures.map((annex, idx) => (
+                    {(policy.annexures as any[]).map((annex: any, idx: number) => (
                       <li key={idx}>{renderFileLink(annex, `annexure_${idx + 1}_${policy.id}`, "annexure")}</li>
                     ))}
                   </ul>
