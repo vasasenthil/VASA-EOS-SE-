@@ -1,0 +1,45 @@
+name: CI
+
+# Dependency-resolution smoke check.
+# This project is a pnpm + Next.js app (pnpm-lock.yaml, lockfileVersion 9.0).
+# The previous "NodeJS with Gulp" starter workflow used `npm install` + `gulp`,
+# which is wrong for this stack: npm cannot resolve React 19 against
+# react-simple-maps@3 (peer caps at React 18), and there is no gulp build.
+# pnpm resolves the tree correctly via autoInstallPeers, so this verifies the
+# dependency tree installs cleanly across supported Node versions.
+# NOTE: a stricter gate (lint / typecheck / next build) is intentionally NOT
+# enabled yet — the app currently has pre-existing TypeScript errors and no
+# ESLint config; hardening those is tracked separately (see docs/VASA-EOS-SE-Gap-Analysis.md).
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  install:
+    name: Install (dependency resolution)
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
