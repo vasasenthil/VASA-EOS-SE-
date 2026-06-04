@@ -18,7 +18,15 @@ function addExtension(href) {
   return href
 }
 
+// Server-only modules referenced by the import chain but unused under test.
+const STUBS = {
+  "next/headers": pathToFileURL(path.join(root, "scripts/test-stubs/next-headers.mjs")).href,
+}
+
 export async function resolve(specifier, context, nextResolve) {
+  if (STUBS[specifier]) {
+    return nextResolve(STUBS[specifier], context)
+  }
   let target = null
   if (specifier.startsWith("@/")) {
     target = pathToFileURL(path.join(root, specifier.slice(2))).href
