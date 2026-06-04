@@ -22,10 +22,12 @@ import {
   Layers,
   DollarSign,
 } from "lucide-react"
-import type { SchemeDocument, OrganizationalUnitSubtype, GovernanceTier } from "../types"
+import type { SchemeDocument, OrganizationalUnitSubtype } from "../types"
+import type { GovernanceTier } from "@/app/governance/types"
 import SchemeDetailLoading from "./loading" // Import the loading component
 import { hasPermission } from "@/app/governance/rbac" // Assuming RBAC setup
 import { PERMISSIONS } from "@/app/governance/types" // Assuming PERMISSIONS are defined
+import { getSupabaseAuthUser } from "@/lib/auth/server"
 
 interface SchemeDetailPageProps {
   params: {
@@ -34,7 +36,10 @@ interface SchemeDetailPageProps {
 }
 
 export default async function SchemeDetailPage({ params }: SchemeDetailPageProps) {
-  const canEdit = await hasPermission(PERMISSIONS.MANAGE_SCHEMES) // Define this permission
+  const user = await getSupabaseAuthUser()
+  const canEdit = user
+    ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL })
+    : false
 
   return (
     <Shell>

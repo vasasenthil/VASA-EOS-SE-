@@ -55,6 +55,7 @@ export interface SchemeDocument {
   id: string
   scheme_id: string
   document_name: string
+  description?: string | null
   document_type?: string | null
   file_path: string // This should be the Vercel Blob URL after upload
   file_size_kb?: number | null

@@ -1,11 +1,9 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 
 export async function getEnrolledCourses() {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -39,7 +37,7 @@ export async function getEnrolledCourses() {
   }
 
   // The data is nested, so we need to flatten it for easier use in the UI.
-  const courses = data.map((enrollment) => ({
+  const courses = data.map((enrollment: any) => ({
     ...enrollment.courses,
   }))
 
