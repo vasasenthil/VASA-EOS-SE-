@@ -139,7 +139,7 @@ export async function getRolesAction(params?: {
     }
 
     const roles = data
-      ? data.map((role) => {
+      ? (data as any[]).map((role: any) => {
           // If permissions are fetched via role_permissions, they are nested.
           // We need to adjust the mapping.
           const mappedRole = mapDbRoleToType(role)
@@ -186,8 +186,8 @@ export async function getRoleByIdAction(
     }
 
     const role = mapDbRoleToType(data)
-    if (params?.includePermissions && data.permissions) {
-      role.permissions = data.permissions.map((rp: any) => mapDbPermissionToType(rp.permissions))
+    if (params?.includePermissions && (data as any).permissions) {
+      role.permissions = (data as any).permissions.map((rp: any) => mapDbPermissionToType(rp.permissions))
     }
 
     return { success: true, message: "Role fetched successfully.", data: role }

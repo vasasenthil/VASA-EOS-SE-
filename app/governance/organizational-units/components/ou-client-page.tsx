@@ -57,7 +57,7 @@ export default function OUClientPage({ initialOUs, initialTiers, userId, canMana
       if (result.success && result.data) {
         setOUs(result.data)
       } else {
-        toast({ title: "Error", description: result.error || "Failed to refresh OUs.", variant: "destructive" })
+        toast({ title: "Error", description: result.message || "Failed to refresh OUs.", variant: "destructive" })
       }
       const tiersResult = await getGovernanceTiersAction()
       if (tiersResult.success && tiersResult.data) {
@@ -94,7 +94,7 @@ export default function OUClientPage({ initialOUs, initialTiers, userId, canMana
         toast({ title: "Success", description: result.message })
         await refreshOUs()
       } else {
-        toast({ title: "Error", description: result.error || "Failed to delete OU.", variant: "destructive" })
+        toast({ title: "Error", description: result.message || "Failed to delete OU.", variant: "destructive" })
       }
       setShowDeleteConfirm(null)
     })
@@ -145,7 +145,7 @@ export default function OUClientPage({ initialOUs, initialTiers, userId, canMana
                     setIsFormOpen(false)
                     setEditingOU(null)
                   }}
-                  userId={userId}
+                  userId={userId ?? ""}
                 />
               </DialogContent>
             </Dialog>
@@ -189,7 +189,7 @@ export default function OUClientPage({ initialOUs, initialTiers, userId, canMana
                   setIsFormOpen(false)
                   setEditingOU(null)
                 }}
-                userId={userId}
+                userId={userId ?? ""}
               />
             </DialogContent>
           </Dialog>

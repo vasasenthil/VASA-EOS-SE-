@@ -49,10 +49,12 @@ interface OUFormProps {
   tiers: GovernanceTier[]
   allOUs: OrganizationalUnit[] // For parent OU selection
   userId: string // For client-side permission check (UX)
-  canManage: boolean // Pre-checked permission from server
+  canManage?: boolean // Pre-checked permission from server (page is already gated)
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export function OUForm({ initialData, tiers, allOUs, userId, canManage }: OUFormProps) {
+export function OUForm({ initialData, tiers, allOUs, userId, canManage = true }: OUFormProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [selectedTierId, setSelectedTierId] = useState<number | undefined>(initialData?.tier_id)
