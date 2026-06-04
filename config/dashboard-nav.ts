@@ -32,6 +32,8 @@ import {
   IndianRupee,
   CalendarDays,
   TrendingUp,
+  Utensils,
+  FileCheck2,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -67,6 +69,8 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Multilingual & Voice", href: "/multilingual", icon: Globe },
     { title: "Consent & Audit", href: "/consent", icon: FileLock },
     { title: "Accessibility", href: "/accessibility", icon: Heart },
+    { title: "PM POSHAN / CMBS", href: "/pm-poshan", icon: Utensils },
+    { title: "Examination Security", href: "/exams", icon: FileCheck2 },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },

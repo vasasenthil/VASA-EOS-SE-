@@ -1,0 +1,26 @@
+"use server"
+
+import { reconcile, type ReconResult } from "@/lib/meals"
+import { appendAudit } from "@/lib/audit/trail"
+
+export interface ReconState {
+  result?: ReconResult
+  error?: string
+}
+
+export async function reconcileAction(_prev: ReconState, formData: FormData): Promise<ReconState> {
+  const date = (formData.get("date") as string) || new Date().toISOString().slice(0, 10)
+  const attendance = Number(formData.get("attendance"))
+  const mealsServed = Number(formData.get("mealsServed"))
+  if (!Number.isFinite(attendance) || !Number.isFinite(mealsServed) || attendance < 0 || mealsServed < 0) {
+    return { error: "Enter valid attendance and meals-served counts." }
+  }
+  const result = reconcile({ date, attendance, mealsServed })
+  appendAudit({
+    actor: "operations",
+    action: "pm_poshan.reconcile",
+    resource: date,
+    details: { variance: result.variance, leakage: result.leakageFlag },
+  })
+  return { result }
+}
