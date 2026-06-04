@@ -51,6 +51,15 @@ test("maps an abort to a timeout message", async () => {
   assert.equal(r.error, "Upstream timed out")
 })
 
+test("maps a non-Error throw to a generic message", async () => {
+  mockFetch(async () => {
+    throw "weird-non-error"
+  })
+  const r = await httpJson("https://x.test/api")
+  assert.equal(r.ok, false)
+  assert.equal(r.error, "Unknown error")
+})
+
 test("sends JSON body and headers on POST", async () => {
   let capturedInit: RequestInit | undefined
   mockFetch(async (_url, init) => {
