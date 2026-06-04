@@ -53,3 +53,23 @@ export function agentsApiKey(): string | undefined {
 export function agentsModel(): string {
   return process.env.AGENTS_MODEL || "gpt-4o-mini"
 }
+
+// ── Bhashini (ULCA / Dhruva) — translation / TTS / ASR ────────────────────────
+// Realistic config uses a provisioned inference endpoint + its auth key (obtained
+// once from the Bhashini pipeline-config step), optionally with explicit serviceIds.
+export interface BhashiniConfig {
+  inferenceUrl?: string
+  apiKey?: string
+  translationServiceId?: string
+  ttsServiceId?: string
+  asrServiceId?: string
+}
+export function bhashiniConfig(): BhashiniConfig {
+  return {
+    inferenceUrl: process.env.BHASHINI_INFERENCE_URL?.replace(/\/$/, "") || undefined,
+    apiKey: process.env.BHASHINI_API_KEY || undefined,
+    translationServiceId: process.env.BHASHINI_TRANSLATION_SERVICE_ID || undefined,
+    ttsServiceId: process.env.BHASHINI_TTS_SERVICE_ID || undefined,
+    asrServiceId: process.env.BHASHINI_ASR_SERVICE_ID || undefined,
+  }
+}

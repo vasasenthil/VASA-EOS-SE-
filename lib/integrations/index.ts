@@ -16,7 +16,7 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveAgents, liveDiksha, liveUdise } from "./live"
+import { liveAgents, liveDiksha, liveLanguage, liveUdise } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
@@ -28,7 +28,8 @@ export const integrations: IntegrationRegistry = {
   udise: integrationModes.udise === "live" ? liveUdise : mockUdise,
   // First real HTTP-backed adapter: DIKSHA content discovery (public API, no MoU).
   diksha: integrationModes.diksha === "live" ? liveDiksha : mockDiksha,
-  language: mockLanguage,
+  // Bhashini translation / TTS for the Tamil-first, 22-language mandate.
+  language: integrationModes.language === "live" ? liveLanguage : mockLanguage,
   // 8 specialised agents run through a live LLM when configured.
   agents: integrationModes.agents === "live" ? liveAgents : mockAgents,
 }

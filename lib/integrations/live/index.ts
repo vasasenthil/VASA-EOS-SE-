@@ -3,3 +3,4 @@
 export { liveDiksha } from "./diksha"
 export { liveUdise } from "./udise"
 export { liveAgents } from "./agents"
+export { liveLanguage } from "./bhashini"
