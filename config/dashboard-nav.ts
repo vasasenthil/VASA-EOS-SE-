@@ -71,6 +71,10 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Accessibility", href: "/accessibility", icon: Heart },
     { title: "PM POSHAN / CMBS", href: "/pm-poshan", icon: Utensils },
     { title: "Examination Security", href: "/exams", icon: FileCheck2 },
+    { title: "Student Information System", href: "/sis", icon: GraduationCap },
+    { title: "Multi-Tenancy", href: "/tenancy", icon: Network },
+    { title: "Zero-Trust Security", href: "/security", icon: ShieldCheck },
+    { title: "Data Platform", href: "/data-platform", icon: Database },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
