@@ -45,6 +45,9 @@ import {
   ScanLine,
   Share2,
   BadgeCheck,
+  Wrench,
+  Siren,
+  Stamp,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -102,6 +105,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "OCR / OMR Engine", href: "/omr", icon: ScanLine },
     { title: "Knowledge Graph", href: "/knowledge-graph", icon: Share2 },
     { title: "Verifiable Credentials", href: "/credentials", icon: BadgeCheck },
+    { title: "Infrastructure & Assets", href: "/infrastructure", icon: Wrench },
+    { title: "Emergency & Disaster", href: "/emergency", icon: Siren },
+    { title: "School Recognition (TN 1973)", href: "/recognition", icon: Stamp },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
