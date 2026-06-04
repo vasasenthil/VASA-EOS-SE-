@@ -35,7 +35,7 @@ async function RolesLoader() {
 
   const canViewPage = await hasPermission({
     userId,
-    permissionString: PERMISSIONS.GOVERNANCE_VIEW,
+    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM,
   })
 
   if (!canViewPage) {
@@ -50,7 +50,7 @@ async function RolesLoader() {
 
   const canManageRoles = await hasPermission({
     userId,
-    permissionString: PERMISSIONS.ROLES_MANAGE,
+    permissionString: PERMISSIONS.ROLES_MANAGE_SYSTEM,
   })
 
   const rolesResult = await getRoles()

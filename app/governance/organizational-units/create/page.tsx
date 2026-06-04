@@ -18,7 +18,7 @@ async function CreateOUPageLoader() {
     redirect("/login") // Or your login page
   }
 
-  const canManageOUs = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE })
+  const canManageOUs = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM })
   if (!canManageOUs) {
     return (
       <Alert variant="destructive">

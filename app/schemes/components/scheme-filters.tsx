@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getSchemeCategoriesAction, getIssuingAuthoritiesAction } from "../actions" // Add getIssuingAuthoritiesAction
-import type { SchemeCategory, Scheme, OrganizationalUnit } from "../types" // Add OrganizationalUnit
+import type { SchemeCategory, Scheme } from "../types"
+import type { OrganizationalUnit } from "@/app/governance/types"
 import { XCircle, ChevronDown } from "lucide-react"
 
 const schemeStatuses: Scheme["status"][] = ["Active", "Proposed", "Completed", "Discontinued", "Archived", "Inactive"]

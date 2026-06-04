@@ -99,7 +99,7 @@ export function OUForm({ initialData, tiers, allOUs, userId, canManage }: OUForm
     }
 
     // Client-side check (UX enhancement, server is authoritative)
-    // const hasManagePermission = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE });
+    // const hasManagePermission = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM });
     // if (!hasManagePermission) {
     //   toast({ title: "Permission Denied", description: "You do not have permission to manage OUs.", variant: "destructive" });
     //   return;

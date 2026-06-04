@@ -21,10 +21,13 @@ interface EditAssignmentFormProps {
 }
 
 export function EditAssignmentForm({ assignment, allRoles, onCancel, onSaved }: EditAssignmentFormProps) {
-  const [state, formAction, isPending] = useActionState(updateUserAssignmentAction.bind(null, assignment.id), {
-    success: false,
-    message: "",
-  })
+  const [state, formAction, isPending] = useActionState(
+    async (
+      _prevState: Awaited<ReturnType<typeof updateUserAssignmentAction>>,
+      updates: { role_id?: string; is_primary_assignment?: boolean },
+    ) => updateUserAssignmentAction(assignment.id, updates),
+    { success: false, message: "" } as Awaited<ReturnType<typeof updateUserAssignmentAction>>,
+  )
   const { toast } = useToast()
   const formRef = useRef<HTMLFormElement>(null)
   const [selectedRoleId, setSelectedRoleId] = useState(assignment.role_id)

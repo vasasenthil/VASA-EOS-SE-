@@ -17,10 +17,16 @@ interface AddAssignmentFormProps {
 }
 
 export function AddAssignmentForm({ userId, organizationalUnits, roles }: AddAssignmentFormProps) {
-  const [state, formAction, isPending] = useActionState(assignUserToOuAction, {
-    success: false,
-    message: "",
-  })
+  const [state, formAction, isPending] = useActionState(
+    async (_prevState: Awaited<ReturnType<typeof assignUserToOuAction>>, formData: FormData) =>
+      assignUserToOuAction({
+        user_id: (formData.get("user_id") as string) || userId,
+        ou_id: formData.get("ou_id") as string,
+        role_id: formData.get("role_id") as string,
+        is_primary_assignment: formData.get("is_primary_assignment") === "on",
+      }),
+    { success: false, message: "" } as Awaited<ReturnType<typeof assignUserToOuAction>>,
+  )
   const { toast } = useToast()
   const formRef = useRef<HTMLFormElement>(null)
 

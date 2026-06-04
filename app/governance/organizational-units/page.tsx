@@ -37,7 +37,7 @@ async function OULoader() {
 
   const canViewPage = await hasPermission({
     userId,
-    permissionString: PERMISSIONS.GOVERNANCE_VIEW, // A general view permission
+    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM, // A general view permission
   })
 
   if (!canViewPage) {
@@ -52,7 +52,7 @@ async function OULoader() {
 
   const canManageOUs = await hasPermission({
     userId,
-    permissionString: PERMISSIONS.OUS_MANAGE,
+    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM,
   })
 
   const ous = await getOUs() // Fetches { includeTier: true, includeUserCount: true } by default from actions/get-ous.ts
