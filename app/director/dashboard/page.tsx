@@ -1,16 +1,21 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
+import { stateRollup } from "@/lib/portal-data"
+import { listApplications } from "@/lib/recognition/store"
 
-export default function DirectorDashboardPage() {
+export default async function DirectorDashboardPage() {
+  const r = stateRollup()
+  const apps = await listApplications()
+  const pending = apps.filter((a) => a.status === "in_progress").length
   return (
     <PortalDashboard
       title="State Director (Directorate)"
       description="Directorate-wide operations across districts — policy implementation, statutory reporting and performance."
       tierLabel="Directorate"
       kpis={[
-        { label: "Districts", value: "38" },
-        { label: "Schools", value: "69,000+" },
-        { label: "Statutory Reports Due", value: "4" },
-        { label: "Quality Index", value: "Above avg" },
+        { label: "Districts", value: String(r.districts) },
+        { label: "Schools", value: String(r.schools) },
+        { label: "Recognition Pipeline", value: String(pending), hint: "live · TN 1973" },
+        { label: "Avg Quality Index", value: String(r.avgQualityIndex), hint: "0-100" },
       ]}
       modules={[
         "Directorate Operations",

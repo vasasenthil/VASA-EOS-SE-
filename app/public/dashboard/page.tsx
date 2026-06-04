@@ -1,16 +1,21 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
+import { stateRollup } from "@/lib/portal-data"
+import { listGrievances } from "@/lib/grievance/store"
 
-export default function PublicDashboardPage() {
+export default async function PublicDashboardPage() {
+  const r = stateRollup()
+  const grievances = await listGrievances()
+  const open = grievances.filter((g) => g.status !== "resolved").length
   return (
     <PortalDashboard
       title="Public / Citizen"
       description="Transparency by default — public dashboards, school finder, scheme tracking and RTI workflow."
       tierLabel="Public"
       kpis={[
-        { label: "Schools (public)", value: "69,000+" },
-        { label: "Enrolment K-12", value: "1.27 Cr" },
-        { label: "RTI Avg Response", value: "<30 days" },
-        { label: "Schemes Tracked", value: "20+" },
+        { label: "Schools", value: String(r.schools), hint: "in live register" },
+        { label: "Students", value: String(r.students) },
+        { label: "Open Grievances", value: String(open), hint: "live" },
+        { label: "Schemes Tracked", value: String(r.distinctSchemes) },
       ]}
       modules={[
         "Public Performance Dashboards",

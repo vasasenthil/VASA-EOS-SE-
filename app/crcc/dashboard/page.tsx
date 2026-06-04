@@ -1,16 +1,18 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
+import { stateRollup } from "@/lib/portal-data"
 
 export default function CrccDashboardPage() {
+  const r = stateRollup()
   return (
     <PortalDashboard
       title="CRC Coordinator"
       description="Mobile-first field operations — GPS-verified visits, teacher mentoring and NIPUN cluster tracking."
       tierLabel="Cluster"
       kpis={[
-        { label: "Schools in Cluster", value: "18" },
-        { label: "Visits This Month", value: "42", hint: "GPS-verified" },
-        { label: "NIPUN On-Track", value: "71%" },
-        { label: "Open Mentoring Tasks", value: "6" },
+        { label: "Schools", value: String(r.schools) },
+        { label: "NIPUN On-Track", value: `${r.nipunOnTrackPct}%`, hint: "Ennum Ezhuthum" },
+        { label: "At-risk learners", value: String(r.atRisk), hint: "mentoring queue" },
+        { label: "Avg Attendance", value: `${r.avgAttendance}%` },
       ]}
       modules={[
         "GPS-Verified School Visits",

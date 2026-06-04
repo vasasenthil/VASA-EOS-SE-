@@ -1,16 +1,21 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
+import { stateRollup } from "@/lib/portal-data"
+import { listGrievances } from "@/lib/grievance/store"
 
-export default function BeoDashboardPage() {
+export default async function BeoDashboardPage() {
+  const r = stateRollup()
+  const grievances = await listGrievances()
+  const open = grievances.filter((g) => g.status !== "resolved").length
   return (
     <PortalDashboard
       title="Block Education Officer"
       description="Block operations — AI-prioritised inspections, CRC coordination, scheme implementation and grievances."
       tierLabel="Block"
       kpis={[
-        { label: "Schools in Block", value: "210" },
-        { label: "Inspections Due", value: "12", hint: "AI-prioritised" },
-        { label: "Open Grievances", value: "9", hint: "SLA-tracked" },
-        { label: "Scheme Coverage", value: "94%" },
+        { label: "Schools", value: String(r.schools) },
+        { label: "Inspections Due", value: String(r.inspectionsDue), hint: "AI-prioritised" },
+        { label: "Open Grievances", value: String(open), hint: "live · SLA-tracked" },
+        { label: "Scheme Coverage", value: `${r.schemeCoveragePct}%` },
       ]}
       modules={[
         "Block KPI Dashboard",

@@ -1,16 +1,18 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
+import { stateRollup, complianceLabel } from "@/lib/portal-data"
 
 export default function DeoDashboardPage() {
+  const r = stateRollup()
   return (
     <PortalDashboard
       title="District Education Officer / CEO"
       description="District operations — real-time KPIs by school and block, compliance traffic-light and resource allocation."
       tierLabel="District"
       kpis={[
-        { label: "Schools", value: "1,840" },
-        { label: "Blocks", value: "11" },
-        { label: "Dropout (9-10)", value: "5.2%", hint: "target <3.5%" },
-        { label: "Compliance", value: "Amber", hint: "RTE/RPwD/DPDP" },
+        { label: "Schools", value: String(r.schools), hint: "in live register" },
+        { label: "Students", value: String(r.students), hint: `${r.avgAttendance}% avg attendance` },
+        { label: "At-risk learners", value: String(r.atRisk), hint: "predictive flags" },
+        { label: "Compliance", value: complianceLabel(r.compliance), hint: "RTE/RPwD/DPDP" },
       ]}
       modules={[
         "District KPI & Heat Maps",
