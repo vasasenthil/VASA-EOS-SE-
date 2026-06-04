@@ -84,7 +84,7 @@ const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
   const getRandomId = () => `POL-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
   const getRandomDate = (start: Date, end: Date): string =>
     new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString()
-  const getRandomElement = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+  const getRandomElement = <T,>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)]
   const getRandomElements = <T,>(arr: T[], num: number): T[] => {
     const shuffled = [...arr].sort(() => 0.5 - Math.random())
     return shuffled.slice(0, Math.min(num, shuffled.length))
@@ -261,7 +261,7 @@ export async function submitPolicyAction(
   const policyIdFromForm = formData.get("id") as string | undefined
   const actionType = formData.get("action") as "saveDraft" | "submitForReview"
 
-  const requiredPermission = policyIdFromForm ? PERMISSIONS.POLICY_UPDATE : PERMISSIONS.POLICY_CREATE
+  const requiredPermission = policyIdFromForm ? PERMISSIONS.POLICY_UPDATE_NATIONAL : PERMISSIONS.POLICY_CREATE_NATIONAL
   // TODO: Determine OU context for policy actions if policies become OU-specific.
   // For now, checking permission without specific ouId (user needs it in any of their roles).
   const canPerformAction = await hasPermission({ userId, permissionString: requiredPermission })
@@ -587,7 +587,7 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
   }
 
   // TODO: Determine OU context for policy deletion if policies become OU-specific.
-  const canDelete = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE })
+  const canDelete = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE_NATIONAL })
   if (!canDelete) {
     return { message: "You do not have permission to delete policies.", success: false }
   }
@@ -597,10 +597,10 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
     try {
       const policy = await getPolicyByIdAction(policyId)
       if (policy) {
-        if (policy.draftPolicyDocument?.url && !policy.draftPolicyDocument.isPlaceholder)
+        if (policy.draftPolicyDocument && "url" in policy.draftPolicyDocument && !policy.draftPolicyDocument.isPlaceholder)
           await del(policy.draftPolicyDocument.url)
         if (policy.annexures)
-          for (const annex of policy.annexures) if (annex.url && !annex.isPlaceholder) await del(annex.url)
+          for (const annex of policy.annexures) if ("url" in annex && !annex.isPlaceholder) await del(annex.url)
       }
     } catch (blobError: any) {
       console.warn(`Failed to delete blobs for policy ${policyId}: ${blobError.message}. Proceeding with DB deletion.`)
@@ -626,10 +626,10 @@ export async function clearPoliciesAction(): Promise<{ message: string }> {
     else {
       for (const policy of policies) {
         try {
-          if (policy.draftPolicyDocument?.url && !policy.draftPolicyDocument.isPlaceholder)
+          if (policy.draftPolicyDocument && "url" in policy.draftPolicyDocument && !policy.draftPolicyDocument.isPlaceholder)
             await del(policy.draftPolicyDocument.url)
           if (policy.annexures)
-            for (const annex of policy.annexures) if (annex.url && !annex.isPlaceholder) await del(annex.url)
+            for (const annex of policy.annexures) if ("url" in annex && !annex.isPlaceholder) await del(annex.url)
         } catch (blobError: any) {
           console.warn(`Failed to delete blobs for policy ${policy.id} during clear: ${blobError.message}`)
         }
@@ -722,7 +722,7 @@ export async function updatePolicyStatusAction(
 
   // TODO: Determine OU context for policy status updates if policies become OU-specific.
   // Using POLICY_UPDATE for now, consider a more granular permission like POLICY_UPDATE_STATUS
-  const canUpdateStatus = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_UPDATE }) // Or a more specific permission
+  const canUpdateStatus = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL }) // Or a more specific permission
   if (!canUpdateStatus) {
     return {
       message: "You do not have permission to update policy status.",

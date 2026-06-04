@@ -1,11 +1,11 @@
 "use server" // This directive is crucial
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache"
-import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac" // Ensure this file is correct
 import { PERMISSIONS } from "@/app/governance/types" // Ensure this file is correct (no "use server")
 import { getSupabaseAuthUser } from "@/lib/auth/server"
-import type { AuthUser } from "@/lib/auth/types"
+import type { AuthUser, OrganizationalUnit, GovernanceTier } from "@/app/governance/types"
 
 // Import ALL necessary schemas, types, and interfaces from types.ts
 // These are NOT exported from this file. This file ONLY exports async functions.
@@ -18,9 +18,7 @@ import {
   type GetSchemesResult,
   type Scheme,
   type SchemeCategory,
-  type OrganizationalUnit,
   type OrganizationalUnitSubtype,
-  type GovernanceTier,
   type SchemeDocument,
   type SchemeStatus,
 } from "./types" // This is app/schemes/types.ts and must NOT have "use server"
@@ -30,7 +28,7 @@ const ITEMS_PER_PAGE = 10
 // Ensure ALL functions exported from this file are async
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
   const {
     page = 1,
     query,
@@ -43,7 +41,10 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
   // Assuming PERMISSIONS.VIEW_SCHEMES is defined in @/app/governance/types.ts
   // And hasPermission is correctly implemented in @/app/governance/rbac.ts
-  const canView = await hasPermission({ permissionString: PERMISSIONS.POLICY_READ }) // Example, adjust to your actual permission
+  const user = await getSupabaseAuthUser()
+  const canView = user
+    ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
+    : false
   if (!canView) {
     return { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
   }
@@ -98,9 +99,12 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
 export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
 
-  const canView = await hasPermission({ permissionString: PERMISSIONS.POLICY_READ }) // Example
+  const user = await getSupabaseAuthUser()
+  const canView = user
+    ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
+    : false
   if (!canView) return null
 
   const { data, error } = await supabase
@@ -165,7 +169,7 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
 
 export async function getSchemeCategoriesAction(): Promise<SchemeCategory[]> {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
   const { data, error } = await supabase.from("scheme_categories").select("*").order("name", { ascending: true })
   if (error) {
     console.error("Error fetching scheme categories:", error)
@@ -176,7 +180,7 @@ export async function getSchemeCategoriesAction(): Promise<SchemeCategory[]> {
 
 export async function getOrganizationalUnitSubtypesAction(): Promise<OrganizationalUnitSubtype[]> {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("organizational_unit_subtypes")
     .select("id, name, description, governance_tier:governance_tiers(id, name)")
@@ -195,7 +199,7 @@ export async function getOrganizationalUnitSubtypesAction(): Promise<Organizatio
 export async function getIssuingAuthoritiesAction(): Promise<OrganizationalUnit[]> {
   // This function might need to be more specific, e.g., filter OUs that can be issuing authorities
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("organizational_units")
     .select("id, name, region_code, tier:governance_tiers(id, name)")
@@ -219,7 +223,7 @@ export async function createSchemeAction(
     return { success: false, error: "User not authenticated." }
   }
   // Adjust permission check to your actual permission string for creating schemes
-  const canManage = await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_CREATE })
+  const canManage = await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_CREATE_NATIONAL })
   if (!canManage) {
     return { success: false, error: "Unauthorized: Missing permission to manage schemes." }
   }
@@ -235,7 +239,7 @@ export async function createSchemeAction(
 
   const { applicable_ou_subtype_ids, target_governance_tier_ids, ...schemeData } = validation.data
 
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
 
   const { data: newScheme, error: schemeError } = await supabase
     .from("schemes")
@@ -292,7 +296,7 @@ export async function updateSchemeAction(
   if (!user) {
     return { success: false, error: "User not authenticated." }
   }
-  const canManage = await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_UPDATE }) // Example
+  const canManage = await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL })
   if (!canManage) {
     return { success: false, error: "Unauthorized: Missing permission to manage schemes." }
   }
@@ -308,7 +312,7 @@ export async function updateSchemeAction(
 
   const { id: schemeId, applicable_ou_subtype_ids, target_governance_tier_ids, ...schemeData } = validation.data
 
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createClient()
 
   const { error: schemeError } = await supabase
     .from("schemes")
