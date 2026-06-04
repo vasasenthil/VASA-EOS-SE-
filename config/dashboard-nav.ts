@@ -51,6 +51,7 @@ import {
   Library,
   School,
   Fingerprint,
+  Plug,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -114,6 +115,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Content Discovery (DIKSHA)", href: "/content", icon: Library },
     { title: "School Registry (UDISE+)", href: "/school-registry", icon: School },
     { title: "Aadhaar Auth (UIDAI)", href: "/aadhaar", icon: Fingerprint },
+    { title: "Integrations Status", href: "/integrations", icon: Plug },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
