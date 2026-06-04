@@ -83,3 +83,13 @@ export function digilockerBaseUrl(): string | undefined {
 export function digilockerApiKey(): string | undefined {
   return process.env.DIGILOCKER_API_KEY || undefined
 }
+
+// ── DBT / APBS (NPCI) — scheme disbursement bridge ────────────────────────────
+/** DBT/APBS sponsor-bank / PFMS gateway origin. No safe default. */
+export function dbtBaseUrl(): string | undefined {
+  return process.env.DBT_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the DBT gateway. */
+export function dbtApiKey(): string | undefined {
+  return process.env.DBT_API_KEY || undefined
+}

@@ -16,7 +16,7 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveAgents, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
+import { liveAgents, liveDbt, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
@@ -24,7 +24,8 @@ export const integrations: IntegrationRegistry = {
   aadhaar: mockAadhaar,
   // DigiLocker credential vault via a configurable partner gateway (OAuth Bearer).
   digilocker: integrationModes.digilocker === "live" ? liveDigiLocker : mockDigiLocker,
-  dbt: mockDbt,
+  // DBT/APBS disbursement via a configurable NPCI/PFMS sponsor-bank gateway.
+  dbt: integrationModes.dbt === "live" ? liveDbt : mockDbt,
   // UDISE+ school registry via a configurable state-hosted REST gateway.
   udise: integrationModes.udise === "live" ? liveUdise : mockUdise,
   // First real HTTP-backed adapter: DIKSHA content discovery (public API, no MoU).
