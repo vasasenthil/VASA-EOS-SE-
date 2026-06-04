@@ -73,3 +73,13 @@ export function bhashiniConfig(): BhashiniConfig {
     asrServiceId: process.env.BHASHINI_ASR_SERVICE_ID || undefined,
   }
 }
+
+// ── DigiLocker (MeitY) — credential issue + fetch via partner gateway ─────────
+/** DigiLocker partner-API origin (Issuer/Requester gateway). No safe default. */
+export function digilockerBaseUrl(): string | undefined {
+  return process.env.DIGILOCKER_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** OAuth access token / partner key for the DigiLocker gateway. */
+export function digilockerApiKey(): string | undefined {
+  return process.env.DIGILOCKER_API_KEY || undefined
+}

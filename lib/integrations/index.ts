@@ -16,13 +16,14 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveAgents, liveDiksha, liveLanguage, liveUdise } from "./live"
+import { liveAgents, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
   identity: mockIdentity, // integrationModes.apaar === "live" ? liveApaar : mockIdentity
   aadhaar: mockAadhaar,
-  digilocker: mockDigiLocker,
+  // DigiLocker credential vault via a configurable partner gateway (OAuth Bearer).
+  digilocker: integrationModes.digilocker === "live" ? liveDigiLocker : mockDigiLocker,
   dbt: mockDbt,
   // UDISE+ school registry via a configurable state-hosted REST gateway.
   udise: integrationModes.udise === "live" ? liveUdise : mockUdise,
