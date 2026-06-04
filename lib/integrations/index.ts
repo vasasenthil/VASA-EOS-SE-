@@ -16,12 +16,13 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveAgents, liveDbt, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
+import { liveAadhaar, liveAgents, liveDbt, liveDigiLocker, liveDiksha, liveLanguage, liveUdise } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
   identity: mockIdentity, // integrationModes.apaar === "live" ? liveApaar : mockIdentity
-  aadhaar: mockAadhaar,
+  // Aadhaar OTP auth (verify-only) via a configurable AUA/KUA gateway.
+  aadhaar: integrationModes.aadhaar === "live" ? liveAadhaar : mockAadhaar,
   // DigiLocker credential vault via a configurable partner gateway (OAuth Bearer).
   digilocker: integrationModes.digilocker === "live" ? liveDigiLocker : mockDigiLocker,
   // DBT/APBS disbursement via a configurable NPCI/PFMS sponsor-bank gateway.

@@ -93,3 +93,13 @@ export function dbtBaseUrl(): string | undefined {
 export function dbtApiKey(): string | undefined {
   return process.env.DBT_API_KEY || undefined
 }
+
+// ── Aadhaar authentication (UIDAI) — verify-only via AUA/KUA gateway ──────────
+/** AUA/KUA gateway origin for Aadhaar OTP auth. No safe default. */
+export function aadhaarBaseUrl(): string | undefined {
+  return process.env.AADHAAR_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the Aadhaar AUA/KUA gateway. */
+export function aadhaarApiKey(): string | undefined {
+  return process.env.AADHAAR_API_KEY || undefined
+}

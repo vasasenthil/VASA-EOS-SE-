@@ -50,6 +50,7 @@ import {
   Stamp,
   Library,
   School,
+  Fingerprint,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -112,6 +113,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "School Recognition (TN 1973)", href: "/recognition", icon: Stamp },
     { title: "Content Discovery (DIKSHA)", href: "/content", icon: Library },
     { title: "School Registry (UDISE+)", href: "/school-registry", icon: School },
+    { title: "Aadhaar Auth (UIDAI)", href: "/aadhaar", icon: Fingerprint },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
