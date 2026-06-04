@@ -1,12 +1,7 @@
 "use server"
 
-import {
-  advanceApplication,
-  fileApplication,
-  listApplications,
-  rejectApplication,
-  type RecognitionApplication,
-} from "@/lib/recognition"
+import { advanceApplication, fileApplication, listApplications, rejectApplication } from "@/lib/recognition/store"
+import type { RecognitionApplication } from "@/lib/recognition"
 
 export async function fileAction(input: {
   school: string
@@ -17,11 +12,11 @@ export async function fileAction(input: {
 }
 
 export async function advanceAction(id: string): Promise<RecognitionApplication[]> {
-  advanceApplication(id)
+  await advanceApplication(id)
   return listApplications()
 }
 
 export async function rejectAction(id: string, reason: string): Promise<RecognitionApplication[]> {
-  rejectApplication(id, reason)
+  await rejectApplication(id, reason)
   return listApplications()
 }

@@ -1,12 +1,7 @@
 "use server"
 
-import {
-  fileGrievance,
-  escalateGrievance,
-  resolveGrievance,
-  listGrievances,
-  type Grievance,
-} from "@/lib/grievance"
+import { fileGrievance, escalateGrievance, resolveGrievance, listGrievances } from "@/lib/grievance/store"
+import type { Grievance } from "@/lib/grievance"
 
 export interface GrievanceState {
   grievances: Grievance[]
@@ -19,13 +14,13 @@ export async function grievanceAction(_prev: GrievanceState, formData: FormData)
   if (op === "file") {
     const category = (formData.get("category") as string) || "Other"
     const description = ((formData.get("description") as string) || "").trim()
-    if (!description) return { grievances: listGrievances(), error: "Please describe the grievance." }
-    fileGrievance({ category, description })
+    if (!description) return { grievances: await listGrievances(), error: "Please describe the grievance." }
+    await fileGrievance({ category, description })
   } else if (op === "escalate") {
-    escalateGrievance((formData.get("id") as string) || "")
+    await escalateGrievance((formData.get("id") as string) || "")
   } else if (op === "resolve") {
-    resolveGrievance((formData.get("id") as string) || "")
+    await resolveGrievance((formData.get("id") as string) || "")
   }
 
-  return { grievances: listGrievances() }
+  return { grievances: await listGrievances() }
 }

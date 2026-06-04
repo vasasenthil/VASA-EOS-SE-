@@ -3,8 +3,8 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { listCredentials } from "@/lib/credentials/store"
 import { CredentialIssuer } from "./credential-issuer"
 
-export default function CredentialsPage() {
-  const initial = listCredentials()
+export default async function CredentialsPage() {
+  const initial = await listCredentials()
   return (
     <Shell>
       <PageHeader>

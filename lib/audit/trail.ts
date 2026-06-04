@@ -1,7 +1,12 @@
 // VASA-EOS(SE) — immutable audit trail primitive (tamper-evident by hash chaining).
 // Each entry links to the previous via a hash, so any retroactive edit breaks the
-// chain (the in-app analogue of the dossier's blockchain-anchored audit). This is an
-// in-memory mock store for demo; production persists to an append-only ledger.
+// chain (the in-app analogue of the dossier's blockchain-anchored audit).
+//
+// Persistence: when a service-role Supabase client is configured the chain is
+// stored in the `audit_trail` table and survives across requests; otherwise it
+// uses an in-memory store (per server instance) so demo/CI works without a DB.
+
+import { getDb } from "@/lib/persistence"
 
 export interface AuditEntry {
   seq: number
@@ -25,42 +30,111 @@ function hash(input: string): string {
 }
 
 const GENESIS = "00000000"
-const trail: AuditEntry[] = []
 
-export function appendAudit(input: {
+// Canonical body hashed for an entry — identical at append and verify time.
+function bodyFor(e: {
+  seq: number
+  ts: string
   actor: string
   action: string
   resource: string
   details?: Record<string, unknown>
-}): AuditEntry {
+  prevHash: string
+}): string {
+  return JSON.stringify({
+    seq: e.seq,
+    ts: e.ts,
+    actor: e.actor,
+    action: e.action,
+    resource: e.resource,
+    details: e.details,
+    prevHash: e.prevHash,
+  })
+}
+
+// ---- in-memory fallback store ----
+const trail: AuditEntry[] = []
+
+interface AuditRow {
+  seq: number
+  ts: string
+  actor: string
+  action: string
+  resource: string
+  details: Record<string, unknown> | null
+  prev_hash: string
+  hash: string
+}
+
+function fromRow(r: AuditRow): AuditEntry {
+  return {
+    seq: r.seq,
+    ts: r.ts,
+    actor: r.actor,
+    action: r.action,
+    resource: r.resource,
+    details: r.details ?? undefined,
+    prevHash: r.prev_hash,
+    hash: r.hash,
+  }
+}
+
+export async function appendAudit(input: {
+  actor: string
+  action: string
+  resource: string
+  details?: Record<string, unknown>
+}): Promise<AuditEntry> {
+  const db = getDb()
+  const ts = new Date().toISOString()
+
+  if (db) {
+    const { data: last } = await db
+      .from("audit_trail")
+      .select("seq, hash")
+      .order("seq", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const seq = (last?.seq ?? 0) + 1
+    const prevHash = last?.hash ?? GENESIS
+    const entry: AuditEntry = { seq, ts, ...input, prevHash, hash: hash(bodyFor({ seq, ts, ...input, prevHash })) }
+    await db.from("audit_trail").insert({
+      seq: entry.seq,
+      ts: entry.ts,
+      actor: entry.actor,
+      action: entry.action,
+      resource: entry.resource,
+      details: entry.details ?? null,
+      prev_hash: entry.prevHash,
+      hash: entry.hash,
+    })
+    return entry
+  }
+
   const prev = trail[trail.length - 1]
   const prevHash = prev ? prev.hash : GENESIS
   const seq = trail.length + 1
-  const ts = new Date().toISOString()
-  const body = JSON.stringify({ seq, ts, ...input, prevHash })
-  const entry: AuditEntry = { seq, ts, ...input, prevHash, hash: hash(body) }
+  const entry: AuditEntry = { seq, ts, ...input, prevHash, hash: hash(bodyFor({ seq, ts, ...input, prevHash })) }
   trail.push(entry)
   return entry
 }
 
-export function getTrail(): AuditEntry[] {
+export async function getTrail(): Promise<AuditEntry[]> {
+  const db = getDb()
+  if (db) {
+    const { data } = await db.from("audit_trail").select("*").order("seq", { ascending: true })
+    return ((data as AuditRow[] | null) ?? []).map(fromRow)
+  }
   return [...trail]
 }
 
 /** Recompute the chain; returns false if any entry was tampered with. */
-export function verifyTrail(): boolean {
+export async function verifyTrail(): Promise<boolean> {
+  const entries = await getTrail()
   let prevHash = GENESIS
-  for (const e of trail) {
-    const body = JSON.stringify({
-      seq: e.seq,
-      ts: e.ts,
-      actor: e.actor,
-      action: e.action,
-      resource: e.resource,
-      details: e.details,
-      prevHash,
-    })
-    if (hash(body) !== e.hash || e.prevHash !== prevHash) return false
+  for (const e of entries) {
+    const recomputed = hash(bodyFor({ ...e, prevHash }))
+    if (recomputed !== e.hash || e.prevHash !== prevHash) return false
     prevHash = e.hash
   }
   return true

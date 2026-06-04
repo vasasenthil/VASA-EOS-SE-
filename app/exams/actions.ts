@@ -34,7 +34,7 @@ export async function processResultAction(_prev: ExamState, formData: FormData):
   const max = subjects.length * 100
 
   // Tamper-evident anchor of the result.
-  const entry = appendAudit({
+  const entry = await appendAudit({
     actor: "DGE-TN",
     action: "exam.result.anchor",
     resource: candidateApaar,

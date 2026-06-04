@@ -1,6 +1,7 @@
 "use server"
 
-import { createProposal, vote, listProposals, type Proposal } from "@/lib/smc"
+import { createProposal, vote, listProposals } from "@/lib/smc/store"
+import type { Proposal } from "@/lib/smc"
 
 export interface SmcState {
   proposals: Proposal[]
@@ -13,13 +14,13 @@ export async function smcAction(_prev: SmcState, formData: FormData): Promise<Sm
   if (op === "create") {
     const title = ((formData.get("title") as string) || "").trim()
     const description = ((formData.get("description") as string) || "").trim()
-    if (!title) return { proposals: listProposals(), error: "Proposal title is required." }
-    createProposal({ title, description })
+    if (!title) return { proposals: await listProposals(), error: "Proposal title is required." }
+    await createProposal({ title, description })
   } else if (op === "for") {
-    vote({ id: (formData.get("id") as string) || "", support: true })
+    await vote({ id: (formData.get("id") as string) || "", support: true })
   } else if (op === "against") {
-    vote({ id: (formData.get("id") as string) || "", support: false })
+    await vote({ id: (formData.get("id") as string) || "", support: false })
   }
 
-  return { proposals: listProposals() }
+  return { proposals: await listProposals() }
 }

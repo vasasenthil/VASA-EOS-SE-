@@ -1,11 +1,12 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { listApplications, recognitionSummary } from "@/lib/recognition"
+import { recognitionSummary } from "@/lib/recognition"
+import { listApplications } from "@/lib/recognition/store"
 import { RecognitionBoard } from "./recognition-board"
 
-export default function RecognitionPage() {
-  const apps = listApplications()
+export default async function RecognitionPage() {
+  const apps = await listApplications()
   const s = recognitionSummary(apps)
   return (
     <Shell>

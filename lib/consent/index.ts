@@ -1,9 +1,6 @@
-// VASA-EOS(SE) — DPDP consent ledger (InDEA 2.0 style).
-// Every personal-data processing purpose requires explicit, withdrawable consent;
-// under-18 consent is given by a guardian. Each grant/withdraw is written to the
-// tamper-evident audit trail. In-memory mock store for demo; production persists.
-
-import { appendAudit } from "@/lib/audit/trail"
+// VASA-EOS(SE) — DPDP consent ledger (InDEA 2.0 style) — client-safe core.
+// Purposes and types for explicit, withdrawable consent (under-18 consent is given
+// by a guardian). DB-backed persistence (audit-logged) lives in ./store (server-only).
 
 export type ConsentPurpose =
   | "aadhaar_linkage"
@@ -28,34 +25,4 @@ export interface ConsentRecord {
   actor: string
   status: "granted" | "withdrawn"
   ts: string
-}
-
-const store: ConsentRecord[] = []
-function id(): string {
-  return `cns-${Math.random().toString(36).slice(2, 10)}`
-}
-
-function record(subjectApaar: string, purpose: ConsentPurpose, actor: string, status: "granted" | "withdrawn"): ConsentRecord {
-  const rec: ConsentRecord = { id: id(), subjectApaar, purpose, actor, status, ts: new Date().toISOString() }
-  store.push(rec)
-  appendAudit({ actor, action: `consent.${status}`, resource: subjectApaar, details: { purpose } })
-  return rec
-}
-
-export function grantConsent(input: { subjectApaar: string; purpose: ConsentPurpose; actor: string }): ConsentRecord {
-  return record(input.subjectApaar, input.purpose, input.actor, "granted")
-}
-
-export function withdrawConsent(input: { subjectApaar: string; purpose: ConsentPurpose; actor: string }): ConsentRecord {
-  return record(input.subjectApaar, input.purpose, input.actor, "withdrawn")
-}
-
-export function listConsents(subjectApaar?: string): ConsentRecord[] {
-  return store.filter((r) => !subjectApaar || r.subjectApaar === subjectApaar)
-}
-
-/** Effective consent for a purpose — the most recent record wins. */
-export function hasConsent(subjectApaar: string, purpose: ConsentPurpose): boolean {
-  const recs = store.filter((r) => r.subjectApaar === subjectApaar && r.purpose === purpose)
-  return recs[recs.length - 1]?.status === "granted"
 }

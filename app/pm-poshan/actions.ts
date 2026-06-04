@@ -16,7 +16,7 @@ export async function reconcileAction(_prev: ReconState, formData: FormData): Pr
     return { error: "Enter valid attendance and meals-served counts." }
   }
   const result = reconcile({ date, attendance, mealsServed })
-  appendAudit({
+  await appendAudit({
     actor: "operations",
     action: "pm_poshan.reconcile",
     resource: date,

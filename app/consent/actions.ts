@@ -1,6 +1,7 @@
 "use server"
 
-import { grantConsent, withdrawConsent, listConsents, type ConsentPurpose, type ConsentRecord } from "@/lib/consent"
+import { grantConsent, withdrawConsent, listConsents } from "@/lib/consent/store"
+import type { ConsentPurpose, ConsentRecord } from "@/lib/consent"
 import { getTrail, verifyTrail, type AuditEntry } from "@/lib/audit/trail"
 
 export interface ConsentState {
@@ -17,10 +18,15 @@ export async function consentAction(_prev: ConsentState, formData: FormData): Pr
   const actor = ((formData.get("actor") as string) || "").trim() || "guardian"
 
   if (!apaar || !purpose) {
-    return { records: listConsents(), trail: getTrail(), verified: verifyTrail(), error: "APAAR id and purpose are required." }
+    return {
+      records: await listConsents(),
+      trail: await getTrail(),
+      verified: await verifyTrail(),
+      error: "APAAR id and purpose are required.",
+    }
   }
-  if (op === "withdraw") withdrawConsent({ subjectApaar: apaar, purpose, actor })
-  else grantConsent({ subjectApaar: apaar, purpose, actor })
+  if (op === "withdraw") await withdrawConsent({ subjectApaar: apaar, purpose, actor })
+  else await grantConsent({ subjectApaar: apaar, purpose, actor })
 
-  return { records: listConsents(), trail: getTrail(), verified: verifyTrail() }
+  return { records: await listConsents(), trail: await getTrail(), verified: await verifyTrail() }
 }
