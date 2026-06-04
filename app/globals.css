@@ -57,3 +57,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Accessibility preferences (see lib/accessibility) */
+.a11y-high-contrast {
+  filter: contrast(1.25);
+}
+.a11y-reduce-motion *,
+.a11y-reduce-motion *::before,
+.a11y-reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+:root[data-text-scale="large"] {
+  font-size: 18px;
+}
+:root[data-text-scale="xlarge"] {
+  font-size: 20px;
+}

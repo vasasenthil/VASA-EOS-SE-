@@ -61,6 +61,12 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Reports & Analytics", href: "/tracking/reports", icon: FileBarChart },
     { title: "Governance Overview", href: "/governance/dashboard", icon: Globe },
     { title: "Audit Log", href: "/admin/audit-log", icon: ShieldCheck },
+    { title: "AI Agents", href: "/ai-agents", icon: Layers },
+    { title: "APAAR Identity", href: "/apaar", icon: Database },
+    { title: "Scheme Disbursement", href: "/dbt", icon: IndianRupee },
+    { title: "Multilingual & Voice", href: "/multilingual", icon: Globe },
+    { title: "Consent & Audit", href: "/consent", icon: FileLock },
+    { title: "Accessibility", href: "/accessibility", icon: Heart },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
