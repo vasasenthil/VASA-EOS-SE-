@@ -10,7 +10,24 @@ import type {
   StakeholderImplementationRole,
 } from "../stakeholders/types"
 import type { ImplementationMilestone, ImplementationMilestoneInput } from "../milestones/types"
-import type { PolicyImplementationStatus } from "./actions" // Self-reference for type
+
+// Row shape for the `policy_implementation_status` table (a NEP policy rolled out in a region).
+// Defined here (previously a broken self-import) so consumers get typed field access.
+export interface PolicyImplementationStatus {
+  id: string
+  policy_id: string
+  region_type?: string | null
+  region_name?: string | null
+  overall_status?: string | null
+  progress_percentage?: number | null
+  target_completion_date?: string | null
+  actual_completion_date?: string | null
+  summary_notes?: string | null
+  key_indicators?: Record<string, unknown> | string | null
+  last_updated_by?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+}
 
 // Import data generation functions
 import { generateSeedPolicyImplementationData } from "@/scripts/seed-policy-implementation"

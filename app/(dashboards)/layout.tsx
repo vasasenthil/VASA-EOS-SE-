@@ -6,7 +6,7 @@ import { createServerClient } from "@supabase/ssr"
 import { Sidebar } from "@/components/layout/sidebar"
 
 export default async function DashboardsLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 

@@ -2,8 +2,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createServerClient } from "@supabase/ssr"
 
-const createClient = () => {
-  const cookieStore = cookies()
+const createClient = async () => {
+  const cookieStore = await cookies()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -33,7 +33,7 @@ const userRoles = [
 type UserRole = (typeof userRoles)[number]
 
 export default async function RootPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

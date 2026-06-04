@@ -4,7 +4,7 @@ import { createClient as createSupabaseClient, type SupabaseClient } from "@supa
 
 // This is a flexible, generic server client creator that can be used in various server contexts.
 // It's useful in Route Handlers or other places where you might pass the cookie store explicitly.
-export function createSupabaseServerClient(cookieStore: ReturnType<typeof cookies>) {
+export function createSupabaseServerClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
   return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
       get(name: string) {
@@ -32,8 +32,8 @@ export function createSupabaseServerClient(cookieStore: ReturnType<typeof cookie
 
 // This is a convenience wrapper for creating a client in Server Components and Server Actions
 // where `cookies()` from `next/headers` is readily available.
-export const createClient = () => {
-  const cookieStore = cookies()
+export const createClient = async () => {
+  const cookieStore = await cookies()
   return createSupabaseServerClient(cookieStore)
 }
 

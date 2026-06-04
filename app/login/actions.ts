@@ -4,7 +4,7 @@ import { z } from "zod"
 import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 
-const createClient = () => {
+const createClient = async () => {
   console.log("--- Inside createClient for loginAction ---")
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -18,7 +18,7 @@ const createClient = () => {
     // For now, createServerClient will likely error out if these are undefined.
   }
 
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   return createServerClient(supabaseUrl!, supabaseAnonKey!, {
     cookies: {
       get(name: string) {
@@ -77,7 +77,7 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
     }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),

@@ -1,9 +1,18 @@
 import type React from "react"
 import { cn } from "@/lib/utils"
 
-function PageHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+interface PageHeaderProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  /** Convenience prop: renders a PageHeaderHeading. Children are still supported. */
+  title?: React.ReactNode
+  /** Convenience prop: renders a PageHeaderDescription. */
+  description?: React.ReactNode
+}
+
+function PageHeader({ className, children, title, description, ...props }: PageHeaderProps) {
   return (
     <section className={cn("flex flex-col gap-2 pb-4 pt-2 md:pb-6 md:pt-4 border-b mb-6", className)} {...props}>
+      {title ? <PageHeaderHeading>{title}</PageHeaderHeading> : null}
+      {description ? <PageHeaderDescriptionComponent>{description}</PageHeaderDescriptionComponent> : null}
       {children}
     </section>
   )
