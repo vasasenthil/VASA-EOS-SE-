@@ -20,3 +20,12 @@ export const integrationModes = {
 } as const
 
 export type IntegrationKey = keyof typeof integrationModes
+
+// ── Endpoint configuration for live adapters ──────────────────────────────────
+// Each live adapter reads its origin here so deployments can point at a sandbox,
+// a state-hosted mirror, or the production provider without code changes.
+
+/** DIKSHA Composite Search origin (default: the national DIKSHA portal). */
+export function dikshaBaseUrl(): string {
+  return process.env.DIKSHA_BASE_URL?.replace(/\/$/, "") || "https://diksha.gov.in"
+}

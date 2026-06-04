@@ -1,8 +1,9 @@
 // Integration registry — returns the configured adapter for each port.
 //
-// Today every port resolves to its mock implementation. To go live for an
-// integration, add a real adapter implementing the port interface and select it
-// here based on integrationModes (driven by INTEGRATION_* env vars).
+// Each port resolves to its mock implementation by default. Flip an integration
+// to "live" (INTEGRATION_* env var) once its real adapter exists; the registry
+// then selects the live adapter. DIKSHA is the first port with a real HTTP-backed
+// adapter wired (content discovery via the public Composite Search API).
 
 import { integrationModes } from "./config"
 import {
@@ -15,6 +16,7 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
+import { liveDiksha } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
@@ -23,7 +25,8 @@ export const integrations: IntegrationRegistry = {
   digilocker: mockDigiLocker,
   dbt: mockDbt,
   udise: mockUdise,
-  diksha: mockDiksha,
+  // First real HTTP-backed adapter: DIKSHA content discovery (public API, no MoU).
+  diksha: integrationModes.diksha === "live" ? liveDiksha : mockDiksha,
   language: mockLanguage,
   agents: mockAgents,
 }
