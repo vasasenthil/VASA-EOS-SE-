@@ -16,7 +16,7 @@ import {
   mockLanguage,
   mockUdise,
 } from "./mock"
-import { liveDiksha } from "./live"
+import { liveDiksha, liveUdise } from "./live"
 import type { IntegrationRegistry } from "./types"
 
 export const integrations: IntegrationRegistry = {
@@ -24,7 +24,8 @@ export const integrations: IntegrationRegistry = {
   aadhaar: mockAadhaar,
   digilocker: mockDigiLocker,
   dbt: mockDbt,
-  udise: mockUdise,
+  // UDISE+ school registry via a configurable state-hosted REST gateway.
+  udise: integrationModes.udise === "live" ? liveUdise : mockUdise,
   // First real HTTP-backed adapter: DIKSHA content discovery (public API, no MoU).
   diksha: integrationModes.diksha === "live" ? liveDiksha : mockDiksha,
   language: mockLanguage,

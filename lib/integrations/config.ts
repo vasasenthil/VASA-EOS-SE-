@@ -29,3 +29,13 @@ export type IntegrationKey = keyof typeof integrationModes
 export function dikshaBaseUrl(): string {
   return process.env.DIKSHA_BASE_URL?.replace(/\/$/, "") || "https://diksha.gov.in"
 }
+
+/** UDISE+ registry REST origin (state-hosted mirror / gateway). No safe default. */
+export function udiseBaseUrl(): string | undefined {
+  return process.env.UDISE_BASE_URL?.replace(/\/$/, "") || undefined
+}
+
+/** Optional Bearer token for the UDISE+ gateway. */
+export function udiseApiKey(): string | undefined {
+  return process.env.UDISE_API_KEY || undefined
+}

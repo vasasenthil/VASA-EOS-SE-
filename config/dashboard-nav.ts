@@ -49,6 +49,7 @@ import {
   Siren,
   Stamp,
   Library,
+  School,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -110,6 +111,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Emergency & Disaster", href: "/emergency", icon: Siren },
     { title: "School Recognition (TN 1973)", href: "/recognition", icon: Stamp },
     { title: "Content Discovery (DIKSHA)", href: "/content", icon: Library },
+    { title: "School Registry (UDISE+)", href: "/school-registry", icon: School },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
