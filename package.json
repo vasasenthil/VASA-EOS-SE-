@@ -9,7 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs --test tests/*.test.ts",
-    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --experimental-test-coverage --test-coverage-exclude='tests/**' --test-coverage-exclude='scripts/**' --import ./scripts/test-register.mjs --test tests/*.test.ts",
+    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --experimental-test-coverage --test-coverage-exclude='tests/**' --test-coverage-exclude='scripts/**' --test-coverage-exclude='lib/supabase/**' --test-coverage-lines=95 --test-coverage-branches=72 --test-coverage-functions=88 --import ./scripts/test-register.mjs --test tests/*.test.ts",
     "db:seed:users": "tsx scripts/seed-users.ts"
   },
   "pnpm": {
