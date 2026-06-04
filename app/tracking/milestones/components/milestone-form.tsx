@@ -13,13 +13,13 @@ import { CalendarIcon, Loader2 } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { type ImplementationMilestone, MILESTONE_STATUSES } from "../types"
-import type { FormAction } from "@/app/tracking/challenges/types" // Re-use FormAction type
+import { type ImplementationMilestone, type ImplementationMilestoneInput, MILESTONE_STATUSES } from "../types"
+import { addMilestoneAction, updateMilestoneAction } from "../../dashboard/actions"
 import { useToast } from "@/hooks/use-toast"
 import { useState } from "react"
 
 const milestoneFormSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters." }).max(200),
+  milestone_name: z.string().min(3, { message: "Title must be at least 3 characters." }).max(200),
   description: z.string().optional(),
   target_date: z.date({ required_error: "Target date is required." }),
   status: z.enum(MILESTONE_STATUSES),
@@ -32,35 +32,25 @@ export type MilestoneFormValues = z.infer<typeof milestoneFormSchema>
 interface MilestoneFormProps {
   implementationStatusId: string
   milestone?: ImplementationMilestone
-  actionFn: (
-    data: MilestoneFormValues,
-    implementationStatusId: string,
-    milestoneId?: string,
-  ) => Promise<{ success: boolean; message: string; data?: ImplementationMilestone }>
-  formAction: FormAction
-  onSuccess: (milestone: ImplementationMilestone) => void
+  onSuccess: () => void
   onCancel?: () => void
 }
 
-export function MilestoneForm({
-  implementationStatusId,
-  milestone,
-  actionFn,
-  formAction,
-  onSuccess,
-  onCancel,
-}: MilestoneFormProps) {
+export function MilestoneForm({ implementationStatusId, milestone, onSuccess, onCancel }: MilestoneFormProps) {
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const defaultValues: Partial<MilestoneFormValues> = milestone
     ? {
-        ...milestone,
+        milestone_name: milestone.milestone_name,
+        description: milestone.description ?? undefined,
+        status: milestone.status,
+        notes: milestone.notes ?? undefined,
         target_date: milestone.target_date ? new Date(milestone.target_date) : undefined,
         actual_completion_date: milestone.actual_completion_date ? new Date(milestone.actual_completion_date) : null,
       }
     : {
-        status: "PLANNED",
+        status: "Not Started",
       }
 
   const form = useForm<MilestoneFormValues>({
@@ -71,17 +61,27 @@ export function MilestoneForm({
   async function onSubmit(values: MilestoneFormValues) {
     setIsSubmitting(true)
     try {
-      const result = await actionFn(values, implementationStatusId, milestone?.id)
-      if (result.success && result.data) {
+      const payload: Omit<ImplementationMilestoneInput, "implementation_status_id"> = {
+        milestone_name: values.milestone_name,
+        description: values.description ?? null,
+        status: values.status,
+        notes: values.notes ?? null,
+        target_date: values.target_date ? values.target_date.toISOString() : null,
+        actual_completion_date: values.actual_completion_date ? values.actual_completion_date.toISOString() : null,
+      }
+      const result = milestone
+        ? await updateMilestoneAction(milestone.id, payload)
+        : await addMilestoneAction(implementationStatusId, payload)
+      if (result.success) {
         toast({
-          title: formAction === "create" ? "Milestone Created" : "Milestone Updated",
+          title: milestone ? "Milestone Updated" : "Milestone Created",
           description: result.message,
         })
-        onSuccess(result.data)
-        if (formAction === "create") {
+        onSuccess()
+        if (!milestone) {
           form.reset({
-            status: "PLANNED",
-            title: "",
+            status: "Not Started",
+            milestone_name: "",
             description: "",
             notes: "",
             target_date: undefined,
@@ -111,7 +111,7 @@ export function MilestoneForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="title"
+          name="milestone_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
@@ -216,7 +216,12 @@ export function MilestoneForm({
                   </FormControl>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                  <Calendar
+                    mode="single"
+                    selected={field.value ?? undefined}
+                    onSelect={field.onChange}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
               <FormMessage />
@@ -246,7 +251,7 @@ export function MilestoneForm({
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {formAction === "create" ? "Add Milestone" : "Save Changes"}
+            {milestone ? "Save Changes" : "Add Milestone"}
           </Button>
         </div>
       </form>

@@ -19,62 +19,48 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Edit3, Trash2, CalendarDays, CheckCircle, XCircle, Hourglass, Info } from "lucide-react"
 import type { ImplementationMilestone, MilestoneStatus } from "../types"
-import { MilestoneForm } from "./milestone-form"
+import { deleteMilestoneAction } from "../../dashboard/actions"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 
 interface MilestoneListItemProps {
   milestone: ImplementationMilestone
-  onUpdate: (updatedMilestone: ImplementationMilestone) => void
-  onDelete: (milestoneId: string) => void
-  updateActionFn: (data: any, implementationStatusId: string, milestoneId: string) => Promise<any>
-  deleteActionFn: (milestoneId: string, implementationStatusId: string) => Promise<any>
-  implementationStatusId: string
+  onEdit: (milestone: ImplementationMilestone) => void
+  onDeleted: (milestoneId: string) => void
 }
 
 const statusColors: Record<MilestoneStatus, string> = {
-  PLANNED: "bg-blue-500 hover:bg-blue-600",
-  IN_PROGRESS: "bg-yellow-500 hover:bg-yellow-600",
-  COMPLETED: "bg-green-500 hover:bg-green-600",
-  DELAYED: "bg-red-500 hover:bg-red-600",
-  ON_HOLD: "bg-gray-500 hover:bg-gray-600",
+  "Not Started": "bg-gray-500 hover:bg-gray-600",
+  "In Progress": "bg-yellow-500 hover:bg-yellow-600",
+  Completed: "bg-green-500 hover:bg-green-600",
+  Delayed: "bg-red-500 hover:bg-red-600",
+  "On Hold": "bg-blue-500 hover:bg-blue-600",
+  Cancelled: "bg-gray-400 hover:bg-gray-500",
 }
 
 const statusIcons: Record<MilestoneStatus, React.ElementType> = {
-  PLANNED: CalendarDays,
-  IN_PROGRESS: Hourglass,
-  COMPLETED: CheckCircle,
-  DELAYED: XCircle,
-  ON_HOLD: Info,
+  "Not Started": CalendarDays,
+  "In Progress": Hourglass,
+  Completed: CheckCircle,
+  Delayed: XCircle,
+  "On Hold": Info,
+  Cancelled: XCircle,
 }
 
-export function MilestoneListItem({
-  milestone,
-  onUpdate,
-  onDelete,
-  updateActionFn,
-  deleteActionFn,
-  implementationStatusId,
-}: MilestoneListItemProps) {
-  const [isEditing, setIsEditing] = useState(false)
+export function MilestoneListItem({ milestone, onEdit, onDeleted }: MilestoneListItemProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const { toast } = useToast()
-
-  const handleUpdate = (updatedMilestone: ImplementationMilestone) => {
-    onUpdate(updatedMilestone)
-    setIsEditing(false)
-  }
 
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const result = await deleteActionFn(milestone.id, implementationStatusId)
+      const result = await deleteMilestoneAction(milestone.id)
       if (result.success) {
         toast({
           title: "Milestone Deleted",
           description: result.message,
         })
-        onDelete(milestone.id)
+        onDeleted(milestone.id)
       } else {
         toast({
           title: "Error Deleting Milestone",
@@ -95,34 +81,14 @@ export function MilestoneListItem({
 
   const StatusIcon = statusIcons[milestone.status] || Info
 
-  if (isEditing) {
-    return (
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Edit Milestone</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <MilestoneForm
-            implementationStatusId={implementationStatusId}
-            milestone={milestone}
-            actionFn={updateActionFn}
-            formAction="update"
-            onSuccess={handleUpdate}
-            onCancel={() => setIsEditing(false)}
-          />
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <Card className="mb-4 overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold">{milestone.title}</CardTitle>
+          <CardTitle className="text-lg font-semibold">{milestone.milestone_name}</CardTitle>
           <Badge className={`${statusColors[milestone.status]} text-white`}>
             <StatusIcon className="mr-1.5 h-3.5 w-3.5" />
-            {milestone.status.replace("_", " ")}
+            {milestone.status}
           </Badge>
         </div>
         {milestone.description && (
@@ -133,7 +99,9 @@ export function MilestoneListItem({
         <div className="flex items-center">
           <CalendarDays className="h-4 w-4 mr-2 text-gray-500" />
           <strong>Target Date:</strong>
-          <span className="ml-1">{format(new Date(milestone.target_date), "PPP")}</span>
+          <span className="ml-1">
+            {milestone.target_date ? format(new Date(milestone.target_date), "PPP") : "—"}
+          </span>
         </div>
         {milestone.actual_completion_date && (
           <div className="flex items-center">
@@ -150,7 +118,7 @@ export function MilestoneListItem({
         )}
       </CardContent>
       <CardFooter className="flex justify-end space-x-2 bg-slate-50 dark:bg-slate-800/30 py-3 px-6 border-t">
-        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+        <Button variant="outline" size="sm" onClick={() => onEdit(milestone)}>
           <Edit3 className="mr-1 h-4 w-4" /> Edit
         </Button>
         <AlertDialog>
@@ -163,7 +131,8 @@ export function MilestoneListItem({
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the milestone &quot;{milestone.title}&quot;.
+                This action cannot be undone. This will permanently delete the milestone &quot;
+                {milestone.milestone_name}&quot;.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

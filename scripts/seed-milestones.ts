@@ -15,11 +15,11 @@ export function generateSampleMilestones(
   if (implementationStatusIds.length === 0) return []
   const milestones: ImplementationMilestoneInput[] = []
   const statuses: ImplementationMilestoneInput["status"][] = [
-    "Pending",
+    "Not Started",
     "In Progress",
     "Completed",
     "Delayed",
-    "Blocked",
+    "On Hold",
     "Cancelled",
   ] // Matched to type
   const entities = ["State Education Dept.", "District Office", "Partner NGO", "Tech Provider"]
