@@ -41,6 +41,10 @@ import {
   Package,
   Leaf,
   Vote,
+  Brain,
+  ScanLine,
+  Share2,
+  BadgeCheck,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -94,6 +98,10 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
     { title: "Green School / ESG", href: "/green-school", icon: Leaf },
     { title: "Co-curricular & Sports", href: "/co-curricular", icon: Award },
+    { title: "Adaptive Learning", href: "/adaptive-learning", icon: Brain },
+    { title: "OCR / OMR Engine", href: "/omr", icon: ScanLine },
+    { title: "Knowledge Graph", href: "/knowledge-graph", icon: Share2 },
+    { title: "Verifiable Credentials", href: "/credentials", icon: BadgeCheck },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
