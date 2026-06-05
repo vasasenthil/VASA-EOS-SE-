@@ -53,6 +53,8 @@ import {
   Fingerprint,
   Plug,
   HeartPulse,
+  Sun,
+  LineChart,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -70,6 +72,8 @@ export interface NavItem {
 export const dashboardNavConfig: Record<string, NavItem[]> = {
   ADMIN: [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { title: "Today (daily loop)", href: "/today", icon: Sun },
+    { title: "Adoption & Retention", href: "/adoption", icon: LineChart },
     { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
     { title: "Policies", href: "/policies", icon: FileText },
     { title: "Schemes", href: "/schemes", icon: Layers },
