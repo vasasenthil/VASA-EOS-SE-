@@ -57,6 +57,8 @@ import {
   LineChart,
   CalendarCheck,
   Send,
+  Accessibility,
+  UserPlus,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -152,6 +154,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Maintenance Tickets", href: "/maintenance", icon: Wrench },
     { title: "Admissions & Enrolment", href: "/admissions", icon: Users },
     { title: "Pre-Primary / Anganwadi", href: "/pre-primary", icon: Heart },
+    { title: "CWSN / Special-Needs IEP", href: "/cwsn", icon: Accessibility },
+    { title: "RTE 25% Quota", href: "/rte", icon: Scale },
+    { title: "Out-of-School Children", href: "/oosc", icon: UserPlus },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
