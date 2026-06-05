@@ -75,6 +75,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Schemes", href: "/schemes", icon: Layers },
     { title: "Governance", href: "/governance/organizational-units", icon: Network },
     { title: "Roles & Permissions", href: "/governance/roles", icon: ShieldCheck },
+    { title: "Access Explorer", href: "/governance/access", icon: ShieldCheck },
     { title: "User Management", href: "/admin/governance/users", icon: Users },
     { title: "Milestones", href: "/tracking/milestones", icon: CheckSquare },
     { title: "Challenges", href: "/tracking/challenges", icon: AlertTriangle },
