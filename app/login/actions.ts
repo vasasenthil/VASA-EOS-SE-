@@ -3,6 +3,7 @@
 import { z } from "zod"
 import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
+import { PORTALS, type PortalRole } from "@/config/portals"
 
 const createClient = async () => {
   console.log("--- Inside createClient for loginAction ---")
@@ -38,21 +39,12 @@ const createClient = async () => {
   })
 }
 
-const userRolesEnum = z.enum([
-  "STUDENT",
-  "TEACHER",
-  "ADMIN", // This will map to System Admin
-  "PRINCIPAL",
-  "SUBJECT_INCHARGE",
-  "ACADEMIC_HEAD",
-  "INSTITUTION_HEAD",
-  "PARENT",
-])
-
+// The form role is a UI hint only — the DB role is the source of truth. Accept any
+// of the registered portal roles (see config/portals).
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(1, "Password is required."),
-  role: userRolesEnum, // Role from form is for UI, DB role is source of truth
+  role: z.string().min(1, "Please select a role."),
 })
 
 export interface LoginState {
@@ -133,43 +125,20 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
   }
 
   console.log(`User profile fetched successfully. Role: ${userProfile.role}`)
-  const actualUserRole = userProfile.role.toUpperCase() as z.infer<typeof userRolesEnum>
+  const actualUserRole = userProfile.role.toUpperCase() as PortalRole
 
-  let redirectPath = "/login?error=unknown_role"
-  switch (actualUserRole) {
-    case "ADMIN":
-      redirectPath = "/admin/dashboard"
-      break
-    case "TEACHER":
-      redirectPath = "/teacher/dashboard"
-      break
-    case "STUDENT":
-      redirectPath = "/student/dashboard"
-      break
-    case "PRINCIPAL":
-      redirectPath = "/principal/dashboard"
-      break
-    case "SUBJECT_INCHARGE":
-      redirectPath = "/subject-incharge/dashboard"
-      break
-    case "ACADEMIC_HEAD":
-      redirectPath = "/academic-head/dashboard"
-      break
-    case "INSTITUTION_HEAD":
-      redirectPath = "/institution-head/dashboard"
-      break
-    case "PARENT":
-      redirectPath = "/parent/dashboard"
-      break
-    default:
-      console.warn(`Unknown role encountered after profile fetch: ${userProfile.role}`)
-      await supabase.auth.signOut()
-      return {
-        success: false,
-        message: "Unknown user role. Access denied.",
-        errors: { _general: "Your account has an unrecognized role." },
-      }
+  // Route to the role's portal home (single source of truth: config/portals).
+  const portal = PORTALS[actualUserRole]
+  if (!portal) {
+    console.warn(`Unknown role encountered after profile fetch: ${userProfile.role}`)
+    await supabase.auth.signOut()
+    return {
+      success: false,
+      message: "Unknown user role. Access denied.",
+      errors: { _general: "Your account has an unrecognized role." },
+    }
   }
+  const redirectPath = portal.home
 
   console.log(`Login successful! Redirecting to: ${redirectPath}`)
   return {
