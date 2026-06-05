@@ -18,6 +18,7 @@ Start at the repo [README](../README.md), then use this index.
 | [CONTRIBUTING](../CONTRIBUTING.md) | Setup, the gate, and the conventions that keep the build green. |
 | [TRACEABILITY](TRACEABILITY.md) | Dossier sections / flagships → implementing modules, routes, and tests. |
 | [ADR](ADR.md) | Architecture decision log — the context, decision, and consequences of the big calls. |
+| [STATUS](STATUS.md) | Completion & pending register — the full delivery timeline and what's done vs pending against the master document. |
 
 ### Suggested reading order
 

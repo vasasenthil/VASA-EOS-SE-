@@ -38,6 +38,8 @@ Start at the **[docs/](docs/README.md)** landing page (index + repo diagram), or
 - **[docs/ADR.md](docs/ADR.md)** — architecture decision log (mock adapters, the
   client/server split, the persistence seam, hash-chained audit, the 5-model PDP, the
   test runner, and CI/coverage).
+- **[docs/STATUS.md](docs/STATUS.md)** — completion & pending register: the full
+  delivery timeline and what's done vs pending against the master document.
 
 In-app operational surfaces:
 
