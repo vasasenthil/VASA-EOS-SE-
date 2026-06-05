@@ -19,6 +19,8 @@ pnpm run test:coverage   # 95 unit tests + enforced coverage thresholds (Node >=
 
 ## Documentation
 
+Start at the **[docs/](docs/README.md)** landing page (index + repo diagram), or jump in:
+
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — layers, the `lib/` module map,
   routing model, the integration seam, and the testing architecture.
 - **[docs/MODULES.md](docs/MODULES.md)** — per-module reference: purpose, key exports,
