@@ -28,6 +28,7 @@ const ITEMS_PER_PAGE = 10
 // Ensure ALL functions exported from this file are async
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
+  try {
   const supabase = await createClient()
   const {
     page = 1,
@@ -77,8 +78,8 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
   const { data, error, count } = await queryBuilder
 
   if (error) {
-    console.error("Error fetching schemes:", error)
-    throw new Error(`Failed to fetch schemes: ${error.message}`)
+    console.error("Error fetching schemes (returning empty):", error)
+    return { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 
   const totalCount = count ?? 0
@@ -95,10 +96,16 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
     })) as Scheme[]) || []
 
   return { schemes, totalPages, currentPage: page, totalCount }
+  } catch (e) {
+    // Network/DB unreachable (e.g. Supabase paused on a preview) — fail soft.
+    console.error("getSchemesAction failed; returning empty result:", e)
+    return { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+  }
 }
 
 export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
+  try {
   const supabase = await createClient()
 
   const user = await getSupabaseAuthUser()
@@ -132,8 +139,8 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
     .maybeSingle()
 
   if (error) {
-    console.error(`Error fetching scheme by ID (${id}):`, error)
-    throw new Error(`Failed to fetch scheme: ${error.message}`)
+    console.error(`Error fetching scheme by ID (${id}) — returning null:`, error)
+    return null
   }
   if (!data) return null
 
@@ -165,6 +172,10 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
     target_governance_tiers,
   }
   return scheme
+  } catch (e) {
+    console.error(`getSchemeByIdAction failed (${id}); returning null:`, e)
+    return null
+  }
 }
 
 export async function getSchemeCategoriesAction(): Promise<SchemeCategory[]> {
