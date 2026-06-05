@@ -2,6 +2,8 @@
 
 import { integrations } from "@/lib/integrations"
 import type { DisbursementResult } from "@/lib/integrations"
+import { requireAccess, AccessDeniedError } from "@/lib/access/policy"
+import { resolveSubject } from "@/lib/access/resolve"
 import { DBT_SCHEMES } from "./schemes"
 
 export interface DbtState {
@@ -21,6 +23,14 @@ export async function disburseAction(_prev: DbtState, formData: FormData): Promi
   if (!apaar) return { error: "APAAR id is required." }
   const scheme = DBT_SCHEMES[schemeCode]
   if (!scheme) return { error: "Unknown scheme." }
+
+  // High-stakes: disbursement requires explicit authorisation (deny-wins, fail-closed).
+  try {
+    requireAccess(await resolveSubject(), "disburse:dbt", { type: "scheme", id: schemeCode })
+  } catch (e) {
+    if (e instanceof AccessDeniedError) return { error: e.message }
+    throw e
+  }
 
   // Eligibility (illustrative; real rules verify APAAR-UDISE+ history + Aadhaar dedup).
   if (scheme.girlOnly && gender !== "female") {

@@ -19,6 +19,7 @@ Start at the repo [README](../README.md), then use this index.
 | [TRACEABILITY](TRACEABILITY.md) | Dossier sections / flagships → implementing modules, routes, and tests. |
 | [ADR](ADR.md) | Architecture decision log — the context, decision, and consequences of the big calls. |
 | [STATUS](STATUS.md) | Completion & pending register — the full delivery timeline and what's done vs pending against the master document. |
+| [REQUIREMENTS](REQUIREMENTS.md) | What's needed to go fully live — every real credential, MoU, and infrastructure dependency, one by one. |
 
 ### Suggested reading order
 

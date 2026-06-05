@@ -1,6 +1,6 @@
 "use server"
 
-import { fileGrievance, escalateGrievance, resolveGrievance, listGrievances } from "@/lib/grievance/store"
+import { fileGrievance, escalateGrievance, resolveGrievance, listGrievances, deleteGrievance } from "@/lib/grievance/store"
 import type { Grievance } from "@/lib/grievance"
 
 export interface GrievanceState {
@@ -20,6 +20,8 @@ export async function grievanceAction(_prev: GrievanceState, formData: FormData)
     await escalateGrievance((formData.get("id") as string) || "")
   } else if (op === "resolve") {
     await resolveGrievance((formData.get("id") as string) || "")
+  } else if (op === "delete") {
+    await deleteGrievance((formData.get("id") as string) || "")
   }
 
   return { grievances: await listGrievances() }

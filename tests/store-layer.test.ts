@@ -4,7 +4,15 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
 import { makeFakeDb } from "./helpers/fake-db"
 
-import { fileGrievance, escalateGrievance, resolveGrievance, listGrievances } from "@/lib/grievance/store"
+import {
+  fileGrievance,
+  escalateGrievance,
+  resolveGrievance,
+  listGrievances,
+  getGrievance,
+  updateGrievance,
+  deleteGrievance,
+} from "@/lib/grievance/store"
 import { createProposal, vote, listProposals } from "@/lib/smc/store"
 import { proposalStatus } from "@/lib/smc"
 import { fileApplication, advanceApplication, rejectApplication, listApplications } from "@/lib/recognition/store"
@@ -29,6 +37,22 @@ test("grievance: file, persist, escalate and resolve via the DB path", async () 
 
   const res = await resolveGrievance(g.id)
   assert.equal(res?.status, "resolved")
+})
+
+test("grievance: full CRUD — get, update and delete via the DB path", async () => {
+  const g = await fileGrievance({ category: "Fees", description: "Wrong amount" })
+
+  const fetched = await getGrievance(g.id)
+  assert.equal(fetched?.id, g.id)
+
+  const updated = await updateGrievance(g.id, { description: "Corrected amount", category: "Scheme / DBT" })
+  assert.equal(updated?.description, "Corrected amount")
+  assert.equal(updated?.category, "Scheme / DBT")
+  assert.equal((await getGrievance(g.id))?.description, "Corrected amount")
+
+  assert.equal(await deleteGrievance(g.id), true)
+  assert.equal(await getGrievance(g.id), undefined)
+  assert.equal(await deleteGrievance(g.id), false)
 })
 
 test("SMC: create a proposal and tally votes via the DB path", async () => {

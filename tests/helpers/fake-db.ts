@@ -18,7 +18,7 @@ function cmp(a: unknown, b: unknown): number {
 }
 
 class FakeQuery implements PromiseLike<Result> {
-  private op: "select" | "insert" | "update" = "select"
+  private op: "select" | "insert" | "update" | "delete" = "select"
   private filters: [string, unknown][] = []
   private orderBy: { col: string; ascending: boolean } | null = null
   private limitN: number | null = null
@@ -41,6 +41,10 @@ class FakeQuery implements PromiseLike<Result> {
   update(payload: Row): this {
     this.op = "update"
     this.payload = payload
+    return this
+  }
+  delete(): this {
+    this.op = "delete"
     return this
   }
   eq(col: string, val: unknown): this {
@@ -71,6 +75,10 @@ class FakeQuery implements PromiseLike<Result> {
     }
     if (this.op === "update") {
       for (const r of this.rows) if (this.matches(r)) Object.assign(r, this.payload)
+      return { data: null, error: null }
+    }
+    if (this.op === "delete") {
+      for (let i = this.rows.length - 1; i >= 0; i--) if (this.matches(this.rows[i])) this.rows.splice(i, 1)
       return { data: null, error: null }
     }
     let out = this.rows.filter((r) => this.matches(r))

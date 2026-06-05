@@ -74,6 +74,45 @@ async function load(gid: string): Promise<Grievance | undefined> {
   return store.find((x) => x.id === gid)
 }
 
+/** Read one grievance by id (DB or in-memory). */
+export async function getGrievance(gid: string): Promise<Grievance | undefined> {
+  return load(gid)
+}
+
+/** Editable fields of a grievance. */
+export type GrievancePatch = Partial<Pick<Grievance, "category" | "description" | "status" | "tier">>
+
+/** Update editable fields; returns the merged record (or undefined if not found). */
+export async function updateGrievance(gid: string, patch: GrievancePatch): Promise<Grievance | undefined> {
+  const g = await load(gid)
+  if (!g) return undefined
+  Object.assign(g, patch)
+  const db = getDb()
+  if (db) {
+    await db
+      .from("grievances")
+      .update({ category: g.category, description: g.description, status: g.status, tier: g.tier })
+      .eq("id", gid)
+  }
+  await appendAudit({ actor: "editor", action: "grievance.update", resource: gid, details: { ...patch } })
+  return g
+}
+
+/** Delete a grievance; returns true if it existed. */
+export async function deleteGrievance(gid: string): Promise<boolean> {
+  const existing = await load(gid)
+  if (!existing) return false
+  const db = getDb()
+  if (db) {
+    await db.from("grievances").delete().eq("id", gid)
+  } else {
+    const i = store.findIndex((x) => x.id === gid)
+    if (i >= 0) store.splice(i, 1)
+  }
+  await appendAudit({ actor: "admin", action: "grievance.delete", resource: gid })
+  return true
+}
+
 export async function escalateGrievance(gid: string): Promise<Grievance | undefined> {
   const g = await load(gid)
   if (!g) return undefined

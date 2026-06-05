@@ -72,24 +72,33 @@ export function GrievancePanel() {
                     <span className="text-xs text-muted-foreground">SLA {g.slaHours}h</span>
                   </div>
                   <p className="mt-1 text-muted-foreground">{g.description}</p>
-                  {g.status !== "resolved" ? (
-                    <div className="mt-2 flex gap-2">
-                      <form action={formAction}>
-                        <input type="hidden" name="op" value="escalate" />
-                        <input type="hidden" name="id" value={g.id} />
-                        <Button type="submit" size="sm" variant="outline">
-                          Escalate
-                        </Button>
-                      </form>
-                      <form action={formAction}>
-                        <input type="hidden" name="op" value="resolve" />
-                        <input type="hidden" name="id" value={g.id} />
-                        <Button type="submit" size="sm">
-                          Resolve
-                        </Button>
-                      </form>
-                    </div>
-                  ) : null}
+                  <div className="mt-2 flex gap-2">
+                    {g.status !== "resolved" ? (
+                      <>
+                        <form action={formAction}>
+                          <input type="hidden" name="op" value="escalate" />
+                          <input type="hidden" name="id" value={g.id} />
+                          <Button type="submit" size="sm" variant="outline">
+                            Escalate
+                          </Button>
+                        </form>
+                        <form action={formAction}>
+                          <input type="hidden" name="op" value="resolve" />
+                          <input type="hidden" name="id" value={g.id} />
+                          <Button type="submit" size="sm">
+                            Resolve
+                          </Button>
+                        </form>
+                      </>
+                    ) : null}
+                    <form action={formAction}>
+                      <input type="hidden" name="op" value="delete" />
+                      <input type="hidden" name="id" value={g.id} />
+                      <Button type="submit" size="sm" variant="ghost" className="text-destructive">
+                        Delete
+                      </Button>
+                    </form>
+                  </div>
                 </li>
               ))}
             </ul>
