@@ -55,6 +55,7 @@ import {
   HeartPulse,
   Sun,
   LineChart,
+  CalendarCheck,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -73,6 +74,8 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
   ADMIN: [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Today (daily loop)", href: "/today", icon: Sun },
+    { title: "Daily Attendance", href: "/attendance", icon: CalendarCheck },
+    { title: "Fee Management", href: "/fees", icon: IndianRupee },
     { title: "Adoption & Retention", href: "/adoption", icon: LineChart },
     { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
     { title: "Policies", href: "/policies", icon: FileText },
