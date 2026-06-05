@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
+import { integrationStatuses, integrationSummary, integrationsReport } from "@/lib/integrations/status"
 
 test("reports a status for all eight ports", () => {
   const rows = integrationStatuses()
@@ -27,4 +27,10 @@ test("summary counts are consistent", () => {
   assert.equal(s.total, rows.length)
   assert.ok(s.live <= s.total)
   assert.ok(s.liveReady <= s.total)
+})
+
+test("integrationsReport composes summary + ports", () => {
+  const r = integrationsReport()
+  assert.equal(r.ports.length, 8)
+  assert.equal(r.summary.total, r.ports.length)
 })

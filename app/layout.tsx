@@ -12,6 +12,7 @@ import { AccessibilityProvider } from "@/components/accessibility-provider"
 import { CommandPaletteProvider } from "@/components/command-palette"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { RouteAnnouncer } from "@/components/route-announcer"
+import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -54,6 +55,7 @@ export default function RootLayout({
                     <Footer />
                   </div>
                   <RouteAnnouncer />
+                  <KeyboardShortcutsHelp />
                   <Toaster />
                 </TooltipProvider>
               </I18nProvider>

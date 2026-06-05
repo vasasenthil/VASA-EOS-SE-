@@ -148,3 +148,14 @@ export function integrationSummary(rows: IntegrationStatus[] = integrationStatus
     liveReady: rows.filter((r) => r.liveReady).length,
   }
 }
+
+export interface IntegrationsReport {
+  summary: IntegrationSummary
+  ports: IntegrationStatus[]
+}
+
+/** Machine-readable integration posture for the /api/integrations endpoint. */
+export function integrationsReport(): IntegrationsReport {
+  const ports = integrationStatuses()
+  return { summary: integrationSummary(ports), ports }
+}

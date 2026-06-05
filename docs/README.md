@@ -88,6 +88,9 @@ flowchart TD
 - **`/health`** — live self-tests of the core guardrails + persistence/integration posture.
 - **`GET /api/health`** — machine-readable JSON of the same self-tests for uptime
   monitors / load balancers (200 healthy, 503 when a guardrail fails; never cached).
+- **`GET /api/integrations`** — machine-readable integration posture (per-port mode +
+  config readiness; never the secret values).
+- **`?`** — keyboard-shortcuts help · **⌘/Ctrl+K** — command palette.
 
 ## Quickstart
 
