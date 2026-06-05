@@ -44,3 +44,40 @@ export const DEFAULT_A11Y: AccessibilityPreferences = {
 }
 
 export const A11Y_STORAGE_KEY = "vasa-eos-a11y"
+
+// All `<html>` classes this module manages — removed in full before re-applying.
+export const A11Y_CLASSES = ["a11y-high-contrast", "a11y-reduce-motion"] as const
+
+const TEXT_SCALES: TextScale[] = ["normal", "large", "xlarge"]
+
+/** Coerce arbitrary parsed input into a complete, valid preference set. */
+export function normalizePrefs(raw: unknown): AccessibilityPreferences {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_A11Y }
+  const p = raw as Partial<AccessibilityPreferences>
+  const textScale = TEXT_SCALES.includes(p.textScale as TextScale) ? (p.textScale as TextScale) : DEFAULT_A11Y.textScale
+  return {
+    highContrast: p.highContrast === true,
+    textScale,
+    reduceMotion: p.reduceMotion === true,
+    voiceFirst: p.voiceFirst === true,
+    locale: typeof p.locale === "string" && p.locale.length > 0 ? p.locale : DEFAULT_A11Y.locale,
+  }
+}
+
+/** Parse a stored JSON string into preferences, falling back to defaults. */
+export function parseStoredPrefs(raw: string | null): AccessibilityPreferences {
+  if (!raw) return { ...DEFAULT_A11Y }
+  try {
+    return normalizePrefs(JSON.parse(raw))
+  } catch {
+    return { ...DEFAULT_A11Y }
+  }
+}
+
+/** The subset of A11Y_CLASSES that should be active for a preference set. */
+export function a11yClassList(prefs: AccessibilityPreferences): string[] {
+  const classes: string[] = []
+  if (prefs.highContrast) classes.push("a11y-high-contrast")
+  if (prefs.reduceMotion) classes.push("a11y-reduce-motion")
+  return classes
+}
