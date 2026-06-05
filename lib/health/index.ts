@@ -43,3 +43,20 @@ export const RBSK_FOUR_DS: string[] = [
   "Diseases (childhood)",
   "Developmental delays incl. disabilities",
 ]
+
+export type ScreeningFindings = Pick<ScreeningRecord, "bmiStatus" | "anaemia" | "vision">
+
+/** Any abnormal finding flags a referral. */
+export function needsReferral(f: ScreeningFindings): boolean {
+  return f.bmiStatus !== "normal" || f.anaemia || f.vision === "refer"
+}
+
+/** Compose a referral note from the findings (empty when none needed). */
+export function suggestReferral(f: ScreeningFindings): string {
+  const parts: string[] = []
+  if (f.bmiStatus === "underweight") parts.push("Nutrition support")
+  if (f.bmiStatus === "overweight") parts.push("Dietary counselling")
+  if (f.anaemia) parts.push("Iron supplementation")
+  if (f.vision === "refer") parts.push("Ophthalmology referral")
+  return parts.join(" + ")
+}
