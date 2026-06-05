@@ -70,6 +70,9 @@ import {
   FlaskConical,
   Medal,
   Map,
+  Flame,
+  Monitor,
+  Mic,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -180,6 +183,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Science Exhibition / INSPIRE", href: "/science-fair", icon: FlaskConical },
     { title: "Olympiad & Competitions", href: "/competitions", icon: Medal },
     { title: "Field Trips & Excursions", href: "/excursions", icon: Map },
+    { title: "Fire & Mock Drills", href: "/mock-drills", icon: Flame },
+    { title: "ICT Lab / Smart Class", href: "/ict-lab", icon: Monitor },
+    { title: "Guest Lectures", href: "/guest-lectures", icon: Mic },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
