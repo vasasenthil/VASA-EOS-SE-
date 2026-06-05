@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { I18nProvider } from "@/components/i18n-provider"
 import { AccessibilityProvider } from "@/components/accessibility-provider"
+import { CommandPalette } from "@/components/command-palette"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -40,6 +41,7 @@ export default function RootLayout({
                   <div className="flex-grow bg-slate-50">{children}</div>
                   <Footer />
                 </div>
+                <CommandPalette />
                 <Toaster />
               </TooltipProvider>
             </I18nProvider>
