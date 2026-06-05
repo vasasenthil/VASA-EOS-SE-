@@ -56,6 +56,7 @@ import {
   Sun,
   LineChart,
   CalendarCheck,
+  Send,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -78,6 +79,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Timetable & Substitution", href: "/timetable", icon: CalendarDays },
     { title: "Lesson Planning", href: "/lesson-plans", icon: BookOpen },
     { title: "Holistic Progress Card", href: "/hpc", icon: ClipboardList },
+    { title: "Certificates", href: "/certificates", icon: FileText },
+    { title: "Teacher CPD", href: "/cpd", icon: GraduationCap },
+    { title: "Communications", href: "/communications", icon: Send },
     { title: "Fee Management", href: "/fees", icon: IndianRupee },
     { title: "Adoption & Retention", href: "/adoption", icon: LineChart },
     { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
