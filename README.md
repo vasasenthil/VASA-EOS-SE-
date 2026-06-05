@@ -21,6 +21,11 @@ pnpm run test:coverage   # 95 unit tests + enforced coverage thresholds (Node >=
 
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — layers, the `lib/` module map,
   routing model, the integration seam, and the testing architecture.
+- **[docs/MODULES.md](docs/MODULES.md)** — per-module reference: purpose, key exports,
+  route, and persistence for each `lib/` module.
+- **[docs/SECURITY.md](docs/SECURITY.md)** — security & privacy deep-dive: the 5-model
+  access PDP, the tamper-evident audit chain, the DPDP consent ledger, tenant
+  isolation, and the zero-trust posture.
 - **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — go-live runbook: the integration
   env-var matrix, Supabase setup, the feature-flag posture, and security/privacy notes.
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, the gate, and the conventions that
