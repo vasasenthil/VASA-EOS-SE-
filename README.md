@@ -31,6 +31,11 @@ pnpm run test:coverage   # 95 unit tests + enforced coverage thresholds (Node >=
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, the gate, and the conventions that
   keep the build green (server-action rules, client/server split, the live-adapter
   and test patterns).
+- **[docs/TRACEABILITY.md](docs/TRACEABILITY.md)** — dossier sections / flagships →
+  implementing modules, routes, and tests.
+- **[docs/ADR.md](docs/ADR.md)** — architecture decision log (mock adapters, the
+  client/server split, the persistence seam, hash-chained audit, the 5-model PDP, the
+  test runner, and CI/coverage).
 
 In-app operational surfaces:
 
