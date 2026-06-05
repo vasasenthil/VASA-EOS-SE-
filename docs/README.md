@@ -86,6 +86,8 @@ flowchart TD
 
 - **`/integrations`** — each port's live/mock mode and configuration readiness.
 - **`/health`** — live self-tests of the core guardrails + persistence/integration posture.
+- **`GET /api/health`** — machine-readable JSON of the same self-tests for uptime
+  monitors / load balancers (200 healthy, 503 when a guardrail fails; never cached).
 
 ## Quickstart
 
