@@ -6,7 +6,7 @@ import {
   ELIGIBILITY_CRITERIA,
   type RecognitionApplication,
 } from "@/lib/recognition"
-import { advanceAction, fileAction, rejectAction } from "./actions"
+import { advanceAction, fileAction, rejectAction, deleteAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -49,6 +49,10 @@ export function RecognitionBoard({ initial }: { initial: RecognitionApplication[
 
   function reject(id: string) {
     startTransition(async () => setApps(await rejectAction(id, "Did not meet statutory norms")))
+  }
+
+  function remove(id: string) {
+    startTransition(async () => setApps(await deleteAction(id)))
   }
 
   return (
@@ -116,16 +120,21 @@ export function RecognitionBoard({ initial }: { initial: RecognitionApplication[
                       <span>{RECOGNITION_STAGES[a.stageIndex]}</span>
                     </div>
                     <Progress value={progress} className="h-2 mt-2" />
-                    {a.status === "in_progress" ? (
-                      <div className="mt-2 flex items-center gap-2">
-                        <Button size="sm" onClick={() => advance(a.id)} disabled={pending}>
-                          Advance stage
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => reject(a.id)} disabled={pending}>
-                          Reject
-                        </Button>
-                      </div>
-                    ) : null}
+                    <div className="mt-2 flex items-center gap-2">
+                      {a.status === "in_progress" ? (
+                        <>
+                          <Button size="sm" onClick={() => advance(a.id)} disabled={pending}>
+                            Advance stage
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => reject(a.id)} disabled={pending}>
+                            Reject
+                          </Button>
+                        </>
+                      ) : null}
+                      <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(a.id)} disabled={pending}>
+                        Delete
+                      </Button>
+                    </div>
                   </li>
                 )
               })}

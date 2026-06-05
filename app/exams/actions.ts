@@ -3,6 +3,8 @@
 import { integrations } from "@/lib/integrations"
 import { appendAudit } from "@/lib/audit/trail"
 import { EXAM_SUBJECTS, type ExamType } from "@/lib/exams"
+import { can } from "@/lib/access/policy"
+import { resolveSubject } from "@/lib/access/resolve"
 
 export interface ExamResultSubject {
   name: string
@@ -23,6 +25,10 @@ export async function processResultAction(_prev: ExamState, formData: FormData):
   const candidateApaar = ((formData.get("apaar") as string) || "").trim()
   const examType = ((formData.get("examType") as string) || "SSLC") as ExamType
   if (!candidateApaar) return { error: "Candidate APAAR is required." }
+
+  // High-stakes: anchoring exam results + pushing marksheets is authority-only.
+  const decision = can(await resolveSubject(), "process:exam", { type: "exam", id: candidateApaar })
+  if (!decision.permitted) return { error: `Not allowed: ${decision.reason}` }
 
   // In production these come from AI-augmented OMR + human-reviewed evaluation.
   const subjectNames = EXAM_SUBJECTS[examType] ?? EXAM_SUBJECTS.SSLC

@@ -64,13 +64,13 @@ export const PORTALS: Record<PortalRole, PortalDef> = {
 
 /** Default RBAC grants per portal role (extend as modules land). */
 export const DEFAULT_GRANTS: RoleGrants = {
-  STUDENT: ["read:self", "read:learning", "read:credentials"],
-  PARENT: ["read:child", "pay:fees", "read:scheme", "file:grievance", "create:proposal", "vote:smc"],
+  STUDENT: ["read:self", "read:learning", "read:credentials", "manage:consent"],
+  PARENT: ["read:child", "pay:fees", "read:scheme", "file:grievance", "create:proposal", "vote:smc", "manage:consent"],
   TEACHER: ["read:class", "write:attendance", "write:assessment", "read:cpd"],
-  PRINCIPAL: ["manage:school", "read:class", "manage:staff", "read:compliance", "create:proposal", "vote:smc"],
+  PRINCIPAL: ["manage:school", "read:class", "manage:staff", "read:compliance", "create:proposal", "vote:smc", "resolve:grievance", "manage:meals"],
   CRCC: ["read:cluster", "write:visit", "read:nipun"],
-  BEO: ["read:block", "schedule:inspection", "read:scheme"],
-  DEO: ["read:district", "allocate:resource", "read:scheme", "approve:recognition"],
+  BEO: ["read:block", "schedule:inspection", "read:scheme", "resolve:grievance"],
+  DEO: ["read:district", "allocate:resource", "read:scheme", "approve:recognition", "resolve:grievance"],
   DIRECTOR: ["read:directorate", "read:statutory"],
   SECRETARY: ["read:state", "read:compliance", "read:scheme"],
   MINISTER: ["read:executive", "read:constituency"],

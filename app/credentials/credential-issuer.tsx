@@ -24,12 +24,18 @@ export function CredentialIssuer({ initial }: { initial: VerifiableCredential[] 
   const [title, setTitle] = useState("Foundational Numeracy — Grade 4")
   const [kind, setKind] = useState<CredentialKind>("micro-credential")
   const [results, setResults] = useState<Record<string, string>>({})
+  const [mintError, setMintError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   function mint() {
     startTransition(async () => {
-      const c = await mintAction({ apaarId, kind, title, issuer: "Directorate of School Education, TN" })
-      setIssued((prev) => [c, ...prev])
+      const r = await mintAction({ apaarId, kind, title, issuer: "Directorate of School Education, TN" })
+      if (r.ok && r.credential) {
+        setIssued((prev) => [r.credential!, ...prev])
+        setMintError(null)
+      } else {
+        setMintError(r.error ?? "Mint failed.")
+      }
     })
   }
 
@@ -73,6 +79,7 @@ export function CredentialIssuer({ initial }: { initial: VerifiableCredential[] 
           <Button onClick={mint} disabled={pending} className="w-full">
             {pending ? "Minting…" : "Mint & anchor"}
           </Button>
+          {mintError ? <p className="text-sm text-destructive">{mintError}</p> : null}
           <p className="text-xs text-muted-foreground">
             Non-transferable by construction — soulbound to the holder&apos;s APAAR ID and anchored to the audit ledger.
           </p>

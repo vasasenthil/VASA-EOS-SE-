@@ -110,6 +110,46 @@ async function load(id: string): Promise<RecognitionApplication | undefined> {
   return store.find((x) => x.id === id)
 }
 
+/** Read one application by id (DB or in-memory). */
+export async function getApplication(id: string): Promise<RecognitionApplication | undefined> {
+  return load(id)
+}
+
+/** Editable fields of an application. */
+export type RecognitionPatch = Partial<Pick<RecognitionApplication, "school" | "district" | "type" | "criteriaMet">>
+
+/** Update editable fields; returns the merged record (or undefined if not found). */
+export async function updateApplication(id: string, patch: RecognitionPatch): Promise<RecognitionApplication | undefined> {
+  const a = await load(id)
+  if (!a) return undefined
+  Object.assign(a, patch)
+  a.updatedAt = new Date().toISOString()
+  const db = getDb()
+  if (db) {
+    await db
+      .from("recognition_applications")
+      .update({ school: a.school, district: a.district, type: a.type, criteria_met: a.criteriaMet, updated_at: a.updatedAt })
+      .eq("id", id)
+  }
+  await appendAudit({ actor: "DEO", action: "recognition.update", resource: id, details: { ...patch } })
+  return a
+}
+
+/** Delete an application; returns true if it existed. */
+export async function deleteApplication(id: string): Promise<boolean> {
+  const existing = await load(id)
+  if (!existing) return false
+  const db = getDb()
+  if (db) {
+    await db.from("recognition_applications").delete().eq("id", id)
+  } else {
+    const i = store.findIndex((x) => x.id === id)
+    if (i >= 0) store.splice(i, 1)
+  }
+  await appendAudit({ actor: "DEO", action: "recognition.delete", resource: id })
+  return true
+}
+
 /** Advance to the next stage; final stage marks the school Recognised. */
 export async function advanceApplication(id: string): Promise<RecognitionApplication | undefined> {
   const current = await load(id)

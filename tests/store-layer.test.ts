@@ -15,7 +15,15 @@ import {
 } from "@/lib/grievance/store"
 import { createProposal, vote, listProposals } from "@/lib/smc/store"
 import { proposalStatus } from "@/lib/smc"
-import { fileApplication, advanceApplication, rejectApplication, listApplications } from "@/lib/recognition/store"
+import {
+  fileApplication,
+  advanceApplication,
+  rejectApplication,
+  listApplications,
+  getApplication,
+  updateApplication,
+  deleteApplication,
+} from "@/lib/recognition/store"
 import { mintCredential, listCredentials, verifyById } from "@/lib/credentials/store"
 import { grantConsent, withdrawConsent, listConsents, hasConsent } from "@/lib/consent/store"
 
@@ -79,6 +87,21 @@ test("recognition: file, advance through stages and reject via the DB path", asy
 
   const rej = await rejectApplication(a.id, "norms not met")
   assert.equal(rej?.status, "rejected")
+})
+
+test("recognition: full CRUD — get, update and delete via the DB path", async () => {
+  const a = await fileApplication({ school: "Edit School", district: "Erode", type: "new" })
+
+  assert.equal((await getApplication(a.id))?.id, a.id)
+
+  const updated = await updateApplication(a.id, { school: "Renamed School", criteriaMet: ["Trust/Society registration"] })
+  assert.equal(updated?.school, "Renamed School")
+  assert.deepEqual(updated?.criteriaMet, ["Trust/Society registration"])
+  assert.equal((await getApplication(a.id))?.school, "Renamed School")
+
+  assert.equal(await deleteApplication(a.id), true)
+  assert.equal(await getApplication(a.id), undefined)
+  assert.equal(await deleteApplication(a.id), false)
 })
 
 test("recognition: advancing to the final stage marks it recognised", async () => {

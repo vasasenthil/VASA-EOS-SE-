@@ -1,6 +1,12 @@
 "use server"
 
-import { advanceApplication, fileApplication, listApplications, rejectApplication } from "@/lib/recognition/store"
+import {
+  advanceApplication,
+  fileApplication,
+  listApplications,
+  rejectApplication,
+  deleteApplication,
+} from "@/lib/recognition/store"
 import type { RecognitionApplication } from "@/lib/recognition"
 import { requireAccess, AccessDeniedError } from "@/lib/access/policy"
 import { resolveSubject } from "@/lib/access/resolve"
@@ -31,5 +37,10 @@ export async function advanceAction(id: string): Promise<RecognitionApplication[
 
 export async function rejectAction(id: string, reason: string): Promise<RecognitionApplication[]> {
   if ((await authorizeRecognition(id)) === null) await rejectApplication(id, reason)
+  return listApplications()
+}
+
+export async function deleteAction(id: string): Promise<RecognitionApplication[]> {
+  if ((await authorizeRecognition(id)) === null) await deleteApplication(id)
   return listApplications()
 }

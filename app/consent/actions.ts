@@ -3,6 +3,8 @@
 import { grantConsent, withdrawConsent, listConsents } from "@/lib/consent/store"
 import type { ConsentPurpose, ConsentRecord } from "@/lib/consent"
 import { getTrail, verifyTrail, type AuditEntry } from "@/lib/audit/trail"
+import { can } from "@/lib/access/policy"
+import { resolveSubject } from "@/lib/access/resolve"
 
 export interface ConsentState {
   records: ConsentRecord[]
@@ -24,6 +26,10 @@ export async function consentAction(_prev: ConsentState, formData: FormData): Pr
       verified: await verifyTrail(),
       error: "APAAR id and purpose are required.",
     }
+  }
+  const decision = can(await resolveSubject(), "manage:consent", { type: "consent", id: apaar })
+  if (!decision.permitted) {
+    return { records: await listConsents(), trail: await getTrail(), verified: await verifyTrail(), error: `Not allowed: ${decision.reason}` }
   }
   if (op === "withdraw") await withdrawConsent({ subjectApaar: apaar, purpose, actor })
   else await grantConsent({ subjectApaar: apaar, purpose, actor })
