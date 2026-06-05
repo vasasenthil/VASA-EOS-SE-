@@ -21,6 +21,7 @@ Start at the repo [README](../README.md), then use this index.
 | [STATUS](STATUS.md) | Completion & pending register — the full delivery timeline and what's done vs pending against the master document. |
 | [REQUIREMENTS](REQUIREMENTS.md) | What's needed to go fully live — every real credential, MoU, and infrastructure dependency, one by one. |
 | [EVALUATION](EVALUATION.md) | Investor-lens readiness review (Altman/YC questions): the wedge, the scorecard, and the pilot-readiness checklist. |
+| [CREDENTIALS](CREDENTIALS.md) | User categories, the governance hierarchy, per-role IAM (RBAC/ReBAC/ABAC/PBAC/CABAC), and demo login credentials. |
 
 ### Suggested reading order
 
