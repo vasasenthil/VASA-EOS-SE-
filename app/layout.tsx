@@ -10,6 +10,8 @@ import { Footer } from "@/components/layout/footer"
 import { I18nProvider } from "@/components/i18n-provider"
 import { AccessibilityProvider } from "@/components/accessibility-provider"
 import { CommandPaletteProvider } from "@/components/command-palette"
+import { Breadcrumbs } from "@/components/breadcrumbs"
+import { RouteAnnouncer } from "@/components/route-announcer"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -46,10 +48,12 @@ export default function RootLayout({
                   <div className="flex flex-col min-h-screen">
                     <Header />
                     <main id="main-content" tabIndex={-1} className="flex-grow bg-slate-50 outline-none">
+                      <Breadcrumbs />
                       {children}
                     </main>
                     <Footer />
                   </div>
+                  <RouteAnnouncer />
                   <Toaster />
                 </TooltipProvider>
               </I18nProvider>
