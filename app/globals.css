@@ -76,3 +76,19 @@
 :root[data-text-scale="xlarge"] {
   font-size: 20px;
 }
+
+/* Keyboard navigation: a clear, consistent focus ring for keyboard users only
+   (mouse clicks don't trigger :focus-visible). Strengthened in high-contrast mode. */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.a11y-high-contrast :focus-visible {
+  outline-width: 3px;
+  outline-offset: 3px;
+}
+/* The skip link must stay visible above everything when focused. */
+a[href="#main-content"]:focus {
+  outline: 2px solid hsl(var(--ring));
+}

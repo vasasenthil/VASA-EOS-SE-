@@ -9,7 +9,7 @@ import { Header } from "@/components/layout/header"
 import { Footer } from "@/components/layout/footer"
 import { I18nProvider } from "@/components/i18n-provider"
 import { AccessibilityProvider } from "@/components/accessibility-provider"
-import { CommandPalette } from "@/components/command-palette"
+import { CommandPaletteProvider } from "@/components/command-palette"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,19 +32,28 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT_SCRIPT }} />
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow focus:outline focus:outline-2 focus:outline-ring"
+        >
+          Skip to content
+        </a>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AccessibilityProvider>
-            <I18nProvider>
-              <TooltipProvider>
-                <div className="flex flex-col min-h-screen">
-                  <Header />
-                  <div className="flex-grow bg-slate-50">{children}</div>
-                  <Footer />
-                </div>
-                <CommandPalette />
-                <Toaster />
-              </TooltipProvider>
-            </I18nProvider>
+            <CommandPaletteProvider>
+              <I18nProvider>
+                <TooltipProvider>
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <main id="main-content" tabIndex={-1} className="flex-grow bg-slate-50 outline-none">
+                      {children}
+                    </main>
+                    <Footer />
+                  </div>
+                  <Toaster />
+                </TooltipProvider>
+              </I18nProvider>
+            </CommandPaletteProvider>
           </AccessibilityProvider>
         </ThemeProvider>
       </body>
