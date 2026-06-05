@@ -1,0 +1,18 @@
+import { Shell } from "@/components/shell"
+import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
+import { PromotionBoard } from "./promotion-board"
+
+export default function PromotionPage() {
+  return (
+    <Shell>
+      <PageHeader>
+        <PageHeaderHeading>Student Promotion &amp; Rollover</PageHeaderHeading>
+        <PageHeaderDescription>
+          Year-end rollover — promote each student to the next class or detain them. Class 12 promotes to graduated. The
+          summary shows how many are promoting, detaining and graduating.
+        </PageHeaderDescription>
+      </PageHeader>
+      <PromotionBoard />
+    </Shell>
+  )
+}

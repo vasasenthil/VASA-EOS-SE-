@@ -33,3 +33,14 @@ export function coCurricularSummary(a: Activity[] = ACTIVITIES): CoCurricularSum
     innovation: a.filter((x) => x.category === "Innovation").length,
   }
 }
+
+export interface Registration {
+  id: string
+  activity: string
+  student: string
+}
+
+/** New participant count after a registration. */
+export function registerParticipant(current: number): number {
+  return current + 1
+}
