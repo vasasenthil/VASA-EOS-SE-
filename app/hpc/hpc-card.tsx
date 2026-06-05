@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
-import { HPC_SUBJECTS, computeHpc } from "@/lib/hpc"
+import { HPC_SUBJECTS, computeHpc, CO_SCHOLASTIC_DOMAINS, computeCoScholastic } from "@/lib/hpc"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -12,11 +12,17 @@ function seededMarks(): Record<string, number> {
   return Object.fromEntries(HPC_SUBJECTS.map((s, i) => [s, 70 + ((i * 7) % 25)]))
 }
 
+function seededCo(): Record<string, number> {
+  return Object.fromEntries(CO_SCHOLASTIC_DOMAINS.map((d, i) => [d, 3 + (i % 3)]))
+}
+
 export function HpcCard() {
   const [student, setStudent] = useState(SIS_ROSTER[0]?.apaarId ?? "")
   const [marks, setMarks] = useState<Record<string, number>>(seededMarks)
+  const [co, setCo] = useState<Record<string, number>>(seededCo)
 
   const hpc = computeHpc(marks)
+  const coResults = computeCoScholastic(co)
   const name = SIS_ROSTER.find((s) => s.apaarId === student)?.name ?? "Student"
 
   return (
@@ -47,6 +53,21 @@ export function HpcCard() {
               />
             </div>
           ))}
+          <div className="pt-2">
+            <Label className="text-sm font-medium">Co-scholastic (rate 1-5)</Label>
+            {CO_SCHOLASTIC_DOMAINS.map((d) => (
+              <div key={d} className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-sm text-muted-foreground">{d}</span>
+                <select
+                  value={co[d] ?? 3}
+                  onChange={(e) => setCo((c) => ({ ...c, [d]: Number(e.target.value) }))}
+                  className="h-8 rounded-md border bg-background px-2 text-sm"
+                >
+                  {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -73,6 +94,21 @@ export function HpcCard() {
             ))}
           </ul>
           <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">{hpc.descriptor}</p>
+
+          <div>
+            <p className="mb-1 text-sm font-medium">Co-scholastic</p>
+            <ul className="divide-y text-sm">
+              {coResults.map((c) => (
+                <li key={c.domain} className="flex items-center justify-between py-2">
+                  <span>{c.domain}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="font-mono">{c.rating}/5</span>
+                    <Badge variant="outline">{c.grade}</Badge>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </CardContent>
       </Card>
     </div>

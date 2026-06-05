@@ -57,6 +57,42 @@ function descriptorFor(pct: number): string {
   return "Needs significant support — intervention recommended."
 }
 
+// ── Co-scholastic domains (NEP holistic development, rated 1-5) ───────────────
+export const CO_SCHOLASTIC_DOMAINS = [
+  "Life Skills",
+  "Arts & Aesthetics",
+  "Health & Physical Education",
+  "Work Education",
+  "Values & Citizenship",
+]
+
+export type CoScholasticGrade = "A" | "B" | "C" | "D"
+
+/** Map a 1-5 rating to an A-D co-scholastic grade. */
+export function coScholasticGrade(rating: number): CoScholasticGrade {
+  const r = Math.max(1, Math.min(5, rating))
+  if (r >= 4) return "A"
+  if (r >= 3) return "B"
+  if (r >= 2) return "C"
+  return "D"
+}
+
+export interface CoScholasticResult {
+  domain: string
+  rating: number
+  grade: CoScholasticGrade
+}
+
+export function computeCoScholastic(
+  ratings: Record<string, number>,
+  domains: string[] = CO_SCHOLASTIC_DOMAINS,
+): CoScholasticResult[] {
+  return domains.map((domain) => {
+    const rating = Math.max(1, Math.min(5, ratings[domain] ?? 3))
+    return { domain, rating, grade: coScholasticGrade(rating) }
+  })
+}
+
 export function computeHpc(marksBySubject: Record<string, number>, subjects: string[] = HPC_SUBJECTS): HpcResult {
   const results: SubjectResult[] = subjects.map((subject) => {
     const marks = Math.max(0, Math.min(100, marksBySubject[subject] ?? 0))

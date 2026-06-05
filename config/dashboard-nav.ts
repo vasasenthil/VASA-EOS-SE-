@@ -108,6 +108,8 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Consent & Audit", href: "/consent", icon: FileLock },
     { title: "Accessibility", href: "/accessibility", icon: Heart },
     { title: "PM POSHAN / CMBS", href: "/pm-poshan", icon: Utensils },
+    { title: "Mid-Day Meal Register", href: "/mdm", icon: Utensils },
+    { title: "Disciplinary / Incidents", href: "/discipline", icon: AlertTriangle },
     { title: "Examination Security", href: "/exams", icon: FileCheck2 },
     { title: "Exam Seating & Halls", href: "/exam-seating", icon: FileCheck2 },
     { title: "Result Publication", href: "/results", icon: FileBarChart },
