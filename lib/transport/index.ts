@@ -7,14 +7,34 @@ export interface BusRoute {
   operator: "TNSTC" | "MTC"
   students: number
   cwsn: number
+  capacity: number
 }
 
 export const ROUTES: BusRoute[] = [
-  { id: "R1", name: "Egmore – Triplicane", operator: "MTC", students: 64, cwsn: 3 },
-  { id: "R2", name: "Coimbatore Rural Loop", operator: "TNSTC", students: 88, cwsn: 5 },
-  { id: "R3", name: "Nilgiris Hill Route", operator: "TNSTC", students: 41, cwsn: 2 },
-  { id: "R4", name: "Madurai City Circuit", operator: "MTC", students: 72, cwsn: 4 },
+  { id: "R1", name: "Egmore – Triplicane", operator: "MTC", students: 64, cwsn: 3, capacity: 70 },
+  { id: "R2", name: "Coimbatore Rural Loop", operator: "TNSTC", students: 88, cwsn: 5, capacity: 90 },
+  { id: "R3", name: "Nilgiris Hill Route", operator: "TNSTC", students: 41, cwsn: 2, capacity: 55 },
+  { id: "R4", name: "Madurai City Circuit", operator: "MTC", students: 72, cwsn: 4, capacity: 80 },
 ]
+
+/** Seats still free on a route given current occupancy. */
+export function freeSeats(capacity: number, occupied: number): number {
+  return Math.max(0, capacity - occupied)
+}
+
+export function canBoard(capacity: number, occupied: number): boolean {
+  return freeSeats(capacity, occupied) > 0
+}
+
+/** New occupancy after boarding a student (never exceeds capacity). */
+export function board(occupied: number, capacity: number): number {
+  return Math.min(capacity, occupied + 1)
+}
+
+/** New occupancy after a student alights (never below zero). */
+export function alight(occupied: number): number {
+  return Math.max(0, occupied - 1)
+}
 
 export interface TransportSummary {
   routes: number
