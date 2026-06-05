@@ -73,6 +73,9 @@ import {
   Flame,
   Monitor,
   Mic,
+  UserMinus,
+  BookCopy,
+  Dumbbell,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -186,6 +189,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Fire & Mock Drills", href: "/mock-drills", icon: Flame },
     { title: "ICT Lab / Smart Class", href: "/ict-lab", icon: Monitor },
     { title: "Guest Lectures", href: "/guest-lectures", icon: Mic },
+    { title: "Teacher Vacancy & Rationalisation", href: "/vacancy", icon: UserMinus },
+    { title: "Textbook Indent & Book Bank", href: "/textbooks", icon: BookCopy },
+    { title: "Khelo India Fitness Test", href: "/fitness", icon: Dumbbell },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
