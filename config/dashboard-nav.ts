@@ -64,6 +64,9 @@ import {
   FileOutput,
   Cctv,
   Droplets,
+  BookA,
+  Sprout,
+  ScrollText,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -168,6 +171,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Transfer Certificate (TC)", href: "/tc", icon: FileOutput },
     { title: "CCTV / Surveillance", href: "/cctv", icon: Cctv },
     { title: "Water & Sanitation Quality", href: "/water-quality", icon: Droplets },
+    { title: "Reading Campaign / FLN", href: "/reading", icon: BookA },
+    { title: "Eco Club & Plantation", href: "/eco-club", icon: Sprout },
+    { title: "RTI Register", href: "/rti", icon: ScrollText },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
