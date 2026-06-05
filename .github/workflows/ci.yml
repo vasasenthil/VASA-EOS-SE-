@@ -1,13 +1,14 @@
 name: CI
 
-# Standard Next.js + pnpm gate: install -> lint -> typecheck -> build.
-# All four phases are green as of the app-hardening work on this branch.
+# Standard Next.js + pnpm gate: install -> lint -> typecheck -> build, plus a
+# Node-22 unit-test + coverage job. Runs on main and on the stacked claude/*
+# feature branches (so PRs targeting those branches are gated too).
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "claude/**"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "claude/**"]
 
 jobs:
   build:
