@@ -45,3 +45,22 @@ export const MESS_CHECKLIST: string[] = [
   "Health & safety inspection done",
   "Scholarship/welfare linkage verified",
 ]
+
+/** Beds still free in a hostel. */
+export function freeBeds(h: Hostel): number {
+  return Math.max(0, h.capacity - h.occupied)
+}
+
+export function canAllocate(h: Hostel): boolean {
+  return freeBeds(h) > 0
+}
+
+/** New occupied count after allocating a bed (never exceeds capacity). */
+export function allocate(occupied: number, capacity: number): number {
+  return Math.min(capacity, occupied + 1)
+}
+
+/** New occupied count after vacating a bed (never below zero). */
+export function vacate(occupied: number): number {
+  return Math.max(0, occupied - 1)
+}
