@@ -17,11 +17,15 @@ pnpm run lint && pnpm run typecheck && pnpm run build
 pnpm run test:coverage   # 95 unit tests + enforced coverage thresholds (Node >= 22.6)
 ```
 
-## Operating the platform
+## Documentation
 
-See **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — the go-live runbook: the
-integration env-var matrix, Supabase setup, the feature-flag posture, and the
-security/privacy notes.
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — layers, the `lib/` module map,
+  routing model, the integration seam, and the testing architecture.
+- **[docs/OPERATIONS.md](docs/OPERATIONS.md)** — go-live runbook: the integration
+  env-var matrix, Supabase setup, the feature-flag posture, and security/privacy notes.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, the gate, and the conventions that
+  keep the build green (server-action rules, client/server split, the live-adapter
+  and test patterns).
 
 In-app operational surfaces:
 
