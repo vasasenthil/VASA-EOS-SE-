@@ -67,6 +67,9 @@ import {
   BookA,
   Sprout,
   ScrollText,
+  FlaskConical,
+  Medal,
+  Map,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -174,6 +177,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Reading Campaign / FLN", href: "/reading", icon: BookA },
     { title: "Eco Club & Plantation", href: "/eco-club", icon: Sprout },
     { title: "RTI Register", href: "/rti", icon: ScrollText },
+    { title: "Science Exhibition / INSPIRE", href: "/science-fair", icon: FlaskConical },
+    { title: "Olympiad & Competitions", href: "/competitions", icon: Medal },
+    { title: "Field Trips & Excursions", href: "/excursions", icon: Map },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
