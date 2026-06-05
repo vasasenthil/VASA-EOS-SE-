@@ -38,9 +38,13 @@ credentials/MoUs) and not "full production feature depth in every module."
 | **Testing & CI** | Node-22 built-in test runner (no jest/vitest); **116 tests**; enforced coverage (95/80/88); CI on `claude/**`; PR coverage comment. | ✅ |
 | **Accessibility & nav** | App-wide a11y preferences (provider + no-FOUC boot + CSS); header quick-toggle; **⌘K command palette**; skip link; focus-visible pass; breadcrumbs; route announcer; `?` shortcuts help. | ✅ |
 | **Resilience** | App-level `error` / `global-error` / `not-found` / `loading` boundaries. | ✅ |
-| **Documentation** | README + docs index + ARCHITECTURE, MODULES, SECURITY, OPERATIONS, CONTRIBUTING, TRACEABILITY, ADR (+ this register). | ✅ |
+| **Documentation** | README + docs index + ARCHITECTURE, MODULES, SECURITY, OPERATIONS, CONTRIBUTING, TRACEABILITY, ADR, EVALUATION, REQUIREMENTS, CREDENTIALS (+ this register). | ✅ |
+| **Access enforcement** | Concrete platform policy (`PLATFORM_ACCESS`) + `requireAccess()` guard threaded through high-stakes actions (DBT, recognition, SMC, consent, exams, PM POSHAN, grievance, credentials); `/governance/access` explorer; user→subject resolver. | ✅ |
+| **Government structure & directory** | TN org hierarchy (ministry · 7 directorates · authorities · councils · committees · offices · school) + a user for every role bound to the 5-model IAM; demo credentials seed + `docs/CREDENTIALS.md`. | ✅ |
+| **Full-roles login** | The "Sign in as" selector + routing derive from `config/portals` — all 17 roles selectable and routed to their portal home. | ✅ |
+| **Interactive functional suite** | ~40 data-enterable school-operations modules so the government can feed its own data and exercise every feature: attendance · staff attendance · fees · timetable+substitution · lesson planning · HPC (scholastic + co-scholastic) · homework · certificates · CPD · postings · communications · notices · PTM · academic calendar · library circulation · career guidance · RBSK screening · MDM register · disciplinary log · inventory · inspections · asset register · maintenance · WASH audit · hostel allocation · transport assignment · bus tracking · scholarships · admissions · pre-primary intake · co-curricular registration · student promotion · visitor management · parent feedback · exam seating · result publication · question bank · teacher profile · alumni registry. | 🟡 (functional slices on seed data) |
 
-Inventory: **41 `lib/` modules · 59 route groups · 17 test files (116 tests) · 15 SQL migrations · 8 doc files**.
+Inventory: **~80 `lib/` modules · ~100 route groups · 62 test files (262 tests) · 16 SQL migrations · 11 doc files**.
 
 ---
 
@@ -107,8 +111,8 @@ Inventory: **41 `lib/` modules · 59 route groups · 17 test files (116 tests) �
 ## Part C — Cross-cutting status
 
 - **Build/typecheck/lint:** ✅ green (`tsc` 0, `next lint` clean, `next build` all routes).
-- **Tests:** ✅ 116 tests (pure logic, access PDP, HTTP transport, all 8 live adapters, audit chain, persisted store path via in-memory DB stub, a11y/nav/command/health helpers).
-- **Coverage:** ✅ enforced — ~97% lines / ~83% branches / ~91% functions.
+- **Tests:** ✅ 262 tests (pure logic, access PDP + platform policy, HTTP transport, all 8 live adapters, audit chain, persisted store path via in-memory DB stub, a11y/nav/command/health helpers, and every functional module's pure logic).
+- **Coverage:** ✅ enforced — ~98% lines / ~88% branches / ~94% functions.
 - **CI:** ✅ lint/typecheck/build matrix (Node 20/22) + Node-22 unit-test job + PR coverage comment, on `main` and `claude/**`.
 - **Deployment:** ✅ Vercel preview Ready.
 - **Docs:** ✅ full set (see [docs/](README.md)).
