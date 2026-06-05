@@ -59,6 +59,8 @@ import {
   Send,
   Accessibility,
   UserPlus,
+  Hammer,
+  Backpack,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -157,6 +159,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "CWSN / Special-Needs IEP", href: "/cwsn", icon: Accessibility },
     { title: "RTE 25% Quota", href: "/rte", icon: Scale },
     { title: "Out-of-School Children", href: "/oosc", icon: UserPlus },
+    { title: "Vocational & Skills (NSQF)", href: "/vocational", icon: Hammer },
+    { title: "Student Council Elections", href: "/student-council", icon: Vote },
+    { title: "Bagless Days", href: "/bagless", icon: Backpack },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
