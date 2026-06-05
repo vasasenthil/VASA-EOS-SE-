@@ -61,6 +61,9 @@ import {
   UserPlus,
   Hammer,
   Backpack,
+  FileOutput,
+  Cctv,
+  Droplets,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -162,6 +165,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Vocational & Skills (NSQF)", href: "/vocational", icon: Hammer },
     { title: "Student Council Elections", href: "/student-council", icon: Vote },
     { title: "Bagless Days", href: "/bagless", icon: Backpack },
+    { title: "Transfer Certificate (TC)", href: "/tc", icon: FileOutput },
+    { title: "CCTV / Surveillance", href: "/cctv", icon: Cctv },
+    { title: "Water & Sanitation Quality", href: "/water-quality", icon: Droplets },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
