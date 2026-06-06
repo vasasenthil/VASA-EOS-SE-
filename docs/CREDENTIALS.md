@@ -93,10 +93,51 @@ server actions call `requireAccess()`.
 | --- | --- | --- | --- | --- |
 | Citizen / Public | `public` / public@vasa-eos.tn.gov.in | PUBLIC | School Education Department, Govt of Tamil Nadu | read:public, file:rti, file:grievance |
 
-## Seeding
+## Seeding — make these logins actually work
 
-Run `scripts/016-seed-org-and-users.sql` against your Supabase/Postgres `users` table
-(adapt column names as needed), then create matching auth users in your provider and
-set `DEMO_PASSWORD` (or per-user passwords + MFA). Once seeded, `resolveSubject()`
-binds each sign-in to the policy above and `requireAccess()` enforces it on
-high-stakes actions.
+The login form authenticates against **Supabase Auth** and then reads
+`public.users WHERE id = <auth uuid>`. Two things must therefore exist for a sign-in
+to succeed: (1) a **Supabase Auth account** for the email, and (2) a **profile row**
+in `public.users` whose `id` equals that account's UUID. The raw SQL seed only does
+half — it writes profile rows with string ids that never match an auth uuid — so the
+one-step script below is the reliable path.
+
+> **Important:** you must type the **full email** (e.g. `admin@vasa-eos.tn.gov.in`)
+> in the Email box — a bare username is rejected because the field is `type="email"`.
+
+### One-step seed (recommended)
+
+`scripts/seed-auth-users.ts` creates/repairs all 23 demo accounts end to end —
+Auth user + confirmed email + the shared password + the matching `public.users`
+profile row keyed by the real UUID. It is **idempotent** (safe to re-run; it also
+refreshes the password so the documented one always works).
+
+```bash
+# Server-side secrets — never commit these. Use your project's values.
+export NEXT_PUBLIC_SUPABASE_URL="https://<project-ref>.supabase.co"
+export SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"   # admin key; bypasses RLS
+export DEMO_PASSWORD="Vasa@Edu#2026"                    # optional; this is the default
+
+pnpm db:seed:auth        # or: npx tsx scripts/seed-auth-users.ts
+```
+
+Prerequisite: a `public.users` table with columns `id (uuid, PK)`, `email`,
+`full_name`, `role`, `school_id`, `status` (see `scripts/016-seed-org-and-users.sql`
+for the shape). The script upserts on `id`.
+
+After it prints `Done. 23 ready, 0 failed.`, sign in at `/login` with any email above
++ the demo password, choosing the matching role. `resolveSubject()` then binds the
+sign-in to the access policy and `requireAccess()` enforces it on high-stakes actions.
+
+### Manual alternative
+
+Run `scripts/016-seed-org-and-users.sql` for the profile rows, then create matching
+Auth users in the Supabase dashboard (Authentication → Users → Add user, "Auto
+confirm"), and update each profile row's `id` to the new Auth UUID. The script above
+does all of this for you.
+
+### Security note
+
+These are **demo-only** accounts sharing one password for a walkthrough. For any real
+deployment: per-user credentials, SSO + MFA, no shared/default passwords, and rotate
+the service-role key if it was ever exported to a shell.
