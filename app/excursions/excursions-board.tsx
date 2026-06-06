@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { excursionSummary, isTripReady, type Trip } from "@/lib/excursions"
+import { createTripAction, addConsentAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,27 +10,41 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function ExcursionsBoard() {
-  const [trips, setTrips] = useState<Trip[]>([])
+export function ExcursionsBoard({ initial = [] }: { initial?: Trip[] }) {
+  const [trips, setTrips] = useState<Trip[]>(initial)
   const [destination, setDestination] = useState("")
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [classGroup, setClassGroup] = useState("")
   const [strength, setStrength] = useState(30)
+  const [, startTransition] = useTransition()
 
   const s = excursionSummary(trips)
 
   function add() {
     if (!destination.trim() || strength <= 0) return
-    setTrips((prev) => [
-      { id: `tr-${Date.now()}`, destination: destination.trim(), date, classGroup: classGroup.trim() || "All", strength, consentsReceived: 0 },
-      ...prev,
-    ])
+    const optimistic: Trip = {
+      id: `tr-${Date.now()}`,
+      destination: destination.trim(),
+      date,
+      classGroup: classGroup.trim() || "All",
+      strength,
+      consentsReceived: 0,
+    }
+    setTrips((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createTripAction({ destination: optimistic.destination, date: optimistic.date, classGroup: optimistic.classGroup, strength: optimistic.strength })
+      if (saved) setTrips((prev) => prev.map((t) => (t.id === optimistic.id ? saved : t)))
+    })
     setDestination("")
     setClassGroup("")
   }
 
   function addConsent(id: string) {
     setTrips((prev) => prev.map((t) => (t.id === id ? { ...t, consentsReceived: Math.min(t.strength, t.consentsReceived + 1) } : t)))
+    startTransition(async () => {
+      const saved = await addConsentAction(id)
+      if (saved) setTrips((prev) => prev.map((t) => (t.id === id ? saved : t)))
+    })
   }
 
   return (

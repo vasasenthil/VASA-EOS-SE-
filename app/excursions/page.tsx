@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { ExcursionsBoard } from "./excursions-board"
+import { listTripsAction } from "./actions"
 
-export default function ExcursionsPage() {
+export default async function ExcursionsPage() {
+  const initial = await listTripsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function ExcursionsPage() {
           signed consent. Keeps off-campus activities safe and auditable.
         </PageHeaderDescription>
       </PageHeader>
-      <ExcursionsBoard />
+      <ExcursionsBoard initial={initial} />
     </Shell>
   )
 }

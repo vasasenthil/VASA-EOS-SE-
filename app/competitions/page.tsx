@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CompetitionsBoard } from "./competitions-board"
+import { listEntriesAction } from "./actions"
 
-export default function CompetitionsPage() {
+export default async function CompetitionsPage() {
+  const initial = await listEntriesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function CompetitionsPage() {
           medal haul. Results feed each student&apos;s achievement portfolio and holistic progress card.
         </PageHeaderDescription>
       </PageHeader>
-      <CompetitionsBoard />
+      <CompetitionsBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { COMP_LEVELS, MEDALS, compSummary, type CompEntry, type Medal } from "@/lib/competitions"
+import { createEntryAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,21 +16,24 @@ const MEDAL_VARIANT: Record<Medal, "default" | "secondary" | "outline"> = {
   Participation: "outline",
 }
 
-export function CompetitionsBoard() {
-  const [entries, setEntries] = useState<CompEntry[]>([])
+export function CompetitionsBoard({ initial = [] }: { initial?: CompEntry[] }) {
+  const [entries, setEntries] = useState<CompEntry[]>(initial)
   const [student, setStudent] = useState("")
   const [event, setEvent] = useState("")
   const [level, setLevel] = useState(COMP_LEVELS[0])
   const [medal, setMedal] = useState<Medal>("Participation")
+  const [, startTransition] = useTransition()
 
   const s = compSummary(entries)
 
   function add() {
     if (!student.trim() || !event.trim()) return
-    setEntries((prev) => [
-      { id: `cp-${Date.now()}`, student: student.trim(), event: event.trim(), level, medal },
-      ...prev,
-    ])
+    const optimistic: CompEntry = { id: `cp-${Date.now()}`, student: student.trim(), event: event.trim(), level, medal }
+    setEntries((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createEntryAction({ student: optimistic.student, event: optimistic.event, level: optimistic.level, medal: optimistic.medal })
+      if (saved) setEntries((prev) => prev.map((en) => (en.id === optimistic.id ? saved : en)))
+    })
     setStudent("")
     setEvent("")
   }

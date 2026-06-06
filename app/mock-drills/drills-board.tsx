@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { DRILL_TYPES, DRILL_TARGET_SEC, drillSummary, isWithinTarget, type Drill } from "@/lib/drills"
+import { createDrillAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,21 +15,30 @@ function fmt(sec: number): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`
 }
 
-export function DrillsBoard() {
-  const [drills, setDrills] = useState<Drill[]>([])
+export function DrillsBoard({ initial = [] }: { initial?: Drill[] }) {
+  const [drills, setDrills] = useState<Drill[]>(initial)
   const [type, setType] = useState(DRILL_TYPES[0])
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [evacTimeSec, setEvacTimeSec] = useState(180)
   const [participants, setParticipants] = useState(200)
   const [observations, setObservations] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = drillSummary(drills)
 
   function add() {
-    setDrills((prev) => [
-      { id: `dr-${Date.now()}`, type, date, evacTimeSec, participants, observations: observations.trim() },
-      ...prev,
-    ])
+    const optimistic: Drill = { id: `dr-${Date.now()}`, type, date, evacTimeSec, participants, observations: observations.trim() }
+    setDrills((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createDrillAction({
+        type: optimistic.type,
+        date: optimistic.date,
+        evacTimeSec: optimistic.evacTimeSec,
+        participants: optimistic.participants,
+        observations: optimistic.observations,
+      })
+      if (saved) setDrills((prev) => prev.map((d) => (d.id === optimistic.id ? saved : d)))
+    })
     setObservations("")
   }
 
