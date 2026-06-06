@@ -1,20 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { DISABILITY_TYPES, CWSN_SUPPORTS, cwsnSummary, type CwsnStudent } from "@/lib/cwsn"
+import { createStudentAction, reviewStudentAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function CwsnBoard() {
-  const [students, setStudents] = useState<CwsnStudent[]>([])
+export function CwsnBoard({ initial = [] }: { initial?: CwsnStudent[] }) {
+  const [students, setStudents] = useState<CwsnStudent[]>(initial)
   const [name, setName] = useState("")
   const [cls, setCls] = useState("")
   const [disability, setDisability] = useState(DISABILITY_TYPES[0])
   const [supports, setSupports] = useState<string[]>([])
   const [iepGoal, setIepGoal] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = cwsnSummary(students)
 
@@ -24,10 +26,26 @@ export function CwsnBoard() {
 
   function add() {
     if (!name.trim()) return
-    setStudents((prev) => [
-      { id: `cw-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", disability, supports, iepGoal: iepGoal.trim(), reviewed: false },
-      ...prev,
-    ])
+    const optimistic: CwsnStudent = {
+      id: `cw-${Date.now()}`,
+      name: name.trim(),
+      cls: cls.trim() || "—",
+      disability,
+      supports,
+      iepGoal: iepGoal.trim(),
+      reviewed: false,
+    }
+    setStudents((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createStudentAction({
+        name: optimistic.name,
+        cls: optimistic.cls,
+        disability: optimistic.disability,
+        supports: optimistic.supports,
+        iepGoal: optimistic.iepGoal,
+      })
+      if (saved) setStudents((prev) => prev.map((x) => (x.id === optimistic.id ? saved : x)))
+    })
     setName("")
     setCls("")
     setSupports([])
@@ -36,6 +54,10 @@ export function CwsnBoard() {
 
   function review(id: string) {
     setStudents((prev) => prev.map((x) => (x.id === id ? { ...x, reviewed: true } : x)))
+    startTransition(async () => {
+      const saved = await reviewStudentAction(id)
+      if (saved) setStudents((prev) => prev.map((x) => (x.id === id ? saved : x)))
+    })
   }
 
   return (

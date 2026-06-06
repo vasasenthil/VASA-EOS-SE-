@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CwsnBoard } from "./cwsn-board"
+import { listStudentsAction } from "./actions"
 
-export default function CwsnPage() {
+export default async function CwsnPage() {
+  const initial = await listStudentsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function CwsnPage() {
           plan (IEP) goal, and track IEP review. Aligned to the RPwD Act and NEP inclusive-education mandate.
         </PageHeaderDescription>
       </PageHeader>
-      <CwsnBoard />
+      <CwsnBoard initial={initial} />
     </Shell>
   )
 }

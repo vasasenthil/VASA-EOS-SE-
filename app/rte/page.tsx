@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { RteBoard } from "./rte-board"
+import { listApplicantsAction } from "./actions"
 
-export default function RtePage() {
+export default async function RtePage() {
+  const initial = await listApplicantsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function RtePage() {
           Sec 12(1)(c) — from application through verification, allotment and admission, against quota fill rate.
         </PageHeaderDescription>
       </PageHeader>
-      <RteBoard />
+      <RteBoard initial={initial} />
     </Shell>
   )
 }

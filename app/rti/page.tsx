@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { RtiBoard } from "./rti-board"
+import { listRtiAction } from "./actions"
 
-export default function RtiPage() {
+export default async function RtiPage() {
+  const initial = await listRtiAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function RtiPage() {
           30-day statutory deadline, with overdue applications flagged automatically.
         </PageHeaderDescription>
       </PageHeader>
-      <RtiBoard />
+      <RtiBoard initial={initial} />
     </Shell>
   )
 }

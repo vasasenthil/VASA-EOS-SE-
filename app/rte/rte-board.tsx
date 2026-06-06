@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { RTE_CATEGORIES, nextRteStatus, rteSummary, type RteApplicant } from "@/lib/rte"
+import { createApplicantAction, advanceApplicantAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,25 +24,38 @@ const NEXT_LABEL: Record<RteApplicant["status"], string> = {
   admitted: "Admitted",
 }
 
-export function RteBoard() {
-  const [applicants, setApplicants] = useState<RteApplicant[]>([])
+export function RteBoard({ initial = [] }: { initial?: RteApplicant[] }) {
+  const [applicants, setApplicants] = useState<RteApplicant[]>(initial)
   const [quotaSeats, setQuotaSeats] = useState(20)
   const [name, setName] = useState("")
   const [category, setCategory] = useState(RTE_CATEGORIES[0])
+  const [, startTransition] = useTransition()
 
   const s = rteSummary(applicants, quotaSeats)
 
   function add() {
     if (!name.trim()) return
-    setApplicants((prev) => [
-      { id: `rt-${Date.now()}`, name: name.trim(), category, status: "applied", date: new Date().toISOString().slice(0, 10) },
-      ...prev,
-    ])
+    const optimistic: RteApplicant = {
+      id: `rt-${Date.now()}`,
+      name: name.trim(),
+      category,
+      status: "applied",
+      date: new Date().toISOString().slice(0, 10),
+    }
+    setApplicants((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createApplicantAction({ name: optimistic.name, category: optimistic.category })
+      if (saved) setApplicants((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setName("")
   }
 
   function advance(id: string) {
     setApplicants((prev) => prev.map((a) => (a.id === id ? { ...a, status: nextRteStatus(a.status) } : a)))
+    startTransition(async () => {
+      const saved = await advanceApplicantAction(id)
+      if (saved) setApplicants((prev) => prev.map((a) => (a.id === id ? saved : a)))
+    })
   }
 
   return (

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { nextRtiStatus, rtiSummary, daysLeft, isOverdue, type RtiRequest } from "@/lib/rti"
+import { createRtiAction, advanceRtiAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,27 +21,44 @@ const NEXT_LABEL: Record<RtiRequest["status"], string> = {
   replied: "Replied",
 }
 
-export function RtiBoard() {
+export function RtiBoard({ initial = [] }: { initial?: RtiRequest[] }) {
   const today = new Date().toISOString().slice(0, 10)
-  const [requests, setRequests] = useState<RtiRequest[]>([])
+  const [requests, setRequests] = useState<RtiRequest[]>(initial)
   const [applicant, setApplicant] = useState("")
   const [subject, setSubject] = useState("")
   const [receivedDate, setReceivedDate] = useState(today)
+  const [, startTransition] = useTransition()
 
   const s = rtiSummary(requests, today)
 
   function add() {
     if (!applicant.trim() || !subject.trim()) return
-    setRequests((prev) => [
-      { id: `rt-${Date.now()}`, applicant: applicant.trim(), subject: subject.trim(), receivedDate, status: "received" },
-      ...prev,
-    ])
+    const optimistic: RtiRequest = {
+      id: `rt-${Date.now()}`,
+      applicant: applicant.trim(),
+      subject: subject.trim(),
+      receivedDate,
+      status: "received",
+    }
+    setRequests((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createRtiAction({
+        applicant: optimistic.applicant,
+        subject: optimistic.subject,
+        receivedDate: optimistic.receivedDate,
+      })
+      if (saved) setRequests((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setApplicant("")
     setSubject("")
   }
 
   function advance(id: string) {
     setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextRtiStatus(r.status) } : r)))
+    startTransition(async () => {
+      const saved = await advanceRtiAction(id)
+      if (saved) setRequests((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (
