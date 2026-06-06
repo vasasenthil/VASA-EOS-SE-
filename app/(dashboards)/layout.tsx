@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
 import { Sidebar } from "@/components/layout/sidebar"
+import { DEMO_COOKIE } from "@/lib/demo-auth"
 
 export default async function DashboardsLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -12,7 +13,11 @@ export default async function DashboardsLayout({ children }: { children: React.R
 
   let userRole = "STUDENT" // default fallback
 
-  if (supabaseUrl && supabaseAnonKey) {
+  // Demo-login session takes precedence when present (Supabase-unreachable walkthrough).
+  const demoRole = cookieStore.get(DEMO_COOKIE)?.value
+  if (demoRole) {
+    userRole = demoRole.toUpperCase()
+  } else if (supabaseUrl && supabaseAnonKey) {
     try {
       const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
         cookies: { get(name: string) { return cookieStore.get(name)?.value } }

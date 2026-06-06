@@ -4,6 +4,27 @@ import { z } from "zod"
 import { cookies } from "next/headers"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { PORTALS, type PortalRole } from "@/config/portals"
+import { demoAuthenticate, DEMO_COOKIE } from "@/lib/demo-auth"
+
+// Demo-login fallback: used only when Supabase Auth is unconfigured or unreachable
+// (the "fetch failed" preview case). A reachable Supabase always takes precedence.
+async function demoLogin(email: string, password: string): Promise<LoginState> {
+  const role = demoAuthenticate(email, password)
+  if (!role || !PORTALS[role as PortalRole]) {
+    return {
+      success: false,
+      message: "Invalid login credentials.",
+      errors: { _general: "Invalid email or password (demo mode — Supabase unreachable)." },
+    }
+  }
+  const cookieStore = await cookies()
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", path: "/" })
+  return {
+    success: true,
+    message: "Signed in (demo mode — Supabase unreachable). Redirecting…",
+    redirectPath: PORTALS[role as PortalRole].home,
+  }
+}
 
 const createClient = async () => {
   console.log("--- Inside createClient for loginAction ---")
@@ -61,16 +82,6 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
   console.log("Attempting to read NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "Exists" : "MISSING")
   console.log("Attempting to read NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "Exists" : "MISSING")
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return {
-      success: false,
-      message: "Server configuration error. Supabase credentials missing.",
-      errors: { _general: "Server configuration error. Please contact support." },
-    }
-  }
-
-  const supabase = await createClient()
-
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -91,18 +102,38 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
 
   const { email, password } = validatedFields.data
 
-  console.log(`Attempting login for email: ${email}`)
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+  // No Supabase configured → demo-login fallback (walkthrough mode).
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("Supabase not configured; using demo-login fallback.")
+    return demoLogin(email, password)
+  }
 
-  if (authError || !authData?.user) {
-    console.error("Authentication error:", authError?.message)
+  let authData: Awaited<ReturnType<Awaited<ReturnType<typeof createClient>>["auth"]["signInWithPassword"]>>["data"]
+  let supabase: Awaited<ReturnType<typeof createClient>>
+  try {
+    supabase = await createClient()
+    console.log(`Attempting login for email: ${email}`)
+    const result = await supabase.auth.signInWithPassword({ email, password })
+    authData = result.data
+    if (result.error || !result.data?.user) {
+      console.error("Authentication error:", result.error?.message)
+      return {
+        success: false,
+        message: result.error?.message || "Invalid login credentials.",
+        errors: { _general: result.error?.message || "Invalid email or password." },
+      }
+    }
+  } catch (e) {
+    // Supabase unreachable ("fetch failed") → demo-login fallback so the walkthrough works.
+    console.error("Supabase unreachable; using demo-login fallback:", e)
+    return demoLogin(email, password)
+  }
+
+  if (!authData?.user) {
     return {
       success: false,
-      message: authError?.message || "Invalid login credentials.",
-      errors: { _general: authError?.message || "Invalid email or password." },
+      message: "Invalid login credentials.",
+      errors: { _general: "Invalid email or password." },
     }
   }
 
