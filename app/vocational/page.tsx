@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { VocationalBoard } from "./vocational-board"
+import { listEnrolmentsAction } from "./actions"
 
-export default function VocationalPage() {
+export default async function VocationalPage() {
+  const initial = await listEnrolmentsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function VocationalPage() {
           education from Class 6; production links to the Skill India / NSQF credential.
         </PageHeaderDescription>
       </PageHeader>
-      <VocationalBoard />
+      <VocationalBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,38 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { COUNCIL_POSITIONS, councilSummary, declareWinners, type Candidate } from "@/lib/council"
+import { createCandidateAction, voteCandidateAction, declareElectionAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function CouncilBoard() {
-  const [candidates, setCandidates] = useState<Candidate[]>([])
+export function CouncilBoard({ initial = [] }: { initial?: Candidate[] }) {
+  const [candidates, setCandidates] = useState<Candidate[]>(initial)
   const [name, setName] = useState("")
   const [cls, setCls] = useState("")
   const [position, setPosition] = useState(COUNCIL_POSITIONS[0])
+  const [, startTransition] = useTransition()
 
   const s = councilSummary(candidates)
 
   function add() {
     if (!name.trim()) return
-    setCandidates((prev) => [
-      { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", position, votes: 0, elected: false },
-      ...prev,
-    ])
+    const optimistic: Candidate = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", position, votes: 0, elected: false }
+    setCandidates((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createCandidateAction({ name: optimistic.name, cls: optimistic.cls, position: optimistic.position })
+      if (saved) setCandidates((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setName("")
     setCls("")
   }
 
   function vote(id: string) {
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, votes: c.votes + 1 } : c)))
+    startTransition(async () => {
+      const saved = await voteCandidateAction(id)
+      if (saved) setCandidates((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   function declare() {
+    // Optimistic local declaration; the server persists the authoritative result.
     const winners = new Set(declareWinners(candidates))
     setCandidates((prev) => prev.map((c) => ({ ...c, elected: winners.has(c.id) })))
+    startTransition(async () => {
+      const all = await declareElectionAction()
+      if (all.length > 0) setCandidates(all)
+    })
   }
 
   return (

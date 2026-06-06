@@ -1,32 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { VOC_TRADES, NSQF_LEVELS, vocSummary, type VocEnrolment } from "@/lib/vocational"
+import { createEnrolmentAction, certifyEnrolmentAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function VocationalBoard() {
-  const [enrolments, setEnrolments] = useState<VocEnrolment[]>([])
+export function VocationalBoard({ initial = [] }: { initial?: VocEnrolment[] }) {
+  const [enrolments, setEnrolments] = useState<VocEnrolment[]>(initial)
   const [student, setStudent] = useState("")
   const [trade, setTrade] = useState(VOC_TRADES[0])
   const [level, setLevel] = useState(NSQF_LEVELS[0])
+  const [, startTransition] = useTransition()
 
   const s = vocSummary(enrolments)
 
   function add() {
     if (!student.trim()) return
-    setEnrolments((prev) => [
-      { id: `vc-${Date.now()}`, student: student.trim(), trade, level, certified: false },
-      ...prev,
-    ])
+    const optimistic: VocEnrolment = { id: `vc-${Date.now()}`, student: student.trim(), trade, level, certified: false }
+    setEnrolments((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createEnrolmentAction({ student: optimistic.student, trade: optimistic.trade, level: optimistic.level })
+      if (saved) setEnrolments((prev) => prev.map((e) => (e.id === optimistic.id ? saved : e)))
+    })
     setStudent("")
   }
 
   function certify(id: string) {
     setEnrolments((prev) => prev.map((e) => (e.id === id ? { ...e, certified: true } : e)))
+    startTransition(async () => {
+      const saved = await certifyEnrolmentAction(id)
+      if (saved) setEnrolments((prev) => prev.map((e) => (e.id === id ? saved : e)))
+    })
   }
 
   return (

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { BAGLESS_TYPES, BAGLESS_TARGET, baglessSummary, type BaglessActivity } from "@/lib/bagless"
+import { createActivityAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,22 +10,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function BaglessBoard() {
-  const [activities, setActivities] = useState<BaglessActivity[]>([])
+export function BaglessBoard({ initial = [] }: { initial?: BaglessActivity[] }) {
+  const [activities, setActivities] = useState<BaglessActivity[]>(initial)
   const [title, setTitle] = useState("")
   const [type, setType] = useState(BAGLESS_TYPES[0])
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [classGroup, setClassGroup] = useState("")
   const [participants, setParticipants] = useState(30)
+  const [, startTransition] = useTransition()
 
   const s = baglessSummary(activities)
 
   function add() {
     if (!title.trim() || participants < 0) return
-    setActivities((prev) => [
-      { id: `bl-${Date.now()}`, title: title.trim(), type, date, classGroup: classGroup.trim() || "All", participants },
-      ...prev,
-    ])
+    const optimistic: BaglessActivity = { id: `bl-${Date.now()}`, title: title.trim(), type, date, classGroup: classGroup.trim() || "All", participants }
+    setActivities((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createActivityAction({ title: optimistic.title, type: optimistic.type, date: optimistic.date, classGroup: optimistic.classGroup, participants: optimistic.participants })
+      if (saved) setActivities((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setTitle("")
   }
 

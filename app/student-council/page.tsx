@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CouncilBoard } from "./council-board"
+import { listCandidatesAction } from "./actions"
 
-export default function StudentCouncilPage() {
+export default async function StudentCouncilPage() {
+  const initial = await listCandidatesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function StudentCouncilPage() {
           interactive ballot to run the school student cabinet and build student leadership.
         </PageHeaderDescription>
       </PageHeader>
-      <CouncilBoard />
+      <CouncilBoard initial={initial} />
     </Shell>
   )
 }
