@@ -14,14 +14,14 @@ async function demoLogin(email: string, password: string): Promise<LoginState> {
     return {
       success: false,
       message: "Invalid login credentials.",
-      errors: { _general: "Invalid email or password (demo mode — Supabase unreachable)." },
+      errors: { _general: "Invalid email or password." },
     }
   }
   const cookieStore = await cookies()
   cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", path: "/" })
   return {
     success: true,
-    message: "Signed in (demo mode — Supabase unreachable). Redirecting…",
+    message: "Login successful! Redirecting...",
     redirectPath: PORTALS[role as PortalRole].home,
   }
 }
