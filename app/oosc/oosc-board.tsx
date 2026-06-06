@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { OOSC_REASONS, nextOoscStatus, ooscSummary, type OoscChild } from "@/lib/oosc"
+import { createChildAction, advanceChildAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,27 +24,41 @@ const NEXT_LABEL: Record<OoscChild["status"], string> = {
   mainstreamed: "Mainstreamed",
 }
 
-export function OoscBoard() {
-  const [children, setChildren] = useState<OoscChild[]>([])
+export function OoscBoard({ initial = [] }: { initial?: OoscChild[] }) {
+  const [children, setChildren] = useState<OoscChild[]>(initial)
   const [name, setName] = useState("")
   const [age, setAge] = useState(9)
   const [reason, setReason] = useState(OOSC_REASONS[0])
   const [targetClass, setTargetClass] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = ooscSummary(children)
 
   function add() {
     if (!name.trim()) return
-    setChildren((prev) => [
-      { id: `oo-${Date.now()}`, name: name.trim(), age, reason, status: "identified", targetClass: targetClass.trim() || "—" },
-      ...prev,
-    ])
+    const optimistic: OoscChild = {
+      id: `oo-${Date.now()}`,
+      name: name.trim(),
+      age,
+      reason,
+      status: "identified",
+      targetClass: targetClass.trim() || "—",
+    }
+    setChildren((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createChildAction({ name: optimistic.name, age: optimistic.age, reason: optimistic.reason, targetClass: optimistic.targetClass })
+      if (saved) setChildren((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setName("")
     setTargetClass("")
   }
 
   function advance(id: string) {
     setChildren((prev) => prev.map((c) => (c.id === id ? { ...c, status: nextOoscStatus(c.status) } : c)))
+    startTransition(async () => {
+      const saved = await advanceChildAction(id)
+      if (saved) setChildren((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   return (

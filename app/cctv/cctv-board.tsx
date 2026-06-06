@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { CCTV_ZONES, cctvSummary, uncoveredZones, type Camera } from "@/lib/cctv"
+import { createCameraAction, setCameraWorkingAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,25 +10,39 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function CctvBoard() {
-  const [cameras, setCameras] = useState<Camera[]>([])
+export function CctvBoard({ initial = [] }: { initial?: Camera[] }) {
+  const [cameras, setCameras] = useState<Camera[]>(initial)
   const [location, setLocation] = useState("")
   const [zone, setZone] = useState(CCTV_ZONES[0])
+  const [, startTransition] = useTransition()
 
   const s = cctvSummary(cameras)
   const gaps = uncoveredZones(cameras)
 
   function add() {
     if (!location.trim()) return
-    setCameras((prev) => [
-      { id: `cam-${Date.now()}`, location: location.trim(), zone, working: true },
-      ...prev,
-    ])
+    const optimistic: Camera = { id: `cam-${Date.now()}`, location: location.trim(), zone, working: true }
+    setCameras((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createCameraAction({ location: optimistic.location, zone: optimistic.zone })
+      if (saved) setCameras((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setLocation("")
   }
 
   function toggle(id: string) {
-    setCameras((prev) => prev.map((c) => (c.id === id ? { ...c, working: !c.working } : c)))
+    let nextWorking = true
+    setCameras((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c
+        nextWorking = !c.working
+        return { ...c, working: nextWorking }
+      }),
+    )
+    startTransition(async () => {
+      const saved = await setCameraWorkingAction(id, nextWorking)
+      if (saved) setCameras((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   return (

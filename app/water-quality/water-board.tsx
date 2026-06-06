@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { WATER_SOURCES, isPhSafe, waterSummary, type WaterTest, type WaterResult } from "@/lib/water"
+import { createTestAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,22 +10,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function WaterBoard() {
-  const [tests, setTests] = useState<WaterTest[]>([])
+export function WaterBoard({ initial = [] }: { initial?: WaterTest[] }) {
+  const [tests, setTests] = useState<WaterTest[]>(initial)
   const [source, setSource] = useState(WATER_SOURCES[0])
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [ph, setPh] = useState(7)
   const [remarks, setRemarks] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = waterSummary(tests)
   const phSafe = isPhSafe(ph)
 
   function add() {
     const result: WaterResult = phSafe ? "safe" : "unsafe"
-    setTests((prev) => [
-      { id: `wt-${Date.now()}`, source, date, ph, result, remarks: remarks.trim() },
-      ...prev,
-    ])
+    const optimistic: WaterTest = { id: `wt-${Date.now()}`, source, date, ph, result, remarks: remarks.trim() }
+    setTests((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createTestAction({ source: optimistic.source, date: optimistic.date, ph: optimistic.ph, remarks: optimistic.remarks })
+      if (saved) setTests((prev) => prev.map((t) => (t.id === optimistic.id ? saved : t)))
+    })
     setRemarks("")
   }
 

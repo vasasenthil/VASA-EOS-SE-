@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { WaterBoard } from "./water-board"
+import { listTestsAction } from "./actions"
 
-export default function WaterQualityPage() {
+export default async function WaterQualityPage() {
+  const initial = await listTestsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function WaterQualityPage() {
           recorded safe/unsafe. Part of the Swachh Vidyalaya / WASH compliance loop.
         </PageHeaderDescription>
       </PageHeader>
-      <WaterBoard />
+      <WaterBoard initial={initial} />
     </Shell>
   )
 }

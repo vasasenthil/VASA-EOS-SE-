@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CctvBoard } from "./cctv-board"
+import { listCamerasAction } from "./actions"
 
-export default function CctvPage() {
+export default async function CctvPage() {
+  const initial = await listCamerasAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function CctvPage() {
           POCSO and campus-safety compliance for the safety committee.
         </PageHeaderDescription>
       </PageHeader>
-      <CctvBoard />
+      <CctvBoard initial={initial} />
     </Shell>
   )
 }

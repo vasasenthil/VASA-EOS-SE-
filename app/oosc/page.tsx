@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { OoscBoard } from "./oosc-board"
+import { listChildrenAction } from "./actions"
 
-export default function OoscPage() {
+export default async function OoscPage() {
+  const initial = await listChildrenAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function OoscPage() {
           through to mainstreaming into the age-appropriate class, per Samagra Shiksha and RTE.
         </PageHeaderDescription>
       </PageHeader>
-      <OoscBoard />
+      <OoscBoard initial={initial} />
     </Shell>
   )
 }
