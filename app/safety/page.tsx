@@ -1,8 +1,11 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { SafetyBoard } from "./safety-board"
+import { listConcernsAction } from "./actions"
 
-export default function SafetyPage() {
+export default async function SafetyPage() {
+  // Load persisted concerns (durable when a DB is configured; empty otherwise).
+  const initial = await listConcernsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +15,7 @@ export default function SafetyPage() {
           statutory committee reviews the log; production routes POCSO/POSH cases confidentially.
         </PageHeaderDescription>
       </PageHeader>
-      <SafetyBoard />
+      <SafetyBoard initial={initial} />
     </Shell>
   )
 }

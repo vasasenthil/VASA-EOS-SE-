@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import {
   SAFETY_CATEGORIES,
   nextSafetyStatus,
   safetySummary,
   type SafetyConcern,
 } from "@/lib/safety"
+import { createConcernAction, advanceConcernAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,35 +27,46 @@ const STATUS_LABEL: Record<SafetyConcern["status"], string> = {
   resolved: "Resolved",
 }
 
-export function SafetyBoard() {
-  const [concerns, setConcerns] = useState<SafetyConcern[]>([])
+export function SafetyBoard({ initial = [] }: { initial?: SafetyConcern[] }) {
+  const [concerns, setConcerns] = useState<SafetyConcern[]>(initial)
   const [category, setCategory] = useState(SAFETY_CATEGORIES[0])
   const [description, setDescription] = useState("")
   const [action, setAction] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = safetySummary(concerns)
 
   function add() {
     if (!description.trim()) return
-    setConcerns((prev) => [
-      {
-        id: `sc-${Date.now()}`,
-        category,
-        description: description.trim(),
-        action: action.trim(),
-        status: "reported",
-        date: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ])
+    const optimistic: SafetyConcern = {
+      id: `sc-${Date.now()}`,
+      category,
+      description: description.trim(),
+      action: action.trim(),
+      status: "reported",
+      date: new Date().toISOString().slice(0, 10),
+    }
+    // Optimistic insert; reconcile with the persisted record (real id) when it returns.
+    setConcerns((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createConcernAction({
+        category: optimistic.category,
+        description: optimistic.description,
+        action: optimistic.action,
+      })
+      if (saved) setConcerns((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setDescription("")
     setAction("")
   }
 
   function advance(id: string) {
-    setConcerns((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, status: nextSafetyStatus(c.status) } : c)),
-    )
+    // Optimistic advance; persist in the background.
+    setConcerns((prev) => prev.map((c) => (c.id === id ? { ...c, status: nextSafetyStatus(c.status) } : c)))
+    startTransition(async () => {
+      const saved = await advanceConcernAction(id)
+      if (saved) setConcerns((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   return (
