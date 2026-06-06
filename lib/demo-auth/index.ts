@@ -43,4 +43,33 @@ export function demoAuthenticate(email: string, password: string): string | null
   return DEMO_USERS[email.trim().toLowerCase()] ?? null
 }
 
+// Supabase JS sometimes THROWS a network error and sometimes RETURNS it as an
+// AuthRetryableFetchError with message "fetch failed". Either way it means the auth
+// service is unreachable (paused/blocked/wrong URL) — not a credential problem — so
+// we should fall back to demo auth rather than show the raw error.
+const UNREACHABLE_HINTS = [
+  "fetch failed",
+  "failed to fetch",
+  "network",
+  "enotfound",
+  "econnrefused",
+  "etimedout",
+  "timeout",
+  "und_err",
+  "socket",
+  "getaddrinfo",
+]
+
+export function isUnreachableError(err: unknown): boolean {
+  if (!err) return false
+  const name = (err as { name?: string }).name?.toLowerCase() ?? ""
+  if (name.includes("retryable") || name.includes("fetch")) return true
+  const status = (err as { status?: number }).status
+  if (status === 0) return true
+  const msg = (
+    typeof err === "string" ? err : ((err as { message?: string }).message ?? "")
+  ).toLowerCase()
+  return UNREACHABLE_HINTS.some((h) => msg.includes(h))
+}
+
 export const DEMO_COOKIE = "demo_role"
