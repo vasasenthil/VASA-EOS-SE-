@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { TC_REASONS, nextTcStatus, tcSummary, tcNumber, type TcRequest } from "@/lib/tc"
+import { createTcAction, advanceTcAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,39 +21,42 @@ const NEXT_LABEL: Record<TcRequest["status"], string> = {
   issued: "Issued",
 }
 
-export function TcBoard() {
-  const [requests, setRequests] = useState<TcRequest[]>([])
-  const [seq, setSeq] = useState(1)
+export function TcBoard({ initial = [] }: { initial?: TcRequest[] }) {
+  const [requests, setRequests] = useState<TcRequest[]>(initial)
   const [student, setStudent] = useState("")
   const [cls, setCls] = useState("")
   const [reason, setReason] = useState(TC_REASONS[0])
+  const [, startTransition] = useTransition()
 
   const s = tcSummary(requests)
   const year = new Date().getFullYear()
 
   function add() {
     if (!student.trim()) return
-    setRequests((prev) => [
-      { id: `tc-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", reason, status: "requested", date: new Date().toISOString().slice(0, 10) },
-      ...prev,
-    ])
+    const optimistic: TcRequest = {
+      id: `tc-${Date.now()}`,
+      student: student.trim(),
+      cls: cls.trim() || "—",
+      reason,
+      status: "requested",
+      date: new Date().toISOString().slice(0, 10),
+    }
+    setRequests((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createTcAction({ student: optimistic.student, cls: optimistic.cls, reason: optimistic.reason })
+      if (saved) setRequests((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setStudent("")
     setCls("")
   }
 
   function advance(id: string) {
-    setRequests((prev) =>
-      prev.map((r) => {
-        if (r.id !== id) return r
-        const next = nextTcStatus(r.status)
-        // Stamp a TC number at the moment of issue.
-        if (next === "issued" && r.status !== "issued") {
-          setSeq((n) => n + 1)
-          return { ...r, status: next, reason: `${r.reason} · ${tcNumber(year, seq)}` }
-        }
-        return { ...r, status: next }
-      }),
-    )
+    // Optimistic status bump; the server stamps the authoritative TC number on issue.
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextTcStatus(r.status) } : r)))
+    startTransition(async () => {
+      const saved = await advanceTcAction(id)
+      if (saved) setRequests((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (
@@ -61,7 +65,7 @@ export function TcBoard() {
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Requests</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{s.total}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Issued</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{s.issued}</div></CardContent></Card>
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle></CardHeader><CardContent><div className={`text-2xl font-bold ${s.pending > 0 ? "text-destructive" : ""}`}>{s.pending}</div></CardContent></Card>
-        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Next TC no.</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{tcNumber(year, seq)}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">Next TC no.</CardTitle></CardHeader><CardContent><div className="text-lg font-bold">{tcNumber(year, s.issued + 1)}</div></CardContent></Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1.6fr]">

@@ -1,32 +1,47 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { COOK_ROLES, cookSummary, inr, type Cook, type CookRole } from "@/lib/cooks"
+import { createCookAction, setCookPresenceAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function CooksBoard() {
-  const [cooks, setCooks] = useState<Cook[]>([])
+export function CooksBoard({ initial = [] }: { initial?: Cook[] }) {
+  const [cooks, setCooks] = useState<Cook[]>(initial)
   const [name, setName] = useState("")
   const [role, setRole] = useState<CookRole>(COOK_ROLES[0])
   const [honorarium, setHonorarium] = useState(1000)
+  const [, startTransition] = useTransition()
 
   const s = cookSummary(cooks)
 
   function add() {
     if (!name.trim() || honorarium < 0) return
-    setCooks((prev) => [
-      { id: `ck-${Date.now()}`, name: name.trim(), role, honorarium, present: true },
-      ...prev,
-    ])
+    const optimistic: Cook = { id: `ck-${Date.now()}`, name: name.trim(), role, honorarium, present: true }
+    setCooks((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createCookAction({ name: optimistic.name, role: optimistic.role, honorarium: optimistic.honorarium })
+      if (saved) setCooks((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setName("")
   }
 
   function toggle(id: string) {
-    setCooks((prev) => prev.map((c) => (c.id === id ? { ...c, present: !c.present } : c)))
+    let nextPresent = true
+    setCooks((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c
+        nextPresent = !c.present
+        return { ...c, present: nextPresent }
+      }),
+    )
+    startTransition(async () => {
+      const saved = await setCookPresenceAction(id, nextPresent)
+      if (saved) setCooks((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   return (

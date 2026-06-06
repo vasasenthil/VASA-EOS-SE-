@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CooksBoard } from "./cooks-board"
+import { listCooksAction } from "./actions"
 
-export default function CooksPage() {
+export default async function CooksPage() {
+  const initial = await listCooksAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function CooksPage() {
           roster to DBT honorarium payouts and the mid-day-meal daily register.
         </PageHeaderDescription>
       </PageHeader>
-      <CooksBoard />
+      <CooksBoard initial={initial} />
     </Shell>
   )
 }

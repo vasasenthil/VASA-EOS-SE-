@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { LostFoundBoard } from "./lost-found-board"
+import { listItemsAction } from "./actions"
 
-export default function LostFoundPage() {
+export default async function LostFoundPage() {
+  const initial = await listItemsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function LostFoundPage() {
           A simple campus operations ledger the front office can run daily.
         </PageHeaderDescription>
       </PageHeader>
-      <LostFoundBoard />
+      <LostFoundBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { TcBoard } from "./tc-board"
+import { listTcAction } from "./actions"
 
-export default function TcPage() {
+export default async function TcPage() {
+  const initial = await listTcAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function TcPage() {
           Production issues a signed, verifiable certificate and syncs UDISE+ / SIS.
         </PageHeaderDescription>
       </PageHeader>
-      <TcBoard />
+      <TcBoard initial={initial} />
     </Shell>
   )
 }

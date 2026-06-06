@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { lostFoundSummary, filterByStatus, type ItemStatus, type LostItem } from "@/lib/lostfound"
+import { createItemAction, claimItemAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,32 +15,41 @@ const STATUS_VARIANT: Record<ItemStatus, "destructive" | "secondary" | "default"
   claimed: "default",
 }
 
-export function LostFoundBoard() {
-  const [items, setItems] = useState<LostItem[]>([])
+export function LostFoundBoard({ initial = [] }: { initial?: LostItem[] }) {
+  const [items, setItems] = useState<LostItem[]>(initial)
   const [filter, setFilter] = useState<ItemStatus | "all">("all")
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [location, setLocation] = useState("")
   const [reportedBy, setReportedBy] = useState("")
   const [status, setStatus] = useState<ItemStatus>("found")
+  const [, startTransition] = useTransition()
 
   const s = lostFoundSummary(items)
   const shown = filterByStatus(items, filter)
 
   function add() {
     if (!name.trim()) return
-    setItems((prev) => [
-      {
-        id: `lf-${Date.now()}`,
-        name: name.trim(),
-        description: description.trim(),
-        location: location.trim(),
-        reportedBy: reportedBy.trim() || "Front office",
-        status,
-        date: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ])
+    const optimistic: LostItem = {
+      id: `lf-${Date.now()}`,
+      name: name.trim(),
+      description: description.trim(),
+      location: location.trim(),
+      reportedBy: reportedBy.trim() || "Front office",
+      status,
+      date: new Date().toISOString().slice(0, 10),
+    }
+    setItems((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createItemAction({
+        name: optimistic.name,
+        description: optimistic.description,
+        location: optimistic.location,
+        reportedBy: optimistic.reportedBy,
+        status: optimistic.status,
+      })
+      if (saved) setItems((prev) => prev.map((i) => (i.id === optimistic.id ? saved : i)))
+    })
     setName("")
     setDescription("")
     setLocation("")
@@ -47,6 +57,10 @@ export function LostFoundBoard() {
 
   function claim(id: string) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status: "claimed" } : i)))
+    startTransition(async () => {
+      const saved = await claimItemAction(id)
+      if (saved) setItems((prev) => prev.map((i) => (i.id === id ? saved : i)))
+    })
   }
 
   return (
