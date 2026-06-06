@@ -76,6 +76,9 @@ import {
   UserMinus,
   BookCopy,
   Dumbbell,
+  HeartHandshake,
+  Sunrise,
+  PiggyBank,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -192,6 +195,9 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Teacher Vacancy & Rationalisation", href: "/vacancy", icon: UserMinus },
     { title: "Textbook Indent & Book Bank", href: "/textbooks", icon: BookCopy },
     { title: "Khelo India Fitness Test", href: "/fitness", icon: Dumbbell },
+    { title: "NSS / NCC / Scouts", href: "/nss-ncc", icon: HeartHandshake },
+    { title: "Morning Assembly / Bal Sabha", href: "/assembly", icon: Sunrise },
+    { title: "Student Banking", href: "/student-banking", icon: PiggyBank },
     { title: "Inventory & Procurement", href: "/procurement", icon: Package },
     { title: "SMC (DAO)", href: "/smc", icon: Vote },
     { title: "Quality & Inspection", href: "/quality", icon: CheckSquare },
