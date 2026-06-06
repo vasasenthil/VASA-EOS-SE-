@@ -1,25 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { bankingSummary, applyTxn, inr, type Account } from "@/lib/banking"
+import { openAccountAction, transactAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function BankingBoard() {
-  const [accounts, setAccounts] = useState<Account[]>([])
+export function BankingBoard({ initial = [] }: { initial?: Account[] }) {
+  const [accounts, setAccounts] = useState<Account[]>(initial)
   const [student, setStudent] = useState("")
   const [cls, setCls] = useState("")
   const [opening, setOpening] = useState(0)
   const [amount, setAmount] = useState(10)
+  const [, startTransition] = useTransition()
 
   const s = bankingSummary(accounts)
 
   function open() {
     if (!student.trim() || opening < 0) return
-    setAccounts((prev) => [{ id: `ac-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", balance: opening }, ...prev])
+    const optimistic: Account = { id: `ac-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", balance: opening }
+    setAccounts((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await openAccountAction({ student: optimistic.student, cls: optimistic.cls, opening: optimistic.balance })
+      if (saved) setAccounts((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setStudent("")
     setCls("")
     setOpening(0)
@@ -27,6 +34,10 @@ export function BankingBoard() {
 
   function txn(id: string, kind: "deposit" | "withdraw") {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, balance: applyTxn(a.balance, kind, amount) } : a)))
+    startTransition(async () => {
+      const saved = await transactAction(id, kind, amount)
+      if (saved) setAccounts((prev) => prev.map((a) => (a.id === id ? saved : a)))
+    })
   }
 
   return (

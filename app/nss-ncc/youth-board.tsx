@@ -1,30 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { YOUTH_WINGS, youthSummary, type Cadet } from "@/lib/youth"
+import { createCadetAction, logCadetHoursAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function YouthBoard() {
-  const [cadets, setCadets] = useState<Cadet[]>([])
+export function YouthBoard({ initial = [] }: { initial?: Cadet[] }) {
+  const [cadets, setCadets] = useState<Cadet[]>(initial)
   const [name, setName] = useState("")
   const [cls, setCls] = useState("")
   const [wing, setWing] = useState(YOUTH_WINGS[0])
+  const [, startTransition] = useTransition()
 
   const s = youthSummary(cadets)
 
   function add() {
     if (!name.trim()) return
-    setCadets((prev) => [{ id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", wing, serviceHours: 0 }, ...prev])
+    const optimistic: Cadet = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", wing, serviceHours: 0 }
+    setCadets((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createCadetAction({ name: optimistic.name, cls: optimistic.cls, wing: optimistic.wing })
+      if (saved) setCadets((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setName("")
     setCls("")
   }
 
   function logHours(id: string, hrs: number) {
     setCadets((prev) => prev.map((c) => (c.id === id ? { ...c, serviceHours: c.serviceHours + hrs } : c)))
+    startTransition(async () => {
+      const saved = await logCadetHoursAction(id, hrs)
+      if (saved) setCadets((prev) => prev.map((c) => (c.id === id ? saved : c)))
+    })
   }
 
   return (

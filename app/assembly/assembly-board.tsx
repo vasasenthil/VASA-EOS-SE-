@@ -1,29 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { ASSEMBLY_THEMES, assemblySummary, type Assembly } from "@/lib/assembly"
+import { createAssemblyAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function AssemblyBoard() {
-  const [items, setItems] = useState<Assembly[]>([])
+export function AssemblyBoard({ initial = [] }: { initial?: Assembly[] }) {
+  const [items, setItems] = useState<Assembly[]>(initial)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [cls, setCls] = useState("")
   const [theme, setTheme] = useState(ASSEMBLY_THEMES[0])
   const [conductedBy, setConductedBy] = useState("")
   const [thought, setThought] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = assemblySummary(items)
 
   function add() {
     if (!cls.trim()) return
-    setItems((prev) => [
-      { id: `as-${Date.now()}`, date, cls: cls.trim(), theme, conductedBy: conductedBy.trim() || "—", thought: thought.trim() },
-      ...prev,
-    ])
+    const optimistic: Assembly = { id: `as-${Date.now()}`, date, cls: cls.trim(), theme, conductedBy: conductedBy.trim() || "—", thought: thought.trim() }
+    setItems((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createAssemblyAction({ date: optimistic.date, cls: optimistic.cls, theme: optimistic.theme, conductedBy: optimistic.conductedBy, thought: optimistic.thought })
+      if (saved) setItems((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setCls("")
     setConductedBy("")
     setThought("")

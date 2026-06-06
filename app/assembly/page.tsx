@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { AssemblyBoard } from "./assembly-board"
+import { listAssembliesAction } from "./actions"
 
-export default function AssemblyPage() {
+export default async function AssemblyPage() {
+  const initial = await listAssembliesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function AssemblyPage() {
           rotating Bal Sabha that builds student voice and value education.
         </PageHeaderDescription>
       </PageHeader>
-      <AssemblyBoard />
+      <AssemblyBoard initial={initial} />
     </Shell>
   )
 }

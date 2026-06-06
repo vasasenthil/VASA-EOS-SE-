@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { YouthBoard } from "./youth-board"
+import { listCadetsAction } from "./actions"
 
-export default function NssNccPage() {
+export default async function NssNccPage() {
+  const initial = await listCadetsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function NssNccPage() {
           record that backs NSS/NCC certificates and merit credits.
         </PageHeaderDescription>
       </PageHeader>
-      <YouthBoard />
+      <YouthBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { BankingBoard } from "./banking-board"
+import { listAccountsAction } from "./actions"
 
-export default function StudentBankingPage() {
+export default async function StudentBankingPage() {
+  const initial = await listAccountsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function StudentBankingPage() {
           overdrawn), and watch total savings grow. A hands-on financial-literacy programme.
         </PageHeaderDescription>
       </PageHeader>
-      <BankingBoard />
+      <BankingBoard initial={initial} />
     </Shell>
   )
 }
