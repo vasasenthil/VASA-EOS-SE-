@@ -9,6 +9,7 @@ const c = (status: SafetyConcern["status"], category = "Fire safety"): SafetyCon
   action: "a",
   status,
   date: "2026-06-05",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("status advances through the flow and clamps at resolved", () => {

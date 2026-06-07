@@ -8,6 +8,7 @@ import {
   type SafetyConcern,
 } from "@/lib/safety"
 import { createConcernAction, advanceConcernAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -45,6 +46,7 @@ export function SafetyBoard({ initial = [] }: { initial?: SafetyConcern[] }) {
       action: action.trim(),
       status: "reported",
       date: new Date().toISOString().slice(0, 10),
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     // Optimistic insert; reconcile with the persisted record (real id) when it returns.
     setConcerns((prev) => [optimistic, ...prev])

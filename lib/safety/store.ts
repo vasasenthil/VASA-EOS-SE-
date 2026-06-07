@@ -6,6 +6,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextSafetyStatus, type SafetyConcern } from "./index"
 
 function id(): string {
@@ -19,6 +20,7 @@ interface SafetyRow {
   action: string
   status: SafetyConcern["status"]
   date: string
+  tenant_id: string
   created_at: string
 }
 
@@ -30,16 +32,25 @@ function fromRow(r: SafetyRow): SafetyConcern {
     action: r.action,
     status: r.status,
     date: r.date,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-// In-memory fallback store (used when no service-role key is configured).
-const store: SafetyConcern[] = []
+// In-memory fallback store, seeded across tenant nodes so data scoping is visible:
+// a state/district overseer sees several; a single school sees only its own.
+const store: SafetyConcern[] = [
+  { id: "SC-SEED1", category: "Anti-ragging", description: "Hostel ragging report", action: "Committee convened", status: "under_review", date: "2026-05-30", tenantId: "TN-CHN-B1-S1" },
+  { id: "SC-SEED2", category: "Fire safety", description: "Expired extinguishers", action: "Replacement ordered", status: "resolved", date: "2026-05-22", tenantId: "TN-CHN-B1-S2" },
+  { id: "SC-SEED3", category: "Building safety", description: "Cracked staircase railing", action: "PWD inspection", status: "reported", date: "2026-06-01", tenantId: "TN-CHN-B2-S1" },
+  { id: "SC-SEED4", category: "Road / transport safety", description: "Unsafe bus drop point", action: "Route reviewed", status: "under_review", date: "2026-06-03", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewConcern {
   category: string
   description: string
   action: string
+  /** Tenant node the concern is filed against; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createConcern(input: NewConcern): Promise<SafetyConcern> {
@@ -50,6 +61,7 @@ export async function createConcern(input: NewConcern): Promise<SafetyConcern> {
     action: input.action,
     status: "reported",
     date: new Date().toISOString().slice(0, 10),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -60,6 +72,7 @@ export async function createConcern(input: NewConcern): Promise<SafetyConcern> {
       action: c.action,
       status: c.status,
       date: c.date,
+      tenant_id: c.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

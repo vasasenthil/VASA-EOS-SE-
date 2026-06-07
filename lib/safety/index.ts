@@ -26,6 +26,8 @@ export interface SafetyConcern {
   action: string
   status: SafetyStatus
   date: string
+  /** Tenant node (school/block/…) this concern belongs to — drives data scoping. */
+  tenantId: string
 }
 
 export interface SafetySummary {

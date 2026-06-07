@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from "next/cache"
 import { createConcern, advanceConcern, deleteConcern, listConcerns, type NewConcern } from "@/lib/safety/store"
 import type { SafetyConcern } from "@/lib/safety"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 // Server actions for the Safety committee log. All fail soft: a persistence error
@@ -13,7 +14,9 @@ import { logger } from "@/lib/logger"
 export async function listConcernsAction(): Promise<SafetyConcern[]> {
   noStore()
   try {
-    return await listConcerns()
+    // Per-role data scoping: a Principal sees one school's concerns, a BEO a block's,
+    // a DEO a district's, the State all. This is the reference enforcement wiring.
+    return await scopeForCurrentSubject(await listConcerns())
   } catch (e) {
     logger.error("safety.list failed", { error: String(e) })
     return []

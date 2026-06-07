@@ -18,6 +18,10 @@ export interface Scoped {
   tenantId: string
 }
 
+// Default leaf school for records created in the demo (until a real posting node is
+// resolved). A school-tier node so school roles see their own data immediately.
+export const DEFAULT_SCHOOL_NODE = "TN-CHN-B1-S1"
+
 /** A record is visible iff the subject governs its node (self or an ancestor). */
 export function inJurisdiction(tenants: Tenant[], subjectTenantId: string, recordTenantId: string): boolean {
   return canAccessTenant(tenants, subjectTenantId, recordTenantId)
