@@ -10,6 +10,7 @@ import { listRecognitions } from "@/lib/recognitionflow/store"
 import { listApplicants } from "@/lib/admissionsflow/store"
 import { listGrievanceFlows } from "@/lib/grievanceflow/store"
 import { listTicketFlows } from "@/lib/maintenanceflow/store"
+import { listForums } from "@/lib/forumflow/store"
 
 const DEF_BY_ID = new Map<string, WorkflowDef>(WORKFLOW_DEFS.map((d) => [d.id, d]))
 
@@ -36,13 +37,14 @@ function project(recordId: string, title: string, inst: WorkflowInstance): Overs
 
 /** Gather every live approval instance across the six flows. Fail-soft per flow. */
 export async function collectOversight(): Promise<OversightItem[]> {
-  const [leave, smc, recog, adm, grv, maint] = await Promise.all([
+  const [leave, smc, recog, adm, grv, maint, forum] = await Promise.all([
     listLeaveFlows().catch(() => []),
     listResolutions().catch(() => []),
     listRecognitions().catch(() => []),
     listApplicants().catch(() => []),
     listGrievanceFlows().catch(() => []),
     listTicketFlows().catch(() => []),
+    listForums().catch(() => []),
   ])
 
   return [
@@ -52,5 +54,6 @@ export async function collectOversight(): Promise<OversightItem[]> {
     ...adm.map((r) => project(r.id, `${r.name} — ${r.className}`, r.instance)),
     ...grv.map((r) => project(r.id, `${r.applicant} — ${r.category}`, r.instance)),
     ...maint.map((r) => project(r.id, `${r.category} — ${r.priority}`, r.instance)),
+    ...forum.map((r) => project(r.id, `${r.forum} — ${r.title}`, r.instance)),
   ]
 }

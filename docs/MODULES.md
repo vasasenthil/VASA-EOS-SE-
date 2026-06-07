@@ -194,6 +194,15 @@ KPI aggregation over the shared datasets for the stakeholder portals. **Exports:
 In-app health checks of the core guardrails. **Exports:** `runSelfTests`,
 `SelfTestReport`, `Check`. **Route:** `/health`.
 
+### `forumflow` + `tracking/analytics`
+**Forum/Meeting (RACI) workflow** — the 7th approval flow. `FORUM_RESOLUTION`
+(Secretary convenes → quorum of 2 Directors adopts → Minister ratifies significant
+items, dynamic skip for routine business). `lib/forumflow/store.ts` (seeded,
+persisted, audited); inbox at `/governance/forums`; flows into the Oversight Command
+Centre. **NEP analytics** — `lib/tracking/analytics.ts` (pure, seeded): `ragBand`,
+`statusDistribution`, `ragDistribution`, `byThrustArea`, `byRegionType`, `atRisk`,
+`analyticsSummary` over NEP-2020 thrust areas/tiers. **Route:** `/tracking/analytics`.
+
 ### `governance/oversight`
 Cross-process **Governance Oversight Command Centre** — a live rollup over every
 approval instance in flight across all six workflow flows (leave · SMC · recognition

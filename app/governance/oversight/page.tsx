@@ -24,6 +24,7 @@ const INBOX: Record<string, string> = {
   "admission-approval": "/admissions-approvals",
   "grievance-escalation": "/grievance-approvals",
   "maintenance-workflow": "/maintenance-approvals",
+  "forum-resolution": "/governance/forums",
 }
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {

@@ -83,6 +83,26 @@ export const MAINTENANCE_WORKFLOW: WorkflowDef = {
   ],
 }
 
+// Governance forum / meeting (RACI): the convener (Secretary, Responsible) tables
+// and adopts the agenda; the member body (Directors, Consulted) deliberates and adopts
+// the resolution by quorum; for significant items the chair (Minister, Accountable)
+// ratifies — dynamic routing skips ratification for routine business. Mirrors the
+// FORUMS + RACI matrix in lib/governance-framework, run as a real, audited process.
+export const FORUM_RESOLUTION: WorkflowDef = {
+  id: "forum-resolution",
+  name: "Governance Forum Resolution",
+  steps: [
+    { id: "agenda", name: "Convene & adopt agenda (Secretary)", approverRole: "SECRETARY" },
+    { id: "deliberate", name: "Member adoption (quorum)", approverRole: "DIRECTOR", quorum: 2 },
+    {
+      id: "ratify",
+      name: "Chair ratification (Minister)",
+      approverRole: "MINISTER",
+      skipIf: (ctx) => !ctx.requiresMinister,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -90,4 +110,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   ADMISSION_APPROVAL,
   GRIEVANCE_ESCALATION,
   MAINTENANCE_WORKFLOW,
+  FORUM_RESOLUTION,
 ]
