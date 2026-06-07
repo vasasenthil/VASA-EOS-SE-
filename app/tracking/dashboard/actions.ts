@@ -343,15 +343,27 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       distinctRegionTypes,
     }
   } catch (error: any) {
+    // Supabase unreachable — fail soft: render the dashboard with zeroed stats and
+    // empty data rather than a full-page error card. The seed buttons remain available.
     console.error("Error fetching tracker dashboard data:", error)
+    const zeroStats: TrackerStat[] = [
+      { title: "Total Policies Tracked", value: "0" },
+      { title: "Avg. Implementation Rate", value: "0%" },
+      { title: "Active Implementations", value: "0" },
+      { title: "States Covered", value: "0" },
+      { title: "Open Challenges", value: "0" },
+      { title: "Critical/High Challenges", value: "0" },
+      { title: "Resolved Challenges", value: "0" },
+      { title: "Total Stakeholders Mapped", value: "0" },
+      { title: "Unique Stakeholder Types", value: "0" },
+    ]
     return {
-      stats: [],
+      stats: zeroStats,
       policyProgress: [],
       nepThrustAreaProgress: [],
       stateImplementationProgress: [],
       distinctStatuses: [],
       distinctRegionTypes: [],
-      error: `Failed to fetch dashboard data: ${error.message}`,
     }
   }
 }
