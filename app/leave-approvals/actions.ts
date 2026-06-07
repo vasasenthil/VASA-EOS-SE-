@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileLeaveFlow, actOnLeave, deleteLeaveFlow, listLeaveFlows, type NewLeaveFlow, type LeaveFlowRecord } from "@/lib/leaveflow/store"
 import type { Decision } from "@/lib/workflow"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listLeaveFlowsAction(): Promise<LeaveFlowRecord[]> {
@@ -35,6 +36,7 @@ export interface DecideInput {
 }
 
 export async function decideLeaveFlowAction(input: DecideInput): Promise<{ ok: boolean; record?: LeaveFlowRecord; reason?: string }> {
+  if (!(await canDo("approve:leave"))) return { ok: false, reason: "You do not have permission to act on leave approvals." }
   try {
     const res = await actOnLeave(input.id, {
       actorRole: input.actorRole,

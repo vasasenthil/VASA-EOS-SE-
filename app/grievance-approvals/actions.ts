@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileGrievanceFlow, actOnGrievance, deleteGrievanceFlow, listGrievanceFlows, type NewGrievance, type GrievanceFlowRecord } from "@/lib/grievanceflow/store"
 import type { Decision } from "@/lib/workflow"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listGrievanceFlowsAction(): Promise<GrievanceFlowRecord[]> {
@@ -27,6 +28,7 @@ export async function fileGrievanceFlowAction(input: NewGrievance): Promise<Grie
 }
 
 export async function actGrievanceAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: GrievanceFlowRecord; reason?: string }> {
+  if (!(await canDo("resolve:grievance"))) return { ok: false, reason: "You do not have permission to act on grievances." }
   try {
     const res = await actOnGrievance(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
     revalidatePath("/grievance-approvals")

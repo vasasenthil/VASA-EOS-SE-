@@ -7,6 +7,7 @@
 // uses an in-memory store (per server instance) so demo/CI works without a DB.
 
 import { getDb } from "@/lib/persistence"
+import { incr } from "@/lib/metrics"
 
 export interface AuditEntry {
   seq: number
@@ -85,6 +86,8 @@ export async function appendAudit(input: {
   resource: string
   details?: Record<string, unknown>
 }): Promise<AuditEntry> {
+  // Observability: every audited mutation increments a metric (scraped at /api/metrics).
+  incr("vasa_audit_events_total", { action: input.action })
   const db = getDb()
   const ts = new Date().toISOString()
 

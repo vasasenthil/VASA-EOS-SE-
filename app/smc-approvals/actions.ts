@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileResolution, actOnResolution, deleteResolution, listResolutions, type NewResolution, type SmcFlowRecord } from "@/lib/smcflow/store"
 import type { Decision } from "@/lib/workflow"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listResolutionsAction(): Promise<SmcFlowRecord[]> {
@@ -27,6 +28,7 @@ export async function fileResolutionAction(input: NewResolution): Promise<SmcFlo
 }
 
 export async function decideResolutionAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: SmcFlowRecord; reason?: string }> {
+  if (!(await canDo("vote:smc"))) return { ok: false, reason: "You do not have permission to act on SMC resolutions." }
   try {
     const res = await actOnResolution(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
     revalidatePath("/smc-approvals")
