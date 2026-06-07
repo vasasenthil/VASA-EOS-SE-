@@ -29,6 +29,8 @@ export interface CwsnStudent {
   supports: string[]
   iepGoal: string
   reviewed: boolean
+  /** Tenant node this learner belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface CwsnSummary {

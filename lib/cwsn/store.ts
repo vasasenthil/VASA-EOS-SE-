@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { CwsnStudent } from "./index"
 
 function id(): string {
@@ -18,6 +19,7 @@ interface Row {
   supports: string[]
   iep_goal: string
   reviewed: boolean
+  tenant_id: string
   created_at: string
 }
 
@@ -30,10 +32,16 @@ function fromRow(r: Row): CwsnStudent {
     supports: r.supports ?? [],
     iepGoal: r.iep_goal,
     reviewed: r.reviewed,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: CwsnStudent[] = []
+// Seeded across tenant nodes so the inclusion cell at each tier sees its own subtree.
+const store: CwsnStudent[] = [
+  { id: "CW-SEED1", name: "Meena", cls: "5A", disability: "Hearing impairment", supports: ["Scribe / reader", "Extra examination time"], iepGoal: "Read 60 wpm", reviewed: false, tenantId: "TN-CHN-B1-S1" },
+  { id: "CW-SEED2", name: "Arun", cls: "7B", disability: "Locomotor disability", supports: ["Assistive device"], iepGoal: "Independent mobility", reviewed: true, tenantId: "TN-CHN-B2-S1" },
+  { id: "CW-SEED3", name: "Priya", cls: "3C", disability: "Autism spectrum", supports: ["Individual support"], iepGoal: "Sustained attention", reviewed: false, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewStudent {
   name: string
@@ -41,6 +49,8 @@ export interface NewStudent {
   disability: string
   supports: string[]
   iepGoal: string
+  /** Tenant node the learner is registered at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createStudent(input: NewStudent): Promise<CwsnStudent> {
@@ -52,6 +62,7 @@ export async function createStudent(input: NewStudent): Promise<CwsnStudent> {
     supports: input.supports,
     iepGoal: input.iepGoal,
     reviewed: false,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -63,6 +74,7 @@ export async function createStudent(input: NewStudent): Promise<CwsnStudent> {
       supports: st.supports,
       iep_goal: st.iepGoal,
       reviewed: st.reviewed,
+      tenant_id: st.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

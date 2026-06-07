@@ -4,12 +4,14 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createStudent, reviewStudent, deleteStudent, listStudents, type NewStudent } from "@/lib/cwsn/store"
 import type { CwsnStudent } from "@/lib/cwsn"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listStudentsAction(): Promise<CwsnStudent[]> {
   noStore()
   try {
-    return await listStudents()
+    // Per-role data scoping: the inclusion cell at each tier sees only its subtree.
+    return await scopeForCurrentSubject(await listStudents())
   } catch (e) {
     logger.error("cwsn.list failed", { error: String(e) })
     return []

@@ -4,12 +4,15 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { logIncident, resolveIncident, deleteIncident, listIncidents, type NewIncident } from "@/lib/discipline/store"
 import type { Incident } from "@/lib/discipline"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listIncidentsAction(): Promise<Incident[]> {
   noStore()
   try {
-    return await listIncidents()
+    // Per-role data scoping: school roles see their school's incidents only; block/
+    // district/state overseers see their subtree.
+    return await scopeForCurrentSubject(await listIncidents())
   } catch (e) {
     logger.error("incident.list failed", { error: String(e) })
     return []

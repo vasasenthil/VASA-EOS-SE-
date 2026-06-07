@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { DISABILITY_TYPES, CWSN_SUPPORTS, cwsnSummary, type CwsnStudent } from "@/lib/cwsn"
 import { createStudentAction, reviewStudentAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -34,6 +35,7 @@ export function CwsnBoard({ initial = [] }: { initial?: CwsnStudent[] }) {
       supports,
       iepGoal: iepGoal.trim(),
       reviewed: false,
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setStudents((prev) => [optimistic, ...prev])
     startTransition(async () => {

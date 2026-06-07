@@ -10,6 +10,7 @@ const s = (reviewed: boolean, supports: string[] = []): CwsnStudent => ({
   supports,
   iepGoal: "g",
   reviewed,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("catalogues expose disability types and supports", () => {

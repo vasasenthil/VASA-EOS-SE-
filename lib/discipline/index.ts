@@ -14,6 +14,8 @@ export interface Incident {
   action: string
   date: string
   status: IncidentStatus
+  /** Tenant node this incident belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface DisciplineSummary {

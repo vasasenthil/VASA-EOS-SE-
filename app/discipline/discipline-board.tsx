@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { INCIDENT_TYPES, disciplineSummary, type Incident, type Severity } from "@/lib/discipline"
 import { logIncidentAction, resolveIncidentAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ export function DisciplineBoard({ initial = [] }: { initial?: Incident[] }) {
   const s = disciplineSummary(incidents)
 
   function log() {
-    const optimistic: Incident = { id: `i-${Date.now()}`, student, type, severity, action: action.trim(), date: TODAY, status: "open" }
+    const optimistic: Incident = { id: `i-${Date.now()}`, student, type, severity, action: action.trim(), date: TODAY, status: "open", tenantId: DEFAULT_SCHOOL_NODE }
     setIncidents((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await logIncidentAction({ student: optimistic.student, type: optimistic.type, severity: optimistic.severity, action: optimistic.action })

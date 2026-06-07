@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { disciplineSummary, INCIDENT_TYPES, type Incident } from "@/lib/discipline"
 
-const i = (over: Partial<Incident>): Incident => ({ id: "i", student: "A", type: "Misconduct", severity: "minor", action: "", date: "2026-06-01", status: "open", ...over })
+const i = (over: Partial<Incident>): Incident => ({ id: "i", student: "A", type: "Misconduct", severity: "minor", action: "", date: "2026-06-01", status: "open", tenantId: "TN-CHN-B1-S1", ...over })
 
 test("incident types are defined", () => {
   assert.ok(INCIDENT_TYPES.length >= 4)

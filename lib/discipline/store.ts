@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Incident, IncidentStatus, Severity } from "./index"
 
 function id(): string {
@@ -18,24 +19,42 @@ interface Row {
   action: string
   date: string
   status: IncidentStatus
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Incident {
-  return { id: r.id, student: r.student, type: r.type, severity: r.severity, action: r.action, date: r.date, status: r.status }
+  return { id: r.id, student: r.student, type: r.type, severity: r.severity, action: r.action, date: r.date, status: r.status, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Incident[] = []
+// Seeded across tenant nodes so a district/state overseer sees several incidents
+// while a single school sees only its own.
+const store: Incident[] = [
+  { id: "INC-SEED1", student: "Student A", type: "Bullying", severity: "serious", action: "Counselling + parents", date: "2026-05-28", status: "open", tenantId: "TN-CHN-B1-S1" },
+  { id: "INC-SEED2", student: "Student B", type: "Property damage", severity: "moderate", action: "Restitution", date: "2026-05-25", status: "resolved", tenantId: "TN-CHN-B2-S1" },
+  { id: "INC-SEED3", student: "Student C", type: "Absenteeism", severity: "minor", action: "Home visit", date: "2026-06-02", status: "open", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewIncident {
   student: string
   type: string
   severity: Severity
   action: string
+  /** Tenant node the incident is filed against; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function logIncident(input: NewIncident): Promise<Incident> {
-  const inc: Incident = { id: id(), ...input, date: new Date().toISOString().slice(0, 10), status: "open" }
+  const inc: Incident = {
+    id: id(),
+    student: input.student,
+    type: input.type,
+    severity: input.severity,
+    action: input.action,
+    date: new Date().toISOString().slice(0, 10),
+    status: "open",
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
+  }
   const db = getDb()
   if (db) {
     await db.from("incidents").insert({
@@ -46,6 +65,7 @@ export async function logIncident(input: NewIncident): Promise<Incident> {
       action: inc.action,
       date: inc.date,
       status: inc.status,
+      tenant_id: inc.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
