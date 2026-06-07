@@ -17,6 +17,7 @@ export async function listIncidentsAction(): Promise<Incident[]> {
 }
 
 export async function logIncidentAction(input: NewIncident): Promise<Incident | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const inc = await logIncident(input)
     revalidatePath("/discipline")

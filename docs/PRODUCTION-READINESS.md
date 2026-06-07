@@ -18,8 +18,8 @@ Legend: ✅ done · 🟡 partial / foundation laid · ❌ not started
 | All interactive modules persisted | 🟡 | ~53 modules persist via stores (+ Distribution, Inventory movements, Certificates; Visitors/Circulation/Alumni; snapshots for Diagnostic/Results/staff-attendance); plus 6 workflow flows; **~21 modules still hold state in the browser (`useState`)** — mostly computed/seeded views (timetable, SIS, exam-seating planner, knowledge-graph, OMR). Rolling out module-by-module |
 | Workflow / approval engine processes | ✅ | Leave (dynamic), SMC (quorum), Recognition (3-tier), Admissions (verify→enrol + APAAR), **Grievance escalation (resolve/escalate per tier)** — role-locked inboxes + audit trail |
 | Input validation on writes | 🟡 | Zod on auth + several actions; not yet uniform across every action |
-| Access enforcement on writes (`requireAccess`) | 🟡 | PDP exists (`lib/access`, 5 models) and is wired on high-stakes actions; not yet on every mutation |
-| Automated tests + coverage gate | ✅ | Node test runner; **96 test files**, **>380 tests**, ~98% lines / ~91% branches, thresholds enforced in CI |
+| Access enforcement on writes (`requireAccess`) | ✅ | `lib/access/guard.canDo()` (fail-closed) enforces the 5-model PDP on all **high-stakes** writes — 6 approval workflows + 8 record-module transitions + sensitive creates (discipline, safety, CWSN). Open creates (citizen files grievance, teacher applies leave) intentionally ungated. |
+| Automated tests + coverage gate | ✅ | Node test runner; **100+ test files**, **475+ tests**, ~97% lines / ~84% branches, thresholds enforced in CI |
 
 ## 2. Operationalise-grade
 
@@ -32,8 +32,11 @@ Legend: ✅ done · 🟡 partial / foundation laid · ❌ not started
 | Env validation / config report | ✅ | `lib/env` — required vs optional contract, presence-only report, `mode` (production/demo); tested |
 | Integration posture introspection | ✅ | `lib/integrations/status` — per-port mock/live mode + which env vars are set |
 | Version / build stamping | ✅ | `APP_VERSION` from `VERCEL_GIT_COMMIT_SHA`, surfaced in probes |
-| Metrics (Prometheus/OTel) | ❌ | No metrics/traces export yet |
-| Centralised log shipping / SIEM | ❌ | Logs are stdout JSON; no aggregator/SIEM wired |
+| Metrics (Prometheus) | ✅ | `lib/metrics` + `GET /api/metrics` (Prometheus text); every audited mutation counted via `appendAudit`; tested |
+| Live ops console | ✅ | `/ops` — readiness + config + integration posture + metrics in one screen |
+| Request tracing id | ✅ | middleware sets/propagates `x-request-id` on every response |
+| Rate-limit seam | 🟡 | `lib/ratelimit` (fixed-window) applied to `/api/metrics`; per-instance only — swap for Redis at multi-instance scale |
+| Centralised log shipping / SIEM / OTel traces | ❌ | Logs are stdout JSON; no aggregator/SIEM/trace exporter wired |
 | DR / backup runbook, on-call/SLA | ❌ | Not defined |
 
 ## 3. Deployment-grade
@@ -43,9 +46,9 @@ Legend: ✅ done · 🟡 partial / foundation laid · ❌ not started
 | Reproducible build | ✅ | `next build` green; Node 20/22 CI matrix |
 | CI quality gates | ✅ | lint + typecheck + build + unit tests + coverage on `main` and `claude/**` |
 | Fail-soft on dependency outage | ✅ | Login, root page, dashboards and Supabase-backed getters degrade gracefully when the DB is unreachable (no crash) |
-| Health/readiness for the load balancer | ✅ | `/api/live`, `/api/ready` (this change) |
+| Health/readiness for the load balancer | ✅ | `/api/live`, `/api/ready`, `/api/health`, `/api/metrics` + `/ops` console |
 | Documented env contract | ✅ | `lib/env` + this doc + `docs/CREDENTIALS.md` |
-| Seed/runbook for first deploy | ✅ | `pnpm db:seed:auth` (auth + profiles); SQL seeds for org/data |
+| Seed/runbook for first deploy | ✅ | `pnpm db:seed:auth` (auth + profiles); SQL seeds for org/users/governance tiers/schemes/**policies** (017) |
 | Container/IaC + sovereign hosting | ❌ | Runs on Vercel + Supabase (managed, **non-sovereign**); no Dockerfile/IaC; TN SDC/MeitY target not provisioned |
 | Secrets management (Vault/HSM) | ❌ | Env-var secrets only |
 | Independent security + a11y audit | ❌ | Not performed |

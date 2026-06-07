@@ -21,6 +21,7 @@ export async function listConcernsAction(): Promise<SafetyConcern[]> {
 }
 
 export async function createConcernAction(input: NewConcern): Promise<SafetyConcern | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const c = await createConcern(input)
     revalidatePath("/safety")

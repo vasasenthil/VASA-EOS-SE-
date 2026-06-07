@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createStudent, reviewStudent, deleteStudent, listStudents, type NewStudent } from "@/lib/cwsn/store"
 import type { CwsnStudent } from "@/lib/cwsn"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listStudentsAction(): Promise<CwsnStudent[]> {
@@ -16,6 +17,7 @@ export async function listStudentsAction(): Promise<CwsnStudent[]> {
 }
 
 export async function createStudentAction(input: NewStudent): Promise<CwsnStudent | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const st = await createStudent(input)
     revalidatePath("/cwsn")
@@ -27,6 +29,7 @@ export async function createStudentAction(input: NewStudent): Promise<CwsnStuden
 }
 
 export async function reviewStudentAction(id: string): Promise<CwsnStudent | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const st = await reviewStudent(id)
     revalidatePath("/cwsn")
