@@ -76,3 +76,19 @@ create index if not exists tc_requests_tenant_id_idx on public.tc_requests (tena
 alter table if exists public.visitors
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists visitors_tenant_id_idx on public.visitors (tenant_id);
+
+alter table if exists public.loans
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists loans_tenant_id_idx on public.loans (tenant_id);
+
+alter table if exists public.alumni
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists alumni_tenant_id_idx on public.alumni (tenant_id);
+
+alter table if exists public.distribution
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists distribution_tenant_id_idx on public.distribution (tenant_id);
+
+alter table if exists public.certificates
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists certificates_tenant_id_idx on public.certificates (tenant_id);

@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { dueDate, type Loan } from "./index"
 
 function id(): string {
@@ -17,6 +18,7 @@ interface Row {
   issued_on: string
   due_on: string
   returned_on: string | null
+  tenant_id: string
   created_at: string
 }
 
@@ -29,16 +31,24 @@ function fromRow(r: Row): Loan {
     issuedOn: r.issued_on,
     dueOn: r.due_on,
     returnedOn: r.returned_on ?? undefined,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: Loan[] = []
+// Seeded across tenant nodes so library circulation rolls up by jurisdiction.
+const store: Loan[] = [
+  { id: "LN-SEED1", bookId: "B-101", bookTitle: "Thirukkural", borrower: "Class 9 — Asha", issuedOn: "2026-05-25", dueOn: "2026-06-08", tenantId: "TN-CHN-B1-S1" },
+  { id: "LN-SEED2", bookId: "B-220", bookTitle: "Wings of Fire", borrower: "Class 10 — Ravi", issuedOn: "2026-05-20", dueOn: "2026-06-03", returnedOn: "2026-06-01", tenantId: "TN-CHN-B2-S1" },
+  { id: "LN-SEED3", bookId: "B-330", bookTitle: "Ponniyin Selvan", borrower: "Class 8 — Kavya", issuedOn: "2026-06-01", dueOn: "2026-06-15", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewLoan {
   bookId: string
   bookTitle: string
   borrower: string
   issuedOn: string
+  /** Tenant node the loan is issued at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function issueLoan(input: NewLoan): Promise<Loan> {
@@ -49,6 +59,7 @@ export async function issueLoan(input: NewLoan): Promise<Loan> {
     borrower: input.borrower,
     issuedOn: input.issuedOn,
     dueOn: dueDate(input.issuedOn),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -60,6 +71,7 @@ export async function issueLoan(input: NewLoan): Promise<Loan> {
       issued_on: l.issuedOn,
       due_on: l.dueOn,
       returned_on: null,
+      tenant_id: l.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

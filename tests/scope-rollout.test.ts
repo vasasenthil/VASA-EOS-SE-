@@ -15,6 +15,10 @@ import { listEntries } from "@/lib/competitions/store"
 import { listTrips } from "@/lib/excursions/store"
 import { listTc } from "@/lib/tc/store"
 import { listVisitors } from "@/lib/visitors/store"
+import { listLoans } from "@/lib/circulation/store"
+import { listAlumni } from "@/lib/alumni/store"
+import { listDistribution } from "@/lib/distribution/store"
+import { listCertificates } from "@/lib/certificates/store"
 import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 beforeEach(() => __setTestDb(null)) // in-memory seeded path
@@ -78,6 +82,21 @@ test("drills/competitions/excursions/tc/visitors seeds are all scopable", async 
     const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
     assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
     assert.equal(cbe.length, 1)
+  }
+})
+
+test("circulation/alumni/distribution/certificates seeds are all scopable", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listLoans,
+    listAlumni,
+    listDistribution,
+    listCertificates,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
+    // Chennai district never sees Coimbatore's records.
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).every((r) => r.tenantId !== "TN-CBE-B1-S1"))
   }
 })
 

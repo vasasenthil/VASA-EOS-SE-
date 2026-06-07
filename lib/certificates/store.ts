@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { certRef, type CertType, type Certificate } from "./index"
 
 function id(): string {
@@ -18,6 +19,7 @@ interface Row {
   student_name: string
   issued_on: string
   remarks: string | null
+  tenant_id: string
   created_at: string
 }
 
@@ -30,16 +32,24 @@ function fromRow(r: Row): Certificate {
     studentName: r.student_name,
     issuedOn: r.issued_on,
     remarks: r.remarks ?? undefined,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: Certificate[] = []
+// Seeded across tenant nodes so certificate issuance rolls up by jurisdiction.
+const store: Certificate[] = [
+  { id: "CRT-SEED1", ref: certRef("bonafide", 1), type: "bonafide", studentApaar: "APAAR-0001", studentName: "Asha R", issuedOn: "2026-05-26", tenantId: "TN-CHN-B1-S1" },
+  { id: "CRT-SEED2", ref: certRef("conduct", 1), type: "conduct", studentApaar: "APAAR-0002", studentName: "Bala K", issuedOn: "2026-05-24", tenantId: "TN-CHN-B2-S1" },
+  { id: "CRT-SEED3", ref: certRef("transfer", 1), type: "transfer", studentApaar: "APAAR-0003", studentName: "Chitra M", issuedOn: "2026-06-01", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewCertificate {
   type: CertType
   studentApaar: string
   studentName: string
   remarks?: string
+  /** Tenant node the certificate is issued at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function issueCertificate(input: NewCertificate): Promise<Certificate> {
@@ -53,6 +63,7 @@ export async function issueCertificate(input: NewCertificate): Promise<Certifica
     studentName: input.studentName,
     issuedOn: new Date().toISOString().slice(0, 10),
     remarks: input.remarks?.trim() || undefined,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -64,6 +75,7 @@ export async function issueCertificate(input: NewCertificate): Promise<Certifica
       student_name: cert.studentName,
       issued_on: cert.issuedOn,
       remarks: cert.remarks ?? null,
+      tenant_id: cert.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

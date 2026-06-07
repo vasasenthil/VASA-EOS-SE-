@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextDistStatus, SAMPLE_DISTRIBUTION, type DistRecord } from "./index"
 
 function id(): string {
@@ -15,11 +16,12 @@ interface Row {
   student: string
   item: string
   status: DistRecord["status"]
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): DistRecord {
-  return { id: r.id, student: r.student, item: r.item, status: r.status }
+  return { id: r.id, student: r.student, item: r.item, status: r.status, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: DistRecord[] = SAMPLE_DISTRIBUTION.map((r) => ({ ...r }))
@@ -27,13 +29,15 @@ const store: DistRecord[] = SAMPLE_DISTRIBUTION.map((r) => ({ ...r }))
 export interface NewDist {
   student: string
   item: string
+  /** Tenant node the entitlement is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function addEntitlement(input: NewDist): Promise<DistRecord> {
-  const r: DistRecord = { id: id(), student: input.student, item: input.item, status: "entitled" }
+  const r: DistRecord = { id: id(), student: input.student, item: input.item, status: "entitled", tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
-    await db.from("distribution").insert({ id: r.id, student: r.student, item: r.item, status: r.status, created_at: new Date().toISOString() })
+    await db.from("distribution").insert({ id: r.id, student: r.student, item: r.item, status: r.status, tenant_id: r.tenantId, created_at: new Date().toISOString() })
   } else {
     store.unshift(r)
   }

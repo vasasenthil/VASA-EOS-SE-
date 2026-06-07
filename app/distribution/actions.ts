@@ -4,12 +4,14 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { addEntitlement, advanceDistribution, deleteDistribution, listDistribution, type NewDist } from "@/lib/distribution/store"
 import type { DistRecord } from "@/lib/distribution"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listDistributionAction(): Promise<DistRecord[]> {
   noStore()
   try {
-    return await listDistribution()
+    // Per-role data scoping: free-scheme distribution rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listDistribution())
   } catch (e) {
     logger.error("distribution.list failed", { error: String(e) })
     return []

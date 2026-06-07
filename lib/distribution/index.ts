@@ -19,13 +19,19 @@ export interface DistRecord {
   student: string
   item: string
   status: DistStatus
+  /** Tenant node this entitlement belongs to — drives per-role data scoping. */
+  tenantId: string
 }
+
+// Cycle the demo entitlements across school nodes so scoping is demonstrable.
+const DIST_NODES = ["TN-CHN-B1-S1", "TN-CHN-B2-S1", "TN-CBE-B1-S1"]
 
 export const SAMPLE_DISTRIBUTION: DistRecord[] = SIS_ROSTER.map((s, i) => ({
   id: `d-${i}`,
   student: s.name,
   item: DIST_ITEMS[i % DIST_ITEMS.length],
   status: DIST_FLOW[i % DIST_FLOW.length],
+  tenantId: DIST_NODES[i % DIST_NODES.length],
 }))
 
 export interface DistSummary {

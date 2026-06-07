@@ -34,4 +34,6 @@ export interface Certificate {
   studentName: string
   issuedOn: string
   remarks?: string
+  /** Tenant node this certificate belongs to — drives per-role data scoping. */
+  tenantId: string
 }

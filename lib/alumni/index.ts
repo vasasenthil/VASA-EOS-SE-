@@ -7,12 +7,14 @@ export interface Alumnus {
   batchYear: number
   occupation: string
   contact: string
+  /** Tenant node (alma-mater school) — drives per-role data scoping. */
+  tenantId: string
 }
 
 export const SAMPLE_ALUMNI: Alumnus[] = [
-  { id: "al-1", name: "Ravi Kumar", batchYear: 2008, occupation: "Civil Engineer", contact: "ravi@example.com" },
-  { id: "al-2", name: "Meena S", batchYear: 2015, occupation: "Doctor", contact: "meena@example.com" },
-  { id: "al-3", name: "Arjun P", batchYear: 2019, occupation: "Software Engineer", contact: "arjun@example.com" },
+  { id: "al-1", name: "Ravi Kumar", batchYear: 2008, occupation: "Civil Engineer", contact: "ravi@example.com", tenantId: "TN-CHN-B1-S1" },
+  { id: "al-2", name: "Meena S", batchYear: 2015, occupation: "Doctor", contact: "meena@example.com", tenantId: "TN-CHN-B2-S1" },
+  { id: "al-3", name: "Arjun P", batchYear: 2019, occupation: "Software Engineer", contact: "arjun@example.com", tenantId: "TN-CBE-B1-S1" },
 ]
 
 export function newAlumniId(): string {

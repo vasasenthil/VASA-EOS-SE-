@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { CERT_TYPES, certRef, certTypeDef, type CertType, type Certificate } from "@/lib/certificates"
 import { issueCertificateAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,7 @@ export function CertificateIssuer({ initial = [] }: { initial?: Certificate[] })
       studentName: s.name,
       issuedOn: new Date().toISOString().slice(0, 10),
       remarks: remarks.trim() || undefined,
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setIssued((prev) => [optimistic, ...prev])
     startTransition(async () => {

@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { issueLoan, returnLoan, deleteLoan, listLoans, type NewLoan } from "@/lib/circulation/store"
 import type { Loan } from "@/lib/circulation"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listLoansAction(): Promise<Loan[]> {
   noStore()
   try {
-    return await listLoans()
+    // Per-role data scoping: library circulation rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listLoans())
   } catch (e) {
     logger.error("loan.list failed", { error: String(e) })
     return []

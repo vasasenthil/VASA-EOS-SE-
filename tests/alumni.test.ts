@@ -11,9 +11,9 @@ test("decadeOf floors the year to its decade", () => {
 
 test("summary groups by decade and finds the latest batch", () => {
   const list: Alumnus[] = [
-    { id: "1", name: "A", batchYear: 2008, occupation: "", contact: "" },
-    { id: "2", name: "B", batchYear: 2015, occupation: "", contact: "" },
-    { id: "3", name: "C", batchYear: 2019, occupation: "", contact: "" },
+    { id: "1", name: "A", batchYear: 2008, occupation: "", contact: "", tenantId: "TN-CHN-B1-S1" },
+    { id: "2", name: "B", batchYear: 2015, occupation: "", contact: "", tenantId: "TN-CHN-B1-S1" },
+    { id: "3", name: "C", batchYear: 2019, occupation: "", contact: "", tenantId: "TN-CHN-B1-S1" },
   ]
   const s = alumniSummary(list)
   assert.equal(s.total, 3)

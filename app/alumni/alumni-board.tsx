@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { newAlumniId, decadeOf, alumniSummary, type Alumnus } from "@/lib/alumni"
 import { registerAlumnusAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,7 @@ export function AlumniBoard({ initial = [] }: { initial?: Alumnus[] }) {
 
   function add() {
     if (!name.trim()) return
-    const optimistic: Alumnus = { id: newAlumniId(), name: name.trim(), batchYear, occupation: occupation.trim(), contact: contact.trim() }
+    const optimistic: Alumnus = { id: newAlumniId(), name: name.trim(), batchYear, occupation: occupation.trim(), contact: contact.trim(), tenantId: DEFAULT_SCHOOL_NODE }
     setList((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await registerAlumnusAction({ name: optimistic.name, batchYear, occupation: optimistic.occupation, contact: optimistic.contact })

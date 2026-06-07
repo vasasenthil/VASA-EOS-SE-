@@ -12,6 +12,8 @@ export interface Loan {
   issuedOn: string // YYYY-MM-DD
   dueOn: string
   returnedOn?: string
+  /** Tenant node this loan belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 /** Add days to a YYYY-MM-DD date, returning YYYY-MM-DD. */

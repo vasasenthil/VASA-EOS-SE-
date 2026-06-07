@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { newAlumniId, SAMPLE_ALUMNI, type Alumnus } from "./index"
 
 interface Row {
@@ -12,11 +13,12 @@ interface Row {
   batch_year: number
   occupation: string
   contact: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Alumnus {
-  return { id: r.id, name: r.name, batchYear: r.batch_year, occupation: r.occupation, contact: r.contact }
+  return { id: r.id, name: r.name, batchYear: r.batch_year, occupation: r.occupation, contact: r.contact, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: Alumnus[] = SAMPLE_ALUMNI.map((a) => ({ ...a }))
@@ -26,10 +28,12 @@ export interface NewAlumnus {
   batchYear: number
   occupation: string
   contact: string
+  /** Tenant node (alma-mater school); defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function registerAlumnus(input: NewAlumnus): Promise<Alumnus> {
-  const a: Alumnus = { id: newAlumniId(), name: input.name, batchYear: input.batchYear, occupation: input.occupation, contact: input.contact }
+  const a: Alumnus = { id: newAlumniId(), name: input.name, batchYear: input.batchYear, occupation: input.occupation, contact: input.contact, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("alumni").insert({
@@ -38,6 +42,7 @@ export async function registerAlumnus(input: NewAlumnus): Promise<Alumnus> {
       batch_year: a.batchYear,
       occupation: a.occupation,
       contact: a.contact,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

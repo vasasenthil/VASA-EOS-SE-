@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { CATALOGUE } from "@/lib/library"
 import { dueDate, loanStatus, circSummary, type Loan, type LoanStatus } from "@/lib/circulation"
 import { issueLoanAction, returnLoanAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -35,7 +36,7 @@ export function CirculationDesk({ initial = [] }: { initial?: Loan[] }) {
   function issue() {
     const book = CATALOGUE.find((b) => b.id === bookId)
     if (!book || !borrower.trim() || (available[bookId] ?? 0) <= 0) return
-    const optimistic: Loan = { id: `L-${Date.now()}`, bookId, bookTitle: book.title, borrower: borrower.trim(), issuedOn: TODAY, dueOn: dueDate(TODAY) }
+    const optimistic: Loan = { id: `L-${Date.now()}`, bookId, bookTitle: book.title, borrower: borrower.trim(), issuedOn: TODAY, dueOn: dueDate(TODAY), tenantId: DEFAULT_SCHOOL_NODE }
     setLoans((prev) => [optimistic, ...prev])
     setAvailable((a) => ({ ...a, [bookId]: a[bookId] - 1 }))
     startTransition(async () => {

@@ -9,6 +9,7 @@ const loan = (over: Partial<Loan>): Loan => ({
   borrower: "A",
   issuedOn: "2026-06-01",
   dueOn: "2026-06-15",
+  tenantId: "TN-CHN-B1-S1",
   ...over,
 })
 
