@@ -194,6 +194,15 @@ KPI aggregation over the shared datasets for the stakeholder portals. **Exports:
 In-app health checks of the core guardrails. **Exports:** `runSelfTests`,
 `SelfTestReport`, `Check`. **Route:** `/health`.
 
+### `access/scope`
+Per-role **data scoping** (ReBAC jurisdiction over Part XIII multi-tenancy): a subject
+governs its own tenant node and every descendant — Principal→school, BEO→block,
+DEO→district, State→all. Pure & tested: `inJurisdiction`, `scopeRecords`,
+`visibleTenantIds`, `jurisdictionLabel`, `nodeForRole`, `scopeBreakdown`, plus a demo
+tenant tree + records. Server enforcement seam `lib/access/scope-server.ts`
+(`scopeForCurrentSubject`, fail-closed) for listing actions. **Route:**
+`/governance/scope` (Data Scope Explorer — narrows live data as you switch role).
+
 ### `forumflow` + `tracking/analytics`
 **Forum/Meeting (RACI) workflow** — the 7th approval flow. `FORUM_RESOLUTION`
 (Secretary convenes → quorum of 2 Directors adopts → Minister ratifies significant
