@@ -19,6 +19,8 @@ export interface Drill {
   evacTimeSec: number
   participants: number
   observations: string
+  /** Tenant node this drill belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function isWithinTarget(d: Drill): boolean {

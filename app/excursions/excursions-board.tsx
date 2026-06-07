@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { excursionSummary, isTripReady, type Trip } from "@/lib/excursions"
 import { createTripAction, addConsentAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,7 @@ export function ExcursionsBoard({ initial = [] }: { initial?: Trip[] }) {
       classGroup: classGroup.trim() || "All",
       strength,
       consentsReceived: 0,
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setTrips((prev) => [optimistic, ...prev])
     startTransition(async () => {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { DRILL_TYPES, DRILL_TARGET_SEC, drillSummary, isWithinTarget, type Drill } from "@/lib/drills"
 import { createDrillAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ export function DrillsBoard({ initial = [] }: { initial?: Drill[] }) {
   const s = drillSummary(drills)
 
   function add() {
-    const optimistic: Drill = { id: `dr-${Date.now()}`, type, date, evacTimeSec, participants, observations: observations.trim() }
+    const optimistic: Drill = { id: `dr-${Date.now()}`, type, date, evacTimeSec, participants, observations: observations.trim(), tenantId: DEFAULT_SCHOOL_NODE }
     setDrills((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createDrillAction({

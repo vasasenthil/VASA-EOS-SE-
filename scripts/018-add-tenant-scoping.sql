@@ -56,3 +56,23 @@ create index if not exists water_tests_tenant_id_idx on public.water_tests (tena
 alter table if exists public.cctv_cameras
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists cctv_cameras_tenant_id_idx on public.cctv_cameras (tenant_id);
+
+alter table if exists public.drills
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists drills_tenant_id_idx on public.drills (tenant_id);
+
+alter table if exists public.competition_entries
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists competition_entries_tenant_id_idx on public.competition_entries (tenant_id);
+
+alter table if exists public.excursions
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists excursions_tenant_id_idx on public.excursions (tenant_id);
+
+alter table if exists public.tc_requests
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists tc_requests_tenant_id_idx on public.tc_requests (tenant_id);
+
+alter table if exists public.visitors
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists visitors_tenant_id_idx on public.visitors (tenant_id);

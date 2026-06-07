@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { COMP_LEVELS, MEDALS, compSummary, type CompEntry, type Medal } from "@/lib/competitions"
 import { createEntryAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ export function CompetitionsBoard({ initial = [] }: { initial?: CompEntry[] }) {
 
   function add() {
     if (!student.trim() || !event.trim()) return
-    const optimistic: CompEntry = { id: `cp-${Date.now()}`, student: student.trim(), event: event.trim(), level, medal }
+    const optimistic: CompEntry = { id: `cp-${Date.now()}`, student: student.trim(), event: event.trim(), level, medal, tenantId: DEFAULT_SCHOOL_NODE }
     setEntries((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createEntryAction({ student: optimistic.student, event: optimistic.event, level: optimistic.level, medal: optimistic.medal })

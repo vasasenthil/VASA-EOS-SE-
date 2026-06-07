@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { isOnPremises, visitorSummary, type Visitor } from "@/lib/visitors"
 
-const v = (over: Partial<Visitor>): Visitor => ({ id: "v", name: "A", purpose: "Official visit", meeting: "Principal", inTime: "09:00", ...over })
+const v = (over: Partial<Visitor>): Visitor => ({ id: "v", name: "A", purpose: "Official visit", meeting: "Principal", inTime: "09:00", tenantId: "TN-CHN-B1-S1", ...over })
 
 test("isOnPremises is true until checked out", () => {
   assert.equal(isOnPremises(v({})), true)

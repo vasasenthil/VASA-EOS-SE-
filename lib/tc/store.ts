@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextTcStatus, tcNumber, type TcRequest } from "./index"
 
 function id(): string {
@@ -17,19 +18,27 @@ interface Row {
   reason: string
   status: TcRequest["status"]
   date: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): TcRequest {
-  return { id: r.id, student: r.student, cls: r.cls, reason: r.reason, status: r.status, date: r.date }
+  return { id: r.id, student: r.student, cls: r.cls, reason: r.reason, status: r.status, date: r.date, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: TcRequest[] = []
+// Seeded across tenant nodes so TC issuance rolls up by jurisdiction.
+const store: TcRequest[] = [
+  { id: "TCR-SEED1", student: "Arjun M", cls: "10-A", reason: "Relocation / family transfer", status: "verified", date: "2026-05-22", tenantId: "TN-CHN-B1-S1" },
+  { id: "TCR-SEED2", student: "Sneha P", cls: "8-B", reason: "Completed final grade", status: "issued", date: "2026-05-10", tenantId: "TN-CHN-B2-S1" },
+  { id: "TCR-SEED3", student: "Bala K", cls: "6-C", reason: "Migration (inter-state)", status: "requested", date: "2026-06-02", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewTc {
   student: string
   cls: string
   reason: string
+  /** Tenant node the request is filed at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createTc(input: NewTc): Promise<TcRequest> {
@@ -40,6 +49,7 @@ export async function createTc(input: NewTc): Promise<TcRequest> {
     reason: input.reason,
     status: "requested",
     date: new Date().toISOString().slice(0, 10),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -50,6 +60,7 @@ export async function createTc(input: NewTc): Promise<TcRequest> {
       reason: t.reason,
       status: t.status,
       date: t.date,
+      tenant_id: t.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

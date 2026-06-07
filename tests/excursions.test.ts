@@ -9,6 +9,7 @@ const t = (strength: number, consentsReceived: number): Trip => ({
   classGroup: "6-8",
   strength,
   consentsReceived,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("a trip is ready only with full consent and non-zero strength", () => {

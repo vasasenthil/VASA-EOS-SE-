@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createDrill, deleteDrill, listDrills, type NewDrill } from "@/lib/drills/store"
 import type { Drill } from "@/lib/drills"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listDrillsAction(): Promise<Drill[]> {
   noStore()
   try {
-    return await listDrills()
+    // Per-role data scoping: drill compliance rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listDrills())
   } catch (e) {
     logger.error("drills.list failed", { error: String(e) })
     return []

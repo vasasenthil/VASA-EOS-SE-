@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Visitor } from "./index"
 
 function id(): string {
@@ -16,24 +17,32 @@ interface Row {
   meeting: string
   in_time: string
   out_time: string | null
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Visitor {
-  return { id: r.id, name: r.name, purpose: r.purpose, meeting: r.meeting, inTime: r.in_time, outTime: r.out_time ?? undefined }
+  return { id: r.id, name: r.name, purpose: r.purpose, meeting: r.meeting, inTime: r.in_time, outTime: r.out_time ?? undefined, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Visitor[] = []
+// Seeded across tenant nodes so the gate log rolls up by jurisdiction.
+const store: Visitor[] = [
+  { id: "VIS-SEED1", name: "R. Anand", purpose: "Parent meeting", meeting: "Class teacher 8-A", inTime: "09:15", outTime: "09:50", tenantId: "TN-CHN-B1-S1" },
+  { id: "VIS-SEED2", name: "Inspector S. Devi", purpose: "Inspection", meeting: "Principal", inTime: "10:30", tenantId: "TN-CHN-B2-S1" },
+  { id: "VIS-SEED3", name: "Vendor delivery", purpose: "Vendor / delivery", meeting: "Office", inTime: "11:00", outTime: "11:20", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewVisitor {
   name: string
   purpose: string
   meeting: string
   inTime: string
+  /** Tenant node the visitor is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function checkIn(input: NewVisitor): Promise<Visitor> {
-  const v: Visitor = { id: id(), name: input.name, purpose: input.purpose, meeting: input.meeting, inTime: input.inTime }
+  const v: Visitor = { id: id(), name: input.name, purpose: input.purpose, meeting: input.meeting, inTime: input.inTime, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("visitors").insert({
@@ -43,6 +52,7 @@ export async function checkIn(input: NewVisitor): Promise<Visitor> {
       meeting: v.meeting,
       in_time: v.inTime,
       out_time: null,
+      tenant_id: v.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

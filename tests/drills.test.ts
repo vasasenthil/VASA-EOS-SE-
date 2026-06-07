@@ -9,6 +9,7 @@ const d = (evacTimeSec: number, participants = 100): Drill => ({
   evacTimeSec,
   participants,
   observations: "",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("within target needs a positive time at or under the target", () => {

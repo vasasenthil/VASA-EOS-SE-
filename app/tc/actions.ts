@@ -4,12 +4,14 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createTc, advanceTc, deleteTc, listTc, type NewTc } from "@/lib/tc/store"
 import type { TcRequest } from "@/lib/tc"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listTcAction(): Promise<TcRequest[]> {
   noStore()
   try {
-    return await listTc()
+    // Per-role data scoping: TC issuance rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listTc())
   } catch (e) {
     logger.error("tc.list failed", { error: String(e) })
     return []

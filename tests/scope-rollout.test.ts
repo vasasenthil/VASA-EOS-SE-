@@ -10,6 +10,11 @@ import { listRti } from "@/lib/rti/store"
 import { listChildren } from "@/lib/oosc/store"
 import { listTests } from "@/lib/water/store"
 import { listCameras } from "@/lib/cctv/store"
+import { listDrills } from "@/lib/drills/store"
+import { listEntries } from "@/lib/competitions/store"
+import { listTrips } from "@/lib/excursions/store"
+import { listTc } from "@/lib/tc/store"
+import { listVisitors } from "@/lib/visitors/store"
 import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 beforeEach(() => __setTestDb(null)) // in-memory seeded path
@@ -53,6 +58,23 @@ test("rte/rti/oosc/water/cctv seeds are all scopable by jurisdiction", async () 
     const all = await list()
     assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
     // A single Coimbatore school sees only its own record, never Chennai's.
+    const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
+    assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
+    assert.equal(cbe.length, 1)
+  }
+})
+
+test("drills/competitions/excursions/tc/visitors seeds are all scopable", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listDrills,
+    listEntries,
+    listTrips,
+    listTc,
+    listVisitors,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
     const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
     assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
     assert.equal(cbe.length, 1)

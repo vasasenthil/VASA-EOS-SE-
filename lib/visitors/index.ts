@@ -10,6 +10,8 @@ export interface Visitor {
   meeting: string // person/dept being visited
   inTime: string
   outTime?: string
+  /** Tenant node this visitor record belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function isOnPremises(v: Visitor): boolean {

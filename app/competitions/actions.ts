@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createEntry, deleteEntry, listEntries, type NewEntry } from "@/lib/competitions/store"
 import type { CompEntry } from "@/lib/competitions"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listEntriesAction(): Promise<CompEntry[]> {
   noStore()
   try {
-    return await listEntries()
+    // Per-role data scoping: achievements roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listEntries())
   } catch (e) {
     logger.error("competitions.list failed", { error: String(e) })
     return []

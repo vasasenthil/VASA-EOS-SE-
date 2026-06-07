@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { checkIn, checkOut, deleteVisitor, listVisitors, type NewVisitor } from "@/lib/visitors/store"
 import type { Visitor } from "@/lib/visitors"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listVisitorsAction(): Promise<Visitor[]> {
   noStore()
   try {
-    return await listVisitors()
+    // Per-role data scoping: the gate log rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listVisitors())
   } catch (e) {
     logger.error("visitor.list failed", { error: String(e) })
     return []

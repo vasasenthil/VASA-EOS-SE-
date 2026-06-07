@@ -26,6 +26,8 @@ export interface TcRequest {
   reason: string
   status: TcStatus
   date: string
+  /** Tenant node this request belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface TcSummary {

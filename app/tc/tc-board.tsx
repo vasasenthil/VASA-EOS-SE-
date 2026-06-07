@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { TC_REASONS, nextTcStatus, tcSummary, tcNumber, type TcRequest } from "@/lib/tc"
 import { createTcAction, advanceTcAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ export function TcBoard({ initial = [] }: { initial?: TcRequest[] }) {
       reason,
       status: "requested",
       date: new Date().toISOString().slice(0, 10),
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setRequests((prev) => [optimistic, ...prev])
     startTransition(async () => {

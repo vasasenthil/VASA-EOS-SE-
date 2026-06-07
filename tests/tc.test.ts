@@ -9,6 +9,7 @@ const r = (status: TcRequest["status"]): TcRequest => ({
   reason: "Relocation / family transfer",
   status,
   date: "2026-06-05",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("status advances through the flow and clamps at issued", () => {

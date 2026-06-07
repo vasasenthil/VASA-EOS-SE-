@@ -8,6 +8,8 @@ export interface Trip {
   classGroup: string
   strength: number
   consentsReceived: number
+  /** Tenant node this trip belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface ExcursionSummary {

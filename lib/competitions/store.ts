@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { CompEntry, Medal } from "./index"
 
 function id(): string {
@@ -15,24 +16,32 @@ interface Row {
   event: string
   level: string
   medal: Medal
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): CompEntry {
-  return { id: r.id, student: r.student, event: r.event, level: r.level, medal: r.medal }
+  return { id: r.id, student: r.student, event: r.event, level: r.level, medal: r.medal, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: CompEntry[] = []
+// Seeded across tenant nodes so achievements roll up by jurisdiction.
+const store: CompEntry[] = [
+  { id: "CP-SEED1", student: "Nila", event: "Science Olympiad", level: "State", medal: "Gold", tenantId: "TN-CHN-B1-S1" },
+  { id: "CP-SEED2", student: "Vikram", event: "Maths Quiz", level: "District", medal: "Silver", tenantId: "TN-CHN-B2-S1" },
+  { id: "CP-SEED3", student: "Iniya", event: "Essay", level: "Block", medal: "Participation", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewEntry {
   student: string
   event: string
   level: string
   medal: Medal
+  /** Tenant node the entry is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createEntry(input: NewEntry): Promise<CompEntry> {
-  const e: CompEntry = { id: id(), student: input.student, event: input.event, level: input.level, medal: input.medal }
+  const e: CompEntry = { id: id(), student: input.student, event: input.event, level: input.level, medal: input.medal, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("competition_entries").insert({
@@ -41,6 +50,7 @@ export async function createEntry(input: NewEntry): Promise<CompEntry> {
       event: e.event,
       level: e.level,
       medal: e.medal,
+      tenant_id: e.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

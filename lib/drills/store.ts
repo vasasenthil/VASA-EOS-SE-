@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Drill } from "./index"
 
 function id(): string {
@@ -17,6 +18,7 @@ interface Row {
   evac_time_sec: number
   participants: number
   observations: string
+  tenant_id: string
   created_at: string
 }
 
@@ -28,10 +30,16 @@ function fromRow(r: Row): Drill {
     evacTimeSec: r.evac_time_sec,
     participants: r.participants,
     observations: r.observations,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: Drill[] = []
+// Seeded across tenant nodes so drill compliance rolls up by jurisdiction.
+const store: Drill[] = [
+  { id: "DR-SEED1", type: "Fire", date: "2026-05-20", evacTimeSec: 210, participants: 820, observations: "Within target", tenantId: "TN-CHN-B1-S1" },
+  { id: "DR-SEED2", type: "Earthquake", date: "2026-05-12", evacTimeSec: 300, participants: 640, observations: "Over target — retrain", tenantId: "TN-CHN-B2-S1" },
+  { id: "DR-SEED3", type: "Lockdown / security", date: "2026-06-01", evacTimeSec: 180, participants: 910, observations: "Good", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewDrill {
   type: string
@@ -39,6 +47,8 @@ export interface NewDrill {
   evacTimeSec: number
   participants: number
   observations: string
+  /** Tenant node the drill is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createDrill(input: NewDrill): Promise<Drill> {
@@ -49,6 +59,7 @@ export async function createDrill(input: NewDrill): Promise<Drill> {
     evacTimeSec: input.evacTimeSec,
     participants: input.participants,
     observations: input.observations,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -59,6 +70,7 @@ export async function createDrill(input: NewDrill): Promise<Drill> {
       evac_time_sec: d.evacTimeSec,
       participants: d.participants,
       observations: d.observations,
+      tenant_id: d.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

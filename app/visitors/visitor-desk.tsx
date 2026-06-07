@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { VISIT_PURPOSES, isOnPremises, visitorSummary, type Visitor } from "@/lib/visitors"
 import { checkInAction, checkOutAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function VisitorDesk({ initial = [] }: { initial?: Visitor[] }) {
 
   function checkIn() {
     if (!name.trim()) return
-    const optimistic: Visitor = { id: `v-${Date.now()}`, name: name.trim(), purpose, meeting: meeting.trim(), inTime: now() }
+    const optimistic: Visitor = { id: `v-${Date.now()}`, name: name.trim(), purpose, meeting: meeting.trim(), inTime: now(), tenantId: DEFAULT_SCHOOL_NODE }
     setVisitors((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await checkInAction({ name: optimistic.name, purpose: optimistic.purpose, meeting: optimistic.meeting, inTime: optimistic.inTime })

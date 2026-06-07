@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createTrip, addConsent, deleteTrip, listTrips, type NewTrip } from "@/lib/excursions/store"
 import type { Trip } from "@/lib/excursions"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listTripsAction(): Promise<Trip[]> {
   noStore()
   try {
-    return await listTrips()
+    // Per-role data scoping: trips roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listTrips())
   } catch (e) {
     logger.error("excursions.list failed", { error: String(e) })
     return []

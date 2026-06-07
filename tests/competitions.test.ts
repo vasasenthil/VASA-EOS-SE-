@@ -8,6 +8,7 @@ const e = (medal: CompEntry["medal"]): CompEntry => ({
   event: "Quiz",
   level: COMP_LEVELS[0],
   medal,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("catalogues expose levels and medals", () => {

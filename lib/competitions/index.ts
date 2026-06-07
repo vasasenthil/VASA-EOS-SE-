@@ -13,6 +13,8 @@ export interface CompEntry {
   event: string
   level: string
   medal: Medal
+  /** Tenant node this entry belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface CompSummary {
