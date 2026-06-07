@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CertificateIssuer } from "./certificate-issuer"
+import { listCertificatesAction } from "./actions"
 
-export default function CertificatesPage() {
+export default async function CertificatesPage() {
+  const initial = await listCertificatesAction()
   return (
     <Shell>
       <PageHeader>
@@ -13,7 +15,7 @@ export default function CertificatesPage() {
           ledger.
         </PageHeaderDescription>
       </PageHeader>
-      <CertificateIssuer />
+      <CertificateIssuer initial={initial} />
     </Shell>
   )
 }

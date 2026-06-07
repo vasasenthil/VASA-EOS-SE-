@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { INVENTORY } from "@/lib/procurement"
-import { adjust, isLow, type Movement, type MovementType } from "@/lib/stock"
+import { adjust, isLow, deriveStock, type Movement, type MovementType } from "@/lib/stock"
+import { recordMovementAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,20 +11,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const TODAY = new Date().toISOString().slice(0, 10)
+const BASE = Object.fromEntries(INVENTORY.map((i) => [i.item, i.inStock])) as Record<string, number>
 
-export function InventoryDesk() {
-  const [stock, setStock] = useState<Record<string, number>>(() =>
-    Object.fromEntries(INVENTORY.map((i) => [i.item, i.inStock])),
-  )
-  const [moves, setMoves] = useState<Movement[]>([])
+export function InventoryDesk({ initial = [] }: { initial?: Movement[] }) {
+  // Stock derives from base inventory net of persisted movements.
+  const [stock, setStock] = useState<Record<string, number>>(() => deriveStock(BASE, initial))
+  const [moves, setMoves] = useState<Movement[]>(initial)
   const [item, setItem] = useState(INVENTORY[0]?.item ?? "")
   const [type, setType] = useState<MovementType>("issue")
   const [qty, setQty] = useState(10)
+  const [, startTransition] = useTransition()
 
   function apply() {
     if (qty <= 0) return
+    const optimistic: Movement = { id: `mv-${Date.now()}`, item, type, qty, at: TODAY }
     setStock((s) => ({ ...s, [item]: adjust(s[item] ?? 0, type, qty) }))
-    setMoves((m) => [{ id: `mv-${Date.now()}`, item, type, qty, at: TODAY }, ...m])
+    setMoves((m) => [optimistic, ...m])
+    startTransition(async () => {
+      const saved = await recordMovementAction({ item, type, qty, at: TODAY })
+      if (saved) setMoves((m) => m.map((x) => (x.id === optimistic.id ? saved : x)))
+    })
   }
 
   return (

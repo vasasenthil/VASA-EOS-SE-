@@ -1,35 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { CERT_TYPES, certRef, certTypeDef, type CertType, type Certificate } from "@/lib/certificates"
+import { issueCertificateAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function CertificateIssuer() {
-  const [issued, setIssued] = useState<Certificate[]>([])
-  const [seq, setSeq] = useState(1)
+export function CertificateIssuer({ initial = [] }: { initial?: Certificate[] }) {
+  const [issued, setIssued] = useState<Certificate[]>(initial)
   const [student, setStudent] = useState(SIS_ROSTER[0]?.apaarId ?? "")
   const [type, setType] = useState<CertType>("transfer")
   const [remarks, setRemarks] = useState("")
+  const [, startTransition] = useTransition()
 
   function issue() {
     const s = SIS_ROSTER.find((x) => x.apaarId === student)
     if (!s) return
-    const cert: Certificate = {
-      id: `cert-${seq}`,
-      ref: certRef(type, seq),
+    const optimistic: Certificate = {
+      id: `cert-${Date.now()}`,
+      ref: certRef(type, issued.filter((c) => c.type === type).length + 1),
       type,
       studentApaar: s.apaarId,
       studentName: s.name,
       issuedOn: new Date().toISOString().slice(0, 10),
       remarks: remarks.trim() || undefined,
     }
-    setIssued((prev) => [cert, ...prev])
-    setSeq((n) => n + 1)
+    setIssued((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await issueCertificateAction({ type, studentApaar: s.apaarId, studentName: s.name, remarks: optimistic.remarks })
+      if (saved) setIssued((prev) => prev.map((c) => (c.id === optimistic.id ? saved : c)))
+    })
     setRemarks("")
   }
 

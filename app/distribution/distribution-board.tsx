@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { SAMPLE_DISTRIBUTION, nextDistStatus, distributionSummary, type DistRecord, type DistStatus } from "@/lib/distribution"
+import { useState, useTransition } from "react"
+import { nextDistStatus, distributionSummary, type DistRecord, type DistStatus } from "@/lib/distribution"
+import { advanceDistributionAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,12 +14,17 @@ const STATUS_VARIANT: Record<DistStatus, "outline" | "secondary" | "default"> = 
   acknowledged: "default",
 }
 
-export function DistributionBoard() {
-  const [records, setRecords] = useState<DistRecord[]>(SAMPLE_DISTRIBUTION)
+export function DistributionBoard({ initial = [] }: { initial?: DistRecord[] }) {
+  const [records, setRecords] = useState<DistRecord[]>(initial)
+  const [, startTransition] = useTransition()
   const s = distributionSummary(records)
 
   function advance(id: string) {
     setRecords((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextDistStatus(r.status) } : r)))
+    startTransition(async () => {
+      const saved = await advanceDistributionAction(id)
+      if (saved) setRecords((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (

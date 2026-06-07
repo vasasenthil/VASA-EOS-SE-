@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { InventoryDesk } from "./inventory-desk"
+import { listMovementsAction } from "./actions"
 
-export default function InventoryPage() {
+export default async function InventoryPage() {
+  const initial = await listMovementsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function InventoryPage() {
           replenish it, and items at or below their reorder level are flagged live.
         </PageHeaderDescription>
       </PageHeader>
-      <InventoryDesk />
+      <InventoryDesk initial={initial} />
     </Shell>
   )
 }

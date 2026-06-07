@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { DistributionBoard } from "./distribution-board"
+import { listDistributionAction } from "./actions"
 
-export default function DistributionPage() {
+export default async function DistributionPage() {
+  const initial = await listDistributionAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function DistributionPage() {
           coverage. Production reconciles against inventory and the beneficiary&apos;s APAAR record.
         </PageHeaderDescription>
       </PageHeader>
-      <DistributionBoard />
+      <DistributionBoard initial={initial} />
     </Shell>
   )
 }
