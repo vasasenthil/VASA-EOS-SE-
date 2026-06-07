@@ -2,9 +2,10 @@ import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { RecognitionApprovalBoard } from "./recognition-approval-board"
 import { listRecognitionsAction } from "./actions"
+import { getCurrentRole } from "@/lib/auth/current-role"
 
 export default async function RecognitionApprovalsPage() {
-  const initial = await listRecognitionsAction()
+  const [initial, role] = await Promise.all([listRecognitionsAction(), getCurrentRole()])
   return (
     <Shell>
       <PageHeader>
@@ -14,7 +15,7 @@ export default async function RecognitionApprovalsPage() {
           (Director). Switch role to act at each tier and watch the application progress with a full audit trail.
         </PageHeaderDescription>
       </PageHeader>
-      <RecognitionApprovalBoard initial={initial} />
+      <RecognitionApprovalBoard initial={initial} sessionRole={role} />
     </Shell>
   )
 }

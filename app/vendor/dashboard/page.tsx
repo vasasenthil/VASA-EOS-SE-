@@ -16,12 +16,12 @@ export default function VendorDashboardPage() {
         { label: "Quality Score", value: "A" },
       ]}
       modules={[
-        "NEAT Marketplace Listing",
-        "Sandbox Environment",
-        "Open SDK / API Integration",
-        "Outcome Reporting",
-        "Quality Feedback",
-        "Payment Reconciliation",
+        { label: "Integrations Status", href: "/integrations" },
+        { label: "Content Discovery (DIKSHA)", href: "/content" },
+        { label: "Data Platform / SDK", href: "/data-platform" },
+        { label: "Outcome Reports", href: "/tracking/reports" },
+        { label: "Scheme Disbursement (DBT)", href: "/dbt" },
+        { label: "Quality Feedback", href: "/quality" },
       ]}
     />
   )

@@ -2,9 +2,10 @@ import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { LeaveApprovalBoard } from "./leave-approval-board"
 import { listLeaveFlowsAction } from "./actions"
+import { getCurrentRole } from "@/lib/auth/current-role"
 
 export default async function LeaveApprovalsPage() {
-  const initial = await listLeaveFlowsAction()
+  const [initial, role] = await Promise.all([listLeaveFlowsAction(), getCurrentRole()])
   return (
     <Shell>
       <PageHeader>
@@ -15,7 +16,7 @@ export default async function LeaveApprovalsPage() {
           inbox, act on requests, and watch the audit trail build.
         </PageHeaderDescription>
       </PageHeader>
-      <LeaveApprovalBoard initial={initial} />
+      <LeaveApprovalBoard initial={initial} sessionRole={role} />
     </Shell>
   )
 }

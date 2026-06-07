@@ -23,7 +23,7 @@ const ROLES = [
   { role: "PRINCIPAL", label: "Principal (chair)" },
 ]
 
-export function SmcApprovalBoard({ initial = [] }: { initial?: Rec[] }) {
+export function SmcApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -62,7 +62,7 @@ export function SmcApprovalBoard({ initial = [] }: { initial?: Rec[] }) {
         </CardContent>
       </Card>
 
-      <ApprovalInbox def={SMC_RESOLUTION} items={items} roles={ROLES} onDecide={decide} pending={pending} />
+      <ApprovalInbox def={SMC_RESOLUTION} items={items} roles={ROLES} onDecide={decide} pending={pending} sessionRole={sessionRole} />
     </div>
   )
 }

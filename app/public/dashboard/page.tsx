@@ -18,12 +18,12 @@ export default async function PublicDashboardPage() {
         { label: "Schemes Tracked", value: String(r.distinctSchemes) },
       ]}
       modules={[
-        "Public Performance Dashboards",
-        "School Finder",
-        "Scheme Tracking",
-        "RTI Workflow (auto-disclosure)",
-        "Citizen Feedback",
-        "Grievance Escalation",
+        { label: "Transparency (NEP Tracker)", href: "/tracking/dashboard" },
+        { label: "School Registry (UDISE+)", href: "/school-registry" },
+        { label: "Scheme Tracking", href: "/schemes" },
+        { label: "RTI Register", href: "/rti" },
+        { label: "Citizen Feedback", href: "/feedback" },
+        { label: "Grievances", href: "/grievance" },
       ]}
     />
   )

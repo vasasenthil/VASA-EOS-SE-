@@ -15,12 +15,12 @@ export default function CrccDashboardPage() {
         { label: "Avg Attendance", value: `${r.avgAttendance}%` },
       ]}
       modules={[
-        "GPS-Verified School Visits",
-        "Teacher Mentoring",
-        "NIPUN / Ennum Ezhuthum Tracking",
-        "Community Engagement",
-        "Offline Field Sync",
-        "Quick Reporting (voice/form)",
+        { label: "School Visits & Inspections", href: "/inspections" },
+        { label: "Teacher Mentoring (CPD)", href: "/cpd" },
+        { label: "NIPUN / Diagnostic", href: "/diagnostic" },
+        { label: "Reading Campaign (FLN)", href: "/reading" },
+        { label: "Remedial / NIPUN Classes", href: "/remedial" },
+        { label: "Grievances", href: "/grievance" },
       ]}
     />
   )

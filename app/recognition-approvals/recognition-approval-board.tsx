@@ -31,7 +31,7 @@ const TYPES: { key: RecognitionType; label: string }[] = [
   { key: "upgrade", label: "Upgrade" },
 ]
 
-export function RecognitionApprovalBoard({ initial = [] }: { initial?: Rec[] }) {
+export function RecognitionApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
   const [school, setSchool] = useState("")
   const [district, setDistrict] = useState("")
@@ -82,7 +82,7 @@ export function RecognitionApprovalBoard({ initial = [] }: { initial?: Rec[] }) 
         </CardContent>
       </Card>
 
-      <ApprovalInbox def={RECOGNITION_APPROVAL} items={items} roles={ROLES} onDecide={decide} pending={pending} />
+      <ApprovalInbox def={RECOGNITION_APPROVAL} items={items} roles={ROLES} onDecide={decide} pending={pending} sessionRole={sessionRole} />
     </div>
   )
 }

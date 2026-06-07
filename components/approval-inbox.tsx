@@ -29,15 +29,21 @@ export function ApprovalInbox({
   roles,
   onDecide,
   pending,
+  sessionRole,
 }: {
   def: WorkflowDef
   items: InboxItem[]
   roles: { role: string; label: string }[]
   onDecide: (id: string, role: string, decision: Decision) => void
   pending: boolean
+  /** When provided (and not ADMIN), the inbox locks to the signed-in role. */
+  sessionRole?: string | null
 }) {
-  const [asRole, setAsRole] = useState(roles[0]?.role ?? "")
+  // Lock to the signed-in role unless they're an admin (admins may act as any tier).
+  const locked = !!sessionRole && sessionRole !== "ADMIN"
+  const [asRole, setAsRole] = useState(locked ? (sessionRole as string) : roles[0]?.role ?? "")
 
+  const sessionLabel = roles.find((r) => r.role === sessionRole)?.label ?? sessionRole
   const inbox = items.filter(
     (i) => i.instance.status === "in_progress" && currentStep(def, i.instance)?.approverRole === asRole,
   )
@@ -47,17 +53,23 @@ export function ApprovalInbox({
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Approver inbox</CardTitle>
-          <select
-            value={asRole}
-            onChange={(e) => setAsRole(e.target.value)}
-            className="h-8 rounded-md border bg-background px-2 text-xs"
-          >
-            {roles.map((r) => (
-              <option key={r.role} value={r.role}>
-                Acting as: {r.label}
-              </option>
-            ))}
-          </select>
+          {locked ? (
+            <span className="rounded-md border bg-muted px-2 py-1 text-xs text-muted-foreground">
+              Signed in as: <span className="font-medium text-foreground">{sessionLabel}</span>
+            </span>
+          ) : (
+            <select
+              value={asRole}
+              onChange={(e) => setAsRole(e.target.value)}
+              className="h-8 rounded-md border bg-background px-2 text-xs"
+            >
+              {roles.map((r) => (
+                <option key={r.role} value={r.role}>
+                  Acting as: {r.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

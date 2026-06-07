@@ -15,12 +15,12 @@ export default function ResearcherDashboardPage() {
         { label: "Privacy", value: "k-anon + DP" },
       ]}
       modules={[
-        "Anonymised Dataset Access",
-        "Federated Study Tools",
-        "Longitudinal Analysis",
-        "Cross-State Benchmarking",
-        "IRB / Ethics Workflow",
-        "Publication-Ready Extracts",
+        { label: "Data Platform (anonymised)", href: "/data-platform" },
+        { label: "Knowledge Graph", href: "/knowledge-graph" },
+        { label: "Reports & Analytics", href: "/tracking/reports" },
+        { label: "Adoption & Retention", href: "/adoption" },
+        { label: "Consent & Audit", href: "/consent" },
+        { label: "Accessibility / CWSN", href: "/cwsn" },
       ]}
     />
   )
