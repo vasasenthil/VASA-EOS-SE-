@@ -76,6 +76,7 @@ import {
   UserMinus,
   BookCopy,
   Dumbbell,
+  Activity,
   HeartHandshake,
   Sunrise,
   PiggyBank,
@@ -228,6 +229,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Aadhaar Auth (UIDAI)", href: "/aadhaar", icon: Fingerprint },
     { title: "Integrations Status", href: "/integrations", icon: Plug },
     { title: "System Self-Test", href: "/health", icon: HeartPulse },
+    { title: "Operations & Health", href: "/ops", icon: Activity },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
