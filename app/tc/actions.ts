@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createTc, advanceTc, deleteTc, listTc, type NewTc } from "@/lib/tc/store"
 import type { TcRequest } from "@/lib/tc"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listTcAction(): Promise<TcRequest[]> {
@@ -27,6 +28,7 @@ export async function createTcAction(input: NewTc): Promise<TcRequest | null> {
 }
 
 export async function advanceTcAction(id: string): Promise<TcRequest | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const t = await advanceTc(id)
     revalidatePath("/tc")

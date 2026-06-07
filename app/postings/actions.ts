@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileTransfer, advanceTransfer, rejectTransfer, deleteTransfer, listTransfers, type NewTransfer } from "@/lib/postings/store"
 import type { TransferRequest } from "@/lib/postings"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listTransfersAction(): Promise<TransferRequest[]> {
@@ -27,6 +28,7 @@ export async function fileTransferAction(input: NewTransfer): Promise<TransferRe
 }
 
 export async function advanceTransferAction(id: string): Promise<TransferRequest | null> {
+  if (!(await canDo("manage:staff"))) return null
   try {
     const t = await advanceTransfer(id)
     revalidatePath("/postings")
@@ -38,6 +40,7 @@ export async function advanceTransferAction(id: string): Promise<TransferRequest
 }
 
 export async function rejectTransferAction(id: string): Promise<TransferRequest | null> {
+  if (!(await canDo("manage:staff"))) return null
   try {
     const t = await rejectTransfer(id)
     revalidatePath("/postings")

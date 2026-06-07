@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createApplicant, advanceApplicant, deleteApplicant, listApplicants, type NewApplicant } from "@/lib/rte/store"
 import type { RteApplicant } from "@/lib/rte"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listApplicantsAction(): Promise<RteApplicant[]> {
@@ -27,6 +28,7 @@ export async function createApplicantAction(input: NewApplicant): Promise<RteApp
 }
 
 export async function advanceApplicantAction(id: string): Promise<RteApplicant | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const a = await advanceApplicant(id)
     revalidatePath("/rte")

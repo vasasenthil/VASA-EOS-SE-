@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { addEntitlement, advanceDistribution, deleteDistribution, listDistribution, type NewDist } from "@/lib/distribution/store"
 import type { DistRecord } from "@/lib/distribution"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listDistributionAction(): Promise<DistRecord[]> {
@@ -27,6 +28,7 @@ export async function addEntitlementAction(input: NewDist): Promise<DistRecord |
 }
 
 export async function advanceDistributionAction(id: string): Promise<DistRecord | null> {
+  if (!(await canDo("read:scheme"))) return null
   try {
     const r = await advanceDistribution(id)
     revalidatePath("/distribution")

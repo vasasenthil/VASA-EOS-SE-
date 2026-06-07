@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { unstable_noStore as noStore } from "next/cache"
 import { createConcern, advanceConcern, deleteConcern, listConcerns, type NewConcern } from "@/lib/safety/store"
 import type { SafetyConcern } from "@/lib/safety"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 // Server actions for the Safety committee log. All fail soft: a persistence error
@@ -31,6 +32,7 @@ export async function createConcernAction(input: NewConcern): Promise<SafetyConc
 }
 
 export async function advanceConcernAction(id: string): Promise<SafetyConcern | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const c = await advanceConcern(id)
     revalidatePath("/safety")

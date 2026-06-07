@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { logIncident, resolveIncident, deleteIncident, listIncidents, type NewIncident } from "@/lib/discipline/store"
 import type { Incident } from "@/lib/discipline"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listIncidentsAction(): Promise<Incident[]> {
@@ -27,6 +28,7 @@ export async function logIncidentAction(input: NewIncident): Promise<Incident | 
 }
 
 export async function resolveIncidentAction(id: string): Promise<Incident | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const inc = await resolveIncident(id)
     revalidatePath("/discipline")
