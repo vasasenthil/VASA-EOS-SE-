@@ -15,12 +15,12 @@ export default function DeoDashboardPage() {
         { label: "Compliance", value: complianceLabel(r.compliance), hint: "RTE/RPwD/DPDP" },
       ]}
       modules={[
-        "District KPI & Heat Maps",
-        "Compliance Traffic-Light",
-        "Teacher Deployment",
-        "Resource Allocation",
-        "DIET Coordination",
-        "Inter-Departmental Coordination",
+        { label: "District KPI & Heat Maps", href: "/tracking/dashboard" },
+        { label: "Recognition Approvals (DEO scrutiny)", href: "/recognition-approvals" },
+        { label: "Leave Approvals (DEO tier)", href: "/leave-approvals" },
+        { label: "Quality & Compliance", href: "/quality" },
+        { label: "Teacher Deployment / Vacancy", href: "/vacancy" },
+        { label: "Grievances", href: "/grievance" },
       ]}
     />
   )

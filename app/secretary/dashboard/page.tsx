@@ -15,12 +15,12 @@ export default function SecretaryDashboardPage() {
         { label: "At-risk learners", value: String(r.atRisk), hint: "risk register" },
       ]}
       modules={[
-        "All-Directorate KPIs",
-        "Policy Implementation (NEP / TN SEP 2022)",
-        "Scheme Impact Dashboards",
-        "Inter-Departmental View",
-        "Assembly / Parliament Preparation",
-        "Risk Register Oversight",
+        { label: "All-Directorate KPIs", href: "/governance/dashboard" },
+        { label: "Policy Implementation (NEP)", href: "/tracking/dashboard" },
+        { label: "Scheme Impact Dashboards", href: "/schemes" },
+        { label: "Policies & Circulars", href: "/policies" },
+        { label: "Government Structure", href: "/governance/org" },
+        { label: "Risk Register (Challenges)", href: "/tracking/challenges" },
       ]}
     />
   )

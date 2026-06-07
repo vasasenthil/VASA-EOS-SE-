@@ -18,12 +18,12 @@ export default async function BeoDashboardPage() {
         { label: "Scheme Coverage", value: `${r.schemeCoveragePct}%` },
       ]}
       modules={[
-        "Block KPI Dashboard",
-        "AI-Prioritised Inspections",
-        "CRC Coordination",
-        "Scheme Implementation",
-        "Grievance Management",
-        "Teacher CPD Coordination",
+        { label: "Recognition Approvals (BEO verification)", href: "/recognition-approvals" },
+        { label: "Leave Approvals (BEO tier)", href: "/leave-approvals" },
+        { label: "AI-Prioritised Inspections", href: "/inspections" },
+        { label: "Grievance Management", href: "/grievance" },
+        { label: "Scheme Implementation", href: "/schemes" },
+        { label: "Block KPIs (NEP Tracker)", href: "/tracking/dashboard" },
       ]}
     />
   )

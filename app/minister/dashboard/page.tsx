@@ -15,12 +15,12 @@ export default function MinisterDashboardPage() {
         { label: "Districts", value: String(r.districts) },
       ]}
       modules={[
-        "Executive Outcomes",
-        "Scheme Impact (CMBS / Pudhumai Penn / Naan Mudhalvan)",
-        "234 Constituency View",
-        "Election-Commitment Tracking",
-        "Inter-State Benchmarking",
-        "Crisis Centre",
+        { label: "Executive Outcomes (NEP Tracker)", href: "/tracking/dashboard" },
+        { label: "Scheme Impact (CMBS / Pudhumai Penn)", href: "/schemes" },
+        { label: "Constituency / Stakeholder View", href: "/tracking/stakeholders" },
+        { label: "Election-Commitment Milestones", href: "/tracking/milestones" },
+        { label: "Reports & Benchmarking", href: "/tracking/reports" },
+        { label: "Crisis / Emergency Centre", href: "/emergency" },
       ]}
     />
   )
