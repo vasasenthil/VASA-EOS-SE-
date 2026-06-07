@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { textbookSummary, pendingOf, type Indent } from "@/lib/textbooks"
+import { createIndentAction, receiveCopiesAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,22 +10,32 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function TextbooksBoard() {
-  const [indents, setIndents] = useState<Indent[]>([])
+export function TextbooksBoard({ initial = [] }: { initial?: Indent[] }) {
+  const [indents, setIndents] = useState<Indent[]>(initial)
   const [cls, setCls] = useState("")
   const [subject, setSubject] = useState("")
   const [required, setRequired] = useState(50)
+  const [, startTransition] = useTransition()
 
   const s = textbookSummary(indents)
 
   function add() {
     if (!cls.trim() || !subject.trim() || required <= 0) return
-    setIndents((prev) => [{ id: `tb-${Date.now()}`, cls: cls.trim(), subject: subject.trim(), required, received: 0 }, ...prev])
+    const optimistic: Indent = { id: `tb-${Date.now()}`, cls: cls.trim(), subject: subject.trim(), required, received: 0 }
+    setIndents((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createIndentAction({ cls: optimistic.cls, subject: optimistic.subject, required: optimistic.required })
+      if (saved) setIndents((prev) => prev.map((i) => (i.id === optimistic.id ? saved : i)))
+    })
     setSubject("")
   }
 
   function receive(id: string, qty: number) {
-    setIndents((prev) => prev.map((i) => (i.id === id ? { ...i, received: Math.max(0, i.received + qty) } : i)))
+    setIndents((prev) => prev.map((i) => (i.id === id ? { ...i, received: Math.max(0, Math.min(i.required, i.received + qty)) } : i)))
+    startTransition(async () => {
+      const saved = await receiveCopiesAction(id, qty)
+      if (saved) setIndents((prev) => prev.map((i) => (i.id === id ? saved : i)))
+    })
   }
 
   return (

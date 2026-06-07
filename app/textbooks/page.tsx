@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { TextbooksBoard } from "./textbooks-board"
+import { listIndentsAction } from "./actions"
 
-export default function TextbooksPage() {
+export default async function TextbooksPage() {
+  const initial = await listIndentsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function TextbooksPage() {
           fulfilment so every child has books on day one.
         </PageHeaderDescription>
       </PageHeader>
-      <TextbooksBoard />
+      <TextbooksBoard initial={initial} />
     </Shell>
   )
 }

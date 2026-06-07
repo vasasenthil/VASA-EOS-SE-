@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { CADRES, vacancySummary, vacancyOf, type PostLine } from "@/lib/vacancy"
+import { createLineAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,17 +10,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function VacancyBoard() {
-  const [lines, setLines] = useState<PostLine[]>([])
+export function VacancyBoard({ initial = [] }: { initial?: PostLine[] }) {
+  const [lines, setLines] = useState<PostLine[]>(initial)
   const [subject, setSubject] = useState(CADRES[0])
   const [sanctioned, setSanctioned] = useState(1)
   const [working, setWorking] = useState(1)
+  const [, startTransition] = useTransition()
 
   const s = vacancySummary(lines)
 
   function add() {
     if (sanctioned < 0 || working < 0) return
-    setLines((prev) => [{ id: `pl-${Date.now()}`, subject, sanctioned, working }, ...prev])
+    const optimistic: PostLine = { id: `pl-${Date.now()}`, subject, sanctioned, working }
+    setLines((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createLineAction({ subject: optimistic.subject, sanctioned: optimistic.sanctioned, working: optimistic.working })
+      if (saved) setLines((prev) => prev.map((l) => (l.id === optimistic.id ? saved : l)))
+    })
   }
 
   return (

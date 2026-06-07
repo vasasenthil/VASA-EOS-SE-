@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { EcoBoard } from "./eco-board"
+import { listActivitiesAction } from "./actions"
 
-export default function EcoClubPage() {
+export default async function EcoClubPage() {
+  const initial = await listActivitiesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function EcoClubPage() {
           rate. Feeds the Green School / ESG score and builds environmental literacy.
         </PageHeaderDescription>
       </PageHeader>
-      <EcoBoard />
+      <EcoBoard initial={initial} />
     </Shell>
   )
 }

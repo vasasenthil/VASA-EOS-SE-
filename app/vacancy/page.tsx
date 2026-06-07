@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { VacancyBoard } from "./vacancy-board"
+import { listLinesAction } from "./actions"
 
-export default function VacancyPage() {
+export default async function VacancyPage() {
+  const initial = await listLinesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function VacancyPage() {
           surplus (for redeployment). The backbone of teacher rationalisation and counselling transfers.
         </PageHeaderDescription>
       </PageHeader>
-      <VacancyBoard />
+      <VacancyBoard initial={initial} />
     </Shell>
   )
 }

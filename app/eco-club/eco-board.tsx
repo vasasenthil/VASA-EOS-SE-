@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { ECO_ACTIVITIES, ecoSummary, type EcoActivity } from "@/lib/eco"
+import { createActivityAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,23 +10,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function EcoBoard() {
-  const [activities, setActivities] = useState<EcoActivity[]>([])
+export function EcoBoard({ initial = [] }: { initial?: EcoActivity[] }) {
+  const [activities, setActivities] = useState<EcoActivity[]>(initial)
   const [title, setTitle] = useState("")
   const [type, setType] = useState(ECO_ACTIVITIES[0])
   const [saplings, setSaplings] = useState(0)
   const [survived, setSurvived] = useState(0)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [, startTransition] = useTransition()
 
   const s = ecoSummary(activities)
   const isPlantation = type === "Tree plantation"
 
   function add() {
     if (!title.trim()) return
-    setActivities((prev) => [
-      { id: `ec-${Date.now()}`, title: title.trim(), type, saplings: isPlantation ? saplings : 0, survived: isPlantation ? survived : 0, date },
-      ...prev,
-    ])
+    const optimistic: EcoActivity = { id: `ec-${Date.now()}`, title: title.trim(), type, saplings: isPlantation ? saplings : 0, survived: isPlantation ? survived : 0, date }
+    setActivities((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createActivityAction({ title: optimistic.title, type: optimistic.type, saplings: optimistic.saplings, survived: optimistic.survived, date: optimistic.date })
+      if (saved) setActivities((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setTitle("")
     setSaplings(0)
     setSurvived(0)
