@@ -553,31 +553,42 @@ export async function getPoliciesAction(params?: {
   query = query.order(dbSortBy, { ascending: sortOrder === "asc" })
   const startIndex = (page - 1) * itemsPerPage
   query = query.range(startIndex, startIndex + itemsPerPage - 1)
-  const { data, error, count } = await query
-  if (error)
-    return {
-      policies: [],
-      totalCount: 0,
-      totalPages: 0,
-      currentPage: page,
-      itemsPerPage,
-      error: `DB error: ${error.message}`,
-    }
-  const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
-  const totalCount = count || 0
-  const totalPages = Math.ceil(totalCount / itemsPerPage)
-  return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
+  try {
+    const { data, error, count } = await query
+    if (error)
+      return {
+        policies: [],
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: page,
+        itemsPerPage,
+        error: `DB error: ${error.message}`,
+      }
+    const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
+    const totalCount = count || 0
+    const totalPages = Math.ceil(totalCount / itemsPerPage)
+    return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
+  } catch (e) {
+    // Supabase unreachable — fail soft so the page still renders.
+    console.error("getPoliciesAction failed; returning empty result:", e)
+    return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage }
+  }
 }
 
 export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | undefined> {
   if (!isSupabaseAdminConfigured()) return undefined
-  const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
-  if (error) {
-    if (error.code === "PGRST116") return undefined // No row found, not an error for this function
-    console.error("Supabase error fetching policy by ID:", error)
+  try {
+    const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
+    if (error) {
+      if (error.code === "PGRST116") return undefined // No row found, not an error for this function
+      console.error("Supabase error fetching policy by ID:", error)
+      return undefined
+    }
+    return data ? mapDbPolicyToPolicyDraft(data) : undefined
+  } catch (e) {
+    console.error("getPolicyByIdAction failed; returning undefined:", e)
     return undefined
   }
-  return data ? mapDbPolicyToPolicyDraft(data) : undefined
 }
 
 export async function deletePolicyAction(policyId: string): Promise<DeletePolicyActionState> {

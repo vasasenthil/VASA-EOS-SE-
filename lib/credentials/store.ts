@@ -91,8 +91,12 @@ export async function mintCredential(input: MintInput): Promise<VerifiableCreden
 export async function listCredentials(): Promise<VerifiableCredential[]> {
   const db = getDb()
   if (db) {
-    const { data } = await db.from("verifiable_credentials").select("*").order("anchor_seq", { ascending: false })
-    return ((data as CredentialRow[] | null) ?? []).map(fromRow)
+    try {
+      const { data } = await db.from("verifiable_credentials").select("*").order("anchor_seq", { ascending: false })
+      return ((data as CredentialRow[] | null) ?? []).map(fromRow)
+    } catch {
+      return []
+    }
   }
   return [...store].reverse()
 }

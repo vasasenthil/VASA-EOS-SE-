@@ -137,8 +137,12 @@ export async function resolveGrievance(gid: string): Promise<Grievance | undefin
 export async function listGrievances(): Promise<Grievance[]> {
   const db = getDb()
   if (db) {
-    const { data } = await db.from("grievances").select("*").order("created_at", { ascending: false })
-    return ((data as GrievanceRow[] | null) ?? []).map(fromRow)
+    try {
+      const { data } = await db.from("grievances").select("*").order("created_at", { ascending: false })
+      return ((data as GrievanceRow[] | null) ?? []).map(fromRow)
+    } catch {
+      return []
+    }
   }
   return [...store]
 }

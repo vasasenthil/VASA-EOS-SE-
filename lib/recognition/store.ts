@@ -61,8 +61,12 @@ const store: RecognitionApplication[] = [
 export async function listApplications(): Promise<RecognitionApplication[]> {
   const db = getDb()
   if (db) {
-    const { data } = await db.from("recognition_applications").select("*").order("updated_at", { ascending: false })
-    return ((data as RecognitionRow[] | null) ?? []).map(fromRow)
+    try {
+      const { data } = await db.from("recognition_applications").select("*").order("updated_at", { ascending: false })
+      return ((data as RecognitionRow[] | null) ?? []).map(fromRow)
+    } catch {
+      return []
+    }
   }
   return [...store]
 }
