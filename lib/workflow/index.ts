@@ -11,7 +11,9 @@
 // Definitions live in code (they carry predicate functions); instances — the
 // context + progress + history — are what gets persisted.
 
-export type Decision = "approve" | "reject"
+// approve = advance/clear the step · reject = terminate (rejected) ·
+// resolve = terminate successfully at ANY tier (used by escalation flows).
+export type Decision = "approve" | "reject" | "resolve"
 export type InstanceStatus = "in_progress" | "approved" | "rejected"
 
 export interface WorkflowStep {
@@ -122,6 +124,11 @@ export function act(def: WorkflowDef, inst: WorkflowInstance, input: ActInput): 
 
   if (input.decision === "reject") {
     return { ok: true, instance: { ...inst, status: "rejected", history } }
+  }
+
+  // "resolve" closes the instance successfully at the current tier (no further routing).
+  if (input.decision === "resolve") {
+    return { ok: true, instance: { ...inst, status: "approved", history } }
   }
 
   const need = step.quorum ?? 1

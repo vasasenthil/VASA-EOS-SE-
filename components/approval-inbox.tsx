@@ -14,6 +14,17 @@ export interface InboxItem {
   subtitle?: string
 }
 
+export interface InboxAction {
+  decision: Decision
+  label: string
+  variant?: "default" | "outline" | "secondary" | "destructive"
+}
+
+const DEFAULT_ACTIONS: InboxAction[] = [
+  { decision: "approve", label: "Approve", variant: "default" },
+  { decision: "reject", label: "Reject", variant: "outline" },
+]
+
 const STATUS_VARIANT: Record<string, "secondary" | "default" | "destructive"> = {
   in_progress: "secondary",
   approved: "default",
@@ -30,6 +41,7 @@ export function ApprovalInbox({
   onDecide,
   pending,
   sessionRole,
+  actions = DEFAULT_ACTIONS,
 }: {
   def: WorkflowDef
   items: InboxItem[]
@@ -38,6 +50,8 @@ export function ApprovalInbox({
   pending: boolean
   /** When provided (and not ADMIN), the inbox locks to the signed-in role. */
   sessionRole?: string | null
+  /** Custom action buttons (e.g. Resolve / Escalate). Defaults to Approve / Reject. */
+  actions?: InboxAction[]
 }) {
   // Lock to the signed-in role unless they're an admin (admins may act as any tier).
   const locked = !!sessionRole && sessionRole !== "ADMIN"
@@ -87,12 +101,17 @@ export function ApprovalInbox({
                   </div>
                   {i.subtitle ? <p className="mt-1 text-xs text-muted-foreground">{i.subtitle}</p> : null}
                   <div className="mt-2 flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onDecide(i.id, asRole, "reject")} disabled={pending}>
-                      Reject
-                    </Button>
-                    <Button size="sm" onClick={() => onDecide(i.id, asRole, "approve")} disabled={pending}>
-                      Approve
-                    </Button>
+                    {actions.map((a) => (
+                      <Button
+                        key={a.decision}
+                        size="sm"
+                        variant={a.variant ?? "default"}
+                        onClick={() => onDecide(i.id, asRole, a.decision)}
+                        disabled={pending}
+                      >
+                        {a.label}
+                      </Button>
+                    ))}
                   </div>
                 </li>
               ))}
@@ -126,7 +145,7 @@ export function ApprovalInbox({
                       <ul className="mt-2 space-y-0.5 border-t pt-2 text-xs text-muted-foreground">
                         {i.instance.history.map((h, idx) => (
                           <li key={idx}>
-                            {h.decision === "approve" ? "✓" : "✗"} {h.actorRole} {h.decision}d
+                            {h.decision === "reject" ? "✗" : "✓"} {h.actorRole} {h.decision}d
                             {h.note ? ` — ${h.note}` : ""}
                           </li>
                         ))}

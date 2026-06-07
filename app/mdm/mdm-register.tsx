@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { consumptionPct, leakageFlag, mdmSummary, type MdmEntry } from "@/lib/mdm"
+import { recordEntryAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,18 +11,24 @@ import { Label } from "@/components/ui/label"
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function MdmRegister() {
-  const [entries, setEntries] = useState<MdmEntry[]>([])
+export function MdmRegister({ initial = [] }: { initial?: MdmEntry[] }) {
+  const [entries, setEntries] = useState<MdmEntry[]>(initial)
   const [date, setDate] = useState(TODAY)
   const [enrolment, setEnrolment] = useState(60)
   const [present, setPresent] = useState(54)
   const [mealsServed, setMealsServed] = useState(54)
   const [menu, setMenu] = useState("Sambar rice, egg, banana")
+  const [, startTransition] = useTransition()
 
   const s = mdmSummary(entries)
 
   function record() {
-    setEntries((prev) => [{ id: `m-${Date.now()}`, date, enrolment, present, mealsServed, menu: menu.trim() }, ...prev])
+    const optimistic: MdmEntry = { id: `m-${Date.now()}`, date, enrolment, present, mealsServed, menu: menu.trim() }
+    setEntries((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await recordEntryAction({ date, enrolment, present, mealsServed, menu: optimistic.menu })
+      if (saved) setEntries((prev) => prev.map((e) => (e.id === optimistic.id ? saved : e)))
+    })
   }
 
   return (

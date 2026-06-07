@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { SCHOLARSHIP_LEDGER, nextStatus, scholarshipSummary, inr, type ScholarRow, type ScholarStatus } from "@/lib/scholarship"
+import { useState, useTransition } from "react"
+import { nextStatus, scholarshipSummary, inr, type ScholarRow, type ScholarStatus } from "@/lib/scholarship"
+import { advanceBeneficiaryAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,12 +15,17 @@ const STATUS_VARIANT: Record<ScholarStatus, "default" | "secondary" | "outline">
   disbursed: "default",
 }
 
-export function ScholarshipBoard() {
-  const [rows, setRows] = useState<ScholarRow[]>(SCHOLARSHIP_LEDGER)
+export function ScholarshipBoard({ initial = [] }: { initial?: ScholarRow[] }) {
+  const [rows, setRows] = useState<ScholarRow[]>(initial)
+  const [, startTransition] = useTransition()
   const s = scholarshipSummary(rows)
 
   function advance(id: string) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextStatus(r.status) } : r)))
+    startTransition(async () => {
+      const saved = await advanceBeneficiaryAction(id)
+      if (saved) setRows((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (

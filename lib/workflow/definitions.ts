@@ -59,4 +59,22 @@ export const ADMISSION_APPROVAL: WorkflowDef = {
   ],
 }
 
-export const WORKFLOW_DEFS: WorkflowDef[] = [LEAVE_APPROVAL, SMC_RESOLUTION, RECOGNITION_APPROVAL, ADMISSION_APPROVAL]
+// Grievance redressal escalation: starts at the school (Principal); each tier can
+// RESOLVE (close) or ESCALATE (approve → next tier): School → Block → District.
+export const GRIEVANCE_ESCALATION: WorkflowDef = {
+  id: "grievance-escalation",
+  name: "Grievance Redressal",
+  steps: [
+    { id: "school", name: "School (Principal)", approverRole: "PRINCIPAL" },
+    { id: "block", name: "Block (BEO)", approverRole: "BEO" },
+    { id: "district", name: "District (DEO)", approverRole: "DEO" },
+  ],
+}
+
+export const WORKFLOW_DEFS: WorkflowDef[] = [
+  LEAVE_APPROVAL,
+  SMC_RESOLUTION,
+  RECOGNITION_APPROVAL,
+  ADMISSION_APPROVAL,
+  GRIEVANCE_ESCALATION,
+]

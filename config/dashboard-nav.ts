@@ -167,6 +167,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "PTM Scheduling", href: "/ptm", icon: Presentation },
     { title: "School Health (RBSK)", href: "/rbsk", icon: Stethoscope },
     { title: "Grievances", href: "/grievance", icon: MessageSquare },
+    { title: "Grievance Escalation (Workflow)", href: "/grievance-approvals", icon: MessageSquare },
     { title: "Parent Feedback", href: "/feedback", icon: Heart },
     { title: "Governance Framework", href: "/governance/framework", icon: Scale },
     { title: "School Finance", href: "/finance", icon: Banknote },
