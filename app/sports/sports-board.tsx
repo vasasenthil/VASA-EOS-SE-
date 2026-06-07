@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { SPORT_EVENTS, sportsSummary, type Medal, type SportResult } from "@/lib/sports"
+import { recordResultAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,16 +16,22 @@ const MEDAL_VARIANT: Record<Medal, "default" | "secondary" | "outline"> = {
   participation: "outline",
 }
 
-export function SportsBoard() {
-  const [results, setResults] = useState<SportResult[]>([])
+export function SportsBoard({ initial = [] }: { initial?: SportResult[] }) {
+  const [results, setResults] = useState<SportResult[]>(initial)
   const [event, setEvent] = useState(SPORT_EVENTS[0])
   const [student, setStudent] = useState(SIS_ROSTER[0]?.name ?? "")
   const [medal, setMedal] = useState<Medal>("gold")
+  const [, startTransition] = useTransition()
 
   const s = sportsSummary(results)
 
   function record() {
-    setResults((prev) => [{ id: `sp-${Date.now()}`, event, student, medal }, ...prev])
+    const optimistic: SportResult = { id: `sp-${Date.now()}`, event, student, medal }
+    setResults((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await recordResultAction({ event, student, medal })
+      if (saved) setResults((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
   }
 
   return (

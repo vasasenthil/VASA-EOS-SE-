@@ -48,4 +48,15 @@ export const RECOGNITION_APPROVAL: WorkflowDef = {
   ],
 }
 
-export const WORKFLOW_DEFS: WorkflowDef[] = [LEAVE_APPROVAL, SMC_RESOLUTION, RECOGNITION_APPROVAL]
+// Student admission: documents verified by the Academic Head, then the Principal
+// enrols and an APAAR id is minted. Two-level, two distinct roles.
+export const ADMISSION_APPROVAL: WorkflowDef = {
+  id: "admission-approval",
+  name: "Student Admission",
+  steps: [
+    { id: "verify", name: "Document verification", approverRole: "ACADEMIC_HEAD" },
+    { id: "enrol", name: "Enrolment & APAAR", approverRole: "PRINCIPAL" },
+  ],
+}
+
+export const WORKFLOW_DEFS: WorkflowDef[] = [LEAVE_APPROVAL, SMC_RESOLUTION, RECOGNITION_APPROVAL, ADMISSION_APPROVAL]

@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { SportsBoard } from "./sports-board"
+import { listResultsAction } from "./actions"
 
-export default function SportsPage() {
+export default async function SportsPage() {
+  const initial = await listResultsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function SportsPage() {
           live — the basis for talent identification and school sports recognition.
         </PageHeaderDescription>
       </PageHeader>
-      <SportsBoard />
+      <SportsBoard initial={initial} />
     </Shell>
   )
 }
