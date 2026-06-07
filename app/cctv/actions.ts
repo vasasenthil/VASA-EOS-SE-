@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createCamera, setCameraWorking, deleteCamera, listCameras, type NewCamera } from "@/lib/cctv/store"
 import type { Camera } from "@/lib/cctv"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listCamerasAction(): Promise<Camera[]> {
   noStore()
   try {
-    return await listCameras()
+    // Per-role data scoping: camera health rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listCameras())
   } catch (e) {
     logger.error("cctv.list failed", { error: String(e) })
     return []

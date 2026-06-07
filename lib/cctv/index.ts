@@ -17,6 +17,8 @@ export interface Camera {
   location: string
   zone: string
   working: boolean
+  /** Tenant node this camera belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface CctvSummary {

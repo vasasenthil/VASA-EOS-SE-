@@ -18,6 +18,8 @@ export interface WaterTest {
   ph: number
   result: WaterResult
   remarks: string
+  /** Tenant node this test belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface WaterSummary {

@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createTest, deleteTest, listTests, type NewTest } from "@/lib/water/store"
 import type { WaterTest } from "@/lib/water"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listTestsAction(): Promise<WaterTest[]> {
   noStore()
   try {
-    return await listTests()
+    // Per-role data scoping: WASH results roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listTests())
   } catch (e) {
     logger.error("water.list failed", { error: String(e) })
     return []

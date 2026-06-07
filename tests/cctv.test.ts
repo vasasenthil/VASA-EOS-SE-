@@ -7,6 +7,7 @@ const cam = (zone: string, working: boolean): Camera => ({
   location: "loc",
   zone,
   working,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("zone catalogue is non-empty", () => {

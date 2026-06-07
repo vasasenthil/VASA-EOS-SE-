@@ -8,6 +8,7 @@ const a = (status: RteApplicant["status"]): RteApplicant => ({
   category: "EWS (economically weaker)",
   status,
   date: "2026-06-05",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("status advances through the flow and clamps at admitted", () => {

@@ -5,6 +5,11 @@ import { listIncidents, logIncident } from "@/lib/discipline/store"
 import { listStudents, createStudent } from "@/lib/cwsn/store"
 import { listItems } from "@/lib/lostfound/store"
 import { listCooks } from "@/lib/cooks/store"
+import { listApplicants } from "@/lib/rte/store"
+import { listRti } from "@/lib/rti/store"
+import { listChildren } from "@/lib/oosc/store"
+import { listTests } from "@/lib/water/store"
+import { listCameras } from "@/lib/cctv/store"
 import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 beforeEach(() => __setTestDb(null)) // in-memory seeded path
@@ -34,6 +39,24 @@ test("lost-found and cooks seeds are scopable by jurisdiction", async () => {
   const cooks = await listCooks()
   assert.ok(scopeRecords(SCOPE_TENANTS, "TN", cooks).length >= 3)
   assert.equal(scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", cooks).length, 1)
+})
+
+test("rte/rti/oosc/water/cctv seeds are all scopable by jurisdiction", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listApplicants,
+    listRti,
+    listChildren,
+    listTests,
+    listCameras,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
+    // A single Coimbatore school sees only its own record, never Chennai's.
+    const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
+    assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
+    assert.equal(cbe.length, 1)
+  }
 })
 
 test("new records default to the demo school node when tenantId is omitted", async () => {

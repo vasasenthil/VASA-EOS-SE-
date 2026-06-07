@@ -9,6 +9,7 @@ const t = (source: string, result: WaterTest["result"]): WaterTest => ({
   ph: 7,
   result,
   remarks: "",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("pH safety follows IS 10500 range 6.5-8.5", () => {

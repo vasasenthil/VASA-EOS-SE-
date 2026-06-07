@@ -36,3 +36,23 @@ alter table if exists public.cooks
 
 create index if not exists cooks_tenant_id_idx
   on public.cooks (tenant_id);
+
+alter table if exists public.rte_applicants
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists rte_applicants_tenant_id_idx on public.rte_applicants (tenant_id);
+
+alter table if exists public.rti_requests
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists rti_requests_tenant_id_idx on public.rti_requests (tenant_id);
+
+alter table if exists public.oosc_children
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists oosc_children_tenant_id_idx on public.oosc_children (tenant_id);
+
+alter table if exists public.water_tests
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists water_tests_tenant_id_idx on public.water_tests (tenant_id);
+
+alter table if exists public.cctv_cameras
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists cctv_cameras_tenant_id_idx on public.cctv_cameras (tenant_id);

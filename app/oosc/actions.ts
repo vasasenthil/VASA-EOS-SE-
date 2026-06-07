@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createChild, advanceChild, deleteChild, listChildren, type NewChild } from "@/lib/oosc/store"
 import type { OoscChild } from "@/lib/oosc"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listChildrenAction(): Promise<OoscChild[]> {
   noStore()
   try {
-    return await listChildren()
+    // Per-role data scoping: OoSC mainstreaming rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listChildren())
   } catch (e) {
     logger.error("oosc.list failed", { error: String(e) })
     return []

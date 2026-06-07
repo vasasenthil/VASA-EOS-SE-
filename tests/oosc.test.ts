@@ -9,6 +9,7 @@ const c = (status: OoscChild["status"]): OoscChild => ({
   reason: "Migration",
   status,
   targetClass: "4",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("status advances through the flow and clamps at mainstreamed", () => {

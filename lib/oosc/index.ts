@@ -26,6 +26,8 @@ export interface OoscChild {
   reason: string
   status: OoscStatus
   targetClass: string
+  /** Tenant node this child is tracked under — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface OoscSummary {

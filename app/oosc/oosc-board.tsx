@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { OOSC_REASONS, nextOoscStatus, ooscSummary, type OoscChild } from "@/lib/oosc"
 import { createChildAction, advanceChildAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ export function OoscBoard({ initial = [] }: { initial?: OoscChild[] }) {
       reason,
       status: "identified",
       targetClass: targetClass.trim() || "—",
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setChildren((prev) => [optimistic, ...prev])
     startTransition(async () => {

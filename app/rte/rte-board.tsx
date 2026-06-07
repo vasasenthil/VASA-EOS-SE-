@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { RTE_CATEGORIES, nextRteStatus, rteSummary, type RteApplicant } from "@/lib/rte"
 import { createApplicantAction, advanceApplicantAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,7 @@ export function RteBoard({ initial = [] }: { initial?: RteApplicant[] }) {
       category,
       status: "applied",
       date: new Date().toISOString().slice(0, 10),
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setApplicants((prev) => [optimistic, ...prev])
     startTransition(async () => {

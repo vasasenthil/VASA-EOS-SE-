@@ -7,6 +7,24 @@ completed-vs-pending status per master-document domain.
 
 **Legend:** ✅ Done · 🟡 Partial (functional slice; depth/real-data pending) · ⏳ Pending.
 
+**Scope (current):** Tamil Nadu State only. Roadmap: more Indian states one-by-one,
+then National (Central MoE) tier later. See `CLAUDE.md`.
+
+---
+
+## Part 0 — Recent register (governance, scoping & traceability stream)
+
+| Capability | Status | Evidence |
+| --- | --- | --- |
+| Abbreviations & glossary | ✅ | `lib/glossary` + `/glossary` + JSON/CSV API; `<Abbr>` tooltip |
+| Governance Oversight Command Centre | ✅ | `lib/governance/oversight` + `/governance/oversight` (live rollup of all 7 flows) + CSV |
+| Forum/Meeting (RACI) workflow (7th flow) | ✅ | `FORUM_RESOLUTION` + `lib/forumflow` + `/governance/forums` (Secretary→Director quorum→Minister) |
+| NEP implementation analytics | ✅ | `lib/tracking/analytics` + `/tracking/analytics` (RAG, thrust-area/tier rollups, at-risk) |
+| Per-role data scoping (ReBAC) | ✅ (engine) / 🟡 (rollout) | `lib/access/scope` + `scope-server` + `/governance/scope`; **wired on 8 modules**: safety, discipline, cwsn, lost-found, cooks, rte, rti, oosc, water, cctv. Remaining store-backed modules pending |
+| Requirements traceability matrix | ✅ | `lib/traceability` + `/governance/traceability` + CSV; **26 user stories × 15 roles**, self-verifying (every referenced test asserted to exist) |
+| Tenant scoping migration | ✅ | `scripts/018-add-tenant-scoping.sql` (tenant_id + index on 8 tables) |
+| Tests / coverage | ✅ | **525 tests**, ~97.1% lines / ~84.9% branches / ~91.3% functions |
+
 **Posture caveat (read first).** The platform is built **mock-by-default on seeded
 data**: it runs and demos end-to-end with zero credentials. Every external dependency
 has a typed port with a working mock **and** a real HTTP-backed live adapter selected

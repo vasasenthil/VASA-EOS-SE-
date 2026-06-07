@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Camera } from "./index"
 
 function id(): string {
@@ -14,22 +15,30 @@ interface Row {
   location: string
   zone: string
   working: boolean
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Camera {
-  return { id: r.id, location: r.location, zone: r.zone, working: r.working }
+  return { id: r.id, location: r.location, zone: r.zone, working: r.working, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Camera[] = []
+// Seeded across tenant nodes so camera health rolls up by jurisdiction.
+const store: Camera[] = [
+  { id: "CAM-SEED1", location: "Main gate", zone: "Entrance", working: true, tenantId: "TN-CHN-B1-S1" },
+  { id: "CAM-SEED2", location: "Corridor A", zone: "Academic block", working: false, tenantId: "TN-CHN-B2-S1" },
+  { id: "CAM-SEED3", location: "Kitchen", zone: "MDM", working: true, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewCamera {
   location: string
   zone: string
+  /** Tenant node the camera is installed at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createCamera(input: NewCamera): Promise<Camera> {
-  const c: Camera = { id: id(), location: input.location, zone: input.zone, working: true }
+  const c: Camera = { id: id(), location: input.location, zone: input.zone, working: true, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("cctv_cameras").insert({
@@ -37,6 +46,7 @@ export async function createCamera(input: NewCamera): Promise<Camera> {
       location: c.location,
       zone: c.zone,
       working: c.working,
+      tenant_id: c.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

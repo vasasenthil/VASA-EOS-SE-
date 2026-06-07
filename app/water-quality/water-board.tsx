@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { WATER_SOURCES, isPhSafe, waterSummary, type WaterTest, type WaterResult } from "@/lib/water"
 import { createTestAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ export function WaterBoard({ initial = [] }: { initial?: WaterTest[] }) {
 
   function add() {
     const result: WaterResult = phSafe ? "safe" : "unsafe"
-    const optimistic: WaterTest = { id: `wt-${Date.now()}`, source, date, ph, result, remarks: remarks.trim() }
+    const optimistic: WaterTest = { id: `wt-${Date.now()}`, source, date, ph, result, remarks: remarks.trim(), tenantId: DEFAULT_SCHOOL_NODE }
     setTests((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createTestAction({ source: optimistic.source, date: optimistic.date, ph: optimistic.ph, remarks: optimistic.remarks })

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { nextRtiStatus, rtiSummary, daysLeft, isOverdue, type RtiRequest } from "@/lib/rti"
 import { createRtiAction, advanceRtiAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,6 +40,7 @@ export function RtiBoard({ initial = [] }: { initial?: RtiRequest[] }) {
       subject: subject.trim(),
       receivedDate,
       status: "received",
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setRequests((prev) => [optimistic, ...prev])
     startTransition(async () => {

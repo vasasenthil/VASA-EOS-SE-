@@ -4,12 +4,14 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createApplicant, advanceApplicant, deleteApplicant, listApplicants, type NewApplicant } from "@/lib/rte/store"
 import type { RteApplicant } from "@/lib/rte"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listApplicantsAction(): Promise<RteApplicant[]> {
   noStore()
   try {
-    return await listApplicants()
+    // Per-role data scoping: RTE intake rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listApplicants())
   } catch (e) {
     logger.error("rte.list failed", { error: String(e) })
     return []

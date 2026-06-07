@@ -25,6 +25,8 @@ export interface RteApplicant {
   category: string
   status: RteStatus
   date: string
+  /** Tenant node this applicant belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface RteSummary {

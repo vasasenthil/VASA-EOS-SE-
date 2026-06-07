@@ -8,6 +8,7 @@ const r = (status: RtiRequest["status"], receivedDate: string): RtiRequest => ({
   subject: "S",
   receivedDate,
   status,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("status advances through the flow and clamps at replied", () => {

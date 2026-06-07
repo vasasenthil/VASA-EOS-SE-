@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createRti, advanceRti, deleteRti, listRti, type NewRti } from "@/lib/rti/store"
 import type { RtiRequest } from "@/lib/rti"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listRtiAction(): Promise<RtiRequest[]> {
   noStore()
   try {
-    return await listRti()
+    // Per-role data scoping: RTI requests roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listRti())
   } catch (e) {
     logger.error("rti.list failed", { error: String(e) })
     return []

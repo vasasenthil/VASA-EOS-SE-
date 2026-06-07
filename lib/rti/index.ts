@@ -18,6 +18,8 @@ export interface RtiRequest {
   subject: string
   receivedDate: string
   status: RtiStatus
+  /** Tenant node this request belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function daysUsed(receivedDate: string, today: string): number {

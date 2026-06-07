@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextRteStatus, type RteApplicant } from "./index"
 
 function id(): string {
@@ -15,18 +16,26 @@ interface Row {
   category: string
   status: RteApplicant["status"]
   date: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): RteApplicant {
-  return { id: r.id, name: r.name, category: r.category, status: r.status, date: r.date }
+  return { id: r.id, name: r.name, category: r.category, status: r.status, date: r.date, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: RteApplicant[] = []
+// Seeded across tenant nodes so RTE intake rolls up by jurisdiction.
+const store: RteApplicant[] = [
+  { id: "RTE-SEED1", name: "Karthik R", category: "EWS (economically weaker)", status: "verified", date: "2026-05-20", tenantId: "TN-CHN-B1-S1" },
+  { id: "RTE-SEED2", name: "Divya S", category: "OBC (disadvantaged)", status: "allotted", date: "2026-05-18", tenantId: "TN-CHN-B2-S1" },
+  { id: "RTE-SEED3", name: "Mohan K", category: "EWS (economically weaker)", status: "applied", date: "2026-06-02", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewApplicant {
   name: string
   category: string
+  /** Tenant node the applicant applies to; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createApplicant(input: NewApplicant): Promise<RteApplicant> {
@@ -36,6 +45,7 @@ export async function createApplicant(input: NewApplicant): Promise<RteApplicant
     category: input.category,
     status: "applied",
     date: new Date().toISOString().slice(0, 10),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -45,6 +55,7 @@ export async function createApplicant(input: NewApplicant): Promise<RteApplicant
       category: a.category,
       status: a.status,
       date: a.date,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextRtiStatus, type RtiRequest } from "./index"
 
 function id(): string {
@@ -15,19 +16,27 @@ interface Row {
   subject: string
   received_date: string
   status: RtiRequest["status"]
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): RtiRequest {
-  return { id: r.id, applicant: r.applicant, subject: r.subject, receivedDate: r.received_date, status: r.status }
+  return { id: r.id, applicant: r.applicant, subject: r.subject, receivedDate: r.received_date, status: r.status, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: RtiRequest[] = []
+// Seeded across tenant nodes so RTI requests roll up by jurisdiction.
+const store: RtiRequest[] = [
+  { id: "RTI-SEED1", applicant: "A. Kumar", subject: "Teacher vacancy data", receivedDate: "2026-05-21", status: "under_process", tenantId: "TN-CHN-B1-S1" },
+  { id: "RTI-SEED2", applicant: "S. Rani", subject: "MDM expenditure 2025-26", receivedDate: "2026-05-15", status: "replied", tenantId: "TN-CHN-B2-S1" },
+  { id: "RTI-SEED3", applicant: "M. Das", subject: "Infrastructure grants", receivedDate: "2026-06-01", status: "received", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewRti {
   applicant: string
   subject: string
   receivedDate: string
+  /** Tenant node the request is filed against; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createRti(input: NewRti): Promise<RtiRequest> {
@@ -37,6 +46,7 @@ export async function createRti(input: NewRti): Promise<RtiRequest> {
     subject: input.subject,
     receivedDate: input.receivedDate,
     status: "received",
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -46,6 +56,7 @@ export async function createRti(input: NewRti): Promise<RtiRequest> {
       subject: r.subject,
       received_date: r.receivedDate,
       status: r.status,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
