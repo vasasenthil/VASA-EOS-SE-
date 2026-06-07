@@ -194,6 +194,16 @@ KPI aggregation over the shared datasets for the stakeholder portals. **Exports:
 In-app health checks of the core guardrails. **Exports:** `runSelfTests`,
 `SelfTestReport`, `Check`. **Route:** `/health`.
 
+### `governance/oversight`
+Cross-process **Governance Oversight Command Centre** — a live rollup over every
+approval instance in flight across all six workflow flows (leave · SMC · recognition
+· admission · grievance · maintenance). Pure aggregator (no store import).
+**Exports:** `summarizeOversight`, `rollupByFlow`, `pendingByRole`, `agingProfile`,
+`ageBucketFor`, `oversightToCSV`, `OversightItem`. **Routes:** `/governance/oversight`
+(real-time dashboard: by-process, awaiting-which-role, backlog aging, live register)
+and `/api/governance/oversight/csv` (downloadable register). Server collector
+`app/governance/oversight/collect.ts` projects each flow's records via the engine.
+
 ### `glossary`
 Abbreviations & Expansions reference for every acronym used across the platform
 (NEP, APAAR, RTE, SMC, CRCC, PM POSHAN, …) grouped into eight themes. Pure,

@@ -128,6 +128,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Stakeholders", href: "/tracking/stakeholders", icon: Users2 },
     { title: "Reports & Analytics", href: "/tracking/reports", icon: FileBarChart },
     { title: "Governance Overview", href: "/governance/dashboard", icon: Globe },
+    { title: "Oversight Command Centre", href: "/governance/oversight", icon: Activity },
     { title: "Audit Log", href: "/admin/audit-log", icon: ShieldCheck },
     { title: "AI Agents", href: "/ai-agents", icon: Layers },
     { title: "APAAR Identity", href: "/apaar", icon: Database },
