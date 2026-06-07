@@ -1,35 +1,48 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { SF_CATEGORIES, SF_SHORTLIST_CUTOFF, sfSummary, isShortlisted, type SfProject } from "@/lib/sciencefair"
+import { createProjectAction, scoreProjectAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function ScienceFairBoard() {
-  const [projects, setProjects] = useState<SfProject[]>([])
+export function ScienceFairBoard({ initial = [] }: { initial?: SfProject[] }) {
+  const [projects, setProjects] = useState<SfProject[]>(initial)
   const [title, setTitle] = useState("")
   const [student, setStudent] = useState("")
   const [cls, setCls] = useState("")
   const [category, setCategory] = useState(SF_CATEGORIES[0])
+  const [, startTransition] = useTransition()
 
   const s = sfSummary(projects)
 
   function add() {
     if (!title.trim() || !student.trim()) return
-    setProjects((prev) => [
-      { id: `sf-${Date.now()}`, title: title.trim(), student: student.trim(), cls: cls.trim() || "—", category, score: 0, judged: false },
-      ...prev,
-    ])
+    const optimistic: SfProject = { id: `sf-${Date.now()}`, title: title.trim(), student: student.trim(), cls: cls.trim() || "—", category, score: 0, judged: false }
+    setProjects((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createProjectAction({ title: optimistic.title, student: optimistic.student, cls: optimistic.cls, category: optimistic.category })
+      if (saved) setProjects((prev) => prev.map((p) => (p.id === optimistic.id ? saved : p)))
+    })
     setTitle("")
     setStudent("")
     setCls("")
   }
 
+  // Live local update while dragging (no write per tick)…
   function judge(id: string, score: number) {
     setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, score, judged: true } : p)))
+  }
+
+  // …persist once on release (pointer-up / key-up / blur).
+  function commitScore(id: string, score: number) {
+    startTransition(async () => {
+      const saved = await scoreProjectAction(id, score)
+      if (saved) setProjects((prev) => prev.map((p) => (p.id === id ? saved : p)))
+    })
   }
 
   return (
@@ -74,7 +87,18 @@ export function ScienceFairBoard() {
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{p.student} · {p.cls} · {p.category}</p>
                     <div className="mt-2 flex items-center gap-2">
-                      <input type="range" min={0} max={100} value={p.score} onChange={(e) => judge(p.id, Number(e.target.value))} className="flex-1" aria-label={`Score ${p.title}`} />
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={p.score}
+                        onChange={(e) => judge(p.id, Number(e.target.value))}
+                        onPointerUp={(e) => commitScore(p.id, Number((e.target as HTMLInputElement).value))}
+                        onKeyUp={(e) => commitScore(p.id, Number((e.target as HTMLInputElement).value))}
+                        onBlur={(e) => commitScore(p.id, Number(e.target.value))}
+                        className="flex-1"
+                        aria-label={`Score ${p.title}`}
+                      />
                       <span className="w-8 text-right text-xs tabular-nums">{p.score}</span>
                     </div>
                   </li>

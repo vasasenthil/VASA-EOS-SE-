@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { FITNESS_TESTS, gradeFor, fitnessSummary, type FitnessRecord, type FitnessGrade } from "@/lib/fitness"
+import { createRecordAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,21 +15,24 @@ const GRADE_VARIANT: Record<FitnessGrade, "destructive" | "secondary" | "default
   Excellent: "default",
 }
 
-export function FitnessBoard() {
-  const [records, setRecords] = useState<FitnessRecord[]>([])
+export function FitnessBoard({ initial = [] }: { initial?: FitnessRecord[] }) {
+  const [records, setRecords] = useState<FitnessRecord[]>(initial)
   const [student, setStudent] = useState("")
   const [cls, setCls] = useState("")
   const [test, setTest] = useState(FITNESS_TESTS[0])
   const [score, setScore] = useState(60)
+  const [, startTransition] = useTransition()
 
   const s = fitnessSummary(records)
 
   function add() {
     if (!student.trim()) return
-    setRecords((prev) => [
-      { id: `ft-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", test, score, grade: gradeFor(score) },
-      ...prev,
-    ])
+    const optimistic: FitnessRecord = { id: `ft-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", test, score, grade: gradeFor(score) }
+    setRecords((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createRecordAction({ student: optimistic.student, cls: optimistic.cls, test: optimistic.test, score: optimistic.score })
+      if (saved) setRecords((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setStudent("")
   }
 

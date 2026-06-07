@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { ReadingBoard } from "./reading-board"
+import { listReadersAction } from "./actions"
 
-export default function ReadingPage() {
+export default async function ReadingPage() {
+  const initial = await listReadersAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function ReadingPage() {
           log books read, and watch the class fluency rate climb toward the NIPUN goal.
         </PageHeaderDescription>
       </PageHeader>
-      <ReadingBoard />
+      <ReadingBoard initial={initial} />
     </Shell>
   )
 }

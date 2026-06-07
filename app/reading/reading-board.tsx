@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { READING_LEVELS, nextReadingLevel, readingSummary, type Reader, type ReadingLevel } from "@/lib/reading"
+import { createReaderAction, promoteReaderAction, logBookAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,30 +18,41 @@ const LEVEL_VARIANT: Record<ReadingLevel, "destructive" | "secondary" | "outline
   Story: "default",
 }
 
-export function ReadingBoard() {
-  const [readers, setReaders] = useState<Reader[]>([])
+export function ReadingBoard({ initial = [] }: { initial?: Reader[] }) {
+  const [readers, setReaders] = useState<Reader[]>(initial)
   const [student, setStudent] = useState("")
   const [cls, setCls] = useState("")
   const [level, setLevel] = useState<ReadingLevel>(READING_LEVELS[0])
+  const [, startTransition] = useTransition()
 
   const s = readingSummary(readers)
 
   function add() {
     if (!student.trim()) return
-    setReaders((prev) => [
-      { id: `rd-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", level, booksRead: 0 },
-      ...prev,
-    ])
+    const optimistic: Reader = { id: `rd-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", level, booksRead: 0 }
+    setReaders((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createReaderAction({ student: optimistic.student, cls: optimistic.cls, level: optimistic.level })
+      if (saved) setReaders((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setStudent("")
     setCls("")
   }
 
   function promote(id: string) {
     setReaders((prev) => prev.map((r) => (r.id === id ? { ...r, level: nextReadingLevel(r.level) } : r)))
+    startTransition(async () => {
+      const saved = await promoteReaderAction(id)
+      if (saved) setReaders((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   function readBook(id: string) {
     setReaders((prev) => prev.map((r) => (r.id === id ? { ...r, booksRead: r.booksRead + 1 } : r)))
+    startTransition(async () => {
+      const saved = await logBookAction(id)
+      if (saved) setReaders((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (

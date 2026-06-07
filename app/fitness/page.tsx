@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { FitnessBoard } from "./fitness-board"
+import { listRecordsAction } from "./actions"
 
-export default function FitnessPage() {
+export default async function FitnessPage() {
+  const initial = await listRecordsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function FitnessPage() {
           who need a PE follow-up plan. Builds physical literacy under Khelo India.
         </PageHeaderDescription>
       </PageHeader>
-      <FitnessBoard />
+      <FitnessBoard initial={initial} />
     </Shell>
   )
 }
