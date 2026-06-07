@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { StaffSheet } from "./staff-sheet"
+import { listSheetsAction } from "./actions"
 
-export default function StaffAttendancePage() {
+export default async function StaffAttendancePage() {
+  const initial = await listSheetsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function StaffAttendancePage() {
           the rate and counts update live. Production federates with biometric/HRMS feeds.
         </PageHeaderDescription>
       </PageHeader>
-      <StaffSheet />
+      <StaffSheet initial={initial} />
     </Shell>
   )
 }

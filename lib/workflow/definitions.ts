@@ -71,10 +71,23 @@ export const GRIEVANCE_ESCALATION: WorkflowDef = {
   ],
 }
 
+// Maintenance ticket: Principal triages & assigns → Vendor does the work →
+// Principal verifies & closes. Role-gated closure (only the Principal closes).
+export const MAINTENANCE_WORKFLOW: WorkflowDef = {
+  id: "maintenance-workflow",
+  name: "Maintenance Ticket",
+  steps: [
+    { id: "triage", name: "Triage & assign", approverRole: "PRINCIPAL" },
+    { id: "work", name: "Vendor work", approverRole: "VENDOR" },
+    { id: "close", name: "Verify & close", approverRole: "PRINCIPAL" },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
   RECOGNITION_APPROVAL,
   ADMISSION_APPROVAL,
   GRIEVANCE_ESCALATION,
+  MAINTENANCE_WORKFLOW,
 ]

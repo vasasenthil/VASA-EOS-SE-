@@ -174,6 +174,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "School Development Plan", href: "/sdp", icon: Banknote },
     { title: "Scholarship Tracking", href: "/scholarships", icon: Banknote },
     { title: "Maintenance Tickets", href: "/maintenance", icon: Wrench },
+    { title: "Maintenance Tickets (Workflow)", href: "/maintenance-approvals", icon: Wrench },
     { title: "Admissions & Enrolment", href: "/admissions", icon: Users },
     { title: "Admissions Approvals (Workflow)", href: "/admissions-approvals", icon: Users },
     { title: "Pre-Primary / Anganwadi", href: "/pre-primary", icon: Heart },
