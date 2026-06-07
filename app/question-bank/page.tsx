@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { QuestionBoard } from "./question-board"
+import { listPapersAction } from "./actions"
 
-export default function QuestionBankPage() {
+export default async function QuestionBankPage() {
+  const initial = await listPapersAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function QuestionBankPage() {
           Add your own questions and select them to build the paper live.
         </PageHeaderDescription>
       </PageHeader>
-      <QuestionBoard />
+      <QuestionBoard initial={initial} />
     </Shell>
   )
 }

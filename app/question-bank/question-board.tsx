@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { QUESTION_BANK, PAPER_TARGET, newQuestionId, paperSummary, type Difficulty, type Question } from "@/lib/question-bank"
+import type { PaperSnapshot } from "@/lib/question-bank/store"
+import { savePaperAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,15 +16,27 @@ const DIFF_VARIANT: Record<Difficulty, "default" | "secondary" | "destructive"> 
   hard: "destructive",
 }
 
-export function QuestionBoard() {
+export function QuestionBoard({ initial = [] }: { initial?: PaperSnapshot[] }) {
   const [bank, setBank] = useState<Question[]>(QUESTION_BANK)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [subject, setSubject] = useState("Mathematics")
   const [text, setText] = useState("")
   const [difficulty, setDifficulty] = useState<Difficulty>("medium")
   const [marks, setMarks] = useState(5)
+  const [paperTitle, setPaperTitle] = useState("Term paper")
+  const [papers, setPapers] = useState<PaperSnapshot[]>(initial)
+  const [pending, startTransition] = useTransition()
 
-  const paper = paperSummary(bank.filter((q) => selected.has(q.id)))
+  const selectedQs = bank.filter((q) => selected.has(q.id))
+  const paper = paperSummary(selectedQs)
+
+  function savePaper() {
+    if (!paperTitle.trim() || selectedQs.length === 0) return
+    startTransition(async () => {
+      const saved = await savePaperAction({ title: paperTitle.trim(), questionIds: selectedQs.map((q) => q.id), totalMarks: paper.totalMarks })
+      if (saved) setPapers((prev) => [saved, ...prev])
+    })
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -94,6 +108,18 @@ export function QuestionBoard() {
             <li className="flex justify-between"><span>Hard</span><span>{paper.byDifficulty.hard}m</span></li>
           </ul>
           <p className="text-xs text-muted-foreground">Select questions from the bank to assemble the paper toward the target marks and difficulty mix.</p>
+          <div className="space-y-1.5 border-t pt-3">
+            <Label htmlFor="ptitle">Paper title</Label>
+            <Input id="ptitle" value={paperTitle} onChange={(e) => setPaperTitle(e.target.value)} />
+          </div>
+          <Button onClick={savePaper} disabled={pending || !paperTitle.trim() || selectedQs.length === 0} className="w-full">Save paper</Button>
+          {papers.length > 0 ? (
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              {papers.slice(0, 5).map((p) => (
+                <li key={p.id} className="flex justify-between"><span>{p.title}</span><span>{p.count} Q · {p.totalMarks}m</span></li>
+              ))}
+            </ul>
+          ) : null}
         </CardContent>
       </Card>
     </div>

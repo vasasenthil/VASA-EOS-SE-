@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { PromotionBoard } from "./promotion-board"
+import { listRunsAction } from "./actions"
 
-export default function PromotionPage() {
+export default async function PromotionPage() {
+  const initial = await listRunsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function PromotionPage() {
           summary shows how many are promoting, detaining and graduating.
         </PageHeaderDescription>
       </PageHeader>
-      <PromotionBoard />
+      <PromotionBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { SeatingPlanner } from "./seating-planner"
+import { listPlansAction } from "./actions"
 
-export default function ExamSeatingPage() {
+export default async function ExamSeatingPage() {
+  const initial = await listPlansAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function ExamSeatingPage() {
           that needs another session. Part of the examination-security workflow.
         </PageHeaderDescription>
       </PageHeader>
-      <SeatingPlanner />
+      <SeatingPlanner initial={initial} />
     </Shell>
   )
 }

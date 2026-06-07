@@ -1,17 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { resolveClass, promotionSummary, type PromotionDecision, type PromotionRow } from "@/lib/promotion"
+import type { PromotionRun } from "@/lib/promotion/store"
+import { saveRunAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-export function PromotionBoard() {
+export function PromotionBoard({ initial = [] }: { initial?: PromotionRun[] }) {
   const [decisions, setDecisions] = useState<Record<string, PromotionDecision>>(() =>
     Object.fromEntries(SIS_ROSTER.map((s) => [s.apaarId, "promote" as PromotionDecision])),
   )
+  const [label, setLabel] = useState("AY 2026-27 rollover")
+  const [runs, setRuns] = useState<PromotionRun[]>(initial)
+  const [pending, startTransition] = useTransition()
 
   const rows: PromotionRow[] = SIS_ROSTER.map((s) => ({
     apaarId: s.apaarId,
@@ -23,6 +29,14 @@ export function PromotionBoard() {
 
   function toggle(apaarId: string) {
     setDecisions((d) => ({ ...d, [apaarId]: d[apaarId] === "promote" ? "detain" : "promote" }))
+  }
+
+  function saveRun() {
+    if (!label.trim()) return
+    startTransition(async () => {
+      const saved = await saveRunAction({ label: label.trim(), summary })
+      if (saved) setRuns((prev) => [saved, ...prev])
+    })
   }
 
   return (
@@ -67,6 +81,24 @@ export function PromotionBoard() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Commit rollover run</CardTitle></CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-2">
+          <div className="space-y-1.5">
+            <label htmlFor="run" className="text-xs font-medium text-muted-foreground">Run label</label>
+            <Input id="run" value={label} onChange={(e) => setLabel(e.target.value)} className="h-9 w-64" />
+          </div>
+          <Button onClick={saveRun} disabled={pending || !label.trim()}>Save run</Button>
+          {runs.length > 0 ? (
+            <ul className="ml-auto w-full space-y-1 text-xs text-muted-foreground sm:w-auto">
+              {runs.slice(0, 4).map((r) => (
+                <li key={r.id} className="flex justify-between gap-4"><span>{r.label}</span><span>{r.promoted} promoted · {r.graduated} grad</span></li>
+              ))}
+            </ul>
+          ) : null}
         </CardContent>
       </Card>
     </div>
