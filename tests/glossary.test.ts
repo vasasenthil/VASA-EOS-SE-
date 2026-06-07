@@ -10,6 +10,7 @@ import {
   lookup,
   glossarySummary,
   queryGlossary,
+  toCSV,
 } from "@/lib/glossary"
 
 test("glossary is non-empty and every entry is well-formed", () => {
@@ -87,6 +88,23 @@ test("queryGlossary composes category filter then search, sorted", () => {
 
   // empty category behaves like "all"
   assert.equal(queryGlossary({ category: "" }).length, GLOSSARY.length)
+})
+
+test("toCSV emits a header row plus one CRLF-terminated row per entry", () => {
+  const csv = toCSV()
+  const lines = csv.split("\r\n").filter((l) => l.length > 0)
+  assert.equal(lines[0], "Abbreviation,Expansion,Category,Note")
+  assert.equal(lines.length, GLOSSARY.length + 1) // header + entries
+  assert.ok(csv.endsWith("\r\n"))
+})
+
+test("toCSV quotes and escapes fields containing commas or quotes", () => {
+  const csv = toCSV([
+    { abbr: "X", expansion: "a, b", category: "Technology & Platform" },
+    { abbr: "Y", expansion: 'has "quotes"', category: "Technology & Platform", note: "n" },
+  ])
+  assert.match(csv, /X,"a, b",Technology & Platform,/)
+  assert.match(csv, /Y,"has ""quotes""",Technology & Platform,n/)
 })
 
 test("summary counts total, categories and notes", () => {

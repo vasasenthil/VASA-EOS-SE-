@@ -1,6 +1,8 @@
 import { Shell } from "@/components/shell"
-import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
+import { PageHeader, PageHeaderHeading, PageHeaderDescription, PageHeaderActions } from "@/components/page-header"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 import { GlossaryBoard } from "./glossary-board"
 import { glossarySummary } from "@/lib/glossary"
 
@@ -20,6 +22,14 @@ export default function GlossaryPage() {
           A plain-language glossary of every acronym used across the platform — policy,
           identity, schemes, roles, assessment, safety and technology. Search or filter by theme.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild variant="outline">
+            <a href="/api/glossary/csv" download>
+              <Download className="mr-2 h-4 w-4" />
+              Download CSV
+            </a>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">

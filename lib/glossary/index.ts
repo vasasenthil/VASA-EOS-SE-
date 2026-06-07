@@ -170,6 +170,18 @@ export function queryGlossary(params: GlossaryQuery = {}, entries: GlossaryEntry
   return sortByAbbr(searchGlossary(params.q ?? "", filterByCategory(params.category, entries)))
 }
 
+/** Escape a single CSV field per RFC 4180 (quote when it contains ," or newline). */
+function csvField(value: string): string {
+  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
+}
+
+/** Render entries as RFC 4180 CSV with a header row — for offline/field-office use. */
+export function toCSV(entries: GlossaryEntry[] = GLOSSARY): string {
+  const header = ["Abbreviation", "Expansion", "Category", "Note"]
+  const rows = entries.map((e) => [e.abbr, e.expansion, e.category, e.note ?? ""].map(csvField).join(","))
+  return [header.join(","), ...rows].join("\r\n") + "\r\n"
+}
+
 export interface GlossarySummary {
   total: number
   categories: number
