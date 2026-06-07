@@ -194,6 +194,13 @@ KPI aggregation over the shared datasets for the stakeholder portals. **Exports:
 In-app health checks of the core guardrails. **Exports:** `runSelfTests`,
 `SelfTestReport`, `Check`. **Route:** `/health`.
 
+### `glossary`
+Abbreviations & Expansions reference for every acronym used across the platform
+(NEP, APAAR, RTE, SMC, CRCC, PM POSHAN, …) grouped into eight themes. Pure,
+client-safe data + helpers. **Exports:** `GLOSSARY`, `GLOSSARY_CATEGORIES`,
+`searchGlossary`, `filterByCategory`, `groupByCategory`, `sortByAbbr`, `lookup`,
+`glossarySummary`. **Route:** `/glossary` (searchable, filter-by-category).
+
 ### `notifications`
 User notifications (Supabase). **Exports:** `createNotification`,
 `getUserNotifications`, `markNotificationRead`, `markAllNotificationsRead`.

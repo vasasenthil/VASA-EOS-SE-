@@ -230,6 +230,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Integrations Status", href: "/integrations", icon: Plug },
     { title: "System Self-Test", href: "/health", icon: HeartPulse },
     { title: "Operations & Health", href: "/ops", icon: Activity },
+    { title: "Abbreviations & Glossary", href: "/glossary", icon: BookA },
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
