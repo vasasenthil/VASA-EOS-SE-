@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { HomeworkBoard } from "./homework-board"
+import { listHomeworkAction } from "./actions"
 
-export default function HomeworkPage() {
+export default async function HomeworkPage() {
+  const initial = await listHomeworkAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function HomeworkPage() {
           flagged for follow-up.
         </PageHeaderDescription>
       </PageHeader>
-      <HomeworkBoard />
+      <HomeworkBoard initial={initial} />
     </Shell>
   )
 }

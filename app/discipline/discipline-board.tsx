@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { INCIDENT_TYPES, disciplineSummary, type Incident, type Severity } from "@/lib/discipline"
+import { logIncidentAction, resolveIncidentAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -16,24 +17,31 @@ const SEVERITY_VARIANT: Record<Severity, "secondary" | "default" | "destructive"
 }
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function DisciplineBoard() {
-  const [incidents, setIncidents] = useState<Incident[]>([])
+export function DisciplineBoard({ initial = [] }: { initial?: Incident[] }) {
+  const [incidents, setIncidents] = useState<Incident[]>(initial)
   const [student, setStudent] = useState(SIS_ROSTER[0]?.name ?? "")
   const [type, setType] = useState(INCIDENT_TYPES[0])
   const [severity, setSeverity] = useState<Severity>("minor")
   const [action, setAction] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = disciplineSummary(incidents)
 
   function log() {
-    setIncidents((prev) => [
-      { id: `i-${Date.now()}`, student, type, severity, action: action.trim(), date: TODAY, status: "open" },
-      ...prev,
-    ])
+    const optimistic: Incident = { id: `i-${Date.now()}`, student, type, severity, action: action.trim(), date: TODAY, status: "open" }
+    setIncidents((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await logIncidentAction({ student: optimistic.student, type: optimistic.type, severity: optimistic.severity, action: optimistic.action })
+      if (saved) setIncidents((prev) => prev.map((i) => (i.id === optimistic.id ? saved : i)))
+    })
     setAction("")
   }
   function resolve(id: string) {
     setIncidents((prev) => prev.map((i) => (i.id === id ? { ...i, status: "resolved" } : i)))
+    startTransition(async () => {
+      const saved = await resolveIncidentAction(id)
+      if (saved) setIncidents((prev) => prev.map((i) => (i.id === id ? saved : i)))
+    })
   }
 
   return (

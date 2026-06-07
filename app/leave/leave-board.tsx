@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { TEACHERS } from "@/lib/timetable"
 import { LEAVE_TYPES, leaveDays, leaveSummary, type LeaveRequest, type LeaveStatus, type LeaveType } from "@/lib/leave"
+import { fileLeaveAction, decideLeaveAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,27 +16,34 @@ const STATUS_VARIANT: Record<LeaveStatus, "default" | "secondary" | "destructive
   rejected: "destructive",
 }
 
-export function LeaveBoard() {
-  const [reqs, setReqs] = useState<LeaveRequest[]>([])
+export function LeaveBoard({ initial = [] }: { initial?: LeaveRequest[] }) {
+  const [reqs, setReqs] = useState<LeaveRequest[]>(initial)
   const [teacher, setTeacher] = useState(TEACHERS[0])
   const [type, setType] = useState<LeaveType>("casual")
   const [from, setFrom] = useState("")
   const [to, setTo] = useState("")
   const [reason, setReason] = useState("")
+  const [, startTransition] = useTransition()
 
   const summary = leaveSummary(reqs)
 
   function file() {
     if (!from || !to || leaveDays(from, to) === 0) return
-    setReqs((prev) => [
-      { id: `lv-${Date.now()}`, teacher, type, from, to, reason: reason.trim(), status: "pending" },
-      ...prev,
-    ])
+    const optimistic: LeaveRequest = { id: `lv-${Date.now()}`, teacher, type, from, to, reason: reason.trim(), status: "pending" }
+    setReqs((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await fileLeaveAction({ teacher: optimistic.teacher, type: optimistic.type, from: optimistic.from, to: optimistic.to, reason: optimistic.reason })
+      if (saved) setReqs((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setReason("")
   }
 
   function decide(id: string, status: LeaveStatus) {
     setReqs((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)))
+    startTransition(async () => {
+      const saved = await decideLeaveAction(id, status)
+      if (saved) setReqs((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (

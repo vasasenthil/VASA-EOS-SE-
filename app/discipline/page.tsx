@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { DisciplineBoard } from "./discipline-board"
+import { listIncidentsAction } from "./actions"
 
-export default function DisciplinePage() {
+export default async function DisciplinePage() {
+  const initial = await listIncidentsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function DisciplinePage() {
           incidents are surfaced for follow-up (safeguarding / POCSO escalation where relevant).
         </PageHeaderDescription>
       </PageHeader>
-      <DisciplineBoard />
+      <DisciplineBoard initial={initial} />
     </Shell>
   )
 }

@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { newHwId, nextHwStatus, homeworkSummary, isHwOverdue, type Homework, type HomeworkStatus } from "@/lib/homework"
+import { createHomeworkAction, advanceHomeworkAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,23 +16,33 @@ const STATUS_VARIANT: Record<HomeworkStatus, "default" | "secondary" | "outline"
 }
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function HomeworkBoard() {
-  const [items, setItems] = useState<Homework[]>([])
+export function HomeworkBoard({ initial = [] }: { initial?: Homework[] }) {
+  const [items, setItems] = useState<Homework[]>(initial)
   const [subject, setSubject] = useState("")
   const [title, setTitle] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = homeworkSummary(items, TODAY)
 
   function assign() {
     if (!subject.trim() || !title.trim()) return
-    setItems((prev) => [{ id: newHwId(), subject: subject.trim(), title: title.trim(), dueDate, status: "assigned" }, ...prev])
+    const optimistic: Homework = { id: newHwId(), subject: subject.trim(), title: title.trim(), dueDate, status: "assigned" }
+    setItems((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createHomeworkAction({ subject: optimistic.subject, title: optimistic.title, dueDate: optimistic.dueDate })
+      if (saved) setItems((prev) => prev.map((h) => (h.id === optimistic.id ? saved : h)))
+    })
     setSubject("")
     setTitle("")
     setDueDate("")
   }
   function advance(id: string) {
     setItems((prev) => prev.map((h) => (h.id === id ? { ...h, status: nextHwStatus(h.status) } : h)))
+    startTransition(async () => {
+      const saved = await advanceHomeworkAction(id)
+      if (saved) setItems((prev) => prev.map((h) => (h.id === id ? saved : h)))
+    })
   }
 
   return (

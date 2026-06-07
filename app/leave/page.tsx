@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { LeaveBoard } from "./leave-board"
+import { listLeaveAction } from "./actions"
 
-export default function LeavePage() {
+export default async function LeavePage() {
+  const initial = await listLeaveAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function LeavePage() {
           trigger for the timetable substitution planner.
         </PageHeaderDescription>
       </PageHeader>
-      <LeaveBoard />
+      <LeaveBoard initial={initial} />
     </Shell>
   )
 }
