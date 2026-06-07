@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { CATALOGUE } from "@/lib/library"
 import { dueDate, loanStatus, circSummary, type Loan, type LoanStatus } from "@/lib/circulation"
+import { issueLoanAction, returnLoanAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,39 +18,49 @@ const STATUS_VARIANT: Record<LoanStatus, "default" | "secondary" | "destructive"
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function CirculationDesk() {
-  const [available, setAvailable] = useState<Record<string, number>>(() =>
-    Object.fromEntries(CATALOGUE.map((b) => [b.id, b.available])),
-  )
-  const [loans, setLoans] = useState<Loan[]>([])
-  const [seq, setSeq] = useState(1)
+export function CirculationDesk({ initial = [] }: { initial?: Loan[] }) {
+  const [available, setAvailable] = useState<Record<string, number>>(() => {
+    // Start from catalogue availability, then net out any active (un-returned) loans.
+    const base = Object.fromEntries(CATALOGUE.map((b) => [b.id, b.available])) as Record<string, number>
+    for (const l of initial) if (!l.returnedOn && base[l.bookId] != null) base[l.bookId] -= 1
+    return base
+  })
+  const [loans, setLoans] = useState<Loan[]>(initial)
   const [bookId, setBookId] = useState(CATALOGUE[0]?.id ?? "")
   const [borrower, setBorrower] = useState("")
+  const [, startTransition] = useTransition()
 
   const summary = circSummary(loans, TODAY)
 
   function issue() {
     const book = CATALOGUE.find((b) => b.id === bookId)
     if (!book || !borrower.trim() || (available[bookId] ?? 0) <= 0) return
-    setLoans((prev) => [
-      { id: `L-${seq}`, bookId, bookTitle: book.title, borrower: borrower.trim(), issuedOn: TODAY, dueOn: dueDate(TODAY) },
-      ...prev,
-    ])
+    const optimistic: Loan = { id: `L-${Date.now()}`, bookId, bookTitle: book.title, borrower: borrower.trim(), issuedOn: TODAY, dueOn: dueDate(TODAY) }
+    setLoans((prev) => [optimistic, ...prev])
     setAvailable((a) => ({ ...a, [bookId]: a[bookId] - 1 }))
-    setSeq((n) => n + 1)
+    startTransition(async () => {
+      const saved = await issueLoanAction({ bookId, bookTitle: book.title, borrower: optimistic.borrower, issuedOn: TODAY })
+      if (saved) setLoans((prev) => prev.map((l) => (l.id === optimistic.id ? saved : l)))
+    })
     setBorrower("")
   }
 
   function returnLoan(id: string) {
+    let bid: string | null = null
     setLoans((prev) =>
       prev.map((l) => {
         if (l.id === id && !l.returnedOn) {
-          setAvailable((a) => ({ ...a, [l.bookId]: (a[l.bookId] ?? 0) + 1 }))
+          bid = l.bookId
           return { ...l, returnedOn: TODAY }
         }
         return l
       }),
     )
+    if (bid) setAvailable((a) => ({ ...a, [bid as string]: (a[bid as string] ?? 0) + 1 }))
+    startTransition(async () => {
+      const saved = await returnLoanAction(id, TODAY)
+      if (saved) setLoans((prev) => prev.map((l) => (l.id === id ? saved : l)))
+    })
   }
 
   return (

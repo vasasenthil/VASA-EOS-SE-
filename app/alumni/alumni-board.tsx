@@ -1,25 +1,32 @@
 "use client"
 
-import { useState } from "react"
-import { SAMPLE_ALUMNI, newAlumniId, decadeOf, alumniSummary, type Alumnus } from "@/lib/alumni"
+import { useState, useTransition } from "react"
+import { newAlumniId, decadeOf, alumniSummary, type Alumnus } from "@/lib/alumni"
+import { registerAlumnusAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function AlumniBoard() {
-  const [list, setList] = useState<Alumnus[]>(SAMPLE_ALUMNI)
+export function AlumniBoard({ initial = [] }: { initial?: Alumnus[] }) {
+  const [list, setList] = useState<Alumnus[]>(initial)
   const [name, setName] = useState("")
   const [batchYear, setBatchYear] = useState(2020)
   const [occupation, setOccupation] = useState("")
   const [contact, setContact] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = alumniSummary(list)
 
   function add() {
     if (!name.trim()) return
-    setList((prev) => [{ id: newAlumniId(), name: name.trim(), batchYear, occupation: occupation.trim(), contact: contact.trim() }, ...prev])
+    const optimistic: Alumnus = { id: newAlumniId(), name: name.trim(), batchYear, occupation: occupation.trim(), contact: contact.trim() }
+    setList((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await registerAlumnusAction({ name: optimistic.name, batchYear, occupation: optimistic.occupation, contact: optimistic.contact })
+      if (saved) setList((prev) => prev.map((a) => (a.id === optimistic.id ? saved : a)))
+    })
     setName("")
     setOccupation("")
     setContact("")

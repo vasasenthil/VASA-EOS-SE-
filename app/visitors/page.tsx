@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { VisitorDesk } from "./visitor-desk"
+import { listVisitorsAction } from "./actions"
 
-export default function VisitorsPage() {
+export default async function VisitorsPage() {
+  const initial = await listVisitorsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function VisitorsPage() {
           a basic safeguarding control (POCSO/safety).
         </PageHeaderDescription>
       </PageHeader>
-      <VisitorDesk />
+      <VisitorDesk initial={initial} />
     </Shell>
   )
 }

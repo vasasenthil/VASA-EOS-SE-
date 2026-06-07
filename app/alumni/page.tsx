@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { AlumniBoard } from "./alumni-board"
+import { listAlumniAction } from "./actions"
 
-export default function AlumniPage() {
+export default async function AlumniPage() {
+  const initial = await listAlumniAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function AlumniPage() {
           guest sessions and school-development engagement.
         </PageHeaderDescription>
       </PageHeader>
-      <AlumniBoard />
+      <AlumniBoard initial={initial} />
     </Shell>
   )
 }

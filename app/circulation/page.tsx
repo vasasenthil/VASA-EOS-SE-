@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { CirculationDesk } from "./circulation-desk"
+import { listLoansAction } from "./actions"
 
-export default function CirculationPage() {
+export default async function CirculationPage() {
+  const initial = await listLoansAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function CirculationPage() {
           copies update live as books go out and come back.
         </PageHeaderDescription>
       </PageHeader>
-      <CirculationDesk />
+      <CirculationDesk initial={initial} />
     </Shell>
   )
 }

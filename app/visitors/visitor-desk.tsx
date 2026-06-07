@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { VISIT_PURPOSES, isOnPremises, visitorSummary, type Visitor } from "@/lib/visitors"
+import { checkInAction, checkOutAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,22 +13,33 @@ function now(): string {
   return new Date().toTimeString().slice(0, 5)
 }
 
-export function VisitorDesk() {
-  const [visitors, setVisitors] = useState<Visitor[]>([])
+export function VisitorDesk({ initial = [] }: { initial?: Visitor[] }) {
+  const [visitors, setVisitors] = useState<Visitor[]>(initial)
   const [name, setName] = useState("")
   const [purpose, setPurpose] = useState(VISIT_PURPOSES[0])
   const [meeting, setMeeting] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = visitorSummary(visitors)
 
   function checkIn() {
     if (!name.trim()) return
-    setVisitors((prev) => [{ id: `v-${Date.now()}`, name: name.trim(), purpose, meeting: meeting.trim(), inTime: now() }, ...prev])
+    const optimistic: Visitor = { id: `v-${Date.now()}`, name: name.trim(), purpose, meeting: meeting.trim(), inTime: now() }
+    setVisitors((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await checkInAction({ name: optimistic.name, purpose: optimistic.purpose, meeting: optimistic.meeting, inTime: optimistic.inTime })
+      if (saved) setVisitors((prev) => prev.map((v) => (v.id === optimistic.id ? saved : v)))
+    })
     setName("")
     setMeeting("")
   }
   function checkOut(id: string) {
-    setVisitors((prev) => prev.map((v) => (v.id === id && !v.outTime ? { ...v, outTime: now() } : v)))
+    const t = now()
+    setVisitors((prev) => prev.map((v) => (v.id === id && !v.outTime ? { ...v, outTime: t } : v)))
+    startTransition(async () => {
+      const saved = await checkOutAction(id, t)
+      if (saved) setVisitors((prev) => prev.map((v) => (v.id === id ? saved : v)))
+    })
   }
 
   return (
