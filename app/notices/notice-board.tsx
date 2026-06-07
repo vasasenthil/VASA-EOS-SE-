@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { SAMPLE_NOTICES, NOTICE_CATEGORIES, NOTICE_AUDIENCES, newNoticeId, sortNotices, noticeSummary, type Notice, type NoticeCategory, type NoticeAudience } from "@/lib/notices"
+import { useState, useTransition } from "react"
+import { NOTICE_CATEGORIES, NOTICE_AUDIENCES, newNoticeId, sortNotices, noticeSummary, type Notice, type NoticeCategory, type NoticeAudience } from "@/lib/notices"
+import { publishNoticeAction, setPinnedAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,24 +11,41 @@ import { Label } from "@/components/ui/label"
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function NoticeBoard() {
-  const [notices, setNotices] = useState<Notice[]>(SAMPLE_NOTICES)
+export function NoticeBoard({ initial = [] }: { initial?: Notice[] }) {
+  const [notices, setNotices] = useState<Notice[]>(initial)
   const [title, setTitle] = useState("")
   const [body, setBody] = useState("")
   const [category, setCategory] = useState<NoticeCategory>("General")
   const [audience, setAudience] = useState<NoticeAudience>("All")
+  const [, startTransition] = useTransition()
 
   const s = noticeSummary(notices)
   const shown = sortNotices(notices)
 
   function publish() {
     if (!title.trim()) return
-    setNotices((prev) => [{ id: newNoticeId(), title: title.trim(), body: body.trim(), category, audience, date: TODAY, pinned: category === "Urgent" }, ...prev])
+    const optimistic: Notice = { id: newNoticeId(), title: title.trim(), body: body.trim(), category, audience, date: TODAY, pinned: category === "Urgent" }
+    setNotices((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await publishNoticeAction({ title: optimistic.title, body: optimistic.body, category, audience })
+      if (saved) setNotices((prev) => prev.map((n) => (n.id === optimistic.id ? saved : n)))
+    })
     setTitle("")
     setBody("")
   }
   function togglePin(id: string) {
-    setNotices((prev) => prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n)))
+    let next = false
+    setNotices((prev) =>
+      prev.map((n) => {
+        if (n.id !== id) return n
+        next = !n.pinned
+        return { ...n, pinned: next }
+      }),
+    )
+    startTransition(async () => {
+      const saved = await setPinnedAction(id, next)
+      if (saved) setNotices((prev) => prev.map((n) => (n.id === id ? saved : n)))
+    })
   }
 
   return (

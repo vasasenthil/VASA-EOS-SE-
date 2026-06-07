@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { TEACHERS } from "@/lib/timetable"
 import { QUALITY } from "@/lib/quality"
 import { nextTransferStatus, transferSummary, type TransferRequest, type TransferStatus } from "@/lib/postings"
+import { fileTransferAction, advanceTransferAction, rejectTransferAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,24 +19,38 @@ const STATUS_VARIANT: Record<TransferStatus, "default" | "secondary" | "outline"
 }
 const SCHOOLS = QUALITY.map((q) => q.name)
 
-export function PostingsBoard() {
-  const [reqs, setReqs] = useState<TransferRequest[]>([])
+export function PostingsBoard({ initial = [] }: { initial?: TransferRequest[] }) {
+  const [reqs, setReqs] = useState<TransferRequest[]>(initial)
   const [teacher, setTeacher] = useState(TEACHERS[0])
   const [fromSchool, setFromSchool] = useState(SCHOOLS[0])
   const [toSchool, setToSchool] = useState(SCHOOLS[1] ?? SCHOOLS[0])
   const [reason, setReason] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = transferSummary(reqs)
 
   function file() {
-    setReqs((prev) => [{ id: `tr-${Date.now()}`, teacher, fromSchool, toSchool, reason: reason.trim(), status: "requested" }, ...prev])
+    const optimistic: TransferRequest = { id: `tr-${Date.now()}`, teacher, fromSchool, toSchool, reason: reason.trim(), status: "requested" }
+    setReqs((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await fileTransferAction({ teacher, fromSchool, toSchool, reason: optimistic.reason })
+      if (saved) setReqs((prev) => prev.map((r) => (r.id === optimistic.id ? saved : r)))
+    })
     setReason("")
   }
   function advance(id: string) {
     setReqs((prev) => prev.map((r) => (r.id === id ? { ...r, status: nextTransferStatus(r.status) } : r)))
+    startTransition(async () => {
+      const saved = await advanceTransferAction(id)
+      if (saved) setReqs((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
   function reject(id: string) {
     setReqs((prev) => prev.map((r) => (r.id === id ? { ...r, status: "rejected" } : r)))
+    startTransition(async () => {
+      const saved = await rejectTransferAction(id)
+      if (saved) setReqs((prev) => prev.map((r) => (r.id === id ? saved : r)))
+    })
   }
 
   return (

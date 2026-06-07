@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { PostingsBoard } from "./postings-board"
+import { listTransfersAction } from "./actions"
 
-export default function PostingsPage() {
+export default async function PostingsPage() {
+  const initial = await listTransfersAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function PostingsPage() {
           enforces rationalisation norms and vacancy availability.
         </PageHeaderDescription>
       </PageHeader>
-      <PostingsBoard />
+      <PostingsBoard initial={initial} />
     </Shell>
   )
 }

@@ -15,7 +15,7 @@ Legend: ✅ done · 🟡 partial / foundation laid · ❌ not started
 | Durable persistence seam | ✅ | `lib/persistence.getDb()` — Supabase service-role or in-memory fallback |
 | DB-backed CRUD pattern + audit | ✅ | `lib/*/store.ts` (grievance, smc, recognition, credentials, consent, **safety**) — full CRUD, every mutation appended to the tamper-evident audit ledger; tested against a fake DB |
 | Modules converted to durable stores | ✅ | Safety, Lost & Found, Cooks, TC, CWSN, RTE, RTI, OoSC, Water-quality, CCTV, **Mock-drills**, **Competitions**, **Excursions** (+ grievance, SMC, recognition, credentials, consent) — `lib/*/store.ts` + `app/*/actions.ts` + server-loaded pages + optimistic boards |
-| All interactive modules persisted | 🟡 | ~36 modules persist via stores (+ Homework, Leave, Discipline); **~38 modules still hold state in the browser (`useState`)**. They follow the same converter — rolling out module-by-module |
+| All interactive modules persisted | 🟡 | ~38 modules persist via stores (+ Postings, Notices; plus Leave/SMC/Recognition workflow flows); **~36 modules still hold state in the browser (`useState`)**. They follow the same converter — rolling out module-by-module |
 | Input validation on writes | 🟡 | Zod on auth + several actions; not yet uniform across every action |
 | Access enforcement on writes (`requireAccess`) | 🟡 | PDP exists (`lib/access`, 5 models) and is wired on high-stakes actions; not yet on every mutation |
 | Automated tests + coverage gate | ✅ | Node test runner; **96 test files**, **>380 tests**, ~98% lines / ~91% branches, thresholds enforced in CI |
