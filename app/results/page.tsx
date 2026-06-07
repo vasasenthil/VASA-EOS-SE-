@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { ResultsBoard } from "./results-board"
+import { listPublicationsAction } from "./actions"
 
-export default function ResultsPage() {
+export default async function ResultsPage() {
+  const initial = await listPublicationsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function ResultsPage() {
           with per-candidate and bulk publish. Production anchors results to the audit ledger and DigiLocker.
         </PageHeaderDescription>
       </PageHeader>
-      <ResultsBoard />
+      <ResultsBoard initial={initial} />
     </Shell>
   )
 }
