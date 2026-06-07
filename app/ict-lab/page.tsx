@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { IctBoard } from "./ict-board"
+import { listSessionsAction } from "./actions"
 
-export default function IctLabPage() {
+export default async function IctLabPage() {
+  const initial = await listSessionsAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function IctLabPage() {
           working devices can&apos;t cover the class. Surfaces real digital-learning utilisation.
         </PageHeaderDescription>
       </PageHeader>
-      <IctBoard />
+      <IctBoard initial={initial} />
     </Shell>
   )
 }

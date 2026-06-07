@@ -1,15 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { GL_DOMAINS, glSummary, type Lecture } from "@/lib/guestlectures"
+import { createLectureAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function GuestLecturesBoard() {
-  const [lectures, setLectures] = useState<Lecture[]>([])
+export function GuestLecturesBoard({ initial = [] }: { initial?: Lecture[] }) {
+  const [lectures, setLectures] = useState<Lecture[]>(initial)
   const [speaker, setSpeaker] = useState("")
   const [topic, setTopic] = useState("")
   const [org, setOrg] = useState("")
@@ -17,15 +18,18 @@ export function GuestLecturesBoard() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [audience, setAudience] = useState(60)
   const [cls, setCls] = useState("")
+  const [, startTransition] = useTransition()
 
   const s = glSummary(lectures)
 
   function add() {
     if (!speaker.trim() || !topic.trim()) return
-    setLectures((prev) => [
-      { id: `gl-${Date.now()}`, speaker: speaker.trim(), topic: topic.trim(), org: org.trim() || "—", domain, date, audience, cls: cls.trim() || "All" },
-      ...prev,
-    ])
+    const optimistic: Lecture = { id: `gl-${Date.now()}`, speaker: speaker.trim(), topic: topic.trim(), org: org.trim() || "—", domain, date, audience, cls: cls.trim() || "All" }
+    setLectures((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createLectureAction({ speaker: optimistic.speaker, topic: optimistic.topic, org: optimistic.org, domain: optimistic.domain, date: optimistic.date, audience: optimistic.audience, cls: optimistic.cls })
+      if (saved) setLectures((prev) => prev.map((l) => (l.id === optimistic.id ? saved : l)))
+    })
     setSpeaker("")
     setTopic("")
     setOrg("")

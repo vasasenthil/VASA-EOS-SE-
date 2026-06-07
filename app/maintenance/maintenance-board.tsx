@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { MAINT_CATEGORIES, nextTicketStatus, maintenanceSummary, type Priority, type Ticket, type TicketStatus } from "@/lib/maintenance"
+import { raiseTicketAction, advanceTicketAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,25 +22,32 @@ const PRIORITY_VARIANT: Record<Priority, "default" | "secondary" | "destructive"
 
 const TODAY = new Date().toISOString().slice(0, 10)
 
-export function MaintenanceBoard() {
-  const [tickets, setTickets] = useState<Ticket[]>([])
+export function MaintenanceBoard({ initial = [] }: { initial?: Ticket[] }) {
+  const [tickets, setTickets] = useState<Ticket[]>(initial)
   const [category, setCategory] = useState(MAINT_CATEGORIES[0])
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState<Priority>("medium")
+  const [, startTransition] = useTransition()
 
   const s = maintenanceSummary(tickets)
 
   function raise() {
     if (!description.trim()) return
-    setTickets((prev) => [
-      { id: `T-${Date.now()}`, category, description: description.trim(), priority, status: "open", raisedOn: TODAY },
-      ...prev,
-    ])
+    const optimistic: Ticket = { id: `T-${Date.now()}`, category, description: description.trim(), priority, status: "open", raisedOn: TODAY }
+    setTickets((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await raiseTicketAction({ category: optimistic.category, description: optimistic.description, priority: optimistic.priority })
+      if (saved) setTickets((prev) => prev.map((t) => (t.id === optimistic.id ? saved : t)))
+    })
     setDescription("")
   }
 
   function advance(id: string) {
     setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: nextTicketStatus(t.status) } : t)))
+    startTransition(async () => {
+      const saved = await advanceTicketAction(id)
+      if (saved) setTickets((prev) => prev.map((t) => (t.id === id ? saved : t)))
+    })
   }
 
   return (

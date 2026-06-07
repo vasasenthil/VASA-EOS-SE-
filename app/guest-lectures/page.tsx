@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { GuestLecturesBoard } from "./guest-lectures-board"
+import { listLecturesAction } from "./actions"
 
-export default function GuestLecturesPage() {
+export default async function GuestLecturesPage() {
+  const initial = await listLecturesAction()
   return (
     <Shell>
       <PageHeader>
@@ -12,7 +14,7 @@ export default function GuestLecturesPage() {
           school&apos;s community and industry resource-person network.
         </PageHeaderDescription>
       </PageHeader>
-      <GuestLecturesBoard />
+      <GuestLecturesBoard initial={initial} />
     </Shell>
   )
 }

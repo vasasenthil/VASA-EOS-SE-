@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { ICT_SUBJECTS, ictSummary, hasShortage, type IctSession } from "@/lib/ictlab"
+import { createSessionAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,23 +10,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 
-export function IctBoard() {
-  const [sessions, setSessions] = useState<IctSession[]>([])
+export function IctBoard({ initial = [] }: { initial?: IctSession[] }) {
+  const [sessions, setSessions] = useState<IctSession[]>(initial)
   const [cls, setCls] = useState("")
   const [subject, setSubject] = useState(ICT_SUBJECTS[0])
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [students, setStudents] = useState(40)
   const [devicesWorking, setDevicesWorking] = useState(20)
   const [devicesTotal, setDevicesTotal] = useState(25)
+  const [, startTransition] = useTransition()
 
   const s = ictSummary(sessions)
 
   function add() {
     if (!cls.trim()) return
-    setSessions((prev) => [
-      { id: `ic-${Date.now()}`, cls: cls.trim(), subject, date, students, devicesWorking, devicesTotal },
-      ...prev,
-    ])
+    const optimistic: IctSession = { id: `ic-${Date.now()}`, cls: cls.trim(), subject, date, students, devicesWorking, devicesTotal }
+    setSessions((prev) => [optimistic, ...prev])
+    startTransition(async () => {
+      const saved = await createSessionAction({ cls: optimistic.cls, subject: optimistic.subject, date: optimistic.date, students: optimistic.students, devicesWorking: optimistic.devicesWorking, devicesTotal: optimistic.devicesTotal })
+      if (saved) setSessions((prev) => prev.map((x) => (x.id === optimistic.id ? saved : x)))
+    })
     setCls("")
   }
 
