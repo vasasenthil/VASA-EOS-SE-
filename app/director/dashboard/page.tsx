@@ -18,12 +18,12 @@ export default async function DirectorDashboardPage() {
         { label: "Avg Quality Index", value: String(r.avgQualityIndex), hint: "0-100" },
       ]}
       modules={[
-        "Directorate Operations",
-        "Cross-District Visibility",
-        "Policy Implementation Tracking",
-        "Statutory Reporting",
-        "Performance Management",
-        "Vendor Management",
+        { label: "School Recognition (TN 1973)", href: "/recognition" },
+        { label: "Policy Implementation Tracking", href: "/tracking/dashboard" },
+        { label: "Schemes", href: "/schemes" },
+        { label: "Quality & Inspection", href: "/quality" },
+        { label: "Reports & Analytics", href: "/tracking/reports" },
+        { label: "Governance Overview", href: "/governance/dashboard" },
       ]}
     />
   )
