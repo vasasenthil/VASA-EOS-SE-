@@ -1,0 +1,48 @@
+# VASA-EOS(SE) — Project memory
+
+AI-native Education Operating System for **school education**.
+
+## Scope & roadmap (IMPORTANT — keep in mind)
+- **This platform is for the State of Tamil Nadu ONLY** at present. It is **not**
+  an all-India / national deployment.
+- **Roadmap:** add **more Indian states one by one**, and a **National level
+  (Central Ministry of Education, India)** tier **later** — not now.
+- The architecture already anticipates this: `lib/tenancy` models
+  `national → state → directorate → district → block → cluster → school`, and
+  `lib/access/scope` roots the live tree at **TN** today. Adding a state means
+  adding a sibling state subtree; adding the Centre means anchoring states under a
+  national node. **Do not** build other states or the national tier until asked;
+  keep new work TN-scoped, but never hard-code assumptions that block adding them.
+
+## Tech stack
+- Next.js 15 (App Router), React 19, TypeScript 5.9.3, Tailwind, shadcn/ui.
+- Layering per module: pure logic `lib/<m>/index.ts`; durable `lib/<m>/store.ts`
+  (Supabase service-role via `lib/persistence.getDb()` or in-memory fallback);
+  server actions `app/<m>/actions.ts`; client boards; server pages.
+- Tests: Node 22 built-in runner + `--experimental-strip-types` (NO jest/vitest).
+  Type-stripping limits: no enums/namespaces/parameter-properties.
+
+## Commands (run binaries directly, NOT `pnpm run`)
+- Typecheck: `./node_modules/.bin/tsc --noEmit`
+- Tests + coverage gate (95 lines / 80 branches / 88 functions):
+  `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --experimental-test-coverage --test-coverage-exclude='tests/**' --test-coverage-exclude='scripts/**' --test-coverage-exclude='lib/supabase/**' --test-coverage-lines=95 --test-coverage-branches=80 --test-coverage-functions=88 --import ./scripts/test-register.mjs --test tests/*.test.ts`
+- Lint: `./node_modules/.bin/next lint` · Build: `./node_modules/.bin/next build`
+
+## Green-bar requirement (every turn)
+tsc 0 errors · lint clean · build success · all tests pass · coverage ≥ gate.
+Commit + push to `claude/platform-foundation`, then fast-forward `main`
+(`git push origin origin/claude/platform-foundation:main`) so Vercel prod stays current.
+
+## Per-role data scoping (ReBAC jurisdiction)
+- Engine: `lib/access/scope.ts` (pure, tested) — downward governance: a subject
+  governs its own tenant node + descendants. Enforcement seam:
+  `lib/access/scope-server.ts` `scopeForCurrentSubject()` (fail-closed).
+- To scope a module: add `tenantId` to its record type + `tenant_id` to the
+  store/Row (+ migration `scripts/018`), seed across nodes, wrap the listing action
+  in `scopeForCurrentSubject(...)`, update the board's optimistic object & test helper.
+- Scoped so far: Safety, Discipline, CWSN.
+
+## Conventions
+- Model id `claude-opus-4-8` must NOT appear in commits/PRs/code/artifacts (chat only).
+- Do NOT create PRs unless explicitly asked. Demo password is demo-only; never ship
+  real secrets. Commit/PR footer: https://claude.ai/code/session_01GjuK73nZFje1CyYWYvq3YA

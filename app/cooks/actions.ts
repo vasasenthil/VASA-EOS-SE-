@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createCook, setCookPresence, deleteCook, listCooks, type NewCook } from "@/lib/cooks/store"
 import type { Cook } from "@/lib/cooks"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listCooksAction(): Promise<Cook[]> {
   noStore()
   try {
-    return await listCooks()
+    // Per-role data scoping: MDM staff rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listCooks())
   } catch (e) {
     logger.error("cooks.list failed", { error: String(e) })
     return []

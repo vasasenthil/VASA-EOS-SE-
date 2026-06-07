@@ -24,3 +24,15 @@ alter table if exists public.cwsn_students
 
 create index if not exists cwsn_students_tenant_id_idx
   on public.cwsn_students (tenant_id);
+
+alter table if exists public.lost_found
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+
+create index if not exists lost_found_tenant_id_idx
+  on public.lost_found (tenant_id);
+
+alter table if exists public.cooks
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+
+create index if not exists cooks_tenant_id_idx
+  on public.cooks (tenant_id);

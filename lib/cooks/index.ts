@@ -11,6 +11,8 @@ export interface Cook {
   role: CookRole
   honorarium: number
   present: boolean
+  /** Tenant node this cook-cum-helper belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface CookSummary {

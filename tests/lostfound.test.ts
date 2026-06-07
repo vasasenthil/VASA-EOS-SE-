@@ -10,6 +10,7 @@ const i = (status: LostItem["status"]): LostItem => ({
   reportedBy: "R",
   status,
   date: "2026-06-05",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("summary tallies by status", () => {

@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createItem, claimItem, deleteItem, listItems, type NewItem } from "@/lib/lostfound/store"
 import type { LostItem } from "@/lib/lostfound"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listItemsAction(): Promise<LostItem[]> {
   noStore()
   try {
-    return await listItems()
+    // Per-role data scoping: each school's front office sees its own register.
+    return await scopeForCurrentSubject(await listItems())
   } catch (e) {
     logger.error("lostfound.list failed", { error: String(e) })
     return []

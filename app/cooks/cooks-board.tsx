@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { COOK_ROLES, cookSummary, inr, type Cook, type CookRole } from "@/lib/cooks"
 import { createCookAction, setCookPresenceAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,7 +21,7 @@ export function CooksBoard({ initial = [] }: { initial?: Cook[] }) {
 
   function add() {
     if (!name.trim() || honorarium < 0) return
-    const optimistic: Cook = { id: `ck-${Date.now()}`, name: name.trim(), role, honorarium, present: true }
+    const optimistic: Cook = { id: `ck-${Date.now()}`, name: name.trim(), role, honorarium, present: true, tenantId: DEFAULT_SCHOOL_NODE }
     setCooks((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createCookAction({ name: optimistic.name, role: optimistic.role, honorarium: optimistic.honorarium })

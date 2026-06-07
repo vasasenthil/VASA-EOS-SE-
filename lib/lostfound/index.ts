@@ -13,6 +13,8 @@ export interface LostItem {
   reportedBy: string
   status: ItemStatus
   date: string
+  /** Tenant node this item belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface LostFoundSummary {

@@ -8,6 +8,7 @@ const k = (present: boolean, honorarium = 1000): Cook => ({
   role: "Cook",
   honorarium,
   present,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("summary counts presence and totals honoraria", () => {

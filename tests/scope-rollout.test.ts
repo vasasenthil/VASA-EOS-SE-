@@ -3,6 +3,8 @@ import assert from "node:assert/strict"
 import { __setTestDb } from "@/lib/persistence"
 import { listIncidents, logIncident } from "@/lib/discipline/store"
 import { listStudents, createStudent } from "@/lib/cwsn/store"
+import { listItems } from "@/lib/lostfound/store"
+import { listCooks } from "@/lib/cooks/store"
 import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 beforeEach(() => __setTestDb(null)) // in-memory seeded path
@@ -22,6 +24,16 @@ test("cwsn learners are scopable; a single school sees only its own", async () =
   const oneSchool = scopeRecords(SCOPE_TENANTS, "TN-CHN-B2-S1", all)
   assert.ok(oneSchool.length >= 1)
   assert.ok(oneSchool.every((s) => s.tenantId === "TN-CHN-B2-S1"))
+})
+
+test("lost-found and cooks seeds are scopable by jurisdiction", async () => {
+  const items = await listItems()
+  assert.ok(scopeRecords(SCOPE_TENANTS, "TN", items).length >= 3)
+  assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", items).every((i) => i.tenantId !== "TN-CBE-B1-S1"))
+
+  const cooks = await listCooks()
+  assert.ok(scopeRecords(SCOPE_TENANTS, "TN", cooks).length >= 3)
+  assert.equal(scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", cooks).length, 1)
 })
 
 test("new records default to the demo school node when tenantId is omitted", async () => {

@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { LostItem } from "./index"
 
 function id(): string {
@@ -17,6 +18,7 @@ interface Row {
   reported_by: string
   status: LostItem["status"]
   date: string
+  tenant_id: string
   created_at: string
 }
 
@@ -29,10 +31,16 @@ function fromRow(r: Row): LostItem {
     reportedBy: r.reported_by,
     status: r.status,
     date: r.date,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: LostItem[] = []
+// Seeded across tenant nodes so scoping is demonstrable across schools.
+const store: LostItem[] = [
+  { id: "LF-SEED1", name: "Water bottle", description: "Blue steel", location: "Playground", reportedBy: "Desk", status: "found", date: "2026-06-01", tenantId: "TN-CHN-B1-S1" },
+  { id: "LF-SEED2", name: "ID card", description: "Class 9", location: "Library", reportedBy: "Librarian", status: "claimed", date: "2026-05-29", tenantId: "TN-CHN-B2-S1" },
+  { id: "LF-SEED3", name: "Umbrella", description: "Black", location: "Gate", reportedBy: "Guard", status: "lost", date: "2026-06-03", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewItem {
   name: string
@@ -40,6 +48,8 @@ export interface NewItem {
   location: string
   reportedBy: string
   status: LostItem["status"]
+  /** Tenant node the item is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createItem(input: NewItem): Promise<LostItem> {
@@ -51,6 +61,7 @@ export async function createItem(input: NewItem): Promise<LostItem> {
     reportedBy: input.reportedBy,
     status: input.status,
     date: new Date().toISOString().slice(0, 10),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -62,6 +73,7 @@ export async function createItem(input: NewItem): Promise<LostItem> {
       reported_by: it.reportedBy,
       status: it.status,
       date: it.date,
+      tenant_id: it.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { lostFoundSummary, filterByStatus, type ItemStatus, type LostItem } from "@/lib/lostfound"
 import { createItemAction, claimItemAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,7 @@ export function LostFoundBoard({ initial = [] }: { initial?: LostItem[] }) {
       reportedBy: reportedBy.trim() || "Front office",
       status,
       date: new Date().toISOString().slice(0, 10),
+      tenantId: DEFAULT_SCHOOL_NODE,
     }
     setItems((prev) => [optimistic, ...prev])
     startTransition(async () => {

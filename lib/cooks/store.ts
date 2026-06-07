@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Cook, CookRole } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   role: CookRole
   honorarium: number
   present: boolean
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Cook {
-  return { id: r.id, name: r.name, role: r.role, honorarium: r.honorarium, present: r.present }
+  return { id: r.id, name: r.name, role: r.role, honorarium: r.honorarium, present: r.present, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Cook[] = []
+// Seeded across tenant nodes so MDM staff rolls up by jurisdiction.
+const store: Cook[] = [
+  { id: "CK-SEED1", name: "Lakshmi", role: "Cook", honorarium: 1000, present: true, tenantId: "TN-CHN-B1-S1" },
+  { id: "CK-SEED2", name: "Devi", role: "Cook-cum-Helper", honorarium: 1000, present: true, tenantId: "TN-CHN-B2-S1" },
+  { id: "CK-SEED3", name: "Kala", role: "Helper", honorarium: 750, present: false, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewCook {
   name: string
   role: CookRole
   honorarium: number
+  /** Tenant node the cook is posted at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createCook(input: NewCook): Promise<Cook> {
-  const c: Cook = { id: id(), name: input.name, role: input.role, honorarium: input.honorarium, present: true }
+  const c: Cook = { id: id(), name: input.name, role: input.role, honorarium: input.honorarium, present: true, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("cooks").insert({
@@ -40,6 +49,7 @@ export async function createCook(input: NewCook): Promise<Cook> {
       role: c.role,
       honorarium: c.honorarium,
       present: c.present,
+      tenant_id: c.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
