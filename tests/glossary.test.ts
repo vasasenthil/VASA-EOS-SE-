@@ -9,6 +9,7 @@ import {
   sortByAbbr,
   lookup,
   glossarySummary,
+  queryGlossary,
 } from "@/lib/glossary"
 
 test("glossary is non-empty and every entry is well-formed", () => {
@@ -70,6 +71,22 @@ test("lookup finds by exact abbreviation, case-insensitive", () => {
   assert.equal(lookup("apaar")?.expansion, "Automated Permanent Academic Account Registry")
   assert.equal(lookup("RTE")?.category, "Policy & Governance")
   assert.equal(lookup("does-not-exist"), undefined)
+})
+
+test("queryGlossary composes category filter then search, sorted", () => {
+  // no params → everything, alphabetised
+  const all = queryGlossary()
+  assert.equal(all.length, GLOSSARY.length)
+  assert.deepEqual(all.map((e) => e.abbr.toLowerCase()), all.map((e) => e.abbr.toLowerCase()).sort())
+
+  // category + text combine (AND)
+  const tech = queryGlossary({ category: "Technology & Platform", q: "access" })
+  assert.ok(tech.length >= 2)
+  assert.ok(tech.every((e) => e.category === "Technology & Platform"))
+  assert.ok(tech.every((e) => /access/i.test(e.abbr + e.expansion + (e.note ?? ""))))
+
+  // empty category behaves like "all"
+  assert.equal(queryGlossary({ category: "" }).length, GLOSSARY.length)
 })
 
 test("summary counts total, categories and notes", () => {

@@ -160,6 +160,16 @@ export function lookup(abbr: string, entries: GlossaryEntry[] = GLOSSARY): Gloss
   return entries.find((e) => e.abbr.toLowerCase() === q)
 }
 
+export interface GlossaryQuery {
+  q?: string
+  category?: GlossaryCategory | ""
+}
+
+/** Compose category filter then text search — the backing logic for the JSON API. */
+export function queryGlossary(params: GlossaryQuery = {}, entries: GlossaryEntry[] = GLOSSARY): GlossaryEntry[] {
+  return sortByAbbr(searchGlossary(params.q ?? "", filterByCategory(params.category, entries)))
+}
+
 export interface GlossarySummary {
   total: number
   categories: number
