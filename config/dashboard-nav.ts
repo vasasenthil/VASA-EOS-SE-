@@ -162,6 +162,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Transport Assignment", href: "/transport-assignment", icon: Bus },
     { title: "Bus Live Tracking", href: "/bus-tracking", icon: Bus },
     { title: "Leave Management", href: "/leave", icon: FileCheck2 },
+    { title: "Leave Approvals (Workflow)", href: "/leave-approvals", icon: CheckSquare },
     { title: "Academic Calendar", href: "/academic-calendar", icon: CalendarDays },
     { title: "PTM Scheduling", href: "/ptm", icon: Presentation },
     { title: "School Health (RBSK)", href: "/rbsk", icon: Stethoscope },
