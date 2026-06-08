@@ -2,6 +2,7 @@ import "server-only"
 
 import { currentStep, progress, type WorkflowDef, type WorkflowInstance } from "@/lib/workflow"
 import { WORKFLOW_DEFS } from "@/lib/workflow/definitions"
+import { withSpan } from "@/lib/tracing"
 import type { OversightItem } from "@/lib/governance/oversight"
 
 import { listLeaveFlows } from "@/lib/leaveflow/store"
@@ -35,17 +36,22 @@ function project(recordId: string, title: string, inst: WorkflowInstance): Overs
   }
 }
 
-/** Gather every live approval instance across the six flows. Fail-soft per flow. */
+/** Gather every live approval instance across the seven flows. Fail-soft per flow. */
 export async function collectOversight(): Promise<OversightItem[]> {
-  const [leave, smc, recog, adm, grv, maint, forum] = await Promise.all([
-    listLeaveFlows().catch(() => []),
-    listResolutions().catch(() => []),
-    listRecognitions().catch(() => []),
-    listApplicants().catch(() => []),
-    listGrievanceFlows().catch(() => []),
-    listTicketFlows().catch(() => []),
-    listForums().catch(() => []),
-  ])
+  const [leave, smc, recog, adm, grv, maint, forum] = await withSpan(
+    "oversight.collect",
+    () =>
+      Promise.all([
+        listLeaveFlows().catch(() => []),
+        listResolutions().catch(() => []),
+        listRecognitions().catch(() => []),
+        listApplicants().catch(() => []),
+        listGrievanceFlows().catch(() => []),
+        listTicketFlows().catch(() => []),
+        listForums().catch(() => []),
+      ]),
+    { attributes: { flows: 7 } },
+  )
 
   return [
     ...leave.map((r) => project(r.id, `${r.teacher} — ${r.type} (${r.days}d)`, r.instance)),

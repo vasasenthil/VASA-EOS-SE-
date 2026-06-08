@@ -9,6 +9,7 @@ import { buildReadiness, APP_VERSION } from "@/lib/readiness"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
 import { integrations } from "@/lib/integrations"
 import { getCounters } from "@/lib/metrics"
+import { getSpans, traceSummary } from "@/lib/tracing"
 
 export const dynamic = "force-dynamic"
 
@@ -34,6 +35,8 @@ export default async function OpsPage() {
   const totalEvents = counters.reduce((s, c) => s + c.value, 0)
   // Live consumer of the EMIS port: pull the demo school's master-data snapshot.
   const emis = await integrations.emis.getSchoolData("33010100101")
+  const spans = getSpans().slice(-10).reverse()
+  const traces = traceSummary()
 
   return (
     <Shell>
@@ -125,6 +128,32 @@ export default async function OpsPage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">EMIS unavailable: {emis.error ?? "no data"}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Traces — recent spans ({traces.spans}, {traces.errors} errors, avg {traces.avgMs}ms)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {spans.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No spans recorded yet this instance. OTLP export at <code>/api/traces</code>.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow><TableHead>Span</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Duration</TableHead></TableRow>
+              </TableHeader>
+              <TableBody>
+                {spans.map((sp) => (
+                  <TableRow key={sp.spanId}>
+                    <TableCell className="font-mono text-xs">{sp.name}</TableCell>
+                    <TableCell><Badge variant={sp.status === "error" ? "destructive" : "default"}>{sp.status}</Badge></TableCell>
+                    <TableCell className="text-right">{sp.durationMs ?? 0}ms</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
