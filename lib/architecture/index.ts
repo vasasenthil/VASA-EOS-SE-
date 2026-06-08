@@ -31,13 +31,14 @@ export const PILLARS: Pillar[] = [
     commitment: "AI woven through the platform: specialised agents, RAG, confidence gating and human-in-the-loop.",
     components: [
       { name: "8 specialised agents + confidence gating + HITL", ref: "lib/agents" },
+      { name: "Per-agent MCP tool definitions", ref: "lib/agents/tools.ts" },
       { name: "Agent/LLM live adapter", ref: "lib/integrations/live/agents.ts" },
       { name: "RAG retrieval port (grounding)", ref: "lib/integrations/live/retrieval.ts" },
       { name: "Knowledge graph", ref: "lib/knowledge-graph" },
       { name: "Adaptive learning (BKT/ZPD)", ref: "lib/adaptive" },
     ],
     status: "partial",
-    gap: "Real LLM keys, per-agent MCP tools and a production vector store at curriculum scale (RAG seam now in place).",
+    gap: "Real LLM keys + an MCP tool-execution runtime + a production vector store at curriculum scale (tool defs + RAG seam now in place).",
   },
   {
     id: "multi-tenancy",

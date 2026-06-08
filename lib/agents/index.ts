@@ -5,6 +5,7 @@
 
 import { integrations } from "@/lib/integrations"
 import type { AgentName, RetrievedChunk } from "@/lib/integrations"
+import { toolsFor } from "./tools"
 
 export interface AgentSpec {
   name: AgentName
@@ -38,6 +39,8 @@ export interface AgentRunResult {
   assertive: boolean
   /** High-stakes => action requires human approval before execution. */
   requiresApproval: boolean
+  /** MCP tool names advertised to the model for this run. */
+  availableTools: string[]
 }
 
 export async function runAgent(
@@ -46,7 +49,14 @@ export async function runAgent(
   context?: Record<string, unknown>,
 ): Promise<AgentRunResult> {
   const spec = AGENTS.find((a) => a.name === name)
-  const res = await integrations.agents.invoke({ agent: name, input, context, requiresApproval: spec?.highStakes })
+  // Advertise the agent's MCP tools to the model (function-calling surface).
+  const toolNames = toolsFor(name).map((t) => t.name)
+  const res = await integrations.agents.invoke({
+    agent: name,
+    input,
+    context: { ...context, tools: toolNames },
+    requiresApproval: spec?.highStakes,
+  })
   const confidence = res.data?.confidence ?? 0
   return {
     agent: name,
@@ -56,6 +66,7 @@ export async function runAgent(
     mode: res.mode,
     assertive: confidence >= CONFIDENCE_THRESHOLD,
     requiresApproval: Boolean(spec?.highStakes),
+    availableTools: toolNames,
   }
 }
 

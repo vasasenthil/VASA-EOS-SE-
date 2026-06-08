@@ -3,16 +3,19 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AGENTS } from "@/lib/agents"
+import { toolsFor, toolSummary } from "@/lib/agents/tools"
 import { AgentConsole } from "./agent-console"
 
 export default function AiAgentsPage() {
+  const t = toolSummary()
   return (
     <Shell>
       <PageHeader>
         <PageHeaderHeading>AI Agent Orchestration</PageHeaderHeading>
         <PageHeaderDescription>
-          8 specialised agents coordinated via MCP. AI augments — never replaces. High-stakes actions route through
-          human-in-the-loop approval, and low-confidence outputs are presented as suggestions.
+          8 specialised agents coordinated via MCP, exposing {t.tools} declared tools ({t.sideEffectTools}{" "}
+          side-effecting → human-in-the-loop). AI augments — never replaces. Low-confidence outputs are presented as
+          suggestions.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -33,6 +36,16 @@ export default function AiAgentsPage() {
                     {t}
                   </Badge>
                 ))}
+              </div>
+              <div className="pt-1">
+                <p className="text-xs font-medium text-muted-foreground">MCP tools</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {toolsFor(a.name).map((tool) => (
+                    <Badge key={tool.name} variant={tool.sideEffect ? "destructive" : "secondary"} className="font-mono text-xs">
+                      {tool.name}{tool.sideEffect ? " ⚠" : ""}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
