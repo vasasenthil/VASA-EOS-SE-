@@ -2,6 +2,7 @@
 
 import { runAgent, type AgentRunResult } from "@/lib/agents"
 import { dispatchTool, type ToolArgs, type ToolDispatchResult } from "@/lib/agents/dispatch"
+import { executeTool } from "@/lib/agents/execute"
 import type { AgentName } from "@/lib/integrations"
 import { appendAudit } from "@/lib/audit/trail"
 import { logger } from "@/lib/logger"
@@ -37,6 +38,16 @@ export async function dispatchToolAction(
   approved = false,
 ): Promise<ToolDispatchResult> {
   const res = dispatchTool(agent, tool, args, { approved })
+  // Once cleared (read-only, or side-effecting + approved), run it against the real
+  // seam; the executor's output supersedes the deterministic preview when routed.
+  if (res.ok && res.executed) {
+    try {
+      const exec = await executeTool(agent, tool, args)
+      if (exec) res.output = exec.mode === "live" ? exec.output : `${exec.output} [mock]`
+    } catch (e) {
+      logger.error("agent.tool execute failed", { tool, error: String(e) })
+    }
+  }
   try {
     await appendAudit({
       actor: `agent:${agent}`,
