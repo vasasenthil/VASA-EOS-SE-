@@ -17,6 +17,8 @@ export interface EcoActivity {
   saplings: number
   survived: number
   date: string
+  /** Tenant node this activity belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface EcoSummary {

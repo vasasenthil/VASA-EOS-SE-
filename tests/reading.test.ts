@@ -8,6 +8,7 @@ const r = (level: Reader["level"], booksRead = 2): Reader => ({
   cls: "3A",
   level,
   booksRead,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("level advances through the bands and clamps at Story", () => {

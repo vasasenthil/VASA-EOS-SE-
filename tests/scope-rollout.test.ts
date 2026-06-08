@@ -19,6 +19,11 @@ import { listLoans } from "@/lib/circulation/store"
 import { listAlumni } from "@/lib/alumni/store"
 import { listDistribution } from "@/lib/distribution/store"
 import { listCertificates } from "@/lib/certificates/store"
+import { listActivities } from "@/lib/eco/store"
+import { listCadets } from "@/lib/youth/store"
+import { listAccounts } from "@/lib/banking/store"
+import { listRecords } from "@/lib/fitness/store"
+import { listReaders } from "@/lib/reading/store"
 import { listMovements } from "@/lib/stock/store"
 import { listProjects } from "@/lib/sciencefair/store"
 import { listLectures } from "@/lib/guestlectures/store"
@@ -112,6 +117,23 @@ test("stock/sciencefair/guestlectures/council/assembly seeds are all scopable", 
     listLectures,
     listCandidates,
     listAssemblies,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
+    const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
+    assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
+    assert.equal(cbe.length, 1)
+  }
+})
+
+test("eco/youth/banking/fitness/reading seeds are all scopable", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listActivities,
+    listCadets,
+    listAccounts,
+    listRecords,
+    listReaders,
   ]
   for (const list of lists) {
     const all = await list()

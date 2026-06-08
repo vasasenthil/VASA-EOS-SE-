@@ -9,6 +9,7 @@ const a = (saplings: number, survived: number): EcoActivity => ({
   saplings,
   survived,
   date: "2026-06-05",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("activity catalogue is non-empty", () => {

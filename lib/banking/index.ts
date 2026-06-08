@@ -6,6 +6,8 @@ export interface Account {
   student: string
   cls: string
   balance: number
+  /** Tenant node this account belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 // Withdraw is capped at the available balance (no overdraft for children).

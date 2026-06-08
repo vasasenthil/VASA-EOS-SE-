@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { YOUTH_WINGS, youthSummary, type Cadet } from "@/lib/youth"
 import { createCadetAction, logCadetHoursAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,7 +21,7 @@ export function YouthBoard({ initial = [] }: { initial?: Cadet[] }) {
 
   function add() {
     if (!name.trim()) return
-    const optimistic: Cadet = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", wing, serviceHours: 0 }
+    const optimistic: Cadet = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", wing, serviceHours: 0, tenantId: DEFAULT_SCHOOL_NODE }
     setCadets((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createCadetAction({ name: optimistic.name, cls: optimistic.cls, wing: optimistic.wing })

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { READING_LEVELS, nextReadingLevel, readingSummary, type Reader, type ReadingLevel } from "@/lib/reading"
 import { createReaderAction, promoteReaderAction, logBookAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,7 +30,7 @@ export function ReadingBoard({ initial = [] }: { initial?: Reader[] }) {
 
   function add() {
     if (!student.trim()) return
-    const optimistic: Reader = { id: `rd-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", level, booksRead: 0 }
+    const optimistic: Reader = { id: `rd-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", level, booksRead: 0, tenantId: DEFAULT_SCHOOL_NODE }
     setReaders((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createReaderAction({ student: optimistic.student, cls: optimistic.cls, level: optimistic.level })

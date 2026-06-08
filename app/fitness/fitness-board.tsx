@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { FITNESS_TESTS, gradeFor, fitnessSummary, type FitnessRecord, type FitnessGrade } from "@/lib/fitness"
 import { createRecordAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ export function FitnessBoard({ initial = [] }: { initial?: FitnessRecord[] }) {
 
   function add() {
     if (!student.trim()) return
-    const optimistic: FitnessRecord = { id: `ft-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", test, score, grade: gradeFor(score) }
+    const optimistic: FitnessRecord = { id: `ft-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", test, score, grade: gradeFor(score), tenantId: DEFAULT_SCHOOL_NODE }
     setRecords((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createRecordAction({ student: optimistic.student, cls: optimistic.cls, test: optimistic.test, score: optimistic.score })

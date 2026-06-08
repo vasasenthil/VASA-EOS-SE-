@@ -9,6 +9,7 @@ const r = (student: string, score: number): FitnessRecord => ({
   test: FITNESS_TESTS[0],
   score,
   grade: gradeFor(score),
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("grading bands at 40 and 70", () => {

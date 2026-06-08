@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createActivity, deleteActivity, listActivities, type NewActivity } from "@/lib/eco/store"
 import type { EcoActivity } from "@/lib/eco"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listActivitiesAction(): Promise<EcoActivity[]> {
   noStore()
   try {
-    return await listActivities()
+    // Per-role data scoping: eco activities roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listActivities())
   } catch (e) {
     logger.error("eco.list failed", { error: String(e) })
     return []

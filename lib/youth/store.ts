@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Cadet } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   cls: string
   wing: string
   service_hours: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Cadet {
-  return { id: r.id, name: r.name, cls: r.cls, wing: r.wing, serviceHours: r.service_hours }
+  return { id: r.id, name: r.name, cls: r.cls, wing: r.wing, serviceHours: r.service_hours, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Cadet[] = []
+// Seeded across tenant nodes so cadet enrolment rolls up by jurisdiction.
+const store: Cadet[] = [
+  { id: "CDT-SEED1", name: "Arjun", cls: "11-A", wing: "NCC (Army wing)", serviceHours: 24, tenantId: "TN-CHN-B1-S1" },
+  { id: "CDT-SEED2", name: "Divya", cls: "10-B", wing: "NSS", serviceHours: 40, tenantId: "TN-CHN-B2-S1" },
+  { id: "CDT-SEED3", name: "Ravi", cls: "9-C", wing: "Scouts & Guides", serviceHours: 12, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewCadet {
   name: string
   cls: string
   wing: string
+  /** Tenant node the cadet is enrolled at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createCadet(input: NewCadet): Promise<Cadet> {
-  const c: Cadet = { id: id(), name: input.name, cls: input.cls, wing: input.wing, serviceHours: 0 }
+  const c: Cadet = { id: id(), name: input.name, cls: input.cls, wing: input.wing, serviceHours: 0, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("cadets").insert({
@@ -40,6 +49,7 @@ export async function createCadet(input: NewCadet): Promise<Cadet> {
       cls: c.cls,
       wing: c.wing,
       service_hours: c.serviceHours,
+      tenant_id: c.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

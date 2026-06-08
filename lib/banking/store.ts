@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { applyTxn, type Account } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   student: string
   cls: string
   balance: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Account {
-  return { id: r.id, student: r.student, cls: r.cls, balance: r.balance }
+  return { id: r.id, student: r.student, cls: r.cls, balance: r.balance, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Account[] = []
+// Seeded across tenant nodes so savings-bank accounts roll up by jurisdiction.
+const store: Account[] = [
+  { id: "AC-SEED1", student: "Asha", cls: "6-A", balance: 450, tenantId: "TN-CHN-B1-S1" },
+  { id: "AC-SEED2", student: "Bala", cls: "7-B", balance: 1200, tenantId: "TN-CHN-B2-S1" },
+  { id: "AC-SEED3", student: "Chitra", cls: "5-C", balance: 80, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewAccount {
   student: string
   cls: string
   opening: number
+  /** Tenant node the account is opened at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function openAccount(input: NewAccount): Promise<Account> {
-  const a: Account = { id: id(), student: input.student, cls: input.cls, balance: Math.max(0, input.opening) }
+  const a: Account = { id: id(), student: input.student, cls: input.cls, balance: Math.max(0, input.opening), tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("bank_accounts").insert({
@@ -39,6 +48,7 @@ export async function openAccount(input: NewAccount): Promise<Account> {
       student: a.student,
       cls: a.cls,
       balance: a.balance,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

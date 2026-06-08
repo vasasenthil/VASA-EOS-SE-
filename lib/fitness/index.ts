@@ -25,6 +25,8 @@ export interface FitnessRecord {
   test: string
   score: number
   grade: FitnessGrade
+  /** Tenant node this record belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface FitnessSummary {

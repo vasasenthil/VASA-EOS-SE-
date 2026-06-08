@@ -8,6 +8,7 @@ const c = (wing: string, serviceHours: number): Cadet => ({
   cls: "9A",
   wing,
   serviceHours,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("wing catalogue is non-empty", () => {

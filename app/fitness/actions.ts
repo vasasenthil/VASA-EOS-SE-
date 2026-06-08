@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createRecord, deleteRecord, listRecords, type NewRecord } from "@/lib/fitness/store"
 import type { FitnessRecord } from "@/lib/fitness"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listRecordsAction(): Promise<FitnessRecord[]> {
   noStore()
   try {
-    return await listRecords()
+    // Per-role data scoping: fitness results roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listRecords())
   } catch (e) {
     logger.error("fitness.list failed", { error: String(e) })
     return []

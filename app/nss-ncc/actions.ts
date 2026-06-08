@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createCadet, logCadetHours, deleteCadet, listCadets, type NewCadet } from "@/lib/youth/store"
 import type { Cadet } from "@/lib/youth"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listCadetsAction(): Promise<Cadet[]> {
   noStore()
   try {
-    return await listCadets()
+    // Per-role data scoping: cadet enrolment rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listCadets())
   } catch (e) {
     logger.error("youth.list failed", { error: String(e) })
     return []

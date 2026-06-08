@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { bankingSummary, applyTxn, inr, type Account } from "@/lib/banking"
 import { openAccountAction, transactAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,7 @@ export function BankingBoard({ initial = [] }: { initial?: Account[] }) {
 
   function open() {
     if (!student.trim() || opening < 0) return
-    const optimistic: Account = { id: `ac-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", balance: opening }
+    const optimistic: Account = { id: `ac-${Date.now()}`, student: student.trim(), cls: cls.trim() || "—", balance: opening, tenantId: DEFAULT_SCHOOL_NODE }
     setAccounts((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await openAccountAction({ student: optimistic.student, cls: optimistic.cls, opening: optimistic.balance })

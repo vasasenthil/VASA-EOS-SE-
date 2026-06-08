@@ -16,6 +16,8 @@ export interface Reader {
   cls: string
   level: ReadingLevel
   booksRead: number
+  /** Tenant node this reader belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface ReadingSummary {

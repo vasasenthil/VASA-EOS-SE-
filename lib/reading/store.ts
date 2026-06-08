@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextReadingLevel, type Reader } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   cls: string
   level: Reader["level"]
   books_read: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Reader {
-  return { id: r.id, student: r.student, cls: r.cls, level: r.level, booksRead: r.books_read }
+  return { id: r.id, student: r.student, cls: r.cls, level: r.level, booksRead: r.books_read, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Reader[] = []
+// Seeded across tenant nodes so reading-level progress rolls up by jurisdiction.
+const store: Reader[] = [
+  { id: "RD-SEED1", student: "Asha", cls: "2-A", level: "Word", booksRead: 6, tenantId: "TN-CHN-B1-S1" },
+  { id: "RD-SEED2", student: "Bala", cls: "3-B", level: "Paragraph", booksRead: 11, tenantId: "TN-CHN-B2-S1" },
+  { id: "RD-SEED3", student: "Chitra", cls: "1-C", level: "Beginner", booksRead: 1, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewReader {
   student: string
   cls: string
   level: Reader["level"]
+  /** Tenant node the reader is enrolled at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createReader(input: NewReader): Promise<Reader> {
-  const r: Reader = { id: id(), student: input.student, cls: input.cls, level: input.level, booksRead: 0 }
+  const r: Reader = { id: id(), student: input.student, cls: input.cls, level: input.level, booksRead: 0, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("readers").insert({
@@ -40,6 +49,7 @@ export async function createReader(input: NewReader): Promise<Reader> {
       cls: r.cls,
       level: r.level,
       books_read: r.booksRead,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

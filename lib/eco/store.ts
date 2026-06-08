@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { EcoActivity } from "./index"
 
 function id(): string {
@@ -17,14 +18,20 @@ interface Row {
   saplings: number
   survived: number
   date: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): EcoActivity {
-  return { id: r.id, title: r.title, type: r.type, saplings: r.saplings, survived: r.survived, date: r.date }
+  return { id: r.id, title: r.title, type: r.type, saplings: r.saplings, survived: r.survived, date: r.date, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: EcoActivity[] = []
+// Seeded across tenant nodes so eco activity rolls up by jurisdiction.
+const store: EcoActivity[] = [
+  { id: "EC-SEED1", title: "World Environment Day drive", type: "Tree plantation", saplings: 150, survived: 132, date: "2026-06-05", tenantId: "TN-CHN-B1-S1" },
+  { id: "EC-SEED2", title: "Plastic-free week", type: "Plastic-free campaign", saplings: 0, survived: 0, date: "2026-05-28", tenantId: "TN-CHN-B2-S1" },
+  { id: "EC-SEED3", title: "Kitchen garden", type: "Kitchen / herbal garden", saplings: 40, survived: 38, date: "2026-05-20", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewActivity {
   title: string
@@ -32,6 +39,8 @@ export interface NewActivity {
   saplings: number
   survived: number
   date: string
+  /** Tenant node the activity is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createActivity(input: NewActivity): Promise<EcoActivity> {
@@ -42,6 +51,7 @@ export async function createActivity(input: NewActivity): Promise<EcoActivity> {
     saplings: input.saplings,
     survived: input.survived,
     date: input.date,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -52,6 +62,7 @@ export async function createActivity(input: NewActivity): Promise<EcoActivity> {
       saplings: a.saplings,
       survived: a.survived,
       date: a.date,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

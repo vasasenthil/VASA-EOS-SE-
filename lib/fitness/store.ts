@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { gradeFor, type FitnessRecord } from "./index"
 
 function id(): string {
@@ -17,20 +18,28 @@ interface Row {
   test: string
   score: number
   grade: FitnessRecord["grade"]
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): FitnessRecord {
-  return { id: r.id, student: r.student, cls: r.cls, test: r.test, score: r.score, grade: r.grade }
+  return { id: r.id, student: r.student, cls: r.cls, test: r.test, score: r.score, grade: r.grade, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: FitnessRecord[] = []
+// Seeded across tenant nodes so fitness results roll up by jurisdiction.
+const store: FitnessRecord[] = [
+  { id: "FT-SEED1", student: "Asha", cls: "8-A", test: "Endurance (600m run)", score: 78, grade: gradeFor(78), tenantId: "TN-CHN-B1-S1" },
+  { id: "FT-SEED2", student: "Bala", cls: "9-B", test: "Strength (push-ups)", score: 55, grade: gradeFor(55), tenantId: "TN-CHN-B2-S1" },
+  { id: "FT-SEED3", student: "Chitra", cls: "7-C", test: "Flexibility (sit & reach)", score: 32, grade: gradeFor(32), tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewRecord {
   student: string
   cls: string
   test: string
   score: number
+  /** Tenant node the record is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createRecord(input: NewRecord): Promise<FitnessRecord> {
@@ -41,6 +50,7 @@ export async function createRecord(input: NewRecord): Promise<FitnessRecord> {
     test: input.test,
     score: input.score,
     grade: gradeFor(input.score),
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -51,6 +61,7 @@ export async function createRecord(input: NewRecord): Promise<FitnessRecord> {
       test: r.test,
       score: r.score,
       grade: r.grade,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

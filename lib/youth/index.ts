@@ -16,6 +16,8 @@ export interface Cadet {
   cls: string
   wing: string
   serviceHours: number
+  /** Tenant node this cadet belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface YouthSummary {

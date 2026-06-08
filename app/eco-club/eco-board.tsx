@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { ECO_ACTIVITIES, ecoSummary, type EcoActivity } from "@/lib/eco"
 import { createActivityAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function EcoBoard({ initial = [] }: { initial?: EcoActivity[] }) {
 
   function add() {
     if (!title.trim()) return
-    const optimistic: EcoActivity = { id: `ec-${Date.now()}`, title: title.trim(), type, saplings: isPlantation ? saplings : 0, survived: isPlantation ? survived : 0, date }
+    const optimistic: EcoActivity = { id: `ec-${Date.now()}`, title: title.trim(), type, saplings: isPlantation ? saplings : 0, survived: isPlantation ? survived : 0, date, tenantId: DEFAULT_SCHOOL_NODE }
     setActivities((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createActivityAction({ title: optimistic.title, type: optimistic.type, saplings: optimistic.saplings, survived: optimistic.survived, date: optimistic.date })

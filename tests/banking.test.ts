@@ -7,6 +7,7 @@ const acc = (balance: number): Account => ({
   student: "N",
   cls: "6A",
   balance,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("deposit adds, withdraw subtracts and never overdraws", () => {

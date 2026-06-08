@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createReader, promoteReader, logBook, deleteReader, listReaders, type NewReader } from "@/lib/reading/store"
 import type { Reader } from "@/lib/reading"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listReadersAction(): Promise<Reader[]> {
   noStore()
   try {
-    return await listReaders()
+    // Per-role data scoping: reading-level progress rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listReaders())
   } catch (e) {
     logger.error("reading.list failed", { error: String(e) })
     return []

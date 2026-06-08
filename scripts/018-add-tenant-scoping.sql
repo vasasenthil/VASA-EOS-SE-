@@ -112,3 +112,23 @@ create index if not exists council_candidates_tenant_id_idx on public.council_ca
 alter table if exists public.assemblies
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists assemblies_tenant_id_idx on public.assemblies (tenant_id);
+
+alter table if exists public.eco_activities
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists eco_activities_tenant_id_idx on public.eco_activities (tenant_id);
+
+alter table if exists public.cadets
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists cadets_tenant_id_idx on public.cadets (tenant_id);
+
+alter table if exists public.bank_accounts
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists bank_accounts_tenant_id_idx on public.bank_accounts (tenant_id);
+
+alter table if exists public.fitness_records
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists fitness_records_tenant_id_idx on public.fitness_records (tenant_id);
+
+alter table if exists public.readers
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists readers_tenant_id_idx on public.readers (tenant_id);
