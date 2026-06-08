@@ -18,6 +18,7 @@ import {
   mockEmis,
   mockPortal,
   mockExams,
+  mockRetrieval,
 } from "./mock"
 import {
   liveAadhaar,
@@ -31,6 +32,7 @@ import {
   liveEmis,
   livePortal,
   liveExams,
+  liveRetrieval,
 } from "./live"
 import type { IntegrationRegistry } from "./types"
 
@@ -57,6 +59,8 @@ export const integrations: IntegrationRegistry = {
   portal: integrationModes.portal === "live" ? livePortal : mockPortal,
   // Exam Systems (DGE) — candidate registration + result retrieval.
   exams: integrationModes.exams === "live" ? liveExams : mockExams,
+  // Retrieval (RAG / vector search) — grounds the AI agents on real corpora.
+  retrieval: integrationModes.retrieval === "live" ? liveRetrieval : mockRetrieval,
 }
 
 export { integrationModes }

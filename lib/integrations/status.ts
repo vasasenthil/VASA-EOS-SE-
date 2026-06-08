@@ -146,6 +146,15 @@ function build(): Def[] {
       mode: integrationModes.exams,
       env: [envVar("EXAMS_BASE_URL"), envVar("EXAMS_API_KEY")],
     },
+    {
+      key: "retrieval",
+      label: "Retrieval (RAG / vector)",
+      port: "RetrievalProvider",
+      note: "Grounds the AI agents on real corpora; keyword mock + live vector search.",
+      flag: "INTEGRATION_RETRIEVAL",
+      mode: integrationModes.retrieval,
+      env: [envVar("RETRIEVAL_BASE_URL"), envVar("RETRIEVAL_API_KEY")],
+    },
   ]
 }
 

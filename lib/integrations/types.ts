@@ -180,6 +180,19 @@ export interface ExamBoard {
 }
 
 /** The full set of ports the platform depends on. */
+// ── Retrieval (RAG / vector search) — grounds the AI agents on real corpora ───
+export interface RetrievedChunk {
+  id: string
+  text: string
+  source: string
+  /** Similarity score 0–1 (higher = more relevant). */
+  score: number
+}
+export interface RetrievalProvider {
+  /** Semantic search over an indexed corpus (curriculum, circulars, policies). */
+  retrieve(query: string, opts?: { topK?: number; corpus?: string }): Promise<IntegrationResult<RetrievedChunk[]>>
+}
+
 export interface IntegrationRegistry {
   identity: IdentityProvider
   aadhaar: AadhaarAuthProvider
@@ -192,4 +205,5 @@ export interface IntegrationRegistry {
   emis: EducationMis
   portal: PublicPortal
   exams: ExamBoard
+  retrieval: RetrievalProvider
 }

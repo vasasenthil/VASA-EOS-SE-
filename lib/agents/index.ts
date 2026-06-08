@@ -4,7 +4,7 @@
 // human-in-the-loop flags for high-stakes agents (welfare disbursement, compliance).
 
 import { integrations } from "@/lib/integrations"
-import type { AgentName } from "@/lib/integrations"
+import type { AgentName, RetrievedChunk } from "@/lib/integrations"
 
 export interface AgentSpec {
   name: AgentName
@@ -57,4 +57,41 @@ export async function runAgent(
     assertive: confidence >= CONFIDENCE_THRESHOLD,
     requiresApproval: Boolean(spec?.highStakes),
   }
+}
+
+// ── RAG grounding: retrieve corpus chunks, then run the agent grounded on them ─
+export interface Grounding {
+  /** Numbered context block to prepend to the agent prompt. */
+  context: string
+  /** Distinct cited sources, in citation order. */
+  sources: string[]
+}
+
+/** Compose a cited grounding block from retrieved chunks. Pure. */
+export function composeGrounding(chunks: RetrievedChunk[]): Grounding {
+  const sources: string[] = []
+  const lines = chunks.map((c, i) => {
+    if (!sources.includes(c.source)) sources.push(c.source)
+    return `[${i + 1}] ${c.text} (${c.source})`
+  })
+  return { context: lines.join("\n"), sources }
+}
+
+export interface GroundedAgentResult extends AgentRunResult {
+  /** Sources the answer was grounded on (empty when retrieval returned nothing). */
+  sources: string[]
+  grounded: boolean
+}
+
+/** Retrieve relevant corpus chunks (RAG), then run the agent grounded on them. */
+export async function runGroundedAgent(
+  name: AgentName,
+  input: string,
+  opts: { topK?: number; corpus?: string } = {},
+): Promise<GroundedAgentResult> {
+  const r = await integrations.retrieval.retrieve(input, opts)
+  const chunks = r.ok ? r.data ?? [] : []
+  const grounding = composeGrounding(chunks)
+  const base = await runAgent(name, input, grounding.context ? { grounding: grounding.context } : undefined)
+  return { ...base, sources: grounding.sources, grounded: chunks.length > 0 }
 }

@@ -15,6 +15,7 @@ import type {
   LanguageService,
   PaymentBridge,
   PublicPortal,
+  RetrievalProvider,
   SchoolRegistry,
 } from "../types"
 
@@ -151,5 +152,35 @@ export const mockExams: ExamBoard = {
   },
   async fetchResults(examCode) {
     return ok({ examCode, candidates: 0, passPct: 0, publishedAt: new Date().toISOString() })
+  },
+}
+
+// A small in-repo corpus so the mock RAG returns real, ranked grounding (not echo).
+const RAG_CORPUS: { id: string; text: string; source: string }[] = [
+  { id: "nep-fln", text: "NIPUN Bharat targets foundational literacy and numeracy (FLN) by Grade 3 under NEP 2020.", source: "NEP 2020 / NIPUN Bharat" },
+  { id: "rte-quota", text: "The RTE Act 2009 mandates 25% reservation in entry-level classes of private unaided schools for EWS/disadvantaged children.", source: "RTE Act 2009, Sec 12(1)(c)" },
+  { id: "cmbs", text: "The Chief Minister's Breakfast Scheme provides a free morning meal to government-school students in Tamil Nadu.", source: "TN CMBS" },
+  { id: "apaar", text: "APAAR is a lifelong Automated Permanent Academic Account Registry id provisioned at first enrolment.", source: "APAAR / One Nation One Student ID" },
+  { id: "stages", text: "NEP 2020 restructures schooling into 5+3+3+4 stages: Foundational, Preparatory, Middle and Secondary.", source: "NEP 2020 5+3+3+4" },
+  { id: "tc", text: "A Transfer Certificate (TC) is issued on a sequential number when a student leaves a school.", source: "TN school office procedure" },
+]
+
+function scoreChunk(query: string, text: string): number {
+  const q = new Set(query.toLowerCase().split(/\W+/).filter((w) => w.length > 2))
+  if (q.size === 0) return 0
+  const words = new Set(text.toLowerCase().split(/\W+/))
+  let hits = 0
+  for (const w of q) if (words.has(w)) hits++
+  return hits / q.size
+}
+
+export const mockRetrieval: RetrievalProvider = {
+  async retrieve(query, opts) {
+    const topK = opts?.topK ?? 3
+    const ranked = RAG_CORPUS.map((c) => ({ id: c.id, text: c.text, source: c.source, score: scoreChunk(query, c.text) }))
+      .filter((c) => c.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK)
+    return ok(ranked)
   },
 }

@@ -30,13 +30,14 @@ export const PILLARS: Pillar[] = [
     name: "Native-AI Fabric",
     commitment: "AI woven through the platform: specialised agents, RAG, confidence gating and human-in-the-loop.",
     components: [
-      { name: "8 specialised agents", ref: "lib/agents" },
-      { name: "Agent/LLM port (RAG-ready)", ref: "lib/integrations/live/agents.ts" },
+      { name: "8 specialised agents + confidence gating + HITL", ref: "lib/agents" },
+      { name: "Agent/LLM live adapter", ref: "lib/integrations/live/agents.ts" },
+      { name: "RAG retrieval port (grounding)", ref: "lib/integrations/live/retrieval.ts" },
       { name: "Knowledge graph", ref: "lib/knowledge-graph" },
       { name: "Adaptive learning (BKT/ZPD)", ref: "lib/adaptive" },
     ],
     status: "partial",
-    gap: "Real LLM keys, per-agent MCP tools and a vector/RAG store at curriculum scale.",
+    gap: "Real LLM keys, per-agent MCP tools and a production vector store at curriculum scale (RAG seam now in place).",
   },
   {
     id: "multi-tenancy",

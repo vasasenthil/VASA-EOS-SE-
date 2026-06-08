@@ -20,6 +20,7 @@ export const integrationModes = {
   emis: modeFor("EMIS"),
   portal: modeFor("TNPORTAL"),
   exams: modeFor("EXAMS"),
+  retrieval: modeFor("RETRIEVAL"),
 } as const
 
 export type IntegrationKey = keyof typeof integrationModes
@@ -145,4 +146,14 @@ export function examsBaseUrl(): string | undefined {
 /** API key / access token for the exam-board API. */
 export function examsApiKey(): string | undefined {
   return process.env.EXAMS_API_KEY || undefined
+}
+
+// ── Retrieval (RAG / vector search) — grounds the AI agents ───────────────────
+/** Vector-search endpoint origin (e.g. a hosted vector DB query API). No default. */
+export function retrievalBaseUrl(): string | undefined {
+  return process.env.RETRIEVAL_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the retrieval endpoint. */
+export function retrievalApiKey(): string | undefined {
+  return process.env.RETRIEVAL_API_KEY || undefined
 }
