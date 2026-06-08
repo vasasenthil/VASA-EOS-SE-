@@ -49,3 +49,12 @@ export function noticeSummary(notices: Notice[]): NoticeSummary {
     urgent: notices.filter((n) => n.category === "Urgent").length,
   }
 }
+
+/**
+ * Whether a notice should be syndicated to the public TN Schools Portal.
+ * Public-facing audiences (everyone / parents / students) are published; staff-only
+ * circulars stay internal.
+ */
+export function shouldSyndicate(audience: NoticeAudience): boolean {
+  return audience === "All" || audience === "Parents" || audience === "Students"
+}

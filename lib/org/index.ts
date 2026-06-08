@@ -55,6 +55,7 @@ export const ORG_UNITS: OrgUnit[] = [
   { id: "ttbc", name: "TN Text Book & Educational Services Corporation", code: "TNTBESC", kind: "authority", tier: "state", parentId: "min-she" },
   { id: "trb", name: "Teachers Recruitment Board", code: "TRB", kind: "authority", tier: "state", parentId: "min-she" },
   { id: "tnsdma", name: "TN State Disaster Management Authority", code: "TNSDMA", kind: "authority", tier: "state" },
+  { id: "dpl", name: "Directorate of Public Libraries", code: "DPL", kind: "authority", tier: "state", parentId: "min-she" },
   { id: "pmu", name: "VASA-EOS Programme Management Unit", code: "PMU", kind: "authority", tier: "state", parentId: "min-she" },
 
   // Councils

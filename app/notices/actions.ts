@@ -2,8 +2,9 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { publishNotice, setPinned, deleteNotice, listNotices, type NewNotice } from "@/lib/notices/store"
-import type { Notice } from "@/lib/notices"
+import { type Notice, shouldSyndicate } from "@/lib/notices"
 import { scopeForCurrentSubject } from "@/lib/access/scope-server"
+import { integrations } from "@/lib/integrations"
 import { logger } from "@/lib/logger"
 
 export async function listNoticesAction(): Promise<Notice[]> {
@@ -20,6 +21,17 @@ export async function listNoticesAction(): Promise<Notice[]> {
 export async function publishNoticeAction(input: NewNotice): Promise<Notice | null> {
   try {
     const n = await publishNotice(input)
+    // Best-effort syndication of public-facing notices to the TN Schools Portal.
+    // Never blocks or fails the local publish; the portal port is mock by default
+    // and a live adapter activates once INTEGRATION_TNPORTAL is configured.
+    if (shouldSyndicate(n.audience)) {
+      try {
+        const res = await integrations.portal.publish({ kind: "notice", title: n.title, body: n.body })
+        logger.info("notice.syndicate", { id: n.id, mode: res.mode, ok: res.ok, ref: res.data?.ref })
+      } catch (e) {
+        logger.warn("notice.syndicate failed", { id: n.id, error: String(e) })
+      }
+    }
     revalidatePath("/notices")
     return n
   } catch (e) {

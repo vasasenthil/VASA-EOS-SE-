@@ -1,8 +1,15 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { sortNotices, noticeSummary, type Notice } from "@/lib/notices"
+import { sortNotices, noticeSummary, shouldSyndicate, type Notice } from "@/lib/notices"
 
 const n = (over: Partial<Notice>): Notice => ({ id: "n", title: "t", body: "", category: "General", audience: "All", date: "2026-06-01", pinned: false, tenantId: "TN-CHN-B1-S1", ...over })
+
+test("shouldSyndicate publishes public-facing audiences, keeps staff internal", () => {
+  assert.equal(shouldSyndicate("All"), true)
+  assert.equal(shouldSyndicate("Parents"), true)
+  assert.equal(shouldSyndicate("Students"), true)
+  assert.equal(shouldSyndicate("Staff"), false)
+})
 
 test("sortNotices puts pinned first, then most recent", () => {
   const list = [
