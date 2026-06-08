@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createCandidate, voteCandidate, declareElection, deleteCandidate, listCandidates, type NewCandidate } from "@/lib/council/store"
 import type { Candidate } from "@/lib/council"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listCandidatesAction(): Promise<Candidate[]> {
   noStore()
   try {
-    return await listCandidates()
+    // Per-role data scoping: council candidates roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listCandidates())
   } catch (e) {
     logger.error("council.list failed", { error: String(e) })
     return []

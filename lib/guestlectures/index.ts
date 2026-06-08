@@ -19,6 +19,8 @@ export interface Lecture {
   date: string
   audience: number
   cls: string
+  /** Tenant node this lecture belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface GlSummary {

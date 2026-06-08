@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Lecture } from "./index"
 
 function id(): string {
@@ -19,6 +20,7 @@ interface Row {
   date: string
   audience: number
   cls: string
+  tenant_id: string
   created_at: string
 }
 
@@ -32,10 +34,16 @@ function fromRow(r: Row): Lecture {
     date: r.date,
     audience: r.audience,
     cls: r.cls,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: Lecture[] = []
+// Seeded across tenant nodes so guest-lecture coverage rolls up by jurisdiction.
+const store: Lecture[] = [
+  { id: "GL-SEED1", speaker: "Dr. Latha", topic: "Careers in science", org: "IIT-M", domain: "Career guidance", date: "2026-05-21", audience: 120, cls: "11-12", tenantId: "TN-CHN-B1-S1" },
+  { id: "GL-SEED2", speaker: "Mr. Raghu", topic: "Cyber safety", org: "TN Police", domain: "Civic / legal awareness", date: "2026-05-26", audience: 200, cls: "9-10", tenantId: "TN-CHN-B2-S1" },
+  { id: "GL-SEED3", speaker: "Ms. Anjali", topic: "Startup basics", org: "TN Startup", domain: "Entrepreneurship", date: "2026-06-02", audience: 80, cls: "11", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewLecture {
   speaker: string
@@ -45,10 +53,12 @@ export interface NewLecture {
   date: string
   audience: number
   cls: string
+  /** Tenant node the lecture is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createLecture(input: NewLecture): Promise<Lecture> {
-  const l: Lecture = { id: id(), ...input }
+  const l: Lecture = { id: id(), ...input, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("guest_lectures").insert({
@@ -60,6 +70,7 @@ export async function createLecture(input: NewLecture): Promise<Lecture> {
       date: l.date,
       audience: l.audience,
       cls: l.cls,
+      tenant_id: l.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

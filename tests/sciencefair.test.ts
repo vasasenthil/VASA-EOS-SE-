@@ -10,6 +10,7 @@ const p = (score: number, judged: boolean): SfProject => ({
   category: SF_CATEGORIES[0],
   score,
   judged,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("categories catalogue is non-empty", () => {

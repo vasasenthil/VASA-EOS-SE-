@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { GL_DOMAINS, glSummary, type Lecture } from "@/lib/guestlectures"
 import { createLectureAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function GuestLecturesBoard({ initial = [] }: { initial?: Lecture[] }) {
 
   function add() {
     if (!speaker.trim() || !topic.trim()) return
-    const optimistic: Lecture = { id: `gl-${Date.now()}`, speaker: speaker.trim(), topic: topic.trim(), org: org.trim() || "—", domain, date, audience, cls: cls.trim() || "All" }
+    const optimistic: Lecture = { id: `gl-${Date.now()}`, speaker: speaker.trim(), topic: topic.trim(), org: org.trim() || "—", domain, date, audience, cls: cls.trim() || "All", tenantId: DEFAULT_SCHOOL_NODE }
     setLectures((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createLectureAction({ speaker: optimistic.speaker, topic: optimistic.topic, org: optimistic.org, domain: optimistic.domain, date: optimistic.date, audience: optimistic.audience, cls: optimistic.cls })

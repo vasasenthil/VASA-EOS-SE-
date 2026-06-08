@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { INVENTORY } from "@/lib/procurement"
 import { adjust, isLow, deriveStock, type Movement, type MovementType } from "@/lib/stock"
 import { recordMovementAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function InventoryDesk({ initial = [] }: { initial?: Movement[] }) {
 
   function apply() {
     if (qty <= 0) return
-    const optimistic: Movement = { id: `mv-${Date.now()}`, item, type, qty, at: TODAY }
+    const optimistic: Movement = { id: `mv-${Date.now()}`, item, type, qty, at: TODAY, tenantId: DEFAULT_SCHOOL_NODE }
     setStock((s) => ({ ...s, [item]: adjust(s[item] ?? 0, type, qty) }))
     setMoves((m) => [optimistic, ...m])
     startTransition(async () => {

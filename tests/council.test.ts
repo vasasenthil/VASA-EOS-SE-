@@ -9,6 +9,7 @@ const c = (position: string, votes: number, elected = false): Candidate => ({
   position,
   votes,
   elected,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("positions catalogue is non-empty", () => {

@@ -19,6 +19,11 @@ import { listLoans } from "@/lib/circulation/store"
 import { listAlumni } from "@/lib/alumni/store"
 import { listDistribution } from "@/lib/distribution/store"
 import { listCertificates } from "@/lib/certificates/store"
+import { listMovements } from "@/lib/stock/store"
+import { listProjects } from "@/lib/sciencefair/store"
+import { listLectures } from "@/lib/guestlectures/store"
+import { listCandidates } from "@/lib/council/store"
+import { listAssemblies } from "@/lib/assembly/store"
 import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 beforeEach(() => __setTestDb(null)) // in-memory seeded path
@@ -97,6 +102,23 @@ test("circulation/alumni/distribution/certificates seeds are all scopable", asyn
     assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
     // Chennai district never sees Coimbatore's records.
     assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).every((r) => r.tenantId !== "TN-CBE-B1-S1"))
+  }
+})
+
+test("stock/sciencefair/guestlectures/council/assembly seeds are all scopable", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listMovements,
+    listProjects,
+    listLectures,
+    listCandidates,
+    listAssemblies,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 3, "state sees all seeds")
+    const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
+    assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
+    assert.equal(cbe.length, 1)
   }
 })
 

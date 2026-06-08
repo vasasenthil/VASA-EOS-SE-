@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { SF_CATEGORIES, SF_SHORTLIST_CUTOFF, sfSummary, isShortlisted, type SfProject } from "@/lib/sciencefair"
 import { createProjectAction, scoreProjectAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,7 @@ export function ScienceFairBoard({ initial = [] }: { initial?: SfProject[] }) {
 
   function add() {
     if (!title.trim() || !student.trim()) return
-    const optimistic: SfProject = { id: `sf-${Date.now()}`, title: title.trim(), student: student.trim(), cls: cls.trim() || "—", category, score: 0, judged: false }
+    const optimistic: SfProject = { id: `sf-${Date.now()}`, title: title.trim(), student: student.trim(), cls: cls.trim() || "—", category, score: 0, judged: false, tenantId: DEFAULT_SCHOOL_NODE }
     setProjects((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createProjectAction({ title: optimistic.title, student: optimistic.student, cls: optimistic.cls, category: optimistic.category })

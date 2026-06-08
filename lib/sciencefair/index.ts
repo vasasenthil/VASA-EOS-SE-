@@ -21,6 +21,8 @@ export interface SfProject {
   category: string
   score: number
   judged: boolean
+  /** Tenant node this project belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface SfSummary {

@@ -11,6 +11,7 @@ const l = (speaker: string, domain: string, audience: number): Lecture => ({
   date: "2026-06-05",
   audience,
   cls: "9-10",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("domain catalogue is non-empty", () => {

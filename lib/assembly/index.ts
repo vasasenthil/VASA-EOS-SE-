@@ -18,6 +18,8 @@ export interface Assembly {
   theme: string
   conductedBy: string
   thought: string
+  /** Tenant node this assembly belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface AssemblySummary {

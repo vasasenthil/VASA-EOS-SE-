@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { COUNCIL_POSITIONS, councilSummary, declareWinners, type Candidate } from "@/lib/council"
 import { createCandidateAction, voteCandidateAction, declareElectionAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,7 +21,7 @@ export function CouncilBoard({ initial = [] }: { initial?: Candidate[] }) {
 
   function add() {
     if (!name.trim()) return
-    const optimistic: Candidate = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", position, votes: 0, elected: false }
+    const optimistic: Candidate = { id: `cd-${Date.now()}`, name: name.trim(), cls: cls.trim() || "—", position, votes: 0, elected: false, tenantId: DEFAULT_SCHOOL_NODE }
     setCandidates((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createCandidateAction({ name: optimistic.name, cls: optimistic.cls, position: optimistic.position })

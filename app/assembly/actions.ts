@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createAssembly, deleteAssembly, listAssemblies, type NewAssembly } from "@/lib/assembly/store"
 import type { Assembly } from "@/lib/assembly"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listAssembliesAction(): Promise<Assembly[]> {
   noStore()
   try {
-    return await listAssemblies()
+    // Per-role data scoping: assembly logs roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listAssemblies())
   } catch (e) {
     logger.error("assembly.list failed", { error: String(e) })
     return []

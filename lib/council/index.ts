@@ -17,6 +17,8 @@ export interface Candidate {
   position: string
   votes: number
   elected: boolean
+  /** Tenant node this candidate belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface CouncilSummary {

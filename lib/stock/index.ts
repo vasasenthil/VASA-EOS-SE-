@@ -9,6 +9,8 @@ export interface Movement {
   type: MovementType
   qty: number
   at: string
+  /** Tenant node this movement belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function isLow(inStock: number, reorderAt: number): boolean {

@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { declareWinners, type Candidate } from "./index"
 
 function id(): string {
@@ -16,23 +17,32 @@ interface Row {
   position: string
   votes: number
   elected: boolean
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Candidate {
-  return { id: r.id, name: r.name, cls: r.cls, position: r.position, votes: r.votes, elected: r.elected }
+  return { id: r.id, name: r.name, cls: r.cls, position: r.position, votes: r.votes, elected: r.elected, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Candidate[] = []
+// Seeded across tenant nodes so council nominations roll up by jurisdiction.
+// Votes kept at 0 so seeds never pre-empt a live election declaration.
+const store: Candidate[] = [
+  { id: "CD-SEED1", name: "Priya", cls: "11-A", position: "School Pupil Leader", votes: 0, elected: false, tenantId: "TN-CHN-B1-S1" },
+  { id: "CD-SEED2", name: "Karthik", cls: "10-B", position: "Deputy Pupil Leader", votes: 0, elected: false, tenantId: "TN-CHN-B2-S1" },
+  { id: "CD-SEED3", name: "Meera", cls: "9-C", position: "Cultural Secretary", votes: 0, elected: false, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewCandidate {
   name: string
   cls: string
   position: string
+  /** Tenant node the candidate stands in; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createCandidate(input: NewCandidate): Promise<Candidate> {
-  const c: Candidate = { id: id(), name: input.name, cls: input.cls, position: input.position, votes: 0, elected: false }
+  const c: Candidate = { id: id(), name: input.name, cls: input.cls, position: input.position, votes: 0, elected: false, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("council_candidates").insert({
@@ -42,6 +52,7 @@ export async function createCandidate(input: NewCandidate): Promise<Candidate> {
       position: c.position,
       votes: c.votes,
       elected: c.elected,
+      tenant_id: c.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

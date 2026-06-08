@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { ASSEMBLY_THEMES, assemblySummary, type Assembly } from "@/lib/assembly"
 import { createAssemblyAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,7 +23,7 @@ export function AssemblyBoard({ initial = [] }: { initial?: Assembly[] }) {
 
   function add() {
     if (!cls.trim()) return
-    const optimistic: Assembly = { id: `as-${Date.now()}`, date, cls: cls.trim(), theme, conductedBy: conductedBy.trim() || "—", thought: thought.trim() }
+    const optimistic: Assembly = { id: `as-${Date.now()}`, date, cls: cls.trim(), theme, conductedBy: conductedBy.trim() || "—", thought: thought.trim(), tenantId: DEFAULT_SCHOOL_NODE }
     setItems((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createAssemblyAction({ date: optimistic.date, cls: optimistic.cls, theme: optimistic.theme, conductedBy: optimistic.conductedBy, thought: optimistic.thought })

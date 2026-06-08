@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createLecture, deleteLecture, listLectures, type NewLecture } from "@/lib/guestlectures/store"
 import type { Lecture } from "@/lib/guestlectures"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listLecturesAction(): Promise<Lecture[]> {
   noStore()
   try {
-    return await listLectures()
+    // Per-role data scoping: guest lectures roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listLectures())
   } catch (e) {
     logger.error("lecture.list failed", { error: String(e) })
     return []

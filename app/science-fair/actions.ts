@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createProject, scoreProject, deleteProject, listProjects, type NewProject } from "@/lib/sciencefair/store"
 import type { SfProject } from "@/lib/sciencefair"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listProjectsAction(): Promise<SfProject[]> {
   noStore()
   try {
-    return await listProjects()
+    // Per-role data scoping: science projects roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listProjects())
   } catch (e) {
     logger.error("sf.list failed", { error: String(e) })
     return []

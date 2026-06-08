@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Assembly } from "./index"
 
 function id(): string {
@@ -17,14 +18,20 @@ interface Row {
   theme: string
   conducted_by: string
   thought: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Assembly {
-  return { id: r.id, date: r.date, cls: r.cls, theme: r.theme, conductedBy: r.conducted_by, thought: r.thought }
+  return { id: r.id, date: r.date, cls: r.cls, theme: r.theme, conductedBy: r.conducted_by, thought: r.thought, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Assembly[] = []
+// Seeded across tenant nodes so assembly logs roll up by jurisdiction.
+const store: Assembly[] = [
+  { id: "AS-SEED1", date: "2026-06-02", cls: "10-A", theme: "Patriotism", conductedBy: "Class 10-A", thought: "Unity is strength", tenantId: "TN-CHN-B1-S1" },
+  { id: "AS-SEED2", date: "2026-06-01", cls: "9-B", theme: "Environment", conductedBy: "Eco Club", thought: "Plant a tree today", tenantId: "TN-CHN-B2-S1" },
+  { id: "AS-SEED3", date: "2026-05-30", cls: "8-C", theme: "Gratitude & kindness", conductedBy: "Class 8-C", thought: "Be kind", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewAssembly {
   date: string
@@ -32,6 +39,8 @@ export interface NewAssembly {
   theme: string
   conductedBy: string
   thought: string
+  /** Tenant node the assembly is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createAssembly(input: NewAssembly): Promise<Assembly> {
@@ -42,6 +51,7 @@ export async function createAssembly(input: NewAssembly): Promise<Assembly> {
     theme: input.theme,
     conductedBy: input.conductedBy,
     thought: input.thought,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -52,6 +62,7 @@ export async function createAssembly(input: NewAssembly): Promise<Assembly> {
       theme: a.theme,
       conducted_by: a.conductedBy,
       thought: a.thought,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

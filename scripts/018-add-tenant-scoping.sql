@@ -92,3 +92,23 @@ create index if not exists distribution_tenant_id_idx on public.distribution (te
 alter table if exists public.certificates
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists certificates_tenant_id_idx on public.certificates (tenant_id);
+
+alter table if exists public.stock_movements
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists stock_movements_tenant_id_idx on public.stock_movements (tenant_id);
+
+alter table if exists public.sf_projects
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists sf_projects_tenant_id_idx on public.sf_projects (tenant_id);
+
+alter table if exists public.guest_lectures
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists guest_lectures_tenant_id_idx on public.guest_lectures (tenant_id);
+
+alter table if exists public.council_candidates
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists council_candidates_tenant_id_idx on public.council_candidates (tenant_id);
+
+alter table if exists public.assemblies
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists assemblies_tenant_id_idx on public.assemblies (tenant_id);

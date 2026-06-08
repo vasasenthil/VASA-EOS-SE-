@@ -9,6 +9,7 @@ const a = (date: string, cls: string, theme: string): Assembly => ({
   theme,
   conductedBy: "Teacher",
   thought: "t",
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("theme catalogue is non-empty", () => {

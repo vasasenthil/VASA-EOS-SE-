@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { SfProject } from "./index"
 
 function id(): string {
@@ -17,6 +18,7 @@ interface Row {
   category: string
   score: number
   judged: boolean
+  tenant_id: string
   created_at: string
 }
 
@@ -29,16 +31,24 @@ function fromRow(r: Row): SfProject {
     category: r.category,
     score: r.score,
     judged: r.judged,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: SfProject[] = []
+// Seeded across tenant nodes so science projects roll up by jurisdiction.
+const store: SfProject[] = [
+  { id: "SF-SEED1", title: "Solar water purifier", student: "Nila", cls: "9-A", category: "Environment", score: 82, judged: true, tenantId: "TN-CHN-B1-S1" },
+  { id: "SF-SEED2", title: "Smart dustbin", student: "Vikram", cls: "10-B", category: "Robotics / IoT", score: 0, judged: false, tenantId: "TN-CHN-B2-S1" },
+  { id: "SF-SEED3", title: "Rainwater pH study", student: "Iniya", cls: "8-C", category: "Chemistry", score: 68, judged: true, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewProject {
   title: string
   student: string
   cls: string
   category: string
+  /** Tenant node the project is registered at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createProject(input: NewProject): Promise<SfProject> {
@@ -50,6 +60,7 @@ export async function createProject(input: NewProject): Promise<SfProject> {
     category: input.category,
     score: 0,
     judged: false,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -61,6 +72,7 @@ export async function createProject(input: NewProject): Promise<SfProject> {
       category: p.category,
       score: p.score,
       judged: p.judged,
+      tenant_id: p.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
