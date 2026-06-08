@@ -44,7 +44,7 @@ export const ASSURANCE_REGISTER: AssuranceItem[] = [
   { id: "consent-review", name: "Consent & PII-handling review", category: "privacy", standard: "DPDP 2023", owner: "DPO", cadence: "Quarterly", status: "in-progress", evidence: "Consent gate + PII catalogue implemented" },
 
   // Accessibility
-  { id: "wcag", name: "WCAG 2.2 audit", category: "accessibility", standard: "WCAG 2.2 AA/AAA · RPwD 2016", owner: "Accessibility", cadence: "Per release", status: "not-started", evidence: "Independent WCAG audit" },
+  { id: "wcag", name: "WCAG 2.2 audit", category: "accessibility", standard: "WCAG 2.2 AA/AAA · RPwD 2016", owner: "Accessibility", cadence: "Every push (CI) + per release", status: "in-progress", evidence: "Lightweight automated audit (scripts/a11y-audit.mjs + CI); commission a full WCAG 2.2 audit for sign-off" },
   { id: "at-qa", name: "Assistive-technology QA (screen reader / Braille / ISL)", category: "accessibility", standard: "RPwD 2016 (21 categories)", owner: "Accessibility", cadence: "Per release", status: "not-started", evidence: "AT lab testing" },
 
   // Resilience

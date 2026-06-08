@@ -21,7 +21,7 @@ test("status is honest: tests pass; independent audits are not started", () => {
   assert.ok(passedIds.includes("unit-tests"))
   assert.ok(passedIds.includes("typecheck"))
   const notStarted = ASSURANCE_REGISTER.filter((a) => a.status === "not-started").map((a) => a.id)
-  for (const required of ["pentest", "dpia", "wcag", "dast"]) {
+  for (const required of ["pentest", "dpia", "dast"]) {
     assert.ok(notStarted.includes(required), `${required} must be honestly flagged not-started`)
   }
 })

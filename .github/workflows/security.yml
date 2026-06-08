@@ -18,6 +18,8 @@ jobs:
         run: node --experimental-strip-types scripts/secret-scan.mjs
       - name: SAST (lightweight ruleset)
         run: node --experimental-strip-types scripts/sast-scan.mjs
+      - name: Accessibility audit (WCAG, lightweight)
+        run: node --experimental-strip-types scripts/a11y-audit.mjs
 
   dependency-audit:
     runs-on: ubuntu-latest
