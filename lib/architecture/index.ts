@@ -48,9 +48,10 @@ export const PILLARS: Pillar[] = [
       { name: "ReBAC data scoping engine", ref: "lib/access/scope.ts" },
       { name: "Scoping enforcement seam", ref: "lib/access/scope-server.ts" },
       { name: "Tenant column migration (45 tables)", ref: "scripts/018-add-tenant-scoping.sql" },
+      { name: "RLS-per-tenant (DB defense-in-depth)", ref: "scripts/019-tenant-rls.sql" },
     ],
     status: "implemented",
-    gap: "Physical/row-level isolation enforced at the database layer (RLS) for every tenant.",
+    gap: "Provisioned database to apply RLS + per-request GUC binding on the non-service connection at deploy.",
   },
   {
     id: "data",
