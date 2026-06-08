@@ -31,9 +31,10 @@ export const ASSURANCE_REGISTER: AssuranceItem[] = [
   { id: "code-review", name: "Code review", category: "quality" as AssuranceCategory, standard: "Internal", owner: "Engineering", cadence: "Per change", status: "in-progress", evidence: "Review on changes" },
 
   // Security
+  { id: "secret-scan", name: "Secret-leak scan", category: "security", standard: "Internal (CWE-798)", owner: "Engineering", cadence: "Every commit (CI)", status: "passed", evidence: "scripts/secret-scan.mjs + .github/workflows/security.yml" },
+  { id: "sca", name: "Dependency / SCA scan", category: "security", standard: "OWASP SCA", owner: "Security", cadence: "Every push (CI)", status: "in-progress", evidence: "pnpm audit in security.yml (report-only)" },
   { id: "sast", name: "Static application security testing (SAST)", category: "security", standard: "OWASP ASVS", owner: "Security", cadence: "Per release", status: "not-started", evidence: "Commission a SAST scan" },
   { id: "dast", name: "Dynamic application security testing (DAST)", category: "security", standard: "OWASP", owner: "Security", cadence: "Per release", status: "not-started", evidence: "Commission a DAST scan" },
-  { id: "sca", name: "Dependency / SCA scan", category: "security", standard: "OWASP SCA", owner: "Security", cadence: "Weekly", status: "not-started", evidence: "Enable SCA in CI" },
   { id: "pentest", name: "Independent penetration test", category: "security", standard: "CERT-In empanelled", owner: "Govt security cell", cadence: "Annual + major release", status: "not-started", evidence: "Engage a CERT-In auditor" },
 
   // Privacy
