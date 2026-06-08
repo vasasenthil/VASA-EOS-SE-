@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT_SCRIPT }} /> {/* sast-ignore: static app-controlled boot script, no user input */}
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow focus:outline focus:outline-2 focus:outline-ring"

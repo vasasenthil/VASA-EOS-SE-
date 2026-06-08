@@ -16,6 +16,8 @@ jobs:
           node-version: "22"
       - name: Secret-leak scan
         run: node --experimental-strip-types scripts/secret-scan.mjs
+      - name: SAST (lightweight ruleset)
+        run: node --experimental-strip-types scripts/sast-scan.mjs
 
   dependency-audit:
     runs-on: ubuntu-latest
