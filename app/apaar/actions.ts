@@ -2,6 +2,27 @@
 
 import { integrations } from "@/lib/integrations"
 import type { ApaarRecord } from "@/lib/integrations"
+import { gatePii } from "@/lib/consent/gate-server"
+import { gatingPurpose } from "@/lib/consent/pii-catalogue"
+import { logger } from "@/lib/logger"
+
+/**
+ * Consent-gated APAAR identity read (reference #2). The lifelong learner record is
+ * released only when the gating purpose for the "identity" PII class is on file for
+ * that APAAR id; otherwise null. Decision is audited by the consent gate.
+ */
+export async function resolveApaarAction(apaarId: string): Promise<ApaarRecord | null> {
+  const purpose = gatingPurpose("identity") ?? "aadhaar_linkage"
+  try {
+    return await gatePii(apaarId, purpose, async () => {
+      const res = await integrations.identity.getApaar(apaarId)
+      return res.ok ? res.data ?? null : null
+    })
+  } catch (e) {
+    logger.error("apaar.resolve failed", { error: String(e) })
+    return null
+  }
+}
 
 export interface ApaarState {
   record?: ApaarRecord

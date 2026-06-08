@@ -141,6 +141,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Scheme Disbursement", href: "/dbt", icon: IndianRupee },
     { title: "Multilingual & Voice", href: "/multilingual", icon: Globe },
     { title: "Consent & Audit", href: "/consent", icon: FileLock },
+    { title: "PII Classification (DPDP)", href: "/governance/pii-catalogue", icon: FileLock },
     { title: "Accessibility", href: "/accessibility", icon: Heart },
     { title: "PM POSHAN / CMBS", href: "/pm-poshan", icon: Utensils },
     { title: "Mid-Day Meal Register", href: "/mdm", icon: Utensils },

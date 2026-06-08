@@ -73,6 +73,7 @@ export const PILLARS: Pillar[] = [
     components: [
       { name: "5-model PDP (RBAC·ABAC·ReBAC·PBAC·CABAC)", ref: "lib/access/policy.ts" },
       { name: "DPDP consent + PII-read gate", ref: "lib/consent/gate-server.ts" },
+      { name: "PII data-classification catalogue", ref: "lib/consent/pii-catalogue.ts" },
       { name: "Security headers + request-id", ref: "middleware.ts" },
       { name: "Rate-limit seam", ref: "lib/ratelimit" },
     ],
