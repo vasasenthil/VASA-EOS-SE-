@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 function id(): string {
   return `PAP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
@@ -16,6 +17,8 @@ export interface PaperSnapshot {
   questionIds: string[]
   count: number
   totalMarks: number
+  /** Tenant node that produced this paper — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -24,11 +27,12 @@ interface Row {
   question_ids: string[]
   count: number
   total_marks: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): PaperSnapshot {
-  return { id: r.id, title: r.title, questionIds: r.question_ids ?? [], count: r.count, totalMarks: r.total_marks }
+  return { id: r.id, title: r.title, questionIds: r.question_ids ?? [], count: r.count, totalMarks: r.total_marks, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: PaperSnapshot[] = []
@@ -37,13 +41,15 @@ export interface NewPaper {
   title: string
   questionIds: string[]
   totalMarks: number
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function savePaper(input: NewPaper): Promise<PaperSnapshot> {
-  const p: PaperSnapshot = { id: id(), title: input.title, questionIds: input.questionIds, count: input.questionIds.length, totalMarks: input.totalMarks }
+  const p: PaperSnapshot = { id: id(), title: input.title, questionIds: input.questionIds, count: input.questionIds.length, totalMarks: input.totalMarks, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
-    await db.from("question_papers").insert({ id: p.id, title: p.title, question_ids: p.questionIds, count: p.count, total_marks: p.totalMarks, created_at: new Date().toISOString() })
+    await db.from("question_papers").insert({ id: p.id, title: p.title, question_ids: p.questionIds, count: p.count, total_marks: p.totalMarks, tenant_id: p.tenantId, created_at: new Date().toISOString() })
   } else {
     store.unshift(p)
   }

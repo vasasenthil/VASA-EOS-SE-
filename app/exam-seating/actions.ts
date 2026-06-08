@@ -2,12 +2,14 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { savePlan, listPlans, type NewSeating, type SeatingSnapshot } from "@/lib/exam-seating/store"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listPlansAction(): Promise<SeatingSnapshot[]> {
   noStore()
   try {
-    return await listPlans()
+    // Per-role data scoping: seating plans roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listPlans())
   } catch (e) {
     logger.error("seating.list failed", { error: String(e) })
     return []

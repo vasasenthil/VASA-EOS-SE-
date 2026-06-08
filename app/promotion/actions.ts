@@ -2,12 +2,14 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { saveRun, listRuns, type NewRun, type PromotionRun } from "@/lib/promotion/store"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listRunsAction(): Promise<PromotionRun[]> {
   noStore()
   try {
-    return await listRuns()
+    // Per-role data scoping: promotion runs roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listRuns())
   } catch (e) {
     logger.error("promotion.list failed", { error: String(e) })
     return []

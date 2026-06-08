@@ -2,12 +2,14 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { savePaper, listPapers, type NewPaper, type PaperSnapshot } from "@/lib/question-bank/store"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listPapersAction(): Promise<PaperSnapshot[]> {
   noStore()
   try {
-    return await listPapers()
+    // Per-role data scoping: saved papers roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listPapers())
   } catch (e) {
     logger.error("paper.list failed", { error: String(e) })
     return []

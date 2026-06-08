@@ -172,3 +172,27 @@ create index if not exists vacancy_lines_tenant_id_idx on public.vacancy_lines (
 alter table if exists public.bagless_activities
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists bagless_activities_tenant_id_idx on public.bagless_activities (tenant_id);
+
+alter table if exists public.diagnostic_rounds
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists diagnostic_rounds_tenant_id_idx on public.diagnostic_rounds (tenant_id);
+
+alter table if exists public.result_publications
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists result_publications_tenant_id_idx on public.result_publications (tenant_id);
+
+alter table if exists public.staff_attendance_sheets
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists staff_attendance_sheets_tenant_id_idx on public.staff_attendance_sheets (tenant_id);
+
+alter table if exists public.seating_plans
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists seating_plans_tenant_id_idx on public.seating_plans (tenant_id);
+
+alter table if exists public.question_papers
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists question_papers_tenant_id_idx on public.question_papers (tenant_id);
+
+alter table if exists public.promotion_runs
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists promotion_runs_tenant_id_idx on public.promotion_runs (tenant_id);

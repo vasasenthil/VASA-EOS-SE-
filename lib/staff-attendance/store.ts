@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { StaffStatus } from "./index"
 
 function id(): string {
@@ -16,6 +17,8 @@ export interface SavedSheet {
   date: string
   records: Record<string, StaffStatus>
   pct: number
+  /** Tenant node that produced this sheet — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -23,11 +26,12 @@ interface Row {
   date: string
   records: Record<string, StaffStatus>
   pct: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): SavedSheet {
-  return { id: r.id, date: r.date, records: r.records, pct: r.pct }
+  return { id: r.id, date: r.date, records: r.records, pct: r.pct, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: SavedSheet[] = []
@@ -36,10 +40,12 @@ export interface NewSheet {
   date: string
   records: Record<string, StaffStatus>
   pct: number
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function saveSheet(input: NewSheet): Promise<SavedSheet> {
-  const s: SavedSheet = { id: id(), date: input.date, records: input.records, pct: input.pct }
+  const s: SavedSheet = { id: id(), date: input.date, records: input.records, pct: input.pct, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("staff_attendance_sheets").insert({
@@ -47,6 +53,7 @@ export async function saveSheet(input: NewSheet): Promise<SavedSheet> {
       date: s.date,
       records: s.records,
       pct: s.pct,
+      tenant_id: s.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

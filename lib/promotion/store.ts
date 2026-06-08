@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { PromotionSummary } from "./index"
 
 function id(): string {
@@ -18,6 +19,8 @@ export interface PromotionRun {
   promoted: number
   detained: number
   graduated: number
+  /** Tenant node that produced this run — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -27,11 +30,12 @@ interface Row {
   promoted: number
   detained: number
   graduated: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): PromotionRun {
-  return { id: r.id, label: r.label, total: r.total, promoted: r.promoted, detained: r.detained, graduated: r.graduated }
+  return { id: r.id, label: r.label, total: r.total, promoted: r.promoted, detained: r.detained, graduated: r.graduated, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: PromotionRun[] = []
@@ -39,6 +43,8 @@ const store: PromotionRun[] = []
 export interface NewRun {
   label: string
   summary: PromotionSummary
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function saveRun(input: NewRun): Promise<PromotionRun> {
@@ -49,10 +55,11 @@ export async function saveRun(input: NewRun): Promise<PromotionRun> {
     promoted: input.summary.promoted,
     detained: input.summary.detained,
     graduated: input.summary.graduated,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
-    await db.from("promotion_runs").insert({ id: r.id, label: r.label, total: r.total, promoted: r.promoted, detained: r.detained, graduated: r.graduated, created_at: new Date().toISOString() })
+    await db.from("promotion_runs").insert({ id: r.id, label: r.label, total: r.total, promoted: r.promoted, detained: r.detained, graduated: r.graduated, tenant_id: r.tenantId, created_at: new Date().toISOString() })
   } else {
     store.unshift(r)
   }

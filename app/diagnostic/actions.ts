@@ -2,12 +2,14 @@
 
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { saveRound, listRounds, type NewRound, type DiagRound } from "@/lib/diagnostic/store"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listRoundsAction(): Promise<DiagRound[]> {
   noStore()
   try {
-    return await listRounds()
+    // Per-role data scoping: diagnostic snapshots roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listRounds())
   } catch (e) {
     logger.error("diagnostic.list failed", { error: String(e) })
     return []

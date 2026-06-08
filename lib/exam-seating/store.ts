@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 function id(): string {
   return `ESP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
@@ -16,6 +17,8 @@ export interface SeatingSnapshot {
   candidates: number
   seated: number
   unseated: number
+  /** Tenant node that produced this plan — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -24,11 +27,12 @@ interface Row {
   candidates: number
   seated: number
   unseated: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): SeatingSnapshot {
-  return { id: r.id, label: r.label, candidates: r.candidates, seated: r.seated, unseated: r.unseated }
+  return { id: r.id, label: r.label, candidates: r.candidates, seated: r.seated, unseated: r.unseated, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: SeatingSnapshot[] = []
@@ -38,13 +42,15 @@ export interface NewSeating {
   candidates: number
   seated: number
   unseated: number
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function savePlan(input: NewSeating): Promise<SeatingSnapshot> {
-  const p: SeatingSnapshot = { id: id(), ...input }
+  const p: SeatingSnapshot = { id: id(), ...input, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
-    await db.from("seating_plans").insert({ id: p.id, label: p.label, candidates: p.candidates, seated: p.seated, unseated: p.unseated, created_at: new Date().toISOString() })
+    await db.from("seating_plans").insert({ id: p.id, label: p.label, candidates: p.candidates, seated: p.seated, unseated: p.unseated, tenant_id: p.tenantId, created_at: new Date().toISOString() })
   } else {
     store.unshift(p)
   }

@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 
 function id(): string {
   return `RP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
@@ -16,6 +17,8 @@ export interface ResultPublication {
   examName: string
   candidates: number
   passPct: number
+  /** Tenant node that produced this snapshot — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -24,11 +27,12 @@ interface Row {
   exam_name: string
   candidates: number
   pass_pct: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): ResultPublication {
-  return { id: r.id, date: r.date, examName: r.exam_name, candidates: r.candidates, passPct: r.pass_pct }
+  return { id: r.id, date: r.date, examName: r.exam_name, candidates: r.candidates, passPct: r.pass_pct, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: ResultPublication[] = []
@@ -37,6 +41,8 @@ export interface NewPublication {
   examName: string
   candidates: number
   passPct: number
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function publishResults(input: NewPublication): Promise<ResultPublication> {
@@ -46,6 +52,7 @@ export async function publishResults(input: NewPublication): Promise<ResultPubli
     examName: input.examName,
     candidates: input.candidates,
     passPct: input.passPct,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -55,6 +62,7 @@ export async function publishResults(input: NewPublication): Promise<ResultPubli
       exam_name: p.examName,
       candidates: p.candidates,
       pass_pct: p.passPct,
+      tenant_id: p.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { DiagSummary } from "./index"
 
 function id(): string {
@@ -17,6 +18,8 @@ export interface DiagRound {
   label: string
   scores: Record<string, number>
   summary: DiagSummary
+  /** Tenant node that produced this snapshot — drives per-role data scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -25,11 +28,12 @@ interface Row {
   label: string
   scores: Record<string, number>
   summary: DiagSummary
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): DiagRound {
-  return { id: r.id, date: r.date, label: r.label, scores: r.scores, summary: r.summary }
+  return { id: r.id, date: r.date, label: r.label, scores: r.scores, summary: r.summary, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: DiagRound[] = []
@@ -39,10 +43,12 @@ export interface NewRound {
   label: string
   scores: Record<string, number>
   summary: DiagSummary
+  /** Producing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function saveRound(input: NewRound): Promise<DiagRound> {
-  const r: DiagRound = { id: id(), date: input.date, label: input.label, scores: input.scores, summary: input.summary }
+  const r: DiagRound = { id: id(), date: input.date, label: input.label, scores: input.scores, summary: input.summary, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("diagnostic_rounds").insert({
@@ -51,6 +57,7 @@ export async function saveRound(input: NewRound): Promise<DiagRound> {
       label: r.label,
       scores: r.scores,
       summary: r.summary,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
