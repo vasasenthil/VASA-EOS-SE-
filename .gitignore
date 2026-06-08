@@ -30,3 +30,4 @@ pnpm-workspace.yaml
 # Test coverage artifacts
 coverage.txt
 coverage-comment.md
+sbom.json

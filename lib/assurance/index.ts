@@ -33,6 +33,7 @@ export const ASSURANCE_REGISTER: AssuranceItem[] = [
   // Security
   { id: "secret-scan", name: "Secret-leak scan", category: "security", standard: "Internal (CWE-798)", owner: "Engineering", cadence: "Every commit (CI)", status: "passed", evidence: "scripts/secret-scan.mjs + .github/workflows/security.yml" },
   { id: "sca", name: "Dependency / SCA scan", category: "security", standard: "OWASP SCA", owner: "Security", cadence: "Every push (CI)", status: "in-progress", evidence: "pnpm audit in security.yml (report-only)" },
+  { id: "sbom", name: "Software Bill of Materials (SBOM)", category: "security", standard: "CycloneDX 1.5", owner: "Engineering", cadence: "Every push (CI) + /api/sbom", status: "passed", evidence: "scripts/generate-sbom.mjs; served at /api/sbom" },
   { id: "sast", name: "Static application security testing (SAST)", category: "security", standard: "OWASP ASVS", owner: "Security", cadence: "Every push (CI)", status: "in-progress", evidence: "Lightweight ruleset (scripts/sast-scan.mjs + CI); commission full SAST for sign-off" },
   { id: "dast", name: "Dynamic application security testing (DAST)", category: "security", standard: "OWASP", owner: "Security", cadence: "Per release", status: "not-started", evidence: "Commission a DAST scan" },
   { id: "pentest", name: "Independent penetration test", category: "security", standard: "CERT-In empanelled", owner: "Govt security cell", cadence: "Annual + major release", status: "not-started", evidence: "Engage a CERT-In auditor" },
