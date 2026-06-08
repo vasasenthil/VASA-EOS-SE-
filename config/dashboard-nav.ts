@@ -137,6 +137,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Forums & Meetings (RACI)", href: "/governance/forums", icon: Vote },
     { title: "Audit Log", href: "/admin/audit-log", icon: ShieldCheck },
     { title: "AI Agents", href: "/ai-agents", icon: Layers },
+    { title: "Agent Action Approvals (HITL)", href: "/ai-agents/approvals", icon: CheckSquare },
     { title: "APAAR Identity", href: "/apaar", icon: Database },
     { title: "Scheme Disbursement", href: "/dbt", icon: IndianRupee },
     { title: "Multilingual & Voice", href: "/multilingual", icon: Globe },

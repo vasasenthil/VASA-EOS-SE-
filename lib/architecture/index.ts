@@ -34,6 +34,7 @@ export const PILLARS: Pillar[] = [
       { name: "Per-agent MCP tool definitions", ref: "lib/agents/tools.ts" },
       { name: "MCP tool dispatcher (HITL-gated)", ref: "lib/agents/dispatch.ts" },
       { name: "Tool executor → real seams (DBT/IVR/translate)", ref: "lib/agents/execute.ts" },
+      { name: "HITL tool-approval queue", ref: "lib/agentflow/store.ts" },
       { name: "Agent/LLM live adapter", ref: "lib/integrations/live/agents.ts" },
       { name: "RAG retrieval port (grounding)", ref: "lib/integrations/live/retrieval.ts" },
       { name: "Knowledge graph", ref: "lib/knowledge-graph" },
