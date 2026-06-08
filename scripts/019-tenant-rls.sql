@@ -26,6 +26,19 @@ as $$
   );
 $$;
 
+-- Per-request binding: the app calls this RPC to set the governed tenant set for the
+-- current transaction (SECURITY DEFINER so it can set_config; transaction-local so it
+-- never leaks across pooled connections). The RLS policy then reads app.tenant_ids.
+create or replace function public.set_tenant_context(ids text)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  perform set_config('app.tenant_ids', coalesce(ids, ''), true);
+end;
+$$;
+
 -- Enable RLS + a SELECT policy on every tenant-scoped table (idempotent).
 do $$
 declare
