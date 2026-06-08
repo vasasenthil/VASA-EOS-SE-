@@ -21,6 +21,7 @@ function addExtension(href) {
 // Server-only modules referenced by the import chain but unused under test.
 const STUBS = {
   "next/headers": pathToFileURL(path.join(root, "scripts/test-stubs/next-headers.mjs")).href,
+  "server-only": pathToFileURL(path.join(root, "scripts/test-stubs/server-only.mjs")).href,
 }
 
 export async function resolve(specifier, context, nextResolve) {

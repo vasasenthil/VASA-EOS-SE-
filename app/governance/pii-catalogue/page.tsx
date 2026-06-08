@@ -26,6 +26,11 @@ export default function PiiCataloguePage() {
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">
+            <a href="/governance/dpia">
+              View DPIA scaffold
+            </a>
+          </Button>
+          <Button asChild variant="outline">
             <a href="/api/governance/pii-catalogue/csv" download>
               <Download className="mr-2 h-4 w-4" />
               Download (CSV)

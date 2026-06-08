@@ -76,8 +76,10 @@ export const PILLARS: Pillar[] = [
     commitment: "Zero-trust: 5-model access PDP, DPDP consent, immutable audit, MFA/SSO, security headers + rate limiting.",
     components: [
       { name: "5-model PDP (RBAC·ABAC·ReBAC·PBAC·CABAC)", ref: "lib/access/policy.ts" },
-      { name: "DPDP consent + PII-read gate", ref: "lib/consent/gate-server.ts" },
+      { name: "DPDP consent + catalogue-driven PII-read gate", ref: "lib/consent/gate-server.ts" },
       { name: "PII data-classification catalogue", ref: "lib/consent/pii-catalogue.ts" },
+      { name: "Consent-gated student PII reader (minimised)", ref: "lib/consent/student-pii.ts" },
+      { name: "DPIA scaffold (generated from PII catalogue)", ref: "lib/consent/dpia.ts" },
       { name: "Security headers + request-id", ref: "middleware.ts" },
       { name: "Rate-limit seam", ref: "lib/ratelimit" },
     ],
@@ -105,10 +107,11 @@ export const PILLARS: Pillar[] = [
     components: [
       { name: "App-wide a11y preferences", ref: "lib/accessibility" },
       { name: "Multilingual (react-i18next)", ref: "lib/i18n" },
+      { name: "22-language Eighth-Schedule catalogue + TN tribal/minority", ref: "lib/i18n/languages.ts" },
       { name: "Bhashini language port (translate/TTS/ASR)", ref: "lib/integrations/live/bhashini.ts" },
     ],
     status: "partial",
-    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking, telephony IVR, full 22-language catalogues, WCAG 2.2 AAA audit.",
+    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking, telephony IVR, full per-language UI string packs (22-language catalogue now modelled), WCAG 2.2 AAA audit.",
   },
   {
     id: "integration",

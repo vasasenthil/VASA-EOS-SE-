@@ -2,8 +2,7 @@
 
 import { integrations } from "@/lib/integrations"
 import type { ApaarRecord } from "@/lib/integrations"
-import { gatePii } from "@/lib/consent/gate-server"
-import { gatingPurpose } from "@/lib/consent/pii-catalogue"
+import { gatePiiClass } from "@/lib/consent/gate-server"
 import { logger } from "@/lib/logger"
 
 /**
@@ -12,9 +11,8 @@ import { logger } from "@/lib/logger"
  * that APAAR id; otherwise null. Decision is audited by the consent gate.
  */
 export async function resolveApaarAction(apaarId: string): Promise<ApaarRecord | null> {
-  const purpose = gatingPurpose("identity") ?? "aadhaar_linkage"
   try {
-    return await gatePii(apaarId, purpose, async () => {
+    return await gatePiiClass(apaarId, "identity", async () => {
       const res = await integrations.identity.getApaar(apaarId)
       return res.ok ? res.data ?? null : null
     })

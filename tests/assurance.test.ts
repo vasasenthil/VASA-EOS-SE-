@@ -21,9 +21,14 @@ test("status is honest: tests pass; independent audits are not started", () => {
   assert.ok(passedIds.includes("unit-tests"))
   assert.ok(passedIds.includes("typecheck"))
   const notStarted = ASSURANCE_REGISTER.filter((a) => a.status === "not-started").map((a) => a.id)
-  for (const required of ["pentest", "dpia", "dast"]) {
+  for (const required of ["pentest", "dast"]) {
     assert.ok(notStarted.includes(required), `${required} must be honestly flagged not-started`)
   }
+  // DPIA: a scaffold is generated from the PII catalogue, but the signed assessment is
+  // the DPO's — so it is honestly "in-progress", never "passed", until sign-off.
+  const dpia = ASSURANCE_REGISTER.find((a) => a.id === "dpia")
+  assert.equal(dpia?.status, "in-progress")
+  assert.notEqual(dpia?.status, "passed")
 })
 
 test("summary tallies statuses and applicable-passed percentage", () => {

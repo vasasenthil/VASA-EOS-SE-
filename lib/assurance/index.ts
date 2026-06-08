@@ -40,7 +40,7 @@ export const ASSURANCE_REGISTER: AssuranceItem[] = [
   { id: "pentest", name: "Independent penetration test", category: "security", standard: "CERT-In empanelled", owner: "Govt security cell", cadence: "Annual + major release", status: "not-started", evidence: "Engage a CERT-In auditor" },
 
   // Privacy
-  { id: "dpia", name: "Data Protection Impact Assessment (DPIA)", category: "privacy", standard: "DPDP Act 2023", owner: "DPO", cadence: "Before go-live + on change", status: "not-started", evidence: "Conduct DPIA (uses /governance/pii-catalogue)" },
+  { id: "dpia", name: "Data Protection Impact Assessment (DPIA)", category: "privacy", standard: "DPDP Act 2023", owner: "DPO", cadence: "Before go-live + on change", status: "in-progress", evidence: "Scaffold auto-generated from the PII catalogue (lib/consent/dpia; /governance/dpia); DPO must complete & sign off" },
   { id: "consent-review", name: "Consent & PII-handling review", category: "privacy", standard: "DPDP 2023", owner: "DPO", cadence: "Quarterly", status: "in-progress", evidence: "Consent gate + PII catalogue implemented" },
 
   // Accessibility
