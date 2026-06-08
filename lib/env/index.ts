@@ -45,3 +45,48 @@ export function buildEnvReport(env: Record<string, string | undefined>): EnvRepo
 export function envReport(): EnvReport {
   return buildEnvReport(process.env as Record<string, string | undefined>)
 }
+
+export type PreflightSeverity = "blocker" | "warning"
+
+export interface PreflightIssue {
+  severity: PreflightSeverity
+  check: string
+  detail: string
+}
+
+/**
+ * Production-deployment preflight: blocking/warning issues a go-live must resolve.
+ * Pure (takes the env map). A deploy gate runs this and refuses to promote on any
+ * blocker. Demo mode (no service-role key) reports a single blocker by design.
+ */
+export function preflightProduction(env: Record<string, string | undefined>): PreflightIssue[] {
+  const issues: PreflightIssue[] = []
+  const has = (k: string) => Boolean(env[k])
+
+  if (!has("SUPABASE_SERVICE_ROLE_KEY")) {
+    issues.push({ severity: "blocker", check: "Durable persistence", detail: "SUPABASE_SERVICE_ROLE_KEY unset — running in-memory (data is not durable)." })
+  }
+  if (!has("NEXT_PUBLIC_SUPABASE_URL") || !has("NEXT_PUBLIC_SUPABASE_ANON_KEY")) {
+    issues.push({ severity: "blocker", check: "Authentication", detail: "Supabase URL/anon key unset — real auth is not active." })
+  }
+  if (env.DEMO_PASSWORD) {
+    issues.push({ severity: "blocker", check: "No demo credentials in prod", detail: "DEMO_PASSWORD is set — remove the shared demo password before go-live." })
+  }
+  if (!has("OTEL_EXPORTER_OTLP_ENDPOINT")) {
+    issues.push({ severity: "warning", check: "Trace shipping", detail: "OTEL_EXPORTER_OTLP_ENDPOINT unset — traces are buffered locally, not shipped." })
+  }
+  return issues
+}
+
+export interface PreflightReport {
+  ready: boolean
+  blockers: number
+  warnings: number
+  issues: PreflightIssue[]
+}
+
+export function preflightReport(env: Record<string, string | undefined> = process.env as Record<string, string | undefined>): PreflightReport {
+  const issues = preflightProduction(env)
+  const blockers = issues.filter((i) => i.severity === "blocker").length
+  return { ready: blockers === 0, blockers, warnings: issues.length - blockers, issues }
+}

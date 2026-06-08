@@ -133,3 +133,45 @@ export function formatOtlp(spans: Span[] = buffer): string {
     ],
   })
 }
+
+// ── OTLP-HTTP push exporter ──────────────────────────────────────────────────
+type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body: string }) => Promise<{ ok: boolean; status: number }>
+
+/** The configured OTLP-HTTP collector endpoint, or undefined when unset. */
+export function otlpEndpoint(): string | undefined {
+  return process.env.OTEL_EXPORTER_OTLP_ENDPOINT?.replace(/\/$/, "") || undefined
+}
+
+export interface ExportResult {
+  ok: boolean
+  exported: number
+  /** True when no endpoint is configured (export is a no-op, not a failure). */
+  skipped: boolean
+  status?: number
+  error?: string
+}
+
+/**
+ * Push spans to an OTLP-HTTP collector ( POST <endpoint>/v1/traces ). Best-effort:
+ * never throws, returns a typed result. No endpoint => skipped (not an error).
+ * `fetchImpl` is injectable for testing.
+ */
+export async function exportSpans(
+  spans: Span[] = buffer,
+  opts: { endpoint?: string; fetchImpl?: FetchLike } = {},
+): Promise<ExportResult> {
+  const endpoint = opts.endpoint ?? otlpEndpoint()
+  if (!endpoint) return { ok: true, exported: 0, skipped: true }
+  if (spans.length === 0) return { ok: true, exported: 0, skipped: false }
+  const doFetch = (opts.fetchImpl ?? (globalThis.fetch as unknown as FetchLike))
+  try {
+    const res = await doFetch(`${endpoint}/v1/traces`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: formatOtlp(spans),
+    })
+    return { ok: res.ok, exported: res.ok ? spans.length : 0, skipped: false, status: res.status }
+  } catch (e) {
+    return { ok: false, exported: 0, skipped: false, error: String(e) }
+  }
+}

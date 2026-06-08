@@ -3,7 +3,7 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { envReport } from "@/lib/env"
+import { envReport, preflightReport } from "@/lib/env"
 import { dbReady } from "@/lib/persistence"
 import { buildReadiness, APP_VERSION } from "@/lib/readiness"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
@@ -37,6 +37,7 @@ export default async function OpsPage() {
   const emis = await integrations.emis.getSchoolData("33010100101")
   const spans = getSpans().slice(-10).reverse()
   const traces = traceSummary()
+  const preflight = preflightReport()
 
   return (
     <Shell>
@@ -128,6 +129,31 @@ export default async function OpsPage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">EMIS unavailable: {emis.error ?? "no data"}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>
+            Production preflight{" "}
+            <Badge variant={preflight.ready ? "default" : "destructive"}>
+              {preflight.ready ? "ready" : `${preflight.blockers} blocker(s)`}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {preflight.issues.length === 0 ? (
+            <p className="text-sm text-muted-foreground">All production checks pass.</p>
+          ) : (
+            <ul className="space-y-1.5 text-sm">
+              {preflight.issues.map((i) => (
+                <li key={i.check} className="flex items-start gap-2">
+                  <Badge variant={i.severity === "blocker" ? "destructive" : "secondary"}>{i.severity}</Badge>
+                  <span><span className="font-medium">{i.check}:</span> <span className="text-muted-foreground">{i.detail}</span></span>
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
