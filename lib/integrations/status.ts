@@ -119,6 +119,33 @@ function build(): Def[] {
       mode: integrationModes.agents,
       env: [envVar("AGENTS_API_KEY"), envVar("AGENTS_API_URL", false), envVar("AGENTS_MODEL", false)],
     },
+    {
+      key: "emis",
+      label: "EMIS (Tamil Nadu)",
+      port: "EducationMis",
+      note: "Student/teacher/school master-data sync via the state EMIS gateway.",
+      flag: "INTEGRATION_EMIS",
+      mode: integrationModes.emis,
+      env: [envVar("EMIS_BASE_URL"), envVar("EMIS_API_KEY")],
+    },
+    {
+      key: "portal",
+      label: "TN Schools Portal",
+      port: "PublicPortal",
+      note: "Publish notices / results / circulars to tnschools.gov.in.",
+      flag: "INTEGRATION_TNPORTAL",
+      mode: integrationModes.portal,
+      env: [envVar("TNPORTAL_BASE_URL"), envVar("TNPORTAL_API_KEY")],
+    },
+    {
+      key: "exams",
+      label: "Exam Systems (DGE)",
+      port: "ExamBoard",
+      note: "Candidate registration + result retrieval via the Govt-Exams board API.",
+      flag: "INTEGRATION_EXAMS",
+      mode: integrationModes.exams,
+      env: [envVar("EXAMS_BASE_URL"), envVar("EXAMS_API_KEY")],
+    },
   ]
 }
 

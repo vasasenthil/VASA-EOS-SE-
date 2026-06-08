@@ -15,6 +15,9 @@ import {
   mockIdentity,
   mockLanguage,
   mockUdise,
+  mockEmis,
+  mockPortal,
+  mockExams,
 } from "./mock"
 import {
   liveAadhaar,
@@ -25,6 +28,9 @@ import {
   liveIdentity,
   liveLanguage,
   liveUdise,
+  liveEmis,
+  livePortal,
+  liveExams,
 } from "./live"
 import type { IntegrationRegistry } from "./types"
 
@@ -45,6 +51,12 @@ export const integrations: IntegrationRegistry = {
   language: integrationModes.language === "live" ? liveLanguage : mockLanguage,
   // 8 specialised agents run through a live LLM when configured.
   agents: integrationModes.agents === "live" ? liveAgents : mockAgents,
+  // Tamil Nadu EMIS — student/teacher/school master-data sync.
+  emis: integrationModes.emis === "live" ? liveEmis : mockEmis,
+  // TN Schools Portal (tnschools.gov.in) — public publishing of notices/results.
+  portal: integrationModes.portal === "live" ? livePortal : mockPortal,
+  // Exam Systems (DGE) — candidate registration + result retrieval.
+  exams: integrationModes.exams === "live" ? liveExams : mockExams,
 }
 
 export { integrationModes }

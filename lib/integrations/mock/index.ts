@@ -8,10 +8,13 @@ import type {
   ApaarRecord,
   ContentBackbone,
   CredentialVault,
+  EducationMis,
+  ExamBoard,
   IdentityProvider,
   IntegrationResult,
   LanguageService,
   PaymentBridge,
+  PublicPortal,
   SchoolRegistry,
 } from "../types"
 
@@ -117,5 +120,36 @@ export const mockAgents: AgentProvider = {
       confidence: 0.5,
       reasoning: "Mock agent response — wire a real LLM/MCP provider to enable this agent.",
     })
+  },
+}
+
+export const mockEmis: EducationMis = {
+  async getSchoolData(udiseCode) {
+    return ok({ udiseCode, students: 820, teachers: 34, classrooms: 28 })
+  },
+  async pushEnrolment() {
+    return ok({ ack: cryptoRandom() })
+  },
+}
+
+export const mockPortal: PublicPortal = {
+  async publish(input) {
+    return ok({
+      url: `https://tnschools.gov.in/mock/${encodeURIComponent(input.kind)}/${cryptoRandom()}`,
+      ref: cryptoRandom(),
+      publishedAt: new Date().toISOString(),
+    })
+  },
+  async listPublished() {
+    return ok([])
+  },
+}
+
+export const mockExams: ExamBoard = {
+  async registerCandidates() {
+    return ok({ batchId: `BATCH-${cryptoRandom()}` })
+  },
+  async fetchResults(examCode) {
+    return ok({ examCode, candidates: 0, passPct: 0, publishedAt: new Date().toISOString() })
   },
 }

@@ -17,6 +17,9 @@ export const integrationModes = {
   diksha: modeFor("DIKSHA"),
   language: modeFor("BHASHINI"),
   agents: modeFor("AGENTS"),
+  emis: modeFor("EMIS"),
+  portal: modeFor("TNPORTAL"),
+  exams: modeFor("EXAMS"),
 } as const
 
 export type IntegrationKey = keyof typeof integrationModes
@@ -112,4 +115,34 @@ export function apaarBaseUrl(): string | undefined {
 /** API key / access token for the APAAR registry gateway. */
 export function apaarApiKey(): string | undefined {
   return process.env.APAAR_API_KEY || undefined
+}
+
+// ── EMIS (Tamil Nadu Education MIS) — student/teacher/school master data ───────
+/** TN EMIS gateway origin. No safe default. */
+export function emisBaseUrl(): string | undefined {
+  return process.env.EMIS_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the EMIS gateway. */
+export function emisApiKey(): string | undefined {
+  return process.env.EMIS_API_KEY || undefined
+}
+
+// ── TN Schools Portal (tnschools.gov.in) — public citizen portal ──────────────
+/** TN Schools Portal publishing-API origin. No safe default. */
+export function tnPortalBaseUrl(): string | undefined {
+  return process.env.TNPORTAL_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the TN Schools Portal publishing API. */
+export function tnPortalApiKey(): string | undefined {
+  return process.env.TNPORTAL_API_KEY || undefined
+}
+
+// ── Exam Systems (DGE / Government Examinations board) ─────────────────────────
+/** Government-Examinations (DGE) board API origin. No safe default. */
+export function examsBaseUrl(): string | undefined {
+  return process.env.EXAMS_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the exam-board API. */
+export function examsApiKey(): string | undefined {
+  return process.env.EXAMS_API_KEY || undefined
 }

@@ -83,7 +83,8 @@ Inventory: **~80 `lib/` modules · ~100 route groups · 62 test files (262 tests
 ### India Stack / NDEAR-S integrations
 | Capability | Master ref | Status | Built | Pending |
 | --- | --- | --- | --- | --- |
-| Adapter seam (all 8 ports) | NDEAR-S | ✅ | Ports, registry, mocks, fail-soft `httpJson`, status, tests | — |
+| Adapter seam (11 ports) | NDEAR-S | ✅ | Ports, registry, mocks, fail-soft `httpJson`, status, tests. **8 India-Stack** (APAAR/Aadhaar/DigiLocker/DBT/UDISE+/DIKSHA/Bhashini/Agents) **+ 3 TN Digital-&-Data** (EMIS, TN Schools Portal, Exam Systems/DGE) | — |
+| Explicit 5+3+3+4 stages + school-category registry | NEP/TN | ✅ | `lib/school-structure` (stages, `stageForGrade/Age`, 9 TN categories) + `/school-structure`, tested | — |
 | APAAR · Aadhaar · DigiLocker · DBT · UDISE+ · DIKSHA · Bhashini · Agents | India Stack / Div III | 🟡 | Real live adapters, flag-gated, tested (mocked fetch) | **Credentials / MoUs / sandboxes**; DIKSHA is the only freely-callable one |
 | Bhashini ASR (speech-to-text) | Bhashini | ⏳ | Translate + TTS live | Live ASR (port carries audioRef, not raw bytes) |
 

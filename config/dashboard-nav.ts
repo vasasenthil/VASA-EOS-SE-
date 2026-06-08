@@ -231,6 +231,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Content Discovery (DIKSHA)", href: "/content", icon: Library },
     { title: "Digital E-Content Library", href: "/e-content", icon: Library },
     { title: "School Registry (UDISE+)", href: "/school-registry", icon: School },
+    { title: "School Structure (5+3+3+4)", href: "/school-structure", icon: School },
     { title: "Aadhaar Auth (UIDAI)", href: "/aadhaar", icon: Fingerprint },
     { title: "Integrations Status", href: "/integrations", icon: Plug },
     { title: "System Self-Test", href: "/health", icon: HeartPulse },

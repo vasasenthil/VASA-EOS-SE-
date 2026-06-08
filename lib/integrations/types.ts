@@ -138,6 +138,47 @@ export interface AgentProvider {
   invoke(call: AgentInvocation): Promise<IntegrationResult<AgentResponse>>
 }
 
+// ── EMIS — Tamil Nadu Education MIS (student / teacher / school master data) ──
+export interface EmisSchoolData {
+  udiseCode: string
+  students: number
+  teachers: number
+  classrooms: number
+}
+export interface EducationMis {
+  /** Pull a school's master-data snapshot (counts) from the state EMIS. */
+  getSchoolData(udiseCode: string): Promise<IntegrationResult<EmisSchoolData>>
+  /** Push an enrolment event upstream to keep EMIS in sync. */
+  pushEnrolment(input: { udiseCode: string; apaarId: string; className: string }): Promise<IntegrationResult<{ ack: string }>>
+}
+
+// ── TN Schools Portal — public citizen portal (tnschools.gov.in) ─────────────
+export interface PortalPublication {
+  url: string
+  ref: string
+  publishedAt: string
+}
+export interface PublicPortal {
+  /** Publish a notice / result / circular to the public state portal. */
+  publish(input: { kind: string; title: string; body?: string }): Promise<IntegrationResult<PortalPublication>>
+  /** List what has been published (optionally filtered by kind). */
+  listPublished(kind?: string): Promise<IntegrationResult<PortalPublication[]>>
+}
+
+// ── Exam Systems — DGE / Government Examinations board ─────────────────────────
+export interface ExamResultSummary {
+  examCode: string
+  candidates: number
+  passPct: number
+  publishedAt: string
+}
+export interface ExamBoard {
+  /** Register a school's candidates for a board examination. */
+  registerCandidates(input: { examCode: string; udiseCode: string; count: number }): Promise<IntegrationResult<{ batchId: string }>>
+  /** Fetch a published result summary for an exam. */
+  fetchResults(examCode: string): Promise<IntegrationResult<ExamResultSummary>>
+}
+
 /** The full set of ports the platform depends on. */
 export interface IntegrationRegistry {
   identity: IdentityProvider
@@ -148,4 +189,7 @@ export interface IntegrationRegistry {
   diksha: ContentBackbone
   language: LanguageService
   agents: AgentProvider
+  emis: EducationMis
+  portal: PublicPortal
+  exams: ExamBoard
 }
