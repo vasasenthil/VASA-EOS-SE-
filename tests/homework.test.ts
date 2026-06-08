@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { nextHwStatus, isHwOverdue, homeworkSummary, type Homework } from "@/lib/homework"
 
-const hw = (over: Partial<Homework>): Homework => ({ id: "h", subject: "Sci", title: "t", dueDate: "2026-06-10", status: "assigned", ...over })
+const hw = (over: Partial<Homework>): Homework => ({ id: "h", subject: "Sci", title: "t", dueDate: "2026-06-10", status: "assigned", tenantId: "TN-CHN-B1-S1", ...over })
 
 test("status advances assigned -> submitted -> graded", () => {
   assert.equal(nextHwStatus("assigned"), "submitted")

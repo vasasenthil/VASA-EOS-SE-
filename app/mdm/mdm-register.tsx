@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { consumptionPct, leakageFlag, mdmSummary, type MdmEntry } from "@/lib/mdm"
 import { recordEntryAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ export function MdmRegister({ initial = [] }: { initial?: MdmEntry[] }) {
   const s = mdmSummary(entries)
 
   function record() {
-    const optimistic: MdmEntry = { id: `m-${Date.now()}`, date, enrolment, present, mealsServed, menu: menu.trim() }
+    const optimistic: MdmEntry = { id: `m-${Date.now()}`, date, enrolment, present, mealsServed, menu: menu.trim(), tenantId: DEFAULT_SCHOOL_NODE }
     setEntries((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await recordEntryAction({ date, enrolment, present, mealsServed, menu: optimistic.menu })

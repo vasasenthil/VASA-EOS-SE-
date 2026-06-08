@@ -8,6 +8,7 @@ const e = (trade: string, certified: boolean): VocEnrolment => ({
   trade,
   level: 2,
   certified,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("catalogues expose trades and NSQF levels", () => {

@@ -12,6 +12,8 @@ export interface SportResult {
   event: string
   student: string
   medal: Medal
+  /** Tenant node this result belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface SportsSummary {

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { SIS_ROSTER } from "@/lib/sis"
 import { SPORT_EVENTS, sportsSummary, type Medal, type SportResult } from "@/lib/sports"
 import { recordResultAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ export function SportsBoard({ initial = [] }: { initial?: SportResult[] }) {
   const s = sportsSummary(results)
 
   function record() {
-    const optimistic: SportResult = { id: `sp-${Date.now()}`, event, student, medal }
+    const optimistic: SportResult = { id: `sp-${Date.now()}`, event, student, medal, tenantId: DEFAULT_SCHOOL_NODE }
     setResults((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await recordResultAction({ event, student, medal })

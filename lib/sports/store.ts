@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Medal, SportResult } from "./index"
 
 function id(): string {
@@ -14,23 +15,31 @@ interface Row {
   event: string
   student: string
   medal: Medal
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): SportResult {
-  return { id: r.id, event: r.event, student: r.student, medal: r.medal }
+  return { id: r.id, event: r.event, student: r.student, medal: r.medal, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: SportResult[] = []
+// Seeded across tenant nodes so meet results roll up by jurisdiction.
+const store: SportResult[] = [
+  { id: "SP-SEED1", event: "100m Sprint", student: "Asha", medal: "gold", tenantId: "TN-CHN-B1-S1" },
+  { id: "SP-SEED2", event: "Long Jump", student: "Bala", medal: "silver", tenantId: "TN-CHN-B2-S1" },
+  { id: "SP-SEED3", event: "Chess", student: "Chitra", medal: "bronze", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewResult {
   event: string
   student: string
   medal: Medal
+  /** Tenant node the result is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function recordResult(input: NewResult): Promise<SportResult> {
-  const r: SportResult = { id: id(), event: input.event, student: input.student, medal: input.medal }
+  const r: SportResult = { id: id(), event: input.event, student: input.student, medal: input.medal, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("sport_results").insert({
@@ -38,6 +47,7 @@ export async function recordResult(input: NewResult): Promise<SportResult> {
       event: r.event,
       student: r.student,
       medal: r.medal,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

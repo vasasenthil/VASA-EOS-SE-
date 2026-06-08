@@ -11,6 +11,8 @@ export interface Homework {
   title: string
   dueDate: string
   status: HomeworkStatus
+  /** Tenant node this homework belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function newHwId(): string {

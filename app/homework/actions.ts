@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createHomework, advanceHomework, deleteHomework, listHomework, type NewHomework } from "@/lib/homework/store"
 import type { Homework } from "@/lib/homework"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listHomeworkAction(): Promise<Homework[]> {
   noStore()
   try {
-    return await listHomework()
+    // Per-role data scoping: homework rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listHomework())
   } catch (e) {
     logger.error("homework.list failed", { error: String(e) })
     return []

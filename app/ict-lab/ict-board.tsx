@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { ICT_SUBJECTS, ictSummary, hasShortage, type IctSession } from "@/lib/ictlab"
 import { createSessionAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function IctBoard({ initial = [] }: { initial?: IctSession[] }) {
 
   function add() {
     if (!cls.trim()) return
-    const optimistic: IctSession = { id: `ic-${Date.now()}`, cls: cls.trim(), subject, date, students, devicesWorking, devicesTotal }
+    const optimistic: IctSession = { id: `ic-${Date.now()}`, cls: cls.trim(), subject, date, students, devicesWorking, devicesTotal, tenantId: DEFAULT_SCHOOL_NODE }
     setSessions((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createSessionAction({ cls: optimistic.cls, subject: optimistic.subject, date: optimistic.date, students: optimistic.students, devicesWorking: optimistic.devicesWorking, devicesTotal: optimistic.devicesTotal })

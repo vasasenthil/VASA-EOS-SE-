@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createEnrolment, certifyEnrolment, deleteEnrolment, listEnrolments, type NewEnrolment } from "@/lib/vocational/store"
 import type { VocEnrolment } from "@/lib/vocational"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listEnrolmentsAction(): Promise<VocEnrolment[]> {
   noStore()
   try {
-    return await listEnrolments()
+    // Per-role data scoping: NSQF enrolment rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listEnrolments())
   } catch (e) {
     logger.error("voc.list failed", { error: String(e) })
     return []

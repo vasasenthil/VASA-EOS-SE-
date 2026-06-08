@@ -22,6 +22,8 @@ export interface VocEnrolment {
   trade: string
   level: number
   certified: boolean
+  /** Tenant node this enrolment belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface VocSummary {

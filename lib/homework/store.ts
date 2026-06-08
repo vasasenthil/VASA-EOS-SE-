@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { newHwId, nextHwStatus, type Homework } from "./index"
 
 interface Row {
@@ -11,23 +12,31 @@ interface Row {
   title: string
   due_date: string
   status: Homework["status"]
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Homework {
-  return { id: r.id, subject: r.subject, title: r.title, dueDate: r.due_date, status: r.status }
+  return { id: r.id, subject: r.subject, title: r.title, dueDate: r.due_date, status: r.status, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Homework[] = []
+// Seeded across tenant nodes so homework rolls up by jurisdiction.
+const store: Homework[] = [
+  { id: "HW-SEED1", subject: "Science", title: "Photosynthesis worksheet", dueDate: "2026-06-10", status: "assigned", tenantId: "TN-CHN-B1-S1" },
+  { id: "HW-SEED2", subject: "Mathematics", title: "Algebra set 3", dueDate: "2026-06-08", status: "submitted", tenantId: "TN-CHN-B2-S1" },
+  { id: "HW-SEED3", subject: "Tamil", title: "Essay - my village", dueDate: "2026-06-05", status: "graded", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewHomework {
   subject: string
   title: string
   dueDate: string
+  /** Tenant node the homework is assigned at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createHomework(input: NewHomework): Promise<Homework> {
-  const h: Homework = { id: newHwId(), subject: input.subject, title: input.title, dueDate: input.dueDate, status: "assigned" }
+  const h: Homework = { id: newHwId(), subject: input.subject, title: input.title, dueDate: input.dueDate, status: "assigned", tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("homework").insert({
@@ -36,6 +45,7 @@ export async function createHomework(input: NewHomework): Promise<Homework> {
       title: h.title,
       due_date: h.dueDate,
       status: h.status,
+      tenant_id: h.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

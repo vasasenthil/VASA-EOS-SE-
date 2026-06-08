@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { IctSession } from "./index"
 
 function id(): string {
@@ -18,6 +19,7 @@ interface Row {
   students: number
   devices_working: number
   devices_total: number
+  tenant_id: string
   created_at: string
 }
 
@@ -30,10 +32,16 @@ function fromRow(r: Row): IctSession {
     students: r.students,
     devicesWorking: r.devices_working,
     devicesTotal: r.devices_total,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: IctSession[] = []
+// Seeded across tenant nodes so ICT-lab usage rolls up by jurisdiction.
+const store: IctSession[] = [
+  { id: "IC-SEED1", cls: "9-A", subject: "Science", date: "2026-06-02", students: 38, devicesWorking: 20, devicesTotal: 20, tenantId: "TN-CHN-B1-S1" },
+  { id: "IC-SEED2", cls: "10-B", subject: "Coding / robotics", date: "2026-06-01", students: 42, devicesWorking: 15, devicesTotal: 20, tenantId: "TN-CHN-B2-S1" },
+  { id: "IC-SEED3", cls: "8-C", subject: "Mathematics", date: "2026-05-30", students: 35, devicesWorking: 18, devicesTotal: 18, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewSession {
   cls: string
@@ -42,10 +50,12 @@ export interface NewSession {
   students: number
   devicesWorking: number
   devicesTotal: number
+  /** Tenant node the session is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createSession(input: NewSession): Promise<IctSession> {
-  const s: IctSession = { id: id(), ...input }
+  const s: IctSession = { id: id(), ...input, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("ict_sessions").insert({
@@ -56,6 +66,7 @@ export async function createSession(input: NewSession): Promise<IctSession> {
       students: s.students,
       devices_working: s.devicesWorking,
       devices_total: s.devicesTotal,
+      tenant_id: s.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

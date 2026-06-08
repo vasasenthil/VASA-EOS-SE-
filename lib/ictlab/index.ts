@@ -19,6 +19,8 @@ export interface IctSession {
   students: number
   devicesWorking: number
   devicesTotal: number
+  /** Tenant node this session belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 // A session has a shortage when working devices can't cover the class.

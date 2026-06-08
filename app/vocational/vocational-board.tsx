@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { VOC_TRADES, NSQF_LEVELS, vocSummary, type VocEnrolment } from "@/lib/vocational"
 import { createEnrolmentAction, certifyEnrolmentAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -20,7 +21,7 @@ export function VocationalBoard({ initial = [] }: { initial?: VocEnrolment[] }) 
 
   function add() {
     if (!student.trim()) return
-    const optimistic: VocEnrolment = { id: `vc-${Date.now()}`, student: student.trim(), trade, level, certified: false }
+    const optimistic: VocEnrolment = { id: `vc-${Date.now()}`, student: student.trim(), trade, level, certified: false, tenantId: DEFAULT_SCHOOL_NODE }
     setEnrolments((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createEnrolmentAction({ student: optimistic.student, trade: optimistic.trade, level: optimistic.level })

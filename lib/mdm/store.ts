@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { leakageFlag, type MdmEntry } from "./index"
 
 function id(): string {
@@ -17,14 +18,20 @@ interface Row {
   present: number
   meals_served: number
   menu: string
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): MdmEntry {
-  return { id: r.id, date: r.date, enrolment: r.enrolment, present: r.present, mealsServed: r.meals_served, menu: r.menu }
+  return { id: r.id, date: r.date, enrolment: r.enrolment, present: r.present, mealsServed: r.meals_served, menu: r.menu, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: MdmEntry[] = []
+// Seeded across tenant nodes so the MDM register rolls up by jurisdiction.
+const store: MdmEntry[] = [
+  { id: "MDM-SEED1", date: "2026-06-04", enrolment: 820, present: 760, mealsServed: 758, menu: "Sambar rice + egg", tenantId: "TN-CHN-B1-S1" },
+  { id: "MDM-SEED2", date: "2026-06-04", enrolment: 640, present: 590, mealsServed: 590, menu: "Curd rice + banana", tenantId: "TN-CHN-B2-S1" },
+  { id: "MDM-SEED3", date: "2026-06-04", enrolment: 910, present: 845, mealsServed: 845, menu: "Lemon rice + sundal", tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewEntry {
   date: string
@@ -32,10 +39,12 @@ export interface NewEntry {
   present: number
   mealsServed: number
   menu: string
+  /** Tenant node the entry is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function recordEntry(input: NewEntry): Promise<MdmEntry> {
-  const e: MdmEntry = { id: id(), ...input }
+  const e: MdmEntry = { id: id(), ...input, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("mdm_register").insert({
@@ -45,6 +54,7 @@ export async function recordEntry(input: NewEntry): Promise<MdmEntry> {
       present: e.present,
       meals_served: e.mealsServed,
       menu: e.menu,
+      tenant_id: e.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

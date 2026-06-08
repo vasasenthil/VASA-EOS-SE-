@@ -9,6 +9,8 @@ export interface MdmEntry {
   present: number
   mealsServed: number
   menu: string
+  /** Tenant node this daily entry belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 /** Meals served as a percentage of children present. */

@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { recordEntry, deleteEntry, listEntries, type NewEntry } from "@/lib/mdm/store"
 import type { MdmEntry } from "@/lib/mdm"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listEntriesAction(): Promise<MdmEntry[]> {
   noStore()
   try {
-    return await listEntries()
+    // Per-role data scoping: the MDM register rolls up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listEntries())
   } catch (e) {
     logger.error("mdm.list failed", { error: String(e) })
     return []

@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { consumptionPct, leakageFlag, mdmSummary, type MdmEntry } from "@/lib/mdm"
 
-const e = (over: Partial<MdmEntry>): MdmEntry => ({ id: "m", date: "2026-06-01", enrolment: 60, present: 54, mealsServed: 54, menu: "x", ...over })
+const e = (over: Partial<MdmEntry>): MdmEntry => ({ id: "m", date: "2026-06-01", enrolment: 60, present: 54, mealsServed: 54, menu: "x", tenantId: "TN-CHN-B1-S1", ...over })
 
 test("consumption is served/present; zero present is 0", () => {
   assert.equal(consumptionPct(54, 54), 100)

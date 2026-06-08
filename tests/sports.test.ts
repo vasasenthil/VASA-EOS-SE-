@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { sportsSummary, MEDAL_POINTS, type SportResult } from "@/lib/sports"
 
-const r = (event: string, medal: SportResult["medal"]): SportResult => ({ id: `${event}-${medal}`, event, student: "A", medal })
+const r = (event: string, medal: SportResult["medal"]): SportResult => ({ id: `${event}-${medal}`, event, student: "A", medal, tenantId: "TN-CHN-B1-S1" })
 
 test("medal points are gold 5 / silver 3 / bronze 1 / participation 0", () => {
   assert.equal(MEDAL_POINTS.gold, 5)

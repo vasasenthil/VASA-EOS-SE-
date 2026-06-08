@@ -132,3 +132,23 @@ create index if not exists fitness_records_tenant_id_idx on public.fitness_recor
 alter table if exists public.readers
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists readers_tenant_id_idx on public.readers (tenant_id);
+
+alter table if exists public.ict_sessions
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists ict_sessions_tenant_id_idx on public.ict_sessions (tenant_id);
+
+alter table if exists public.voc_enrolments
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists voc_enrolments_tenant_id_idx on public.voc_enrolments (tenant_id);
+
+alter table if exists public.homework
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists homework_tenant_id_idx on public.homework (tenant_id);
+
+alter table if exists public.mdm_register
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists mdm_register_tenant_id_idx on public.mdm_register (tenant_id);
+
+alter table if exists public.sport_results
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists sport_results_tenant_id_idx on public.sport_results (tenant_id);

@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { VocEnrolment } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   trade: string
   level: number
   certified: boolean
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): VocEnrolment {
-  return { id: r.id, student: r.student, trade: r.trade, level: r.level, certified: r.certified }
+  return { id: r.id, student: r.student, trade: r.trade, level: r.level, certified: r.certified, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: VocEnrolment[] = []
+// Seeded across tenant nodes so NSQF enrolment rolls up by jurisdiction.
+const store: VocEnrolment[] = [
+  { id: "VC-SEED1", student: "Asha", trade: "IT / ITeS", level: 2, certified: true, tenantId: "TN-CHN-B1-S1" },
+  { id: "VC-SEED2", student: "Bala", trade: "Healthcare", level: 1, certified: false, tenantId: "TN-CHN-B2-S1" },
+  { id: "VC-SEED3", student: "Chitra", trade: "Agriculture", level: 3, certified: false, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewEnrolment {
   student: string
   trade: string
   level: number
+  /** Tenant node the enrolment is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createEnrolment(input: NewEnrolment): Promise<VocEnrolment> {
-  const e: VocEnrolment = { id: id(), student: input.student, trade: input.trade, level: input.level, certified: false }
+  const e: VocEnrolment = { id: id(), student: input.student, trade: input.trade, level: input.level, certified: false, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("voc_enrolments").insert({
@@ -40,6 +49,7 @@ export async function createEnrolment(input: NewEnrolment): Promise<VocEnrolment
       trade: e.trade,
       level: e.level,
       certified: e.certified,
+      tenant_id: e.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

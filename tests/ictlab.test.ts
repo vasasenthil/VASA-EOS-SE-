@@ -10,6 +10,7 @@ const s = (students: number, devicesWorking: number, devicesTotal: number): IctS
   students,
   devicesWorking,
   devicesTotal,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("subject catalogue is non-empty", () => {
