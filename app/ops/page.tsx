@@ -7,6 +7,7 @@ import { envReport } from "@/lib/env"
 import { dbReady } from "@/lib/persistence"
 import { buildReadiness, APP_VERSION } from "@/lib/readiness"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
+import { integrations } from "@/lib/integrations"
 import { getCounters } from "@/lib/metrics"
 
 export const dynamic = "force-dynamic"
@@ -31,6 +32,8 @@ export default async function OpsPage() {
   const integ = integrationSummary(ports)
   const counters = [...getCounters()].sort((a, b) => b.value - a.value)
   const totalEvents = counters.reduce((s, c) => s + c.value, 0)
+  // Live consumer of the EMIS port: pull the demo school's master-data snapshot.
+  const emis = await integrations.emis.getSchoolData("33010100101")
 
   return (
     <Shell>
@@ -105,6 +108,26 @@ export default async function OpsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>
+            EMIS master-data (school 33010100101){" "}
+            <Badge variant={emis.mode === "live" ? "default" : "secondary"}>{emis.mode}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {emis.ok && emis.data ? (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div><div className="text-2xl font-bold">{emis.data.students}</div><div className="text-xs text-muted-foreground">Students</div></div>
+              <div><div className="text-2xl font-bold">{emis.data.teachers}</div><div className="text-xs text-muted-foreground">Teachers</div></div>
+              <div><div className="text-2xl font-bold">{emis.data.classrooms}</div><div className="text-xs text-muted-foreground">Classrooms</div></div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">EMIS unavailable: {emis.error ?? "no data"}</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="mt-6">
         <CardHeader><CardTitle>Integration posture</CardTitle></CardHeader>
