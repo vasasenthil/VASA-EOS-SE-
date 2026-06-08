@@ -124,6 +124,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Data Scope Explorer", href: "/governance/scope", icon: Network },
     { title: "Requirements Traceability", href: "/governance/traceability", icon: ClipboardList },
     { title: "Architecture Conformance", href: "/architecture", icon: Network },
+    { title: "Integration Go-Live", href: "/governance/go-live", icon: Plug },
     { title: "Government Structure", href: "/governance/org", icon: Landmark },
     { title: "User Directory & IAM", href: "/governance/directory", icon: Users },
     { title: "User Management", href: "/admin/governance/users", icon: Users },

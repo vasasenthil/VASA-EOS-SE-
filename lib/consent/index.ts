@@ -26,3 +26,19 @@ export interface ConsentRecord {
   status: "granted" | "withdrawn"
   ts: string
 }
+
+/**
+ * Effective consent for a (subject, purpose) over a record list — most recent wins.
+ * Pure and fail-closed: no record => not granted. The PII-read enforcement seam
+ * (lib/consent/gate-server) delegates here so the rule is unit-testable.
+ */
+export function consentGranted(
+  records: ConsentRecord[],
+  subjectApaar: string,
+  purpose: ConsentPurpose,
+): boolean {
+  const matching = records
+    .filter((r) => r.subjectApaar === subjectApaar && r.purpose === purpose)
+    .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0))
+  return matching[matching.length - 1]?.status === "granted"
+}
