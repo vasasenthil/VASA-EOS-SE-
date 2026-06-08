@@ -20,6 +20,8 @@ export interface BaglessActivity {
   date: string
   classGroup: string
   participants: number
+  /** Tenant node this activity belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export interface BaglessSummary {

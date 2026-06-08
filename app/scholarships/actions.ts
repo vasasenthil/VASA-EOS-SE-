@@ -4,12 +4,14 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { addBeneficiary, advanceBeneficiary, deleteBeneficiary, listBeneficiaries, type NewScholar } from "@/lib/scholarship/store"
 import type { ScholarRow } from "@/lib/scholarship"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listBeneficiariesAction(): Promise<ScholarRow[]> {
   noStore()
   try {
-    return await listBeneficiaries()
+    // Per-role data scoping: scholarship beneficiaries roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listBeneficiaries())
   } catch (e) {
     logger.error("scholarship.list failed", { error: String(e) })
     return []

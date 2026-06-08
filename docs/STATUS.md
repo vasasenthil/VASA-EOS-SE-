@@ -20,7 +20,7 @@ then National (Central MoE) tier later. See `CLAUDE.md`.
 | Governance Oversight Command Centre | ✅ | `lib/governance/oversight` + `/governance/oversight` (live rollup of all 7 flows) + CSV |
 | Forum/Meeting (RACI) workflow (7th flow) | ✅ | `FORUM_RESOLUTION` + `lib/forumflow` + `/governance/forums` (Secretary→Director quorum→Minister) |
 | NEP implementation analytics | ✅ | `lib/tracking/analytics` + `/tracking/analytics` (RAG, thrust-area/tier rollups, at-risk) |
-| Per-role data scoping (ReBAC) | ✅ (engine) / 🟡 (rollout) | `lib/access/scope` + `scope-server` + `/governance/scope`; **wired on 34 modules**: safety, discipline, cwsn, lost-found, cooks, rte, rti, oosc, water, cctv, drills, competitions, excursions, tc, visitors, circulation, alumni, distribution, certificates, stock, sciencefair, guest-lectures, council, assembly, eco-club, nss-ncc, student-banking, fitness, reading, ict-lab, vocational, homework, mdm, sports. Remaining: snapshot/flow stores |
+| Per-role data scoping (ReBAC) | ✅ (engine) / 🟡 (rollout) | `lib/access/scope` + `scope-server` + `/governance/scope`; **wired on 39 modules** (+notices, scholarships, textbooks, vacancy, bagless). Remaining: snapshot stores (diagnostic/results/staff-attendance/exam-seating/question-bank/promotion) + workflow-flow stores (carry WorkflowInstances; surfaced in Oversight) |
 | Requirements traceability matrix | ✅ | `lib/traceability` + `/governance/traceability` + CSV; **26 user stories × 15 roles**, self-verifying (every referenced test asserted to exist) |
 | Tenant scoping migration | ✅ | `scripts/018-add-tenant-scoping.sql` (tenant_id + index on 8 tables) |
 | Tests / coverage | ✅ | **525 tests**, ~97.1% lines / ~84.9% branches / ~91.3% functions |

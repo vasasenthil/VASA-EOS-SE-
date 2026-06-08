@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Indent } from "./index"
 
 function id(): string {
@@ -15,23 +16,31 @@ interface Row {
   subject: string
   required: number
   received: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Indent {
-  return { id: r.id, cls: r.cls, subject: r.subject, required: r.required, received: r.received }
+  return { id: r.id, cls: r.cls, subject: r.subject, required: r.required, received: r.received, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: Indent[] = []
+// Seeded across tenant nodes so textbook indents roll up by jurisdiction.
+const store: Indent[] = [
+  { id: "TB-SEED1", cls: "9", subject: "Science", required: 240, received: 240, tenantId: "TN-CHN-B1-S1" },
+  { id: "TB-SEED2", cls: "10", subject: "Mathematics", required: 300, received: 180, tenantId: "TN-CHN-B2-S1" },
+  { id: "TB-SEED3", cls: "8", subject: "Tamil", required: 210, received: 0, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewIndent {
   cls: string
   subject: string
   required: number
+  /** Tenant node the indent is raised at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createIndent(input: NewIndent): Promise<Indent> {
-  const it: Indent = { id: id(), cls: input.cls, subject: input.subject, required: input.required, received: 0 }
+  const it: Indent = { id: id(), cls: input.cls, subject: input.subject, required: input.required, received: 0, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("textbook_indents").insert({
@@ -40,6 +49,7 @@ export async function createIndent(input: NewIndent): Promise<Indent> {
       subject: it.subject,
       required: it.required,
       received: it.received,
+      tenant_id: it.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

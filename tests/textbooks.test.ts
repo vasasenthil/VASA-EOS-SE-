@@ -8,6 +8,7 @@ const i = (required: number, received: number): Indent => ({
   subject: "Maths",
   required,
   received,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("pending never goes negative", () => {

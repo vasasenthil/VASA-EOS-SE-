@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createLine, deleteLine, listLines, type NewLine } from "@/lib/vacancy/store"
 import type { PostLine } from "@/lib/vacancy"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listLinesAction(): Promise<PostLine[]> {
   noStore()
   try {
-    return await listLines()
+    // Per-role data scoping: vacancy lines roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listLines())
   } catch (e) {
     logger.error("vacancy.list failed", { error: String(e) })
     return []

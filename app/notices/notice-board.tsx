@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { NOTICE_CATEGORIES, NOTICE_AUDIENCES, newNoticeId, sortNotices, noticeSummary, type Notice, type NoticeCategory, type NoticeAudience } from "@/lib/notices"
 import { publishNoticeAction, setPinnedAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,7 +25,7 @@ export function NoticeBoard({ initial = [] }: { initial?: Notice[] }) {
 
   function publish() {
     if (!title.trim()) return
-    const optimistic: Notice = { id: newNoticeId(), title: title.trim(), body: body.trim(), category, audience, date: TODAY, pinned: category === "Urgent" }
+    const optimistic: Notice = { id: newNoticeId(), title: title.trim(), body: body.trim(), category, audience, date: TODAY, pinned: category === "Urgent", tenantId: DEFAULT_SCHOOL_NODE }
     setNotices((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await publishNoticeAction({ title: optimistic.title, body: optimistic.body, category, audience })

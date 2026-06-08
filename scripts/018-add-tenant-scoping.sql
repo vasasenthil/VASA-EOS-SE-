@@ -152,3 +152,23 @@ create index if not exists mdm_register_tenant_id_idx on public.mdm_register (te
 alter table if exists public.sport_results
   add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
 create index if not exists sport_results_tenant_id_idx on public.sport_results (tenant_id);
+
+alter table if exists public.notices
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists notices_tenant_id_idx on public.notices (tenant_id);
+
+alter table if exists public.scholarships
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists scholarships_tenant_id_idx on public.scholarships (tenant_id);
+
+alter table if exists public.textbook_indents
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists textbook_indents_tenant_id_idx on public.textbook_indents (tenant_id);
+
+alter table if exists public.vacancy_lines
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists vacancy_lines_tenant_id_idx on public.vacancy_lines (tenant_id);
+
+alter table if exists public.bagless_activities
+  add column if not exists tenant_id text not null default 'TN-CHN-B1-S1';
+create index if not exists bagless_activities_tenant_id_idx on public.bagless_activities (tenant_id);

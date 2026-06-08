@@ -7,6 +7,8 @@ export interface Indent {
   subject: string
   required: number
   received: number
+  /** Tenant node this indent belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function pendingOf(i: Indent): number {

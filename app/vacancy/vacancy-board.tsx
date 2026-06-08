@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { CADRES, vacancySummary, vacancyOf, type PostLine } from "@/lib/vacancy"
 import { createLineAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,7 +22,7 @@ export function VacancyBoard({ initial = [] }: { initial?: PostLine[] }) {
 
   function add() {
     if (sanctioned < 0 || working < 0) return
-    const optimistic: PostLine = { id: `pl-${Date.now()}`, subject, sanctioned, working }
+    const optimistic: PostLine = { id: `pl-${Date.now()}`, subject, sanctioned, working, tenantId: DEFAULT_SCHOOL_NODE }
     setLines((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createLineAction({ subject: optimistic.subject, sanctioned: optimistic.sanctioned, working: optimistic.working })

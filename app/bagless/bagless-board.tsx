@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { BAGLESS_TYPES, BAGLESS_TARGET, baglessSummary, type BaglessActivity } from "@/lib/bagless"
 import { createActivityAction } from "./actions"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ export function BaglessBoard({ initial = [] }: { initial?: BaglessActivity[] }) 
 
   function add() {
     if (!title.trim() || participants < 0) return
-    const optimistic: BaglessActivity = { id: `bl-${Date.now()}`, title: title.trim(), type, date, classGroup: classGroup.trim() || "All", participants }
+    const optimistic: BaglessActivity = { id: `bl-${Date.now()}`, title: title.trim(), type, date, classGroup: classGroup.trim() || "All", participants, tenantId: DEFAULT_SCHOOL_NODE }
     setActivities((prev) => [optimistic, ...prev])
     startTransition(async () => {
       const saved = await createActivityAction({ title: optimistic.title, type: optimistic.type, date: optimistic.date, classGroup: optimistic.classGroup, participants: optimistic.participants })

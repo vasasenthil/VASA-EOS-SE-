@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { sortNotices, noticeSummary, type Notice } from "@/lib/notices"
 
-const n = (over: Partial<Notice>): Notice => ({ id: "n", title: "t", body: "", category: "General", audience: "All", date: "2026-06-01", pinned: false, ...over })
+const n = (over: Partial<Notice>): Notice => ({ id: "n", title: "t", body: "", category: "General", audience: "All", date: "2026-06-01", pinned: false, tenantId: "TN-CHN-B1-S1", ...over })
 
 test("sortNotices puts pinned first, then most recent", () => {
   const list = [

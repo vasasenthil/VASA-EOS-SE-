@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { PostLine } from "./index"
 
 function id(): string {
@@ -14,23 +15,31 @@ interface Row {
   subject: string
   sanctioned: number
   working: number
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): PostLine {
-  return { id: r.id, subject: r.subject, sanctioned: r.sanctioned, working: r.working }
+  return { id: r.id, subject: r.subject, sanctioned: r.sanctioned, working: r.working, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
-const store: PostLine[] = []
+// Seeded across tenant nodes so vacancy/rationalisation rolls up by jurisdiction.
+const store: PostLine[] = [
+  { id: "PL-SEED1", subject: "Graduate (BT Assistant)", sanctioned: 12, working: 10, tenantId: "TN-CHN-B1-S1" },
+  { id: "PL-SEED2", subject: "Post-Graduate (PG Assistant)", sanctioned: 8, working: 8, tenantId: "TN-CHN-B2-S1" },
+  { id: "PL-SEED3", subject: "Physical Education", sanctioned: 2, working: 1, tenantId: "TN-CBE-B1-S1" },
+]
 
 export interface NewLine {
   subject: string
   sanctioned: number
   working: number
+  /** Tenant node the post line belongs to; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createLine(input: NewLine): Promise<PostLine> {
-  const l: PostLine = { id: id(), subject: input.subject, sanctioned: input.sanctioned, working: input.working }
+  const l: PostLine = { id: id(), subject: input.subject, sanctioned: input.sanctioned, working: input.working, tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("vacancy_lines").insert({
@@ -38,6 +47,7 @@ export async function createLine(input: NewLine): Promise<PostLine> {
       subject: l.subject,
       sanctioned: l.sanctioned,
       working: l.working,
+      tenant_id: l.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

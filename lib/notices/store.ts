@@ -3,6 +3,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { newNoticeId, SAMPLE_NOTICES, type Notice, type NoticeAudience, type NoticeCategory } from "./index"
 
 interface Row {
@@ -13,11 +14,12 @@ interface Row {
   audience: NoticeAudience
   date: string
   pinned: boolean
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): Notice {
-  return { id: r.id, title: r.title, body: r.body, category: r.category, audience: r.audience, date: r.date, pinned: r.pinned }
+  return { id: r.id, title: r.title, body: r.body, category: r.category, audience: r.audience, date: r.date, pinned: r.pinned, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 // In-memory fallback seeded with the sample board so the demo shows content.
@@ -28,6 +30,8 @@ export interface NewNotice {
   body: string
   category: NoticeCategory
   audience: NoticeAudience
+  /** Tenant node the notice is published at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function publishNotice(input: NewNotice): Promise<Notice> {
@@ -39,6 +43,7 @@ export async function publishNotice(input: NewNotice): Promise<Notice> {
     audience: input.audience,
     date: new Date().toISOString().slice(0, 10),
     pinned: input.category === "Urgent",
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -50,6 +55,7 @@ export async function publishNotice(input: NewNotice): Promise<Notice> {
       audience: n.audience,
       date: n.date,
       pinned: n.pinned,
+      tenant_id: n.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

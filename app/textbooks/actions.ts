@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { createIndent, receiveCopies, deleteIndent, listIndents, type NewIndent } from "@/lib/textbooks/store"
 import type { Indent } from "@/lib/textbooks"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listIndentsAction(): Promise<Indent[]> {
   noStore()
   try {
-    return await listIndents()
+    // Per-role data scoping: textbook indents roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listIndents())
   } catch (e) {
     logger.error("textbook.list failed", { error: String(e) })
     return []

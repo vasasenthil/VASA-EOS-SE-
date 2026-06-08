@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { nextStatus, SCHOLARSHIP_LEDGER, type ScholarRow } from "./index"
 
 function id(): string {
@@ -16,11 +17,12 @@ interface Row {
   scheme: string
   amount: number
   status: ScholarRow["status"]
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): ScholarRow {
-  return { id: r.id, name: r.name, scheme: r.scheme, amount: r.amount, status: r.status }
+  return { id: r.id, name: r.name, scheme: r.scheme, amount: r.amount, status: r.status, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 // In-memory fallback seeded with the demo ledger so the pipeline shows content.
@@ -30,10 +32,12 @@ export interface NewScholar {
   name: string
   scheme: string
   amount: number
+  /** Tenant node the beneficiary is recorded at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function addBeneficiary(input: NewScholar): Promise<ScholarRow> {
-  const r: ScholarRow = { id: id(), name: input.name, scheme: input.scheme, amount: input.amount, status: "eligible" }
+  const r: ScholarRow = { id: id(), name: input.name, scheme: input.scheme, amount: input.amount, status: "eligible", tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE }
   const db = getDb()
   if (db) {
     await db.from("scholarships").insert({
@@ -42,6 +46,7 @@ export async function addBeneficiary(input: NewScholar): Promise<ScholarRow> {
       scheme: r.scheme,
       amount: r.amount,
       status: r.status,
+      tenant_id: r.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

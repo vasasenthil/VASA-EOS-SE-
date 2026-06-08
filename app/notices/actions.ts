@@ -3,12 +3,14 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { publishNotice, setPinned, deleteNotice, listNotices, type NewNotice } from "@/lib/notices/store"
 import type { Notice } from "@/lib/notices"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listNoticesAction(): Promise<Notice[]> {
   noStore()
   try {
-    return await listNotices()
+    // Per-role data scoping: notices roll up by jurisdiction subtree.
+    return await scopeForCurrentSubject(await listNotices())
   } catch (e) {
     logger.error("notice.list failed", { error: String(e) })
     return []

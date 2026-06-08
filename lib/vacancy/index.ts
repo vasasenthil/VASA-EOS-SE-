@@ -15,6 +15,8 @@ export interface PostLine {
   subject: string
   sanctioned: number
   working: number
+  /** Tenant node this post line belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 // Positive = vacancy (short-staffed); negative = surplus (over-staffed).

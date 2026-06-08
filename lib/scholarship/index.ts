@@ -16,15 +16,17 @@ export interface ScholarRow {
   scheme: string
   amount: number // rupees
   status: ScholarStatus
+  /** Tenant node this beneficiary belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export const SCHOLARSHIP_LEDGER: ScholarRow[] = [
-  { id: "S1", name: "Aarthi M", scheme: "Pudhumai Penn", amount: 12000, status: "disbursed" },
-  { id: "S2", name: "Bharath K", scheme: "Adi Dravidar Welfare", amount: 8000, status: "sanctioned" },
-  { id: "S3", name: "Charumathi R", scheme: "Pudhumai Penn", amount: 12000, status: "applied" },
-  { id: "S4", name: "Dinesh S", scheme: "Naan Mudhalvan Stipend", amount: 6000, status: "eligible" },
-  { id: "S5", name: "Eswari T", scheme: "Tribal Welfare Hostel", amount: 15000, status: "sanctioned" },
-  { id: "S6", name: "Faizal A", scheme: "Minority Welfare", amount: 9000, status: "applied" },
+  { id: "S1", name: "Aarthi M", scheme: "Pudhumai Penn", amount: 12000, status: "disbursed", tenantId: "TN-CHN-B1-S1" },
+  { id: "S2", name: "Bharath K", scheme: "Adi Dravidar Welfare", amount: 8000, status: "sanctioned", tenantId: "TN-CHN-B2-S1" },
+  { id: "S3", name: "Charumathi R", scheme: "Pudhumai Penn", amount: 12000, status: "applied", tenantId: "TN-CBE-B1-S1" },
+  { id: "S4", name: "Dinesh S", scheme: "Naan Mudhalvan Stipend", amount: 6000, status: "eligible", tenantId: "TN-CHN-B1-S1" },
+  { id: "S5", name: "Eswari T", scheme: "Tribal Welfare Hostel", amount: 15000, status: "sanctioned", tenantId: "TN-CHN-B2-S1" },
+  { id: "S6", name: "Faizal A", scheme: "Minority Welfare", amount: 9000, status: "applied", tenantId: "TN-CBE-B1-S1" },
 ]
 
 export interface ScholarSummary {

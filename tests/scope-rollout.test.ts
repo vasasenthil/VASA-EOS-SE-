@@ -30,6 +30,11 @@ import { listEnrolments } from "@/lib/vocational/store"
 import { listHomework } from "@/lib/homework/store"
 import { listEntries as listMdm } from "@/lib/mdm/store"
 import { listResults } from "@/lib/sports/store"
+import { listNotices } from "@/lib/notices/store"
+import { listBeneficiaries } from "@/lib/scholarship/store"
+import { listIndents } from "@/lib/textbooks/store"
+import { listLines } from "@/lib/vacancy/store"
+import { listActivities as listBagless } from "@/lib/bagless/store"
 import { listProjects } from "@/lib/sciencefair/store"
 import { listLectures } from "@/lib/guestlectures/store"
 import { listCandidates } from "@/lib/council/store"
@@ -163,6 +168,22 @@ test("ictlab/vocational/homework/mdm/sports seeds are all scopable", async () =>
     const cbe = scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all)
     assert.ok(cbe.every((r) => r.tenantId === "TN-CBE-B1-S1"))
     assert.equal(cbe.length, 1)
+  }
+})
+
+test("notices/scholarship/textbooks/vacancy/bagless seeds are all scopable", async () => {
+  const lists: Array<() => Promise<{ tenantId: string }[]>> = [
+    listNotices,
+    listBeneficiaries,
+    listIndents,
+    listLines,
+    listBagless,
+  ]
+  for (const list of lists) {
+    const all = await list()
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN", all).length >= 2, "state sees all seeds")
+    // Chennai district never sees the Coimbatore-only record.
+    assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).every((r) => r.tenantId !== "TN-CBE-B1-S1"))
   }
 })
 

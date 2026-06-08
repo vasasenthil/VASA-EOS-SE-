@@ -7,6 +7,7 @@ const p = (subject: string, sanctioned: number, working: number): PostLine => ({
   subject,
   sanctioned,
   working,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("cadre catalogue is non-empty", () => {

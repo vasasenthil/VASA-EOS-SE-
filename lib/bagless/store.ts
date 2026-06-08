@@ -4,6 +4,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { BaglessActivity } from "./index"
 
 function id(): string {
@@ -17,6 +18,7 @@ interface Row {
   date: string
   class_group: string
   participants: number
+  tenant_id: string
   created_at: string
 }
 
@@ -28,10 +30,18 @@ function fromRow(r: Row): BaglessActivity {
     date: r.date,
     classGroup: r.class_group,
     participants: r.participants,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
-const store: BaglessActivity[] = []
+// Seeded across tenant nodes so bagless-days roll up by jurisdiction.
+const seeded: BaglessActivity[] = [
+  { id: "BL-SEED1", title: "Pottery with local artisan", type: "Local craft / artisan", date: "2026-06-02", classGroup: "6-8", participants: 60, tenantId: "TN-CHN-B1-S1" },
+  { id: "BL-SEED2", title: "Wetland bird count", type: "Field / nature visit", date: "2026-05-28", classGroup: "9-10", participants: 45, tenantId: "TN-CHN-B2-S1" },
+  { id: "BL-SEED3", title: "Terrace kitchen garden", type: "Kitchen gardening", date: "2026-05-25", classGroup: "All", participants: 80, tenantId: "TN-CBE-B1-S1" },
+]
+
+const store: BaglessActivity[] = [...seeded]
 
 export interface NewActivity {
   title: string
@@ -39,6 +49,8 @@ export interface NewActivity {
   date: string
   classGroup: string
   participants: number
+  /** Tenant node the activity is logged at; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function createActivity(input: NewActivity): Promise<BaglessActivity> {
@@ -49,6 +61,7 @@ export async function createActivity(input: NewActivity): Promise<BaglessActivit
     date: input.date,
     classGroup: input.classGroup,
     participants: input.participants,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -59,6 +72,7 @@ export async function createActivity(input: NewActivity): Promise<BaglessActivit
       date: a.date,
       class_group: a.classGroup,
       participants: a.participants,
+      tenant_id: a.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

@@ -15,6 +15,8 @@ export interface Notice {
   audience: NoticeAudience
   date: string
   pinned: boolean
+  /** Tenant node this notice belongs to — drives per-role data scoping. */
+  tenantId: string
 }
 
 export function newNoticeId(): string {
@@ -22,8 +24,8 @@ export function newNoticeId(): string {
 }
 
 export const SAMPLE_NOTICES: Notice[] = [
-  { id: "nt-seed1", title: "Half-yearly exam timetable released", body: "Exams begin 14 Sep. See the academic calendar.", category: "Examination", audience: "All", date: "2026-09-01", pinned: true },
-  { id: "nt-seed2", title: "School closed for Pongal", body: "School remains closed 14-16 Jan for Pongal.", category: "Holiday", audience: "All", date: "2027-01-10", pinned: false },
+  { id: "nt-seed1", title: "Half-yearly exam timetable released", body: "Exams begin 14 Sep. See the academic calendar.", category: "Examination", audience: "All", date: "2026-09-01", pinned: true, tenantId: "TN-CHN-B1-S1" },
+  { id: "nt-seed2", title: "School closed for Pongal", body: "School remains closed 14-16 Jan for Pongal.", category: "Holiday", audience: "All", date: "2027-01-10", pinned: false, tenantId: "TN-CHN-B2-S1" },
 ]
 
 /** Pinned first, then most recent date first. */

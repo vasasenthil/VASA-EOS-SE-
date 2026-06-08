@@ -9,6 +9,7 @@ const a = (date: string, participants: number): BaglessActivity => ({
   date,
   classGroup: "6-8",
   participants,
+  tenantId: "TN-CHN-B1-S1",
 })
 
 test("target is the NEP 10 bagless days", () => {
