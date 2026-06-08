@@ -16,6 +16,8 @@ export interface SbomComponent {
   version: string
   scope: "required" | "optional"
   purl: string
+  /** SPDX licence id, when known (CycloneDX `licenses[].license.id`). */
+  licenses?: { license: { id: string } }[]
 }
 
 export interface CycloneDxBom {
@@ -45,12 +47,17 @@ export function npmPurl(name: string, version: string): string {
 /** Build a CycloneDX 1.5 SBOM from a package manifest. Pure + deterministic. */
 export function buildSbom(
   pkg: PackageManifest,
-  opts: { includeDev?: boolean; timestamp?: string } = {},
+  opts: { includeDev?: boolean; timestamp?: string; licenses?: Record<string, string> } = {},
 ): CycloneDxBom {
+  const lic = opts.licenses ?? {}
   const comp = (deps: Record<string, string> | undefined, scope: SbomComponent["scope"]): SbomComponent[] =>
     Object.entries(deps ?? {})
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([name, range]) => ({ type: "library", name, version: cleanVersion(range), scope, purl: npmPurl(name, range) }))
+      .map(([name, range]) => {
+        const c: SbomComponent = { type: "library", name, version: cleanVersion(range), scope, purl: npmPurl(name, range) }
+        if (lic[name]) c.licenses = [{ license: { id: lic[name] } }]
+        return c
+      })
 
   const components = [
     ...comp(pkg.dependencies, "required"),

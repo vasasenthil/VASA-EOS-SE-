@@ -30,6 +30,8 @@ jobs:
         run: corepack enable
       - name: SCA — pnpm audit (high+)
         run: pnpm audit --audit-level=high || true # report; do not block on transitive advisories yet
+      - name: License compliance
+        run: node --experimental-strip-types scripts/license-check.mjs
       - name: Generate SBOM (CycloneDX)
         run: node --experimental-strip-types scripts/generate-sbom.mjs
       - name: Upload SBOM
