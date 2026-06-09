@@ -24,6 +24,7 @@ import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
 import { runbookSummary } from "@/lib/ops-posture/runbook"
+import { sliSummary } from "@/lib/ops-posture/sli"
 
 export interface ComplianceDomain {
   id: string
@@ -56,6 +57,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const standards = standardsSummary()
   const matrix = matrixSummary()
   const runbook = runbookSummary()
+  const sli = sliSummary()
 
   return [
     { id: "architecture", name: "Architecture conformance", pillar: "All pillars", registerRef: "lib/architecture/index.ts", route: "/architecture", items: arch.components, headline: `${arch.implemented} implemented · ${arch.partial} partial across ${arch.pillars} pillars` },
@@ -73,6 +75,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "data-lineage", name: "Medallion data lineage", pillar: "Data", registerRef: "lib/data/lineage.ts", route: "/data-lineage", items: lineage.datasets, headline: `${lineage.bronze}/${lineage.silver}/${lineage.gold} bronze/silver/gold · ${lineage.piiDatasets} PII` },
     { id: "data-standards", name: "Master-data & ID standards", pillar: "Data", registerRef: "lib/data/standards.ts", route: "/data-standards", items: standards.standards, headline: `${standards.standards} identifier standards · ${standards.authorities} authorities` },
     { id: "dr-runbook", name: "DR runbook & on-call", pillar: "Operations", registerRef: "lib/ops-posture/runbook.ts", route: "/ops/runbook", items: runbook.runbooks, headline: `${runbook.drScenariosCovered} DR scenarios · ${runbook.onCallRoles} on-call roles` },
+    { id: "sli", name: "SLIs & error budgets", pillar: "Operations", registerRef: "lib/ops-posture/sli.ts", route: "/ops/sli", items: sli.slis, headline: `${sli.availabilitySlis} availability · ${sli.latencySlis} latency · ${sli.tightestBudgetMinutes} min tightest budget` },
   ]
 }
 

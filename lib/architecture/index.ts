@@ -101,6 +101,7 @@ export const PILLARS: Pillar[] = [
       { name: "Structured logger + metrics", ref: "lib/metrics" },
       { name: "Live ops console", ref: "app/ops/page.tsx" },
       { name: "DR + SLO posture model", ref: "lib/ops-posture" },
+      { name: "SLI catalogue + error budgets (SLO-bound)", ref: "lib/ops-posture/sli.ts" },
       { name: "DR runbook + on-call/SLA (per-scenario procedures)", ref: "lib/ops-posture/runbook.ts" },
       { name: "Tracing seam (OTLP export)", ref: "lib/tracing" },
     ],
