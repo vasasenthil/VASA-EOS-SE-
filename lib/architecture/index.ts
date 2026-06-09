@@ -135,6 +135,7 @@ export const PILLARS: Pillar[] = [
       { name: "Live HTTP adapters", ref: "lib/integrations/live" },
       { name: "Posture introspection", ref: "lib/integrations/status.ts" },
       { name: "NDEAR compliance register (principles + building blocks)", ref: "lib/compliance/ndear.ts" },
+      { name: "Regulatory frameworks register (NEP·DPDP·RPwD·RTE·POCSO·ISO·WCAG·SDG4…)", ref: "lib/compliance/regulatory.ts" },
     ],
     status: "implemented",
     gap: "Credentials / MoUs / sandboxes per provider to flip ports from mock to live.",

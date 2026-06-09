@@ -13,6 +13,7 @@ import { archSummary } from "@/lib/architecture"
 import { tenancySummary } from "@/lib/tenancy/catalogue"
 import { sovereigntySummary } from "@/lib/compliance/sovereignty"
 import { ndearSummary } from "@/lib/compliance/ndear"
+import { regSummary } from "@/lib/compliance/regulatory"
 import { threatSummary } from "@/lib/security/threat-model"
 import { guardrailSummary } from "@/lib/agents/guardrails"
 import { agentCatalogueSummary } from "@/lib/agents/catalogue"
@@ -49,6 +50,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const tenancy = tenancySummary()
   const sovereignty = sovereigntySummary()
   const ndear = ndearSummary()
+  const reg = regSummary()
   const threat = threatSummary()
   const guard = guardrailSummary()
   const agentCat = agentCatalogueSummary()
@@ -70,6 +72,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "tenancy", name: "Sovereign tenancy tiers", pillar: "Multi-Tenancy", registerRef: "lib/tenancy/catalogue.ts", route: "/governance/tenancy", items: tenancy.tiers, headline: `${tenancy.tiers} tiers · depth ${tenancy.depth} · sovereign ${tenancy.sovereignState}` },
     { id: "sovereignty", name: "Five sovereignty guarantees", pillar: "Multi-Tenancy", registerRef: "lib/compliance/sovereignty.ts", route: "/governance/sovereignty", items: sovereignty.guarantees, headline: `${sovereignty.enforced} enforced · ${sovereignty.partial} complete at deploy` },
     { id: "ndear", name: "NDEAR compliance", pillar: "Integration", registerRef: "lib/compliance/ndear.ts", route: "/governance/ndear", items: ndear.total, headline: `${ndear.implemented} implemented · ${ndear.partial} partial · ${ndear.coveragePct}% coverage` },
+    { id: "regulatory", name: "Regulatory frameworks", pillar: "Integration", registerRef: "lib/compliance/regulatory.ts", route: "/governance/regulatory", items: reg.frameworks, headline: `${reg.frameworks} frameworks · ${reg.aligned} aligned · ${reg.partial} pending external audit` },
     { id: "threat-model", name: "STRIDE threat model", pillar: "Security", registerRef: "lib/security/threat-model.ts", route: "/governance/threat-model", items: threat.threats, headline: `${threat.mitigated} mitigated · ${threat.partial} partial · ${threat.categories}/6 STRIDE` },
     { id: "access-matrix", name: "Role × permission matrix", pillar: "Security", registerRef: "lib/access/matrix.ts", route: "/governance/access-matrix", items: matrix.roles, headline: `${matrix.roles} roles · ${matrix.actions} actions · ${matrix.elevatedActions} elevated (CABAC)` },
     { id: "ai-guardrails", name: "Responsible-AI guardrails", pillar: "Native-AI", registerRef: "lib/agents/guardrails.ts", route: "/governance/ai-guardrails", items: guard.guardrails, headline: `${guard.enforced} enforced · ${guard.partial} partial · ${guard.risksCovered} risks covered` },
