@@ -71,6 +71,7 @@ export const PILLARS: Pillar[] = [
       { name: "Master-data identifier standards (MDM)", ref: "lib/data/standards.ts" },
       { name: "Durable persistence seam", ref: "lib/persistence" },
       { name: "Hash-chained audit ledger", ref: "lib/audit" },
+      { name: "Welfare leakage-prevention controls (vector→control)", ref: "lib/compliance/leakage.ts" },
       { name: "Snapshot stores", ref: "lib/results/store.ts" },
     ],
     status: "partial",

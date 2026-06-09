@@ -26,6 +26,7 @@ import { languageSummary } from "@/lib/i18n/languages"
 import { channelSummary } from "@/lib/accessibility/channels"
 import { deliverySummary } from "@/lib/accessibility/delivery"
 import { equitySummary } from "@/lib/compliance/equity"
+import { leakageSummary } from "@/lib/compliance/leakage"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -65,6 +66,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const chan = channelSummary()
   const delivery = deliverySummary()
   const equity = equitySummary()
+  const leakage = leakageSummary()
   const lineage = lineageSummary()
   const standards = standardsSummary()
   const matrix = matrixSummary()
@@ -90,6 +92,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "channels", name: "Multi-channel & IVR", pillar: "Accessibility", registerRef: "lib/accessibility/channels.ts", route: "/accessibility/channels", items: chan.channels, headline: `${chan.ivrFlows} IVR flows · ${chan.noLiteracyChannels} no-literacy channels` },
     { id: "delivery", name: "Last-mile delivery posture", pillar: "Accessibility", registerRef: "lib/accessibility/delivery.ts", route: "/accessibility/delivery", items: delivery.capabilities, headline: `${delivery.barriersCovered} barriers · ${delivery.geographies} geographies · ${delivery.tamilDialects} dialects` },
     { id: "equity", name: "12 equity dimensions", pillar: "Accessibility", registerRef: "lib/compliance/equity.ts", route: "/governance/equity", items: equity.dimensions, headline: `${equity.dimensions} dimensions · ${equity.implemented} implemented · ${equity.articles} constitutional Articles` },
+    { id: "leakage", name: "Welfare leakage prevention", pillar: "Data", registerRef: "lib/compliance/leakage.ts", route: "/governance/leakage", items: leakage.controls, headline: `${leakage.controls} controls · ${leakage.enforced} enforced · ${leakage.targetLeakageReductionPct}% target reduction` },
     { id: "data-lineage", name: "Medallion data lineage", pillar: "Data", registerRef: "lib/data/lineage.ts", route: "/data-lineage", items: lineage.datasets, headline: `${lineage.bronze}/${lineage.silver}/${lineage.gold} bronze/silver/gold · ${lineage.piiDatasets} PII` },
     { id: "data-standards", name: "Master-data & ID standards", pillar: "Data", registerRef: "lib/data/standards.ts", route: "/data-standards", items: standards.standards, headline: `${standards.standards} identifier standards · ${standards.authorities} authorities` },
     { id: "dr-runbook", name: "DR runbook & on-call", pillar: "Operations", registerRef: "lib/ops-posture/runbook.ts", route: "/ops/runbook", items: runbook.runbooks, headline: `${runbook.drScenariosCovered} DR scenarios · ${runbook.onCallRoles} on-call roles` },
