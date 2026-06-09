@@ -31,6 +31,7 @@ export const PILLARS: Pillar[] = [
     commitment: "AI woven through the platform: specialised agents, RAG, confidence gating and human-in-the-loop.",
     components: [
       { name: "8 specialised agents + confidence gating + HITL", ref: "lib/agents" },
+      { name: "Responsible-AI guardrails (risk→control register)", ref: "lib/agents/guardrails.ts" },
       { name: "Per-agent MCP tool definitions", ref: "lib/agents/tools.ts" },
       { name: "MCP tool dispatcher (HITL-gated)", ref: "lib/agents/dispatch.ts" },
       { name: "Tool executor → real seams (DBT/IVR/translate)", ref: "lib/agents/execute.ts" },
@@ -41,7 +42,7 @@ export const PILLARS: Pillar[] = [
       { name: "Adaptive learning (BKT/ZPD)", ref: "lib/adaptive" },
     ],
     status: "partial",
-    gap: "Real LLM keys + an MCP tool-execution runtime + a production vector store at curriculum scale (tool defs + RAG seam now in place).",
+    gap: "Real LLM keys + an MCP tool-execution runtime + a production vector store at curriculum scale (tool defs + RAG seam + responsible-AI guardrails now in place).",
   },
   {
     id: "multi-tenancy",
