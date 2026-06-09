@@ -65,6 +65,7 @@ export const PILLARS: Pillar[] = [
     components: [
       { name: "Polyglot + Bronze/Silver/Gold reference", ref: "lib/data" },
       { name: "Medallion data-lineage DAG (dbt-style models)", ref: "lib/data/lineage.ts" },
+      { name: "Master-data identifier standards (MDM)", ref: "lib/data/standards.ts" },
       { name: "Durable persistence seam", ref: "lib/persistence" },
       { name: "Hash-chained audit ledger", ref: "lib/audit" },
       { name: "Snapshot stores", ref: "lib/results/store.ts" },
