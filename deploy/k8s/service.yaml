@@ -1,0 +1,32 @@
+# Service + Ingress skeleton. Terminate TLS at the ingress (mTLS to upstreams is
+# handled by the service mesh / gateway, not the app).
+apiVersion: v1
+kind: Service
+metadata:
+  name: vasa-eos-se
+spec:
+  selector: { app: vasa-eos-se }
+  ports:
+    - port: 80
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vasa-eos-se
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - hosts: ["vasa-eos.tn.gov.in"]
+      secretName: vasa-eos-tls
+  rules:
+    - host: vasa-eos.tn.gov.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vasa-eos-se
+                port: { number: 80 }

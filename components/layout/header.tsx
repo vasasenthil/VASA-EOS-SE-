@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NotificationBell } from "@/components/notifications/notification-bell"
+import { AccessibilityQuickToggle } from "@/components/accessibility-quick-toggle"
+import { CommandPaletteTrigger } from "@/components/command-palette"
 
 interface HeaderUserData {
   name: string
@@ -79,7 +81,9 @@ export function Header({ userData }: HeaderProps) {
         </div>
 
         {userData && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+          <CommandPaletteTrigger />
+          <AccessibilityQuickToggle />
           <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -131,9 +135,13 @@ export function Header({ userData }: HeaderProps) {
           </div>
         )}
         {!userData && (
-          <Button asChild variant="outline">
-            <Link href="/login">Sign In</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <CommandPaletteTrigger />
+            <AccessibilityQuickToggle />
+            <Button asChild variant="outline">
+              <Link href="/login">Sign In</Link>
+            </Button>
+          </div>
         )}
       </div>
     </header>

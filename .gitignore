@@ -26,3 +26,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 pnpm-workspace.yaml
+
+# Test coverage artifacts
+coverage.txt
+coverage-comment.md
+sbom.json
