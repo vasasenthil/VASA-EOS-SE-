@@ -81,11 +81,12 @@ export const PILLARS: Pillar[] = [
       { name: "PII data-classification catalogue", ref: "lib/consent/pii-catalogue.ts" },
       { name: "Consent-gated student PII reader (minimised)", ref: "lib/consent/student-pii.ts" },
       { name: "DPIA scaffold (generated from PII catalogue)", ref: "lib/consent/dpia.ts" },
+      { name: "STRIDE threat model (controls bound to repo paths)", ref: "lib/security/threat-model.ts" },
       { name: "Security headers + request-id", ref: "middleware.ts" },
       { name: "Rate-limit seam", ref: "lib/ratelimit" },
     ],
     status: "partial",
-    gap: "WAF / SIEM / Vault-HSM / mTLS are infrastructure to provision at deploy.",
+    gap: "WAF / SIEM / Vault-HSM / mTLS are infrastructure to provision at deploy (threat model + mitigations now mapped to controls).",
   },
   {
     id: "operations",
