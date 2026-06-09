@@ -95,10 +95,11 @@ export const PILLARS: Pillar[] = [
       { name: "Structured logger + metrics", ref: "lib/metrics" },
       { name: "Live ops console", ref: "app/ops/page.tsx" },
       { name: "DR + SLO posture model", ref: "lib/ops-posture" },
+      { name: "DR runbook + on-call/SLA (per-scenario procedures)", ref: "lib/ops-posture/runbook.ts" },
       { name: "Tracing seam (OTLP export)", ref: "lib/tracing" },
     ],
     status: "partial",
-    gap: "Live OTel collector + log shipping/SIEM, and an exercised DR runbook with on-call/SLA.",
+    gap: "Live OTel collector + log shipping/SIEM, and a DR drill that *exercises* the runbook (runbook + on-call/SLA now modelled).",
   },
   {
     id: "accessibility",
