@@ -113,10 +113,11 @@ export const PILLARS: Pillar[] = [
       { name: "RPwD Act 2016 — 21 specified disabilities register", ref: "lib/accessibility/rpwd.ts" },
       { name: "Multilingual (react-i18next)", ref: "lib/i18n" },
       { name: "22-language Eighth-Schedule catalogue + TN tribal/minority", ref: "lib/i18n/languages.ts" },
+      { name: "Multi-channel & IVR voice access catalogue", ref: "lib/accessibility/channels.ts" },
       { name: "Bhashini language port (translate/TTS/ASR)", ref: "lib/integrations/live/bhashini.ts" },
     ],
     status: "partial",
-    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking, telephony IVR, full per-language UI string packs (22-language + RPwD-21 now modelled), WCAG 2.2 AAA audit.",
+    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking + a live telephony IVR provider (channels/flows now modelled), full per-language UI string packs, WCAG 2.2 AAA audit.",
   },
   {
     id: "integration",
