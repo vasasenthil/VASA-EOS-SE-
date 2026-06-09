@@ -13,6 +13,7 @@ import { archSummary } from "@/lib/architecture"
 import { ndearSummary } from "@/lib/compliance/ndear"
 import { threatSummary } from "@/lib/security/threat-model"
 import { guardrailSummary } from "@/lib/agents/guardrails"
+import { agentCatalogueSummary } from "@/lib/agents/catalogue"
 import { dpiaSummary } from "@/lib/consent/dpia"
 import { piiSummary } from "@/lib/consent/pii-catalogue"
 import { retentionSummary } from "@/lib/consent/retention"
@@ -46,6 +47,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const ndear = ndearSummary()
   const threat = threatSummary()
   const guard = guardrailSummary()
+  const agentCat = agentCatalogueSummary()
   const dpia = dpiaSummary()
   const pii = piiSummary()
   const retention = retentionSummary()
@@ -65,6 +67,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "threat-model", name: "STRIDE threat model", pillar: "Security", registerRef: "lib/security/threat-model.ts", route: "/governance/threat-model", items: threat.threats, headline: `${threat.mitigated} mitigated · ${threat.partial} partial · ${threat.categories}/6 STRIDE` },
     { id: "access-matrix", name: "Role × permission matrix", pillar: "Security", registerRef: "lib/access/matrix.ts", route: "/governance/access-matrix", items: matrix.roles, headline: `${matrix.roles} roles · ${matrix.actions} actions · ${matrix.elevatedActions} elevated (CABAC)` },
     { id: "ai-guardrails", name: "Responsible-AI guardrails", pillar: "Native-AI", registerRef: "lib/agents/guardrails.ts", route: "/governance/ai-guardrails", items: guard.guardrails, headline: `${guard.enforced} enforced · ${guard.partial} partial · ${guard.risksCovered} risks covered` },
+    { id: "agent-catalogue", name: "AI agent capabilities", pillar: "Native-AI", registerRef: "lib/agents/catalogue.ts", route: "/ai-agents/catalogue", items: agentCat.agents, headline: `${agentCat.agents} agents · ${agentCat.mcpTools} MCP tools · ${agentCat.highStakes} high-stakes (HITL)` },
     { id: "dpia", name: "DPIA (scaffold)", pillar: "Security", registerRef: "lib/consent/dpia.ts", route: "/governance/dpia", items: dpia.activities, headline: `${dpia.high} high-risk · ${dpia.childDataActivities} children's-data activities` },
     { id: "pii", name: "PII data classification", pillar: "Security", registerRef: "lib/consent/pii-catalogue.ts", route: "/governance/pii-catalogue", items: pii.classes, headline: `${pii.sensitive} sensitive · ${pii.child} children's · ${pii.consentGated} consent-gated` },
     { id: "retention", name: "Retention & right-to-erasure", pillar: "Security", registerRef: "lib/consent/retention.ts", route: "/governance/retention", items: retention.rules, headline: `${retention.hardDelete} hard-delete · ${retention.anonymise} anonymise · ${retention.honoursRte} honour RTE` },

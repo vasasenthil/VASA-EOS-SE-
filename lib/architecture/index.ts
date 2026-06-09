@@ -31,6 +31,7 @@ export const PILLARS: Pillar[] = [
     commitment: "AI woven through the platform: specialised agents, RAG, confidence gating and human-in-the-loop.",
     components: [
       { name: "8 specialised agents + confidence gating + HITL", ref: "lib/agents" },
+      { name: "Agent capability catalogue (scope·tools·HITL)", ref: "lib/agents/catalogue.ts" },
       { name: "Responsible-AI guardrails (risk→control register)", ref: "lib/agents/guardrails.ts" },
       { name: "Per-agent MCP tool definitions", ref: "lib/agents/tools.ts" },
       { name: "MCP tool dispatcher (HITL-gated)", ref: "lib/agents/dispatch.ts" },

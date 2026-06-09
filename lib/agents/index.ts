@@ -28,6 +28,8 @@ export const AGENTS: AgentSpec[] = [
 ]
 
 const CONFIDENCE_THRESHOLD = 0.7
+/** Confidence at/above which an agent result is presented assertively (else a suggestion). */
+export const ASSERTIVE_CONFIDENCE_THRESHOLD = CONFIDENCE_THRESHOLD
 
 export interface AgentRunResult {
   agent: AgentName
