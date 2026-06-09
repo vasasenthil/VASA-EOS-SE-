@@ -80,6 +80,7 @@ export const PILLARS: Pillar[] = [
       { name: "5-model PDP (RBAC·ABAC·ReBAC·PBAC·CABAC)", ref: "lib/access/policy.ts" },
       { name: "DPDP consent + catalogue-driven PII-read gate", ref: "lib/consent/gate-server.ts" },
       { name: "PII data-classification catalogue", ref: "lib/consent/pii-catalogue.ts" },
+      { name: "Retention & right-to-erasure schedule (DPDP)", ref: "lib/consent/retention.ts" },
       { name: "Consent-gated student PII reader (minimised)", ref: "lib/consent/student-pii.ts" },
       { name: "DPIA scaffold (generated from PII catalogue)", ref: "lib/consent/dpia.ts" },
       { name: "STRIDE threat model (controls bound to repo paths)", ref: "lib/security/threat-model.ts" },

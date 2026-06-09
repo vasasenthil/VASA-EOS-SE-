@@ -15,6 +15,7 @@ import { threatSummary } from "@/lib/security/threat-model"
 import { guardrailSummary } from "@/lib/agents/guardrails"
 import { dpiaSummary } from "@/lib/consent/dpia"
 import { piiSummary } from "@/lib/consent/pii-catalogue"
+import { retentionSummary } from "@/lib/consent/retention"
 import { assuranceSummary } from "@/lib/assurance"
 import { rpwdSummary } from "@/lib/accessibility/rpwd"
 import { languageSummary } from "@/lib/i18n/languages"
@@ -44,6 +45,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const guard = guardrailSummary()
   const dpia = dpiaSummary()
   const pii = piiSummary()
+  const retention = retentionSummary()
   const assurance = assuranceSummary()
   const rpwd = rpwdSummary()
   const lang = languageSummary()
@@ -58,6 +60,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "ai-guardrails", name: "Responsible-AI guardrails", pillar: "Native-AI", registerRef: "lib/agents/guardrails.ts", route: "/governance/ai-guardrails", items: guard.guardrails, headline: `${guard.enforced} enforced · ${guard.partial} partial · ${guard.risksCovered} risks covered` },
     { id: "dpia", name: "DPIA (scaffold)", pillar: "Security", registerRef: "lib/consent/dpia.ts", route: "/governance/dpia", items: dpia.activities, headline: `${dpia.high} high-risk · ${dpia.childDataActivities} children's-data activities` },
     { id: "pii", name: "PII data classification", pillar: "Security", registerRef: "lib/consent/pii-catalogue.ts", route: "/governance/pii-catalogue", items: pii.classes, headline: `${pii.sensitive} sensitive · ${pii.child} children's · ${pii.consentGated} consent-gated` },
+    { id: "retention", name: "Retention & right-to-erasure", pillar: "Security", registerRef: "lib/consent/retention.ts", route: "/governance/retention", items: retention.rules, headline: `${retention.hardDelete} hard-delete · ${retention.anonymise} anonymise · ${retention.honoursRte} honour RTE` },
     { id: "assurance", name: "Independent assurance", pillar: "Operations", registerRef: "lib/assurance/index.ts", route: "/governance/assurance", items: assurance.total, headline: `${assurance.passed} passed · ${assurance.inProgress} in-progress · ${assurance.notStarted} not-started` },
     { id: "rpwd", name: "RPwD 21 disabilities", pillar: "Accessibility", registerRef: "lib/accessibility/rpwd.ts", route: "/accessibility/rpwd", items: rpwd.total, headline: `${rpwd.groups} statutory groups · ${rpwd.benchmarkEligible} benchmark-eligible` },
     { id: "languages", name: "22-language catalogue", pillar: "Accessibility", registerRef: "lib/i18n/languages.ts", route: "/accessibility/languages", items: lang.total, headline: `${lang.scheduled} scheduled · ${lang.scripts} scripts` },
