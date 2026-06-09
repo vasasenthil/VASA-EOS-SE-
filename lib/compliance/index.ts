@@ -24,6 +24,7 @@ import { assuranceSummary } from "@/lib/assurance"
 import { rpwdSummary } from "@/lib/accessibility/rpwd"
 import { languageSummary } from "@/lib/i18n/languages"
 import { channelSummary } from "@/lib/accessibility/channels"
+import { deliverySummary } from "@/lib/accessibility/delivery"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -61,6 +62,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const rpwd = rpwdSummary()
   const lang = languageSummary()
   const chan = channelSummary()
+  const delivery = deliverySummary()
   const lineage = lineageSummary()
   const standards = standardsSummary()
   const matrix = matrixSummary()
@@ -84,6 +86,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "rpwd", name: "RPwD 21 disabilities", pillar: "Accessibility", registerRef: "lib/accessibility/rpwd.ts", route: "/accessibility/rpwd", items: rpwd.total, headline: `${rpwd.groups} statutory groups · ${rpwd.benchmarkEligible} benchmark-eligible` },
     { id: "languages", name: "22-language catalogue", pillar: "Accessibility", registerRef: "lib/i18n/languages.ts", route: "/accessibility/languages", items: lang.total, headline: `${lang.scheduled} scheduled · ${lang.scripts} scripts` },
     { id: "channels", name: "Multi-channel & IVR", pillar: "Accessibility", registerRef: "lib/accessibility/channels.ts", route: "/accessibility/channels", items: chan.channels, headline: `${chan.ivrFlows} IVR flows · ${chan.noLiteracyChannels} no-literacy channels` },
+    { id: "delivery", name: "Last-mile delivery posture", pillar: "Accessibility", registerRef: "lib/accessibility/delivery.ts", route: "/accessibility/delivery", items: delivery.capabilities, headline: `${delivery.barriersCovered} barriers · ${delivery.geographies} geographies · ${delivery.tamilDialects} dialects` },
     { id: "data-lineage", name: "Medallion data lineage", pillar: "Data", registerRef: "lib/data/lineage.ts", route: "/data-lineage", items: lineage.datasets, headline: `${lineage.bronze}/${lineage.silver}/${lineage.gold} bronze/silver/gold · ${lineage.piiDatasets} PII` },
     { id: "data-standards", name: "Master-data & ID standards", pillar: "Data", registerRef: "lib/data/standards.ts", route: "/data-standards", items: standards.standards, headline: `${standards.standards} identifier standards · ${standards.authorities} authorities` },
     { id: "dr-runbook", name: "DR runbook & on-call", pillar: "Operations", registerRef: "lib/ops-posture/runbook.ts", route: "/ops/runbook", items: runbook.runbooks, headline: `${runbook.drScenariosCovered} DR scenarios · ${runbook.onCallRoles} on-call roles` },
