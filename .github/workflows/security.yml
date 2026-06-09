@@ -1,17 +1,10 @@
 # VASA-EOS(SE) — security CI: secret-leak scan + dependency (SCA) audit.
 # Fails the build before a credential is committed or a vulnerable dependency lands.
-#
-# NOTE: triggers are temporarily set to manual (workflow_dispatch) only, because
-# GitHub Actions for this PRIVATE repo is blocked at the account billing level
-# (jobs fail at runner provisioning with no runner assigned). These gates run and
-# pass locally on every change (scripts/secret-scan.mjs, sast-scan.mjs, a11y-audit.mjs).
-# To restore automatic runs once billing/payment is resolved (or the repo is made
-# public for free unlimited Actions), re-add under `on:`:
-#   push:
-#     branches: ["main", "claude/**"]
-#   pull_request:
 name: security
 on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
   workflow_dispatch:
 
 jobs:

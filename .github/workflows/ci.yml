@@ -1,21 +1,14 @@
 name: CI
 
 # Standard Next.js + pnpm gate: install -> lint -> typecheck -> build, plus a
-# Node-22 unit-test + coverage job.
-#
-# NOTE: triggers are temporarily set to manual (workflow_dispatch) only, because
-# GitHub Actions for this PRIVATE repo is blocked at the account billing level
-# (jobs fail at runner provisioning with no runner assigned, in ~2s, no steps).
-# The same gates run and pass locally every change: `next lint`, `tsc --noEmit`,
-# `next build`, and the Node-22 unit tests with the 95/80/88 coverage thresholds.
-# To restore automatic runs once billing/payment is resolved (or the repo is made
-# public for free unlimited Actions), re-add under `on:`:
-#   push:
-#     branches: ["main", "claude/**"]
-#   pull_request:
-#     branches: ["main", "claude/**"]
+# Node-22 unit-test + coverage job. Runs on main and on the stacked claude/*
+# feature branches (so PRs targeting those branches are gated too).
 
 on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+    branches: ["main", "claude/**"]
   workflow_dispatch:
 
 jobs:
