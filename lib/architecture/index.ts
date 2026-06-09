@@ -52,6 +52,7 @@ export const PILLARS: Pillar[] = [
     components: [
       { name: "7-tier tenant model", ref: "lib/tenancy" },
       { name: "Jurisdiction tier catalogue (live TN tree)", ref: "lib/tenancy/catalogue.ts" },
+      { name: "Five sovereignty guarantees (trust architecture)", ref: "lib/compliance/sovereignty.ts" },
       { name: "ReBAC data scoping engine", ref: "lib/access/scope.ts" },
       { name: "Scoping enforcement seam", ref: "lib/access/scope-server.ts" },
       { name: "Tenant column migration (45 tables)", ref: "scripts/018-add-tenant-scoping.sql" },
