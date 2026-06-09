@@ -79,6 +79,7 @@ export const PILLARS: Pillar[] = [
     commitment: "Zero-trust: 5-model access PDP, DPDP consent, immutable audit, MFA/SSO, security headers + rate limiting.",
     components: [
       { name: "5-model PDP (RBAC·ABAC·ReBAC·PBAC·CABAC)", ref: "lib/access/policy.ts" },
+      { name: "Role × permission matrix (live from the PDP)", ref: "lib/access/matrix.ts" },
       { name: "DPDP consent + catalogue-driven PII-read gate", ref: "lib/consent/gate-server.ts" },
       { name: "PII data-classification catalogue", ref: "lib/consent/pii-catalogue.ts" },
       { name: "Retention & right-to-erasure schedule (DPDP)", ref: "lib/consent/retention.ts" },
