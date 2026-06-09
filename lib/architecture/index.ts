@@ -63,12 +63,13 @@ export const PILLARS: Pillar[] = [
     commitment: "Polyglot stores feeding a Bronze/Silver/Gold lakehouse; durable persistence with a tamper-evident ledger.",
     components: [
       { name: "Polyglot + Bronze/Silver/Gold reference", ref: "lib/data" },
+      { name: "Medallion data-lineage DAG (dbt-style models)", ref: "lib/data/lineage.ts" },
       { name: "Durable persistence seam", ref: "lib/persistence" },
       { name: "Hash-chained audit ledger", ref: "lib/audit" },
       { name: "Snapshot stores", ref: "lib/results/store.ts" },
     ],
     status: "partial",
-    gap: "Actual multi-store/lakehouse deployment + dbt pipelines (reference architecture today).",
+    gap: "Actual multi-store/lakehouse deployment + a running dbt runtime (the model lineage DAG is now modelled in-repo).",
   },
   {
     id: "security",
