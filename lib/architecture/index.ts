@@ -90,6 +90,7 @@ export const PILLARS: Pillar[] = [
       { name: "Consent-gated student PII reader (minimised)", ref: "lib/consent/student-pii.ts" },
       { name: "DPIA scaffold (generated from PII catalogue)", ref: "lib/consent/dpia.ts" },
       { name: "STRIDE threat model (controls bound to repo paths)", ref: "lib/security/threat-model.ts" },
+      { name: "Child safeguarding controls (risk→control, POCSO/JJ/RTE/DPDP)", ref: "lib/safety/safeguarding.ts" },
       { name: "Security headers + request-id", ref: "middleware.ts" },
       { name: "Rate-limit seam", ref: "lib/ratelimit" },
     ],
