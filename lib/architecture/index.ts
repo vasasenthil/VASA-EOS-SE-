@@ -51,6 +51,7 @@ export const PILLARS: Pillar[] = [
     commitment: "Seven-tier sovereign tenancy (national→state→directorate→district→block→cluster→school) with downward-governance data scoping.",
     components: [
       { name: "7-tier tenant model", ref: "lib/tenancy" },
+      { name: "Jurisdiction tier catalogue (live TN tree)", ref: "lib/tenancy/catalogue.ts" },
       { name: "ReBAC data scoping engine", ref: "lib/access/scope.ts" },
       { name: "Scoping enforcement seam", ref: "lib/access/scope-server.ts" },
       { name: "Tenant column migration (45 tables)", ref: "scripts/018-add-tenant-scoping.sql" },

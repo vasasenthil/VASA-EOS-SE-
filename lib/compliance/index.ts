@@ -10,6 +10,7 @@
 // other pure modules) + client-safe.
 
 import { archSummary } from "@/lib/architecture"
+import { tenancySummary } from "@/lib/tenancy/catalogue"
 import { ndearSummary } from "@/lib/compliance/ndear"
 import { threatSummary } from "@/lib/security/threat-model"
 import { guardrailSummary } from "@/lib/agents/guardrails"
@@ -44,6 +45,7 @@ export interface ComplianceDomain {
 
 export function complianceDomains(): ComplianceDomain[] {
   const arch = archSummary()
+  const tenancy = tenancySummary()
   const ndear = ndearSummary()
   const threat = threatSummary()
   const guard = guardrailSummary()
@@ -63,6 +65,7 @@ export function complianceDomains(): ComplianceDomain[] {
 
   return [
     { id: "architecture", name: "Architecture conformance", pillar: "All pillars", registerRef: "lib/architecture/index.ts", route: "/architecture", items: arch.components, headline: `${arch.implemented} implemented · ${arch.partial} partial across ${arch.pillars} pillars` },
+    { id: "tenancy", name: "Sovereign tenancy tiers", pillar: "Multi-Tenancy", registerRef: "lib/tenancy/catalogue.ts", route: "/governance/tenancy", items: tenancy.tiers, headline: `${tenancy.tiers} tiers · depth ${tenancy.depth} · sovereign ${tenancy.sovereignState}` },
     { id: "ndear", name: "NDEAR compliance", pillar: "Integration", registerRef: "lib/compliance/ndear.ts", route: "/governance/ndear", items: ndear.total, headline: `${ndear.implemented} implemented · ${ndear.partial} partial · ${ndear.coveragePct}% coverage` },
     { id: "threat-model", name: "STRIDE threat model", pillar: "Security", registerRef: "lib/security/threat-model.ts", route: "/governance/threat-model", items: threat.threats, headline: `${threat.mitigated} mitigated · ${threat.partial} partial · ${threat.categories}/6 STRIDE` },
     { id: "access-matrix", name: "Role × permission matrix", pillar: "Security", registerRef: "lib/access/matrix.ts", route: "/governance/access-matrix", items: matrix.roles, headline: `${matrix.roles} roles · ${matrix.actions} actions · ${matrix.elevatedActions} elevated (CABAC)` },
