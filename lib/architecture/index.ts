@@ -105,13 +105,14 @@ export const PILLARS: Pillar[] = [
     name: "Accessibility",
     commitment: "21 RPwD categories, WCAG-aligned UX, 22-language multilingual + voice/IVR.",
     components: [
-      { name: "App-wide a11y preferences", ref: "lib/accessibility" },
+      { name: "App-wide a11y preferences + 14 deep-a11y features", ref: "lib/accessibility" },
+      { name: "RPwD Act 2016 — 21 specified disabilities register", ref: "lib/accessibility/rpwd.ts" },
       { name: "Multilingual (react-i18next)", ref: "lib/i18n" },
       { name: "22-language Eighth-Schedule catalogue + TN tribal/minority", ref: "lib/i18n/languages.ts" },
       { name: "Bhashini language port (translate/TTS/ASR)", ref: "lib/integrations/live/bhashini.ts" },
     ],
     status: "partial",
-    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking, telephony IVR, full per-language UI string packs (22-language catalogue now modelled), WCAG 2.2 AAA audit.",
+    gap: "Runtime Braille/ISL/AAC/switch/eye-tracking, telephony IVR, full per-language UI string packs (22-language + RPwD-21 now modelled), WCAG 2.2 AAA audit.",
   },
   {
     id: "integration",
