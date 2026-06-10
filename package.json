@@ -16,7 +16,17 @@
   "pnpm": {
     "allowed-build-scripts": [
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "undici": ">=6.24.0",
+      "minimatch": ">=9.0.7",
+      "picomatch": ">=2.3.2",
+      "glob": ">=10.5.0",
+      "d3-color": ">=3.1.0",
+      "yaml": ">=2.8.3",
+      "postcss": ">=8.5.10",
+      "brace-expansion": ">=2.0.3"
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",
