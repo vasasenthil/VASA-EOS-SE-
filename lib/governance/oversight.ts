@@ -9,6 +9,8 @@
 // It operates on plain OversightItem[] (no engine/store import) so it is fully pure;
 // the page projects each flow's records into this shape using the workflow engine.
 
+import { csvField } from "@/lib/csv"
+
 import type { InstanceStatus } from "@/lib/workflow"
 
 export interface OversightItem {
@@ -124,9 +126,6 @@ export function agingProfile(items: OversightItem[], now: number = Date.now()): 
   return AGE_BUCKETS.map((bucket) => ({ bucket, count: counts.get(bucket) ?? 0 }))
 }
 
-function csvField(value: string): string {
-  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
-}
 
 /** RFC 4180 CSV report of every tracked item — the downloadable oversight register. */
 export function oversightToCSV(items: OversightItem[]): string {

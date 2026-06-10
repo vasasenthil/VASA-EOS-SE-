@@ -6,6 +6,8 @@
 // activities the platform genuinely does (tests, typecheck, lint, CI) are 'passed';
 // the independent audits a government must commission are 'not-started'. Pure data.
 
+import { csvField } from "@/lib/csv"
+
 export type AssuranceCategory = "security" | "privacy" | "accessibility" | "resilience" | "quality"
 export type AssuranceStatus = "passed" | "in-progress" | "not-started" | "n/a"
 
@@ -77,9 +79,6 @@ export function assuranceSummary(items: AssuranceItem[] = ASSURANCE_REGISTER): A
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: AssuranceItem[] = ASSURANCE_REGISTER): string {
   const header = ["Activity", "Category", "Standard", "Owner", "Cadence", "Status", "Evidence"]

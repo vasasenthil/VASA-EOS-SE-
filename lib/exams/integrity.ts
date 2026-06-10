@@ -9,6 +9,8 @@
 // deploy (real KMS-encrypted distribution, live invigilation cameras) are honestly 'partial'.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type ExamIntegrityStatus = "enforced" | "partial"
 export type ExamStage = "pre-exam" | "in-hall" | "evaluation" | "results"
 
@@ -66,9 +68,6 @@ export function examIntegritySummary(items: ExamIntegrityControl[] = EXAM_INTEGR
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: ExamIntegrityControl[] = EXAM_INTEGRITY_CONTROLS): string {
   const header = ["Vector", "Stage", "Control", "Component", "Status"]

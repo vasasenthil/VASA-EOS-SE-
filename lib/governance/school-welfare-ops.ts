@@ -5,6 +5,8 @@
 // readiness score derived from them, plus the in-repo module that owns the service (asserted to exist). No
 // hand-set scores — readiness is computed from the KPI values. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export interface WelfareService {
   key: string
   name: string
@@ -66,9 +68,6 @@ export function welfareSummary(items: WelfareService[] = WELFARE_SERVICES): Welf
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: WelfareService[] = WELFARE_SERVICES): string {
   const header = ["Service", "Readiness %", "Band", "Module"]

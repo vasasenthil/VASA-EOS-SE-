@@ -6,6 +6,8 @@
 // candidate is cleared to appoint ONLY when every mandatory check is cleared, and a single flagged check blocks
 // appointment outright. Sample cohort seeded; real verifications persist behind getDb(). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export const VERIFICATION_CHECKS = [
   "Identity (Aadhaar)",
   "Qualification (TET / Degree)",
@@ -72,9 +74,6 @@ export function verificationSummary(items: StaffVerification[] = STAFF_VERIFICAT
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: StaffVerification[] = STAFF_VERIFICATIONS): string {
   const header = ["Staff ID", "Name", "Role", "Verdict", "Cleared to appoint"]

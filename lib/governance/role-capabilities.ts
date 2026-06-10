@@ -6,6 +6,8 @@
 // on-disk feature). This module holds the one definition of that shape, summary and CSV so each role register
 // is just its data plus thin wrappers. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type CapabilityStatus = "built" | "partial" | "pending"
 export type CapabilityDimension = "general" | "technical" | "functional"
 
@@ -47,9 +49,6 @@ export function roleCapabilitySummary(items: RoleCapability[]): RoleCapabilitySu
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function roleCapabilitiesToCSV(items: RoleCapability[]): string {
   const header = ["Dimension", "Responsibility", "Feature", "Route", "Status"]

@@ -7,6 +7,8 @@
 // the improvement areas (domains below target) fall out of the data — no hand-set headline. Every evidenceRef
 // is asserted to exist on disk. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type Level = 1 | 2 | 3 | 4
 
 export interface SqaafDomain {
@@ -73,9 +75,6 @@ export function sqaafSummary(items: SqaafDomain[] = SQAAF_DOMAINS): SqaafSummary
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: SqaafDomain[] = SQAAF_DOMAINS): string {
   const header = ["Domain", "Level", "Target", "Gap", "Evidence"]

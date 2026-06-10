@@ -8,6 +8,8 @@
 // disk (self-verifying); controls that need a live provider at deploy are honestly 'partial'.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type LeakageStatus = "enforced" | "partial"
 
 export interface LeakageControl {
@@ -55,9 +57,6 @@ export function leakageSummary(items: LeakageControl[] = LEAKAGE_CONTROLS): Leak
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: LeakageControl[] = LEAKAGE_CONTROLS): string {
   const header = ["Vector", "Control", "Component", "Status"]

@@ -7,6 +7,8 @@
 // output is HITL — the teacher reviews and approves; only read-only summaries/retrieval run unattended. The
 // teacher is the author, never the clerk. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type Autonomy = "suggest" | "draft" | "auto"
 
 export interface AssistTask {
@@ -70,9 +72,6 @@ export function assistantSummary(items: AssistTask[] = ASSIST_TASKS): AssistantS
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: AssistTask[] = ASSIST_TASKS): string {
   const header = ["Task", "Autonomy", "HITL", "High-stakes", "Confidence"]

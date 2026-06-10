@@ -6,6 +6,8 @@
 // the rest. Matched by hostel type (Boys/Girls). Sample data seeded; real applications persist behind getDb().
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type HostelType = "Boys" | "Girls"
 
 export interface Hostel {
@@ -117,9 +119,6 @@ export function hostelSummary(hostels: Hostel[] = HOSTELS, applicants: HostelApp
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(hostels: Hostel[] = HOSTELS, applicants: HostelApplicant[] = APPLICANTS): string {
   const header = ["Student", "Type", "Category", "Distance km", "Score", "Outcome", "Hostel"]

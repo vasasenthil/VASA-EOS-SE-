@@ -8,6 +8,8 @@
 // 'infra' or 'partial', not overclaimed. Self-verified against the i18n dialect list (the
 // "8 Tamil dialects" claim is the actual locale data). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { LOCALES } from "@/lib/i18n"
 
 export type Barrier = "connectivity" | "electricity" | "literacy" | "device" | "dialect" | "disruption"
@@ -78,9 +80,6 @@ export function deliverySummary(): DeliverySummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: DeliveryCapability[] = DELIVERY_CAPABILITIES): string {
   const header = ["Capability", "What it does", "Barriers", "Status"]

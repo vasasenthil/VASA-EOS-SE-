@@ -7,6 +7,8 @@
 // The register is self-verifying: a test asserts every example validates against its
 // own pattern, and validate() enforces the format at the boundary. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export interface IdStandard {
   id: string
   name: string
@@ -56,9 +58,6 @@ export function standardsSummary(items: IdStandard[] = ID_STANDARDS): StandardsS
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: IdStandard[] = ID_STANDARDS): string {
   const header = ["Standard", "Authority", "Pattern", "Example", "Used for"]

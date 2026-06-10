@@ -6,6 +6,8 @@
 // and a centre is cleared to conduct only when every check is met and it is not over-allotted. Sample centres
 // seeded. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export const READINESS_CHECKS = [
   "CCTV coverage",
   "Invigilators assigned",
@@ -79,9 +81,6 @@ export function boardPrepSummary(items: ExamCentre[] = EXAM_CENTRES): BoardPrepS
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: ExamCentre[] = EXAM_CENTRES): string {
   const header = ["Centre ID", "Name", "District", "Capacity", "Allotted", "Readiness %", "Cleared"]

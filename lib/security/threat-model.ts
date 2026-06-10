@@ -9,6 +9,8 @@
 // Pure + client-safe. (Infra controls — WAF/SIEM/Vault-HSM/mTLS — are provisioned at
 // deploy and are honestly recorded as 'partial' here.)
 
+import { csvField } from "@/lib/csv"
+
 export type Stride =
   | "spoofing"
   | "tampering"
@@ -102,9 +104,6 @@ export function threatSummary(items: Threat[] = THREATS): ThreatSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Threat[] = THREATS): string {
   const header = ["ID", "STRIDE", "Boundary", "Threat", "Severity", "Mitigation", "Control", "Status"]

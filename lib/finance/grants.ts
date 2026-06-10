@@ -6,6 +6,8 @@
 // whether the next tranche is releasable — with an honest block reason where it is not. Sample grants seeded;
 // real ledgers persist behind getDb(). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 /** Minimum utilisation (% of released funds) required before the next tranche releases. */
 export const UTILISATION_THRESHOLD = 60
 
@@ -85,9 +87,6 @@ export function grantsSummary(items: Grant[] = GRANTS): GrantsSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Grant[] = GRANTS): string {
   const header = ["ID", "Scheme", "Sanctioned", "Released", "Utilised", "Utilisation %", "UC", "Tranche status"]

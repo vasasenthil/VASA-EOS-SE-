@@ -8,6 +8,8 @@
 // self-verified against the PII catalogue: every rule maps to a catalogued class and
 // every class has exactly one rule. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { PII_CATALOGUE, piiClassById } from "./pii-catalogue"
 
 export type ErasureAction = "hard-delete" | "anonymise" | "archive"
@@ -81,9 +83,6 @@ export function retentionSummary(items: RetentionRule[] = RETENTION_RULES): Rete
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: RetentionRule[] = RETENTION_RULES): string {
   const header = ["Data class", "Retention", "Erasure action", "Triggers", "Statutory hold"]

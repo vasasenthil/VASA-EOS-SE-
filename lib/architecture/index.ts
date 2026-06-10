@@ -5,6 +5,8 @@
 // and any remaining gap. Each component's `ref` points at a real path so the matrix
 // is self-verifying (a test asserts every ref exists on disk). Pure data + helpers.
 
+import { csvField } from "@/lib/csv"
+
 export type PillarStatus = "implemented" | "partial" | "infra-pending"
 
 export interface ArchComponent {
@@ -168,9 +170,6 @@ export function archSummary(pillars: Pillar[] = PILLARS): ArchSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 /** RFC 4180 CSV of the conformance matrix (one row per component). */
 export function toCSV(pillars: Pillar[] = PILLARS): string {

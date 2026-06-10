@@ -8,6 +8,8 @@
 // regulatory register…), and validateNote() refuses to call a note complete until every mandatory section
 // is filled — so an incompletely-drafted note is caught, not waved through. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type NoteStatus = "draft" | "vetted" | "approved"
 
 export interface NoteSection {
@@ -126,9 +128,6 @@ export function cabinetNoteSummary(notes: CabinetNote[] = CABINET_NOTES): Cabine
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(notes: CabinetNote[] = CABINET_NOTES): string {
   const header = ["ID", "Subject", "Status", "Complete", "Missing sections"]

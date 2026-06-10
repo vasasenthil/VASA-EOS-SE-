@@ -7,6 +7,8 @@
 // practice; this layer is the pure scoring logic. Sample cohort seeded; real screens persist behind getDb().
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export const WELLBEING_DOMAINS = [
   "Stress",
   "Anxiety",
@@ -97,9 +99,6 @@ export function mentalHealthSummary(items: Screening[] = SCREENINGS): MentalHeal
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Screening[] = SCREENINGS): string {
   const header = ["Student", "Grade", "Total", "Band", "Top concern"]

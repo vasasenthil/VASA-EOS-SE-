@@ -9,6 +9,8 @@
 // (self-verifying); controls needing a live feed at deploy (CCTV, GPS, health) are honestly
 // 'partial'. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type SafeguardingStatus = "enforced" | "partial"
 
 export interface SafeguardingControl {
@@ -62,9 +64,6 @@ export function safeguardingSummary(items: SafeguardingControl[] = SAFEGUARDING_
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: SafeguardingControl[] = SAFEGUARDING_CONTROLS): string {
   const header = ["Risk", "Statute", "Control", "Component", "Status"]

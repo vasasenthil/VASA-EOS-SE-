@@ -7,6 +7,8 @@
 // self-transfers or over-draws. applySanction() returns the post-sanction budget; nothing mutates in place.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { BUDGET, type BudgetLine } from "@/lib/finance"
 
 export type SanctionKind = "reappropriation" | "supplementary"
@@ -99,9 +101,6 @@ export function sanctionSummary(proposals: SanctionProposal[] = SANCTION_PROPOSA
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(proposals: SanctionProposal[] = SANCTION_PROPOSALS, budget: BudgetLine[] = BUDGET): string {
   const header = ["ID", "Kind", "Target head", "Source head", "Amount", "Justification", "Authority", "Status", "Valid"]

@@ -7,6 +7,8 @@
 // the architecture matrix and threat model). It is the concrete answer to the policy
 // brief's "NDEAR Compliance & Global Standards". Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type NdearKind = "principle" | "building-block"
 export type NdearStatus = "implemented" | "partial" | "infra-pending"
 
@@ -77,9 +79,6 @@ export function ndearSummary(items: NdearItem[] = NDEAR_REGISTER): NdearSummary 
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: NdearItem[] = NDEAR_REGISTER): string {
   const header = ["ID", "Kind", "Name", "NDEAR requirement", "Component", "Status"]

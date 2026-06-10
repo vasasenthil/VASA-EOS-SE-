@@ -6,6 +6,8 @@
 // before publication. Reuses the Assembly briefing's value-interpolation so press and floor never diverge.
 // Every sourceRef is asserted to exist on disk (self-verifying). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { stateRollup, type StateRollup } from "@/lib/portal-data"
 import { formatValue, type NumericRollupKey, type AnswerFormat } from "@/lib/governance/assembly-briefing"
 
@@ -76,9 +78,6 @@ export function commsSummary(items: Announcement[] = ANNOUNCEMENTS): CommsSummar
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(r: StateRollup = stateRollup()): string {
   const header = ["ID", "Title", "Channel", "Audience", "Body", "Source", "Status"]

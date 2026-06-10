@@ -7,6 +7,8 @@
 // NOT yet government-grade, because the largest remaining gates (real data, live integrations, sovereign hosting,
 // security/DPDP audit, scale testing) are organisational and infrastructural, not more TypeScript. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type ReadinessStatus = "done" | "partial" | "not-started"
 
 export type ReadinessCategory =
@@ -146,9 +148,6 @@ export function readinessSummary(items: ReadinessCriterion[] = READINESS_CRITERI
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: ReadinessCriterion[] = READINESS_CRITERIA): string {
   const header = ["Category", "Criterion", "Status", "Note", "Evidence"]

@@ -6,6 +6,8 @@
 // higher-need districts draw a larger per-student share, and surfaces the progressivity ratio so the politics of
 // equity are visible. Pure (the pool is a parameter defaulting to the real budget total) + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { financeSummary } from "@/lib/finance"
 
 export interface DistrictProfile {
@@ -85,9 +87,6 @@ export function allocationSummary(pool: number = financeSummary().allocated, ite
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(pool: number = financeSummary().allocated, items: DistrictProfile[] = DISTRICT_PROFILES): string {
   const header = ["District", "Schools", "Enrolment", "Need index", "Share %", "Allocated", "Per student"]

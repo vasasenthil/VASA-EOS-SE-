@@ -8,6 +8,8 @@
 // threat model). Pure + client-safe. AI is advisory: high-stakes actions stay
 // human-in-the-loop; this register is the governance face of that commitment.
 
+import { csvField } from "@/lib/csv"
+
 export type AiRisk =
   | "hallucination"
   | "unsafe-action"
@@ -102,9 +104,6 @@ export function guardrailSummary(items: Guardrail[] = GUARDRAILS): GuardrailSumm
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Guardrail[] = GUARDRAILS): string {
   const header = ["ID", "Risk", "Principle", "Description", "Control", "ControlRef", "Status"]

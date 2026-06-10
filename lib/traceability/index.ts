@@ -5,6 +5,8 @@
 // exported. This is a *representative* matrix across every stakeholder role (not the
 // full 362-line requirement catalogue); each row points at real files in this repo.
 
+import { csvField } from "@/lib/csv"
+
 export type TraceStatus = "done" | "partial" | "planned"
 
 export interface TraceItem {
@@ -100,9 +102,6 @@ export function filterByStatus(status: TraceStatus | "all", items: TraceItem[] =
   return status === "all" ? items : items.filter((i) => i.status === status)
 }
 
-function csvField(value: string): string {
-  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
-}
 
 /** RFC 4180 CSV of the traceability matrix — the downloadable register. */
 export function toCSV(items: TraceItem[] = TRACE_MATRIX): string {

@@ -7,6 +7,8 @@
 // the 17 portal roles against the full action catalogue, with the elevated (CABAC
 // time-boxed) actions called out. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { DEFAULT_GRANTS, type PortalRole } from "@/config/portals"
 import { canRole, allActions, ELEVATED_ACTIONS } from "./policy"
 import type { Action } from "./index"
@@ -68,9 +70,6 @@ export function matrixSummary(): MatrixSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(matrix: RolePermissions[] = accessMatrix()): string {
   const header = ["Role", "Permitted actions", "Count"]

@@ -8,6 +8,8 @@
 // that finish at deploy (data residency, the legal escrow, independent evaluation) are
 // honestly recorded as 'partial'. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type GuaranteeStatus = "enforced" | "partial"
 
 export interface SovereigntyGuarantee {
@@ -88,9 +90,6 @@ export function sovereigntySummary(items: SovereigntyGuarantee[] = SOVEREIGNTY_G
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: SovereigntyGuarantee[] = SOVEREIGNTY_GUARANTEES): string {
   const header = ["Guarantee", "Promise", "Mechanism", "Control", "Status", "Remaining"]

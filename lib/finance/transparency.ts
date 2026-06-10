@@ -8,6 +8,8 @@
 // to. Every controlRef is asserted to exist on disk (self-verifying); principles needing a live
 // government rail at deploy (PFMS utilisation feed, DBT-APBS) are honestly 'partial'. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type FinTransparencyStatus = "enforced" | "partial"
 
 export interface FinTransparencyControl {
@@ -61,9 +63,6 @@ export function finTransparencySummary(items: FinTransparencyControl[] = FIN_TRA
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: FinTransparencyControl[] = FIN_TRANSPARENCY_CONTROLS): string {
   const header = ["Principle", "Framework", "Mechanism", "Component", "Status"]

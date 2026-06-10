@@ -9,6 +9,8 @@
 // (lib/integrations/live/bhashini); this is the registry that drives language choice,
 // content localisation targets and the accessibility audit. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type TnRole = "primary" | "neighbour" | "link" | "national" | "tribal-minority"
 
 export interface LanguageDef {
@@ -94,9 +96,6 @@ export function languageSummary(items: LanguageDef[] = LANGUAGE_CATALOGUE): Lang
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: LanguageDef[] = LANGUAGE_CATALOGUE): string {
   const header = ["Code", "Name", "Native name", "Script", "Eighth Schedule", "TN role"]

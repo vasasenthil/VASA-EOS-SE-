@@ -6,6 +6,8 @@
 // computing a redeployment plan that moves excess teachers from surplus schools to deficit ones (counselling-
 // based, the lawful TN mechanism) before any fresh recruitment. Pure + client-safe; the PTR is a parameter.
 
+import { csvField } from "@/lib/csv"
+
 import { type TransferRequest } from "@/lib/postings"
 
 /** RTE Schedule pupil-teacher ratio (state target). */
@@ -128,9 +130,6 @@ export function cadreSummary(ptr: number = RTE_PTR, items: SchoolCadre[] = SCHOO
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(ptr: number = RTE_PTR, items: SchoolCadre[] = SCHOOL_CADRE): string {
   const header = ["School", "District", "Enrolment", "Required", "Working", "Vacancy", "Balance", "Class"]

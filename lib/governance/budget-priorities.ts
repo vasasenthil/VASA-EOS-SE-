@@ -7,6 +7,8 @@
 // utilisation. Budget heads are cross-checked against the real budget and outcome modules are asserted to
 // exist on disk. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { BUDGET, type BudgetLine } from "@/lib/finance"
 
 export type PriorityTier = "flagship" | "high" | "standard"
@@ -88,9 +90,6 @@ export function prioritySummary(budget: BudgetLine[] = BUDGET, priorities: Budge
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(budget: BudgetLine[] = BUDGET, priorities: BudgetPriority[] = BUDGET_PRIORITIES): string {
   const header = ["Head", "Tier", "Allocated", "Share %", "Utilisation %", "Rationale", "Outcome module"]

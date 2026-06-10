@@ -8,6 +8,8 @@
 // holds. TN is the primary sovereign tenant today; the model already anchors states under
 // a national node so more states / the Centre can be added later. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { TENANT_TIERS, DEMO_TENANTS, ancestorsOf, canAccessTenant, type TenantTier, type Tenant } from "./index"
 
 export const TIER_ORDER: TenantTier[] = [
@@ -100,9 +102,6 @@ export function tenancySummary(): TenancySummary {
 
 export { canAccessTenant }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(rows: TierRow[] = tierCatalogue()): string {
   const header = ["Level", "Tier", "Label", "TN scale", "Demo node"]

@@ -6,6 +6,8 @@
 // attention follows need. Time-pure aggregation over seeded constituency rows (the live feed is the grievance
 // store). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export interface ConstituencyGrievance {
   constituency: string
   district: string
@@ -65,9 +67,6 @@ export function constituencyGrievanceSummary(items: ConstituencyGrievance[] = CO
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: ConstituencyGrievance[] = CONSTITUENCY_GRIEVANCES): string {
   const header = ["Constituency", "District", "Received", "Resolved", "Pending", "Resolution %"]

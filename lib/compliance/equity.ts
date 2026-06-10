@@ -8,6 +8,8 @@
 // still to be built. Every controlRef is asserted to exist on disk (self-verifying). Pure
 // + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type EquityStatus = "implemented" | "partial"
 
 export interface EquityDimension {
@@ -66,9 +68,6 @@ export function equitySummary(items: EquityDimension[] = EQUITY_DIMENSIONS): Equ
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: EquityDimension[] = EQUITY_DIMENSIONS): string {
   const header = ["Dimension", "Protects", "Articles", "Component", "Status"]

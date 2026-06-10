@@ -8,6 +8,8 @@
 // Every controlRef is asserted to exist on disk (self-verifying); commitments needing live sensor
 // feeds at deploy (solar metering, water-quality telemetry) are honestly 'partial'. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type GreenStatus = "enforced" | "partial"
 
 export interface GreenCommitment {
@@ -60,9 +62,6 @@ export function greenSummary(items: GreenCommitment[] = GREEN_COMMITMENTS): Gree
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: GreenCommitment[] = GREEN_COMMITMENTS): string {
   const header = ["Commitment", "SDG", "Mechanism", "Component", "Status"]

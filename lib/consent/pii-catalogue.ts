@@ -6,6 +6,8 @@
 // looks up the gating purpose here, then enforces it via lib/consent/gate-server.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import type { ConsentPurpose } from "./index"
 
 export type Sensitivity = "normal" | "sensitive" | "child"
@@ -63,9 +65,6 @@ export function piiSummary(items: PiiClass[] = PII_CATALOGUE): PiiSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: PiiClass[] = PII_CATALOGUE): string {
   const header = ["Data class", "Examples", "Sensitivity", "Gating purpose", "Lawful basis", "Retention", "Stored in"]

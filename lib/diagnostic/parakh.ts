@@ -6,6 +6,8 @@
 // distribution per subject, the proficiency rate (Proficient + Advanced), and the weakest area so remediation
 // is targeted. Sample cohort seeded; real survey data ingests via the data pipeline. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export const PROFICIENCY_LEVELS = ["Below Basic", "Basic", "Proficient", "Advanced"] as const
 
 export interface SubjectResult {
@@ -64,9 +66,6 @@ export function parakhSummary(items: SubjectResult[] = PARAKH_RESULTS): ParakhSu
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: SubjectResult[] = PARAKH_RESULTS): string {
   const header = ["Subject", "Grade", "Assessed", "Below Basic %", "Proficiency %"]

@@ -8,6 +8,8 @@
 // scheme launch-ready until every mandatory gate is met — so a half-designed scheme is caught, not announced.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { BUDGET } from "@/lib/finance"
 
 export type SchemeStatus = "design" | "approved" | "launched"
@@ -132,9 +134,6 @@ export function schemeLaunchSummary(items: SchemeLaunch[] = SCHEME_LAUNCHES): Sc
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: SchemeLaunch[] = SCHEME_LAUNCHES): string {
   const header = ["ID", "Name", "Delivery", "Funding head", "Target beneficiaries", "Readiness %", "Launch-ready", "Status"]

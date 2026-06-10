@@ -7,6 +7,8 @@
 // live-provider attestation) is still required. Every controlRef is asserted to exist on
 // disk (self-verifying). Complements the NDEAR-specific register. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type RegStatus = "aligned" | "partial"
 
 export interface RegFramework {
@@ -59,9 +61,6 @@ export function regSummary(items: RegFramework[] = REG_FRAMEWORKS): RegSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: RegFramework[] = REG_FRAMEWORKS): string {
   const header = ["Framework", "Authority", "Scope", "Component", "Status", "External step"]

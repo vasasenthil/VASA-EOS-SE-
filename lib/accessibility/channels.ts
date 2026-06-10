@@ -8,6 +8,8 @@
 // self-verified by tests: every IVR flow's language codes exist in the language
 // catalogue, and every flow's backing module exists on disk. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { languageByCode } from "@/lib/i18n/languages"
 
 export type Modality = "visual" | "voice" | "text"
@@ -95,9 +97,6 @@ export function channelSummary(): ChannelSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Channel[] = CHANNELS): string {
   const header = ["Channel", "Modality", "Literacy required", "Offline-capable", "Audience"]

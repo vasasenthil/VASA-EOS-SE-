@@ -4,6 +4,8 @@
 // authority, and a derived readiness state from the live integration status.
 // Pure: takes the integration status rows so it is unit-testable.
 
+import { csvField } from "@/lib/csv"
+
 import type { IntegrationStatus } from "@/lib/integrations/status"
 
 export type Prerequisite = "public-api" | "sandbox" | "mou" | "internal"
@@ -94,9 +96,6 @@ export function goLiveSummary(rows: GoLiveRow[]): GoLiveSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 /** RFC 4180 CSV of the go-live tracker (one row per port). */
 export function toCSV(rows: GoLiveRow[]): string {

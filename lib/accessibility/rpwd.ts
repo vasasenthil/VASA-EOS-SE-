@@ -9,6 +9,8 @@
 // This is the canonical reference the CWSN/inclusion, exam-seating and accessibility
 // modules align to. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { DEEP_ACCESSIBILITY } from "./index"
 
 export type RpwdGroup =
@@ -97,9 +99,6 @@ export function unknownAssistiveTechKeys(items: RpwdDisability[] = RPWD_DISABILI
   return [...bad]
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: RpwdDisability[] = RPWD_DISABILITIES): string {
   const header = ["Disability", "Group", "Benchmark eligible", "Assistive tech", "Exam concession"]

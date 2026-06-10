@@ -7,6 +7,8 @@
 // unit-tested. Pure + client-safe. (Computing these live needs the OTel collector / log
 // pipeline at deploy; the indicators and budgets are defined here.)
 
+import { csvField } from "@/lib/csv"
+
 import { SLO_TARGETS } from "./index"
 
 export type SliSource = "metric" | "probe" | "trace" | "ledger"
@@ -77,9 +79,6 @@ export function sliSummary(items: Sli[] = SLIS): SliSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Sli[] = SLIS): string {
   const header = ["Service", "Indicator", "Source", "Measurement", "Error budget"]

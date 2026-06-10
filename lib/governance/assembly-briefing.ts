@@ -7,6 +7,8 @@
 // status tracks readiness. No figure is hand-typed — answerFor() reads the rollup — so the pack is always
 // consistent with the platform. Every sourceRef is asserted to exist on disk (self-verifying). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { stateRollup, type StateRollup } from "@/lib/portal-data"
 
 export type QuestionType = "starred" | "unstarred"
@@ -104,9 +106,6 @@ export function briefingSummary(items: AssemblyQuestion[] = ASSEMBLY_QUESTIONS):
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(r: StateRollup = stateRollup()): string {
   const header = ["Number", "Type", "Member", "Constituency", "Subject", "Question", "Answer", "Source", "Status"]

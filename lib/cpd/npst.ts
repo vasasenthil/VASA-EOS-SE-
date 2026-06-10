@@ -6,6 +6,8 @@
 // competency, and whether they are ready to progress. The CPD plan flows from the gaps. Sample profile seeded;
 // a real assessment would persist behind the getDb() seam. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export const CAREER_STAGES = ["Proficient", "Proficient-II", "Expert", "Lead"] as const
 export type CareerStage = (typeof CAREER_STAGES)[number]
 
@@ -81,9 +83,6 @@ export function npstSummary(profile: NpstProfile = SAMPLE_PROFILE): NpstSummary 
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(profile: NpstProfile = SAMPLE_PROFILE): string {
   const header = ["Domain", "Current", "Expected", "Gap"]

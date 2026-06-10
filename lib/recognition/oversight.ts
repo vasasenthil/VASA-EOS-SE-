@@ -7,6 +7,8 @@
 // by stage and district. The clock is time-pure (every function takes an explicit `now`) so it is
 // deterministically testable. Builds on the recognition core; client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { ELIGIBILITY_CRITERIA, RECOGNITION_STAGES, type RecognitionApplication } from "@/lib/recognition"
 
 /** Statutory window (days) to decide a recognition application before it is in default. */
@@ -88,9 +90,6 @@ export function oversightSummary(now: Date = new Date(), items: OversightApplica
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(now: Date = new Date(), items: OversightApplication[] = RECOGNITION_PIPELINE): string {
   const header = ["ID", "School", "District", "Type", "Stage", "Elapsed days", "Overdue", "Completeness %"]

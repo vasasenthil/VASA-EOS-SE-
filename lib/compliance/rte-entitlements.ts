@@ -9,6 +9,8 @@
 // (self-verifying); entitlements needing real rosters/census at deploy are honestly
 // 'partial'. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type RteEntitlementStatus = "enforced" | "partial"
 
 export interface RteEntitlement {
@@ -63,9 +65,6 @@ export function rteEntitlementSummary(items: RteEntitlement[] = RTE_ENTITLEMENTS
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: RteEntitlement[] = RTE_ENTITLEMENTS): string {
   const header = ["Entitlement", "Section", "Mechanism", "Component", "Status"]

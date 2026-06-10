@@ -7,6 +7,8 @@
 // spec and the AGENT_TOOLS MCP definitions, so it can't drift; a test asserts every agent
 // has MCP tools and that high-stakes agents are HITL. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { AGENTS, ASSERTIVE_CONFIDENCE_THRESHOLD } from "./index"
 import { toolsFor } from "./tools"
 import type { AgentName } from "@/lib/integrations"
@@ -69,9 +71,6 @@ export function agentCatalogueSummary(): AgentCatalogueSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(caps: AgentCapability[] = agentCapabilities()): string {
   const header = ["Agent", "Scope", "MCP tools", "High-stakes", "Human-in-the-loop"]

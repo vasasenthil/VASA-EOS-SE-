@@ -9,6 +9,8 @@
 // so this index can never point at a register or page that isn't there. Pure (composes
 // other pure modules) + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { archSummary } from "@/lib/architecture"
 import { tenancySummary } from "@/lib/tenancy/catalogue"
 import { sovereigntySummary } from "@/lib/compliance/sovereignty"
@@ -155,9 +157,6 @@ export function complianceIndexSummary(): ComplianceIndexSummary {
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(domains: ComplianceDomain[] = complianceDomains()): string {
   const header = ["Domain", "Pillar", "Items", "Status", "Register", "Route"]

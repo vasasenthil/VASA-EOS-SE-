@@ -9,6 +9,8 @@
 // bronze/source, gold<-silver/gold), and every dataset's store is a real polyglot store.
 // Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { POLYGLOT_STORES } from "./index"
 
 export type Layer = "bronze" | "silver" | "gold"
@@ -152,9 +154,6 @@ export function unknownStores(): string[] {
   return [...new Set(DATASETS.map((d) => d.store).filter((s) => !known.has(s)))]
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Dataset[] = DATASETS): string {
   const header = ["Dataset", "Layer", "Store", "PII", "Upstream", "Description"]

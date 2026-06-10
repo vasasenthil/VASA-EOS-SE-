@@ -9,6 +9,8 @@
 // represented. Mirrors the live tenancy tree (national → state → directorate → district → block → cluster →
 // school) rooted at TN. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { type CapabilityStatus, type CapabilityDimension } from "@/lib/governance/role-capabilities"
 
 export const TIERS = [
@@ -135,9 +137,6 @@ export function tierCoverageSummary(items: TierCapability[] = TIER_CAPABILITIES)
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: TierCapability[] = TIER_CAPABILITIES): string {
   const header = ["Tier", "Role", "Dimension", "Responsibility", "Feature", "Route", "Status"]

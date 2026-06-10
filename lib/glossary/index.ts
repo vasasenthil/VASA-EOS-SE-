@@ -2,6 +2,8 @@
 // platform. Pure, client-safe data + helpers (no imports, no side effects) so it can
 // be consumed by both server pages and client boards.
 
+import { csvField } from "@/lib/csv"
+
 export type GlossaryCategory =
   | "Policy & Governance"
   | "Identity & Data"
@@ -171,9 +173,6 @@ export function queryGlossary(params: GlossaryQuery = {}, entries: GlossaryEntry
 }
 
 /** Escape a single CSV field per RFC 4180 (quote when it contains ," or newline). */
-function csvField(value: string): string {
-  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
-}
 
 /** Render entries as RFC 4180 CSV with a header row — for offline/field-office use. */
 export function toCSV(entries: GlossaryEntry[] = GLOSSARY): string {

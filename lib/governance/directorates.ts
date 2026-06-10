@@ -7,6 +7,8 @@
 // CPD, DEE → FLN diagnostics, and so on). Every moduleRef is asserted to exist on disk (self-verifying). This
 // closes the Director register's per-directorate-specialisation gap. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type DirectorateStatus = "supported" | "partial"
 
 export interface Directorate {
@@ -58,9 +60,6 @@ export function directorateSummary(items: Directorate[] = DIRECTORATES): Directo
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: Directorate[] = DIRECTORATES): string {
   const header = ["Abbr", "Name", "Mandate", "Focus", "Module", "Status"]

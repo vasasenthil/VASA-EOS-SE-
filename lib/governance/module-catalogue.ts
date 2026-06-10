@@ -8,6 +8,8 @@
 // named modules against the codebase. Every built/partial repoRef is asserted to exist on disk; pending entries
 // reference nothing — so the map cannot overstate how much of the catalogue is built. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 import { type CapabilityStatus } from "@/lib/governance/role-capabilities"
 
 /** Catalogue headline figures (from the attachment), for honest context. */
@@ -185,9 +187,6 @@ export function catalogueSummary(items: CatalogueModule[] = CATALOGUE_MODULES): 
   }
 }
 
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
-}
 
 export function toCSV(items: CatalogueModule[] = CATALOGUE_MODULES): string {
   const header = ["Tier", "Module", "Repo evidence", "Status"]
