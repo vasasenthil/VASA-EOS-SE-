@@ -23,8 +23,9 @@ export default function DirectorCapabilitiesPage() {
           The honest answer to &ldquo;is every State Director feature built?&rdquo; — inspectable, not asserted. One
           Director portal stands in for all seven directorates. Each responsibility maps to the in-repo feature that
           delivers it: <strong>built</strong> ({s.built}), <strong>partial</strong> ({s.partial}) or <strong>pending</strong>
-          {" "}({s.pending}). It does not overclaim — per-directorate specialised operations (DGE exams, SCERT curriculum,
-          ELCTSL, Library) remain pending. A test keeps status and feature consistent.
+          {" "}({s.pending}). All {s.capabilities} responsibilities now have a dedicated feature. &ldquo;Built&rdquo; means a
+          purpose-built, tested feature exists — not that it is wired to live government data; that platform-wide caveat
+          still holds. A test keeps status and feature consistent.
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">

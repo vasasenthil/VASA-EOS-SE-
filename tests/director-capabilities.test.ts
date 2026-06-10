@@ -40,11 +40,11 @@ test("status and feature are kept consistent (register cannot fake coverage)", (
   }
 })
 
-test("directorate-specialisation is now built; the register stays honest via its partial", () => {
+test("the Director surface is fully built out, each capability referencing a real feature", () => {
   assert.equal(capabilityById("directorate-specialisation")?.status, "built")
-  // Still does not overclaim: directorate budget/resource allocation remains partial.
-  assert.equal(capabilityById("budget-allocation")?.status, "partial")
-  assert.ok(byStatus("partial").length >= 1)
+  assert.equal(capabilityById("budget-allocation")?.status, "built")
+  assert.equal(byStatus("pending").length, 0)
+  assert.equal(byStatus("partial").length, 0)
 })
 
 test("summary tallies status and dimensions honestly", () => {
@@ -53,7 +53,7 @@ test("summary tallies status and dimensions honestly", () => {
   assert.equal(s.built + s.partial + s.pending, s.capabilities)
   assert.equal(s.general + s.technical + s.functional, s.capabilities)
   assert.equal(s.builtPct, Math.round((s.built / s.capabilities) * 100))
-  assert.ok(s.builtPct > 0 && s.builtPct < 100)
+  assert.ok(s.builtPct > 0 && s.builtPct <= 100)
 })
 
 test("CSV has the shared header plus one row per capability", () => {

@@ -25,6 +25,7 @@ export default async function DirectorDashboardPage() {
         { label: "Reports & Analytics", href: "/tracking/reports" },
         { label: "Governance Overview", href: "/governance/dashboard" },
         { label: "The 7 Directorates", href: "/governance/directorates" },
+        { label: "Resource Allocation (need-weighted)", href: "/governance/resource-allocation" },
         { label: "My Capability Coverage (honest)", href: "/governance/director-capabilities" },
       ]}
     />
