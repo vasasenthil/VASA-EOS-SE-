@@ -29,6 +29,7 @@ import { equitySummary } from "@/lib/compliance/equity"
 import { rteEntitlementSummary } from "@/lib/compliance/rte-entitlements"
 import { leakageSummary } from "@/lib/compliance/leakage"
 import { safeguardingSummary } from "@/lib/safety/safeguarding"
+import { examIntegritySummary } from "@/lib/exams/integrity"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -71,6 +72,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const rte = rteEntitlementSummary()
   const leakage = leakageSummary()
   const safeguarding = safeguardingSummary()
+  const examIntegrity = examIntegritySummary()
   const lineage = lineageSummary()
   const standards = standardsSummary()
   const matrix = matrixSummary()
@@ -99,6 +101,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "rte-entitlements", name: "RTE Act entitlements", pillar: "Accessibility", registerRef: "lib/compliance/rte-entitlements.ts", route: "/governance/rte-entitlements", items: rte.entitlements, headline: `${rte.entitlements} entitlements · ${rte.enforced} enforced · ${rte.sectionsCovered} RTE sections` },
     { id: "leakage", name: "Welfare leakage prevention", pillar: "Data", registerRef: "lib/compliance/leakage.ts", route: "/governance/leakage", items: leakage.controls, headline: `${leakage.controls} controls · ${leakage.enforced} enforced · ${leakage.targetLeakageReductionPct}% target reduction` },
     { id: "safeguarding", name: "Child safeguarding (POCSO)", pillar: "Security", registerRef: "lib/safety/safeguarding.ts", route: "/governance/safeguarding", items: safeguarding.controls, headline: `${safeguarding.controls} controls · ${safeguarding.enforced} enforced · ${safeguarding.statutesCovered} statutes discharged` },
+    { id: "exam-integrity", name: "Examination integrity", pillar: "Security", registerRef: "lib/exams/integrity.ts", route: "/governance/exam-integrity", items: examIntegrity.controls, headline: `${examIntegrity.controls} controls · ${examIntegrity.enforced} enforced · ${examIntegrity.stagesCovered} lifecycle stages guarded` },
     { id: "data-lineage", name: "Medallion data lineage", pillar: "Data", registerRef: "lib/data/lineage.ts", route: "/data-lineage", items: lineage.datasets, headline: `${lineage.bronze}/${lineage.silver}/${lineage.gold} bronze/silver/gold · ${lineage.piiDatasets} PII` },
     { id: "data-standards", name: "Master-data & ID standards", pillar: "Data", registerRef: "lib/data/standards.ts", route: "/data-standards", items: standards.standards, headline: `${standards.standards} identifier standards · ${standards.authorities} authorities` },
     { id: "dr-runbook", name: "DR runbook & on-call", pillar: "Operations", registerRef: "lib/ops-posture/runbook.ts", route: "/ops/runbook", items: runbook.runbooks, headline: `${runbook.drScenariosCovered} DR scenarios · ${runbook.onCallRoles} on-call roles` },

@@ -91,6 +91,7 @@ export const PILLARS: Pillar[] = [
       { name: "DPIA scaffold (generated from PII catalogue)", ref: "lib/consent/dpia.ts" },
       { name: "STRIDE threat model (controls bound to repo paths)", ref: "lib/security/threat-model.ts" },
       { name: "Child safeguarding controls (risk→control, POCSO/JJ/RTE/DPDP)", ref: "lib/safety/safeguarding.ts" },
+      { name: "Examination integrity controls (vector→control by lifecycle stage)", ref: "lib/exams/integrity.ts" },
       { name: "Security headers + request-id", ref: "middleware.ts" },
       { name: "Rate-limit seam", ref: "lib/ratelimit" },
     ],
