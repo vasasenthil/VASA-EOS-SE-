@@ -47,17 +47,37 @@ fallback** — state resets per server instance. For durable, cross-request stat
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon key (browser/auth) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Privileged** key — enables durable persistence |
 
-Apply the SQL migrations in `scripts/` in order (`001` … `015`). The interactive
-stores specifically require:
+Apply the SQL migrations in `scripts/` in order (`001` … `021`). Two are
+load-bearing for the transactional modules:
 
 - **`scripts/015-persist-interactive-modules.sql`** — creates `audit_trail`,
   `grievances`, `smc_proposals`, `recognition_applications`,
-  `verifiable_credentials`, `consent_records`. RLS is enabled with **no public
-  policies**; these tables are written only via the service-role client.
+  `verifiable_credentials`, `consent_records`.
+- **`scripts/021-create-workflow-flow-tables.sql`** — creates the six
+  workflow-backed flow tables (`recognition_flows`, `grievance_flows`,
+  `admission_flows`, `leave_flows`, `smc_flows`, `maintenance_flows`) that the
+  deep verticals write to.
 
-When `SUPABASE_SERVICE_ROLE_KEY` is present, `getDb()` returns the privileged
-client and the stores persist automatically; `/health` reports
+RLS is enabled with **no public policies** on these tables; they are written only
+via the service-role client (which bypasses RLS and performs the app's own ReBAC
+scoping). When `SUPABASE_SERVICE_ROLE_KEY` is present, `getDb()` returns the
+privileged client and the stores persist automatically; `/health` reports
 `Persistence mode: durable`.
+
+### Verify the schema after provisioning
+
+A configured key does **not** guarantee the tables exist — if migrations have not
+run, the stores silently fall back to in-memory and writes never persist. Prove
+durability before go-live:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=… SUPABASE_SERVICE_ROLE_KEY=… pnpm db:verify
+```
+
+It probes every workflow flow table and exits non-zero (naming the missing ones)
+if any migration has not been applied. The same check is exposed at
+**`/api/ready/schema`** — `200` when all tables are reachable, `503` (with the
+missing list) otherwise — so an uptime monitor can gate go-live on it.
 
 ---
 
