@@ -19,6 +19,7 @@ export default async function DirectorDashboardPage() {
       ]}
       modules={[
         { label: "School Recognition (TN 1973)", href: "/recognition" },
+        { label: "Recognition Approvals — file & decide (BEO→DEO→Director)", href: "/recognition-approvals" },
         { label: "Policy Implementation Tracking", href: "/tracking/dashboard" },
         { label: "Schemes", href: "/schemes" },
         { label: "Quality & Inspection", href: "/quality" },

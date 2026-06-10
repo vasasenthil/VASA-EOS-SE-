@@ -14,12 +14,25 @@ function id(): string {
 
 export type RecognitionType = "new" | "renewal" | "upgrade"
 
+/** Rich application detail captured by the multi-field recognition form (TN 1973 Act). */
+export interface RecognitionDetails {
+  block?: string
+  management?: string
+  trustRegNo?: string
+  udiseCode?: string
+  landStatus?: string
+  contactEmail?: string
+  contactPhone?: string
+  criteriaMet?: string[]
+}
+
 export interface RecognitionFlowRecord {
   id: string
   school: string
   district: string
   type: RecognitionType
   instance: WorkflowInstance
+  details?: RecognitionDetails
 }
 
 interface Row {
@@ -28,11 +41,12 @@ interface Row {
   district: string
   type: RecognitionType
   instance: WorkflowInstance
+  details?: RecognitionDetails
   created_at: string
 }
 
 function fromRow(r: Row): RecognitionFlowRecord {
-  return { id: r.id, school: r.school, district: r.district, type: r.type, instance: r.instance }
+  return { id: r.id, school: r.school, district: r.district, type: r.type, instance: r.instance, details: r.details }
 }
 
 const store: RecognitionFlowRecord[] = []
@@ -41,6 +55,7 @@ export interface NewRecognition {
   school: string
   district: string
   type: RecognitionType
+  details?: RecognitionDetails
 }
 
 export async function fileRecognition(input: NewRecognition): Promise<RecognitionFlowRecord> {
@@ -50,6 +65,7 @@ export async function fileRecognition(input: NewRecognition): Promise<Recognitio
     district: input.district,
     type: input.type,
     instance: startInstance(RECOGNITION_APPROVAL, {}),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -59,12 +75,18 @@ export async function fileRecognition(input: NewRecognition): Promise<Recognitio
       district: rec.district,
       type: rec.type,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
     store.unshift(rec)
   }
-  await appendAudit({ actor: "school", action: "recognitionflow.file", resource: rec.id, details: { type: rec.type } })
+  await appendAudit({
+    actor: "school",
+    action: "recognitionflow.file",
+    resource: rec.id,
+    details: { type: rec.type, management: rec.details?.management, block: rec.details?.block },
+  })
   return rec
 }
 
