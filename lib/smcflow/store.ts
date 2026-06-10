@@ -12,11 +12,22 @@ function id(): string {
   return `SR-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
+/** Rich detail captured by the SMC resolution form. */
+export interface ResolutionDetails {
+  category?: string
+  meetingDate?: string
+  proposedBy?: string
+  secondedBy?: string
+  membersPresent?: number
+  fundImplication?: number
+}
+
 export interface SmcFlowRecord {
   id: string
   title: string
   description: string
   instance: WorkflowInstance
+  details?: ResolutionDetails
 }
 
 interface Row {
@@ -24,11 +35,12 @@ interface Row {
   title: string
   description: string
   instance: WorkflowInstance
+  details?: ResolutionDetails
   created_at: string
 }
 
 function fromRow(r: Row): SmcFlowRecord {
-  return { id: r.id, title: r.title, description: r.description, instance: r.instance }
+  return { id: r.id, title: r.title, description: r.description, instance: r.instance, details: r.details }
 }
 
 const store: SmcFlowRecord[] = []
@@ -36,6 +48,7 @@ const store: SmcFlowRecord[] = []
 export interface NewResolution {
   title: string
   description: string
+  details?: ResolutionDetails
 }
 
 export async function fileResolution(input: NewResolution): Promise<SmcFlowRecord> {
@@ -44,6 +57,7 @@ export async function fileResolution(input: NewResolution): Promise<SmcFlowRecor
     title: input.title,
     description: input.description,
     instance: startInstance(SMC_RESOLUTION, {}),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -52,12 +66,18 @@ export async function fileResolution(input: NewResolution): Promise<SmcFlowRecor
       title: rec.title,
       description: rec.description,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
     store.unshift(rec)
   }
-  await appendAudit({ actor: "smc", action: "smcflow.file", resource: rec.id })
+  await appendAudit({
+    actor: "smc",
+    action: "smcflow.file",
+    resource: rec.id,
+    details: { category: rec.details?.category, membersPresent: rec.details?.membersPresent },
+  })
   return rec
 }
 
