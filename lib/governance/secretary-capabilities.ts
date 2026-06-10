@@ -50,7 +50,7 @@ export const SECRETARY_CAPABILITIES: SecretaryCapability[] = [
   { id: "cadre-postings", dimension: "functional", responsibility: "Cadre management & transfer-posting policy at scale", featureRef: "lib/postings/index.ts", route: "/postings", status: "partial" },
   { id: "budget-sanction", dimension: "functional", responsibility: "Budget sanction, allocation & re-appropriation authority", featureRef: "lib/finance/sanction.ts", route: "/governance/budget-sanction", status: "built" },
   { id: "assembly-prep", dimension: "functional", responsibility: "Assembly / legislative Q&A briefing-pack preparation", featureRef: "lib/governance/assembly-briefing.ts", route: "/governance/assembly-briefing", status: "built" },
-  { id: "cabinet-notes", dimension: "functional", responsibility: "Cabinet-note / policy-drafting tooling", featureRef: "", route: "", status: "pending" },
+  { id: "cabinet-notes", dimension: "functional", responsibility: "Cabinet-note / policy-drafting tooling", featureRef: "lib/governance/cabinet-note.ts", route: "/governance/cabinet-note", status: "built" },
 ]
 
 export function capabilityById(id: string): SecretaryCapability | undefined {

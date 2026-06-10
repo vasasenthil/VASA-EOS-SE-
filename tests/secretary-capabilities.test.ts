@@ -41,8 +41,9 @@ test("pending capabilities honestly claim NO feature (register cannot fake cover
     assert.equal(c.featureRef, "", `${c.id} is pending but claims a feature`)
     assert.equal(c.route, "", `${c.id} is pending but claims a route`)
   }
-  // The honest answer: not every Secretary feature is built.
-  assert.ok(byStatus("pending").length >= 1, "register should disclose real gaps")
+  // The honest answer: every dedicated Secretary feature is now built, but the register still
+  // does not overclaim — capabilities whose Secretary-tier depth is pending remain 'partial'.
+  assert.ok(byStatus("partial").length + byStatus("pending").length >= 1, "register must still disclose what isn't fully built")
 })
 
 test("the two traced Secretary user stories are built", () => {

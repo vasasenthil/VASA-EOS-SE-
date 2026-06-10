@@ -24,6 +24,7 @@ export default function SecretaryDashboardPage() {
         { label: "Assembly Q&A Briefing Pack", href: "/governance/assembly-briefing" },
         { label: "Budget Sanction & Re-appropriation", href: "/governance/budget-sanction" },
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
+        { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
       ]}
     />
