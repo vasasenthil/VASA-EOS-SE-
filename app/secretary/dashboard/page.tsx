@@ -26,6 +26,7 @@ export default function SecretaryDashboardPage() {
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },
+        { label: "School Recognition Oversight", href: "/governance/recognition-oversight" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
       ]}
     />
