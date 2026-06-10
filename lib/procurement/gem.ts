@@ -6,6 +6,8 @@
 // sits behind the integration seam; this is the evaluation logic + records.) Sample tenders seeded. Pure +
 // client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type GemStatus = "draft" | "published" | "bids-received" | "awarded"
 
 export interface Bid {
@@ -105,10 +107,6 @@ export function gemSummary(items: GemProcurement[] = GEM_PROCUREMENTS): GemSumma
     totalAwarded,
     totalSavings: awarded.reduce((s, p) => s + savings(p), 0),
   }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
 export function toCSV(items: GemProcurement[] = GEM_PROCUREMENTS): string {

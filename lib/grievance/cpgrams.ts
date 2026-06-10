@@ -8,6 +8,7 @@
 // client-safe.
 
 import { type GrievanceStatus } from "@/lib/grievance"
+import { csvField } from "@/lib/csv"
 
 export const CPGRAMS_SLA_DAYS = 21
 
@@ -86,10 +87,6 @@ export function cpgramsSummary(now: Date = new Date(), items: CpgramsCase[] = CP
     overdue: items.filter((c) => isOverdue(c, now)).length,
     disposalRatePct: items.length === 0 ? 0 : Math.round((disposed / items.length) * 100),
   }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
 export function toCSV(now: Date = new Date(), items: CpgramsCase[] = CPGRAMS_CASES): string {

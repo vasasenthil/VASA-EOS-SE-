@@ -8,6 +8,7 @@
 // testable. Builds on the grievance core; client-safe.
 
 import { ESCALATION_TIERS, type Grievance } from "@/lib/grievance"
+import { csvField } from "@/lib/csv"
 
 export const SECRETARIAT_TIER = ESCALATION_TIERS.indexOf("Secretariat")
 
@@ -75,10 +76,6 @@ export function disposalSummary(now: Date = new Date(), items: Grievance[] = ESC
     disposed: atTier.filter((g) => g.status === "resolved").length,
     byCategory: [...counts.entries()].map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count),
   }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
 export function toCSV(now: Date = new Date(), items: Grievance[] = ESCALATED_GRIEVANCES): string {

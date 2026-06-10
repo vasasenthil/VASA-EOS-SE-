@@ -6,6 +6,8 @@
 // risk register so attention follows exposure. Sample dataset seeded; the persisted register would live behind
 // the getDb() seam. Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type CaseStatus = "filed" | "hearing" | "reserved" | "disposed"
 export type CaseRisk = "low" | "medium" | "high"
 
@@ -91,10 +93,6 @@ export function legalSummary(now: Date = new Date(), items: LegalCase[] = LEGAL_
     imminentHearings: upcomingHearings(now, 7, items).length,
     byType: [...counts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count),
   }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
 export function toCSV(items: LegalCase[] = LEGAL_CASES): string {

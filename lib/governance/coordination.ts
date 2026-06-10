@@ -7,6 +7,8 @@
 // purpose, and the in-repo module the initiative actually touches (asserted to exist on disk, so the desk
 // can never list a partnership with no platform footprint). Pure + client-safe.
 
+import { csvField } from "@/lib/csv"
+
 export type PartnerType = "department" | "csr" | "multilateral" | "cso"
 export type InitiativeStatus = "active" | "proposed" | "completed"
 
@@ -71,10 +73,6 @@ export function coordinationSummary(items: CoordinationInitiative[] = COORDINATI
     externalPartners: items.filter((i) => i.partnerType !== "department").length,
     modulesLinked: new Set(items.map((i) => i.linkedModule)).size,
   }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
 }
 
 export function toCSV(items: CoordinationInitiative[] = COORDINATION_INITIATIVES): string {
