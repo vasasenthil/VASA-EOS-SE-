@@ -53,7 +53,7 @@ export const READINESS_CRITERIA: ReadinessCriterion[] = [
 
   // Hosting & infrastructure
   { id: "sovereign-hosting", category: "Hosting & infrastructure", criterion: "Sovereign cloud hosting (TN SDC / MeitY)", status: "not-started", note: "Runs on managed non-sovereign cloud", evidenceRef: "" },
-  { id: "container-iac", category: "Hosting & infrastructure", criterion: "Container / IaC (Dockerfile, Terraform)", status: "not-started", note: "No IaC checked in", evidenceRef: "" },
+  { id: "container-iac", category: "Hosting & infrastructure", criterion: "Container / IaC (Dockerfile, Terraform)", status: "partial", note: "Dockerfile (multi-stage, non-root, standalone) + k8s manifests + docker-compose + Terraform skeleton checked in (deploy/); provider blocks pending the chosen sovereign cloud", evidenceRef: "deploy/terraform/main.tf" },
 
   // Scale & performance
   { id: "db-provisioned", category: "Scale & performance", criterion: "Durable database provisioned + migrations run", status: "partial", note: "Migrations exist; not provisioned at scale", evidenceRef: "scripts" },
@@ -61,7 +61,7 @@ export const READINESS_CRITERIA: ReadinessCriterion[] = [
 
   // Observability & DR
   { id: "logging-probes-metrics", category: "Observability & DR", criterion: "Structured logging, liveness/readiness probes, metrics", status: "done", note: "logger + readiness + Prometheus metrics, tested", evidenceRef: "lib/readiness" },
-  { id: "siem-otel", category: "Observability & DR", criterion: "Centralised log shipping / SIEM / OTel traces", status: "not-started", note: "stdout JSON only", evidenceRef: "" },
+  { id: "siem-otel", category: "Observability & DR", criterion: "Centralised log shipping / SIEM / OTel traces", status: "partial", note: "ECS-schema SIEM exporter seam (NDJSON, severity, endpoint-gated) checked in; a live collector (Splunk/Elastic/Wazuh) + OTel trace export still to provision", evidenceRef: "lib/observability/siem.ts" },
   { id: "dr-runbook", category: "Observability & DR", criterion: "DR runbook + backups, exercised", status: "partial", note: "Runbook modelled in-repo; not exercised against real infra", evidenceRef: "lib/ops-posture/runbook.ts" },
 
   // Compliance & assurance
