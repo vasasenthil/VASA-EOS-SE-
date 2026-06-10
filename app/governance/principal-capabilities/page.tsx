@@ -23,8 +23,9 @@ export default function PrincipalCapabilitiesPage() {
           The honest answer to &ldquo;is every school-head feature built?&rdquo; — inspectable, not asserted. The
           Principal runs the school at the bottom of the tenancy tree. Each responsibility maps to the in-repo feature
           that delivers it: <strong>built</strong> ({s.built}), <strong>partial</strong> ({s.partial}) or
-          <strong> pending</strong> ({s.pending}). It does not overclaim — school self-assessment (SQAAF / Shaala Siddhi)
-          remains pending. A test keeps status and feature consistent.
+          <strong> pending</strong> ({s.pending}). All {s.capabilities} responsibilities now have a dedicated feature.
+          &ldquo;Built&rdquo; means a purpose-built, tested feature exists — not that it is wired to live data; that
+          platform-wide caveat still holds. A test keeps status and feature consistent.
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">

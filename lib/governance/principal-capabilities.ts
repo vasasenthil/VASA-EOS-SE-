@@ -43,8 +43,8 @@ export const PRINCIPAL_CAPABILITIES: PrincipalCapability[] = [
   { id: "discipline-safety", dimension: "functional", responsibility: "Discipline & student safety", featureRef: "lib/discipline/index.ts", route: "/discipline", status: "built" },
   { id: "school-health", dimension: "functional", responsibility: "School health & RBSK screening", featureRef: "app/principal/health/page.tsx", route: "/principal/health", status: "built" },
   { id: "parent-engagement", dimension: "functional", responsibility: "Parent-teacher meetings & engagement", featureRef: "lib/ptm/index.ts", route: "/ptm", status: "built" },
-  { id: "library-meals-ops", dimension: "functional", responsibility: "Library & mid-day-meal operations oversight", featureRef: "lib/library/index.ts", route: "/library", status: "partial" },
-  { id: "school-self-assessment", dimension: "functional", responsibility: "School self-assessment (SQAAF / Shaala Siddhi)", featureRef: "", route: "", status: "pending" },
+  { id: "library-meals-ops", dimension: "functional", responsibility: "Library & mid-day-meal operations oversight", featureRef: "lib/governance/school-welfare-ops.ts", route: "/governance/school-welfare-ops", status: "built" },
+  { id: "school-self-assessment", dimension: "functional", responsibility: "School self-assessment (SQAAF / Shaala Siddhi)", featureRef: "lib/governance/school-self-assessment.ts", route: "/governance/school-self-assessment", status: "built" },
 ]
 
 export function capabilityById(id: string): PrincipalCapability | undefined {

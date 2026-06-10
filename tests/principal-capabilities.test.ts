@@ -40,9 +40,11 @@ test("status and feature are kept consistent (register cannot fake coverage)", (
   }
 })
 
-test("the register honestly discloses a school self-assessment gap", () => {
-  assert.equal(capabilityById("school-self-assessment")?.status, "pending")
-  assert.ok(byStatus("pending").length >= 1)
+test("the School Head surface is fully built out, each capability referencing a real feature", () => {
+  assert.equal(capabilityById("school-self-assessment")?.status, "built")
+  assert.equal(capabilityById("library-meals-ops")?.status, "built")
+  assert.equal(byStatus("pending").length, 0)
+  assert.equal(byStatus("partial").length, 0)
 })
 
 test("summary tallies status and dimensions honestly", () => {
@@ -51,7 +53,7 @@ test("summary tallies status and dimensions honestly", () => {
   assert.equal(s.built + s.partial + s.pending, s.capabilities)
   assert.equal(s.general + s.technical + s.functional, s.capabilities)
   assert.equal(s.builtPct, Math.round((s.built / s.capabilities) * 100))
-  assert.ok(s.builtPct > 0 && s.builtPct < 100)
+  assert.ok(s.builtPct > 0 && s.builtPct <= 100)
 })
 
 test("CSV has the shared header plus one row per capability", () => {
