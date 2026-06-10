@@ -8,20 +8,19 @@
 // never fake coverage). A test asserts every built/partial featureRef exists on disk AND that every pending
 // item references nothing. Pure + client-safe.
 
-export type CapabilityStatus = "built" | "partial" | "pending"
-export type CapabilityDimension = "general" | "technical" | "functional"
+import {
+  type CapabilityStatus,
+  type CapabilityDimension,
+  type RoleCapability,
+  type RoleCapabilitySummary,
+  roleCapabilitySummary,
+  roleCapabilitiesToCSV,
+} from "@/lib/governance/role-capabilities"
 
-export interface SecretaryCapability {
-  id: string
-  dimension: CapabilityDimension
-  /** The Secretary responsibility. */
-  responsibility: string
-  /** The in-repo feature delivering it — empty string when pending (honestly nothing yet). */
-  featureRef: string
-  /** In-app route, when one exists. */
-  route: string
-  status: CapabilityStatus
-}
+export type { CapabilityStatus, CapabilityDimension } from "@/lib/governance/role-capabilities"
+
+/** A Secretary capability is a role capability (see role-capabilities for the shape). */
+export type SecretaryCapability = RoleCapability
 
 export const SECRETARY_CAPABILITIES: SecretaryCapability[] = [
   // General — leadership, oversight, jurisdiction
@@ -65,38 +64,12 @@ export function byDimension(dimension: CapabilityDimension): SecretaryCapability
   return SECRETARY_CAPABILITIES.filter((c) => c.dimension === dimension)
 }
 
-export interface SecretaryCapabilitySummary {
-  capabilities: number
-  built: number
-  partial: number
-  pending: number
-  /** Share of the surface that is built (working slice), 0–100. */
-  builtPct: number
-  general: number
-  technical: number
-  functional: number
-}
+export type SecretaryCapabilitySummary = RoleCapabilitySummary
 
 export function secretaryCapabilitySummary(items: SecretaryCapability[] = SECRETARY_CAPABILITIES): SecretaryCapabilitySummary {
-  const built = items.filter((c) => c.status === "built").length
-  return {
-    capabilities: items.length,
-    built,
-    partial: items.filter((c) => c.status === "partial").length,
-    pending: items.filter((c) => c.status === "pending").length,
-    builtPct: items.length === 0 ? 0 : Math.round((built / items.length) * 100),
-    general: items.filter((c) => c.dimension === "general").length,
-    technical: items.filter((c) => c.dimension === "technical").length,
-    functional: items.filter((c) => c.dimension === "functional").length,
-  }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+  return roleCapabilitySummary(items)
 }
 
 export function toCSV(items: SecretaryCapability[] = SECRETARY_CAPABILITIES): string {
-  const header = ["Dimension", "Responsibility", "Feature", "Route", "Status"]
-  const rows = items.map((c) => [c.dimension, c.responsibility, c.featureRef || "—", c.route || "—", c.status].map(csvField).join(","))
-  return [header.join(","), ...rows].join("\r\n") + "\r\n"
+  return roleCapabilitiesToCSV(items)
 }

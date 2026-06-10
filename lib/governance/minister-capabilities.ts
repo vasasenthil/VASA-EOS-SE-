@@ -8,18 +8,19 @@
 // (not yet built — referencing NO feature, so the register cannot fake coverage). A test keeps status and feature
 // consistent. Pure + client-safe.
 
-export type CapabilityStatus = "built" | "partial" | "pending"
-export type CapabilityDimension = "general" | "technical" | "functional"
+import {
+  type CapabilityStatus,
+  type CapabilityDimension,
+  type RoleCapability,
+  type RoleCapabilitySummary,
+  roleCapabilitySummary,
+  roleCapabilitiesToCSV,
+} from "@/lib/governance/role-capabilities"
 
-export interface MinisterCapability {
-  id: string
-  dimension: CapabilityDimension
-  responsibility: string
-  /** In-repo feature delivering it — empty string when pending. */
-  featureRef: string
-  route: string
-  status: CapabilityStatus
-}
+export type { CapabilityStatus, CapabilityDimension } from "@/lib/governance/role-capabilities"
+
+/** A Minister capability is a role capability (see role-capabilities for the shape). */
+export type MinisterCapability = RoleCapability
 
 export const MINISTER_CAPABILITIES: MinisterCapability[] = [
   // General — executive leadership
@@ -59,37 +60,12 @@ export function byDimension(dimension: CapabilityDimension): MinisterCapability[
   return MINISTER_CAPABILITIES.filter((c) => c.dimension === dimension)
 }
 
-export interface MinisterCapabilitySummary {
-  capabilities: number
-  built: number
-  partial: number
-  pending: number
-  builtPct: number
-  general: number
-  technical: number
-  functional: number
-}
+export type MinisterCapabilitySummary = RoleCapabilitySummary
 
 export function ministerCapabilitySummary(items: MinisterCapability[] = MINISTER_CAPABILITIES): MinisterCapabilitySummary {
-  const built = items.filter((c) => c.status === "built").length
-  return {
-    capabilities: items.length,
-    built,
-    partial: items.filter((c) => c.status === "partial").length,
-    pending: items.filter((c) => c.status === "pending").length,
-    builtPct: items.length === 0 ? 0 : Math.round((built / items.length) * 100),
-    general: items.filter((c) => c.dimension === "general").length,
-    technical: items.filter((c) => c.dimension === "technical").length,
-    functional: items.filter((c) => c.dimension === "functional").length,
-  }
-}
-
-function csvField(v: string): string {
-  return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v
+  return roleCapabilitySummary(items)
 }
 
 export function toCSV(items: MinisterCapability[] = MINISTER_CAPABILITIES): string {
-  const header = ["Dimension", "Responsibility", "Feature", "Route", "Status"]
-  const rows = items.map((c) => [c.dimension, c.responsibility, c.featureRef || "—", c.route || "—", c.status].map(csvField).join(","))
-  return [header.join(","), ...rows].join("\r\n") + "\r\n"
+  return roleCapabilitiesToCSV(items)
 }
