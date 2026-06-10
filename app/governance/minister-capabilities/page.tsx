@@ -24,8 +24,9 @@ export default function MinisterCapabilitiesPage() {
           not asserted. The Minister is the executive head — outcomes, schemes, constituency, election commitments, crisis
           response and the floor of the Assembly. Each responsibility maps to the in-repo feature that delivers it, with a
           candid status: <strong>built</strong> ({s.built}), <strong>partial</strong> ({s.partial}) or <strong>pending</strong>
-          {" "}({s.pending}). It does not overclaim — {s.pending} responsibilities are openly pending. A test keeps status
-          and feature consistent (pending ⇔ no feature, built/partial ⇔ a real on-disk feature).
+          {" "}({s.pending}). All {s.capabilities} responsibilities now have a dedicated feature. &ldquo;Built&rdquo; means a
+          purpose-built, tested feature exists — not that it is wired to live government data; that platform-wide caveat
+          still holds. A test keeps status and feature consistent (pending ⇔ no feature, built/partial ⇔ a real on-disk feature).
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">

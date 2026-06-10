@@ -23,6 +23,8 @@ export default function MinisterDashboardPage() {
         { label: "Crisis / Emergency Centre", href: "/emergency" },
         { label: "Welfare-Scheme Launch", href: "/governance/scheme-launch" },
         { label: "Public Communication Desk", href: "/governance/public-communication" },
+        { label: "Executive Budget Priorities", href: "/governance/budget-priorities" },
+        { label: "Constituency Grievance Redress", href: "/governance/constituency-grievance" },
         { label: "My Capability Coverage (honest)", href: "/governance/minister-capabilities" },
       ]}
     />

@@ -42,8 +42,8 @@ export const MINISTER_CAPABILITIES: MinisterCapability[] = [
   { id: "milestones", dimension: "functional", responsibility: "Election-commitment milestone tracking", featureRef: "app/tracking/milestones/page.tsx", route: "/tracking/milestones", status: "built" },
   { id: "reports", dimension: "functional", responsibility: "Reports & benchmarking", featureRef: "app/tracking/reports/page.tsx", route: "/tracking/reports", status: "built" },
   { id: "assembly-answers", dimension: "functional", responsibility: "Assembly floor Q&A (the Minister answers)", featureRef: "lib/governance/assembly-briefing.ts", route: "/governance/assembly-briefing", status: "built" },
-  { id: "budget-priorities", dimension: "functional", responsibility: "Executive budget priorities & sanction view", featureRef: "lib/finance/sanction.ts", route: "/governance/budget-sanction", status: "partial" },
-  { id: "constituency-grievance", dimension: "functional", responsibility: "Constituency grievance redress", featureRef: "lib/grievance/index.ts", route: "/grievance", status: "partial" },
+  { id: "budget-priorities", dimension: "functional", responsibility: "Executive budget priorities & sanction view", featureRef: "lib/governance/budget-priorities.ts", route: "/governance/budget-priorities", status: "built" },
+  { id: "constituency-grievance", dimension: "functional", responsibility: "Constituency grievance redress", featureRef: "lib/governance/constituency-grievance.ts", route: "/governance/constituency-grievance", status: "built" },
   { id: "scheme-launch", dimension: "functional", responsibility: "New welfare-scheme design & launch tooling", featureRef: "lib/governance/scheme-launch.ts", route: "/governance/scheme-launch", status: "built" },
   { id: "public-communication", dimension: "functional", responsibility: "Public address / press & citizen messaging", featureRef: "lib/governance/public-communication.ts", route: "/governance/public-communication", status: "built" },
 ]
