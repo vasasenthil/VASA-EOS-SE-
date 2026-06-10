@@ -98,7 +98,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Grievance Filing", repoRef: "lib/grievance/index.ts", status: "built" },
   { tier: "School", name: "Adi Dravidar Hostel Management", repoRef: "lib/hostel/index.ts", status: "partial" },
   { tier: "School", name: "Adolescent Mental-Health / Anti-Stress", repoRef: "lib/health/mental-health.ts", status: "built" },
-  { tier: "School", name: "Staff Background Verification", repoRef: "", status: "pending" },
+  { tier: "School", name: "Staff Background Verification", repoRef: "lib/staff/background-verification.ts", status: "built" },
 
   // Platform tier (cross-cutting)
   { tier: "Platform", name: "Consent Manager (DPDP / InDEA)", repoRef: "lib/consent/pii-catalogue.ts", status: "built" },
