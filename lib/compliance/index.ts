@@ -39,6 +39,7 @@ import { principalCapabilitySummary } from "@/lib/governance/principal-capabilit
 import { tierCoverageSummary } from "@/lib/governance/tier-coverage"
 import { directorateSummary } from "@/lib/governance/directorates"
 import { readinessSummary } from "@/lib/governance/launch-readiness"
+import { catalogueSummary } from "@/lib/governance/module-catalogue"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -69,6 +70,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const tierCoverage = tierCoverageSummary()
   const directorates = directorateSummary()
   const launch = readinessSummary()
+  const catalogue = catalogueSummary()
   const tenancy = tenancySummary()
   const sovereignty = sovereigntySummary()
   const ndear = ndearSummary()
@@ -106,6 +108,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "tier-coverage", name: "Org-chart coverage (all tiers)", pillar: "Multi-Tenancy", registerRef: "lib/governance/tier-coverage.ts", route: "/governance/tier-coverage", items: tierCoverage.capabilities, headline: `${tierCoverage.built} built · ${tierCoverage.partial} partial · ${tierCoverage.pending} pending across ${tierCoverage.tiers} tiers (${tierCoverage.builtPct}%)` },
     { id: "directorates", name: "The seven directorates", pillar: "Multi-Tenancy", registerRef: "lib/governance/directorates.ts", route: "/governance/directorates", items: directorates.directorates, headline: `${directorates.directorates} directorates · ${directorates.supported} supported · ${directorates.modulesLinked} modules linked` },
     { id: "launch-readiness", name: "Launch / government readiness", pillar: "Operations", registerRef: "lib/governance/launch-readiness.ts", route: "/governance/launch-readiness", items: launch.criteria, headline: `${launch.overallReadinessPct}% ready · ${launch.done} done · ${launch.partial} partial · ${launch.notStarted} not-started (honest: MVP, not government-grade)` },
+    { id: "module-catalogue", name: "Module Catalogue v3.0 coverage", pillar: "All pillars", registerRef: "lib/governance/module-catalogue.ts", route: "/governance/module-catalogue", items: catalogue.mapped, headline: `${catalogue.mapped} of ~${catalogue.catalogueTotal} catalogue modules mapped · ${catalogue.built} built · ${catalogue.partial} partial · ${catalogue.pending} pending (${catalogue.coveragePct}% weighted)` },
     { id: "tenancy", name: "Sovereign tenancy tiers", pillar: "Multi-Tenancy", registerRef: "lib/tenancy/catalogue.ts", route: "/governance/tenancy", items: tenancy.tiers, headline: `${tenancy.tiers} tiers · depth ${tenancy.depth} · sovereign ${tenancy.sovereignState}` },
     { id: "sovereignty", name: "Five sovereignty guarantees", pillar: "Multi-Tenancy", registerRef: "lib/compliance/sovereignty.ts", route: "/governance/sovereignty", items: sovereignty.guarantees, headline: `${sovereignty.enforced} enforced · ${sovereignty.partial} complete at deploy` },
     { id: "ndear", name: "NDEAR compliance", pillar: "Integration", registerRef: "lib/compliance/ndear.ts", route: "/governance/ndear", items: ndear.total, headline: `${ndear.implemented} implemented · ${ndear.partial} partial · ${ndear.coveragePct}% coverage` },
