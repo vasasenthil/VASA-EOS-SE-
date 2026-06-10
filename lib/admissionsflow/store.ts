@@ -13,6 +13,17 @@ function id(): string {
   return `AD-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
+/** Rich detail captured by the admission application form. */
+export interface AdmissionDetails {
+  guardianName?: string
+  guardianPhone?: string
+  guardianEmail?: string
+  address?: string
+  previousSchool?: string
+  rteQuota?: boolean
+  documents?: string[]
+}
+
 export interface AdmissionFlowRecord {
   id: string
   name: string
@@ -22,6 +33,7 @@ export interface AdmissionFlowRecord {
   className: string
   apaarId?: string
   instance: WorkflowInstance
+  details?: AdmissionDetails
 }
 
 interface Row {
@@ -33,6 +45,7 @@ interface Row {
   class_name: string
   apaar_id: string | null
   instance: WorkflowInstance
+  details?: AdmissionDetails
   created_at: string
 }
 
@@ -46,6 +59,7 @@ function fromRow(r: Row): AdmissionFlowRecord {
     className: r.class_name,
     apaarId: r.apaar_id ?? undefined,
     instance: r.instance,
+    details: r.details,
   }
 }
 
@@ -57,6 +71,7 @@ export interface NewApplicant {
   gender: string
   category: string
   className: string
+  details?: AdmissionDetails
 }
 
 export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowRecord> {
@@ -68,6 +83,7 @@ export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowR
     category: input.category,
     className: input.className,
     instance: startInstance(ADMISSION_APPROVAL, {}),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -78,6 +94,7 @@ export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowR
       gender: rec.gender,
       category: rec.category,
       class_name: rec.className,
+      details: rec.details,
       apaar_id: null,
       instance: rec.instance,
       created_at: new Date().toISOString(),
