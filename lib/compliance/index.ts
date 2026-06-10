@@ -32,6 +32,7 @@ import { safeguardingSummary } from "@/lib/safety/safeguarding"
 import { examIntegritySummary } from "@/lib/exams/integrity"
 import { greenSummary } from "@/lib/esg/green-school"
 import { finTransparencySummary } from "@/lib/finance/transparency"
+import { secretaryCapabilitySummary } from "@/lib/governance/secretary-capabilities"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -55,6 +56,7 @@ export interface ComplianceDomain {
 
 export function complianceDomains(): ComplianceDomain[] {
   const arch = archSummary()
+  const secretaryCap = secretaryCapabilitySummary()
   const tenancy = tenancySummary()
   const sovereignty = sovereigntySummary()
   const ndear = ndearSummary()
@@ -85,6 +87,7 @@ export function complianceDomains(): ComplianceDomain[] {
 
   return [
     { id: "architecture", name: "Architecture conformance", pillar: "All pillars", registerRef: "lib/architecture/index.ts", route: "/architecture", items: arch.components, headline: `${arch.implemented} implemented · ${arch.partial} partial across ${arch.pillars} pillars` },
+    { id: "secretary-capabilities", name: "Secretary capability coverage", pillar: "All pillars", registerRef: "lib/governance/secretary-capabilities.ts", route: "/governance/secretary-capabilities", items: secretaryCap.capabilities, headline: `${secretaryCap.built} built · ${secretaryCap.partial} partial · ${secretaryCap.pending} pending (${secretaryCap.builtPct}% built)` },
     { id: "tenancy", name: "Sovereign tenancy tiers", pillar: "Multi-Tenancy", registerRef: "lib/tenancy/catalogue.ts", route: "/governance/tenancy", items: tenancy.tiers, headline: `${tenancy.tiers} tiers · depth ${tenancy.depth} · sovereign ${tenancy.sovereignState}` },
     { id: "sovereignty", name: "Five sovereignty guarantees", pillar: "Multi-Tenancy", registerRef: "lib/compliance/sovereignty.ts", route: "/governance/sovereignty", items: sovereignty.guarantees, headline: `${sovereignty.enforced} enforced · ${sovereignty.partial} complete at deploy` },
     { id: "ndear", name: "NDEAR compliance", pillar: "Integration", registerRef: "lib/compliance/ndear.ts", route: "/governance/ndear", items: ndear.total, headline: `${ndear.implemented} implemented · ${ndear.partial} partial · ${ndear.coveragePct}% coverage` },
