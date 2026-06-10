@@ -79,6 +79,12 @@ if any migration has not been applied. The same check is exposed at
 **`/api/ready/schema`** — `200` when all tables are reachable, `503` (with the
 missing list) otherwise — so an uptime monitor can gate go-live on it.
 
+> **Verified:** `scripts/021` has been applied to a live **PostgreSQL 16**
+> instance — all six flow tables are created with row-level security enabled, a
+> service-role insert round-trips durably, and an `anon` SELECT returns **zero
+> rows** (RLS deny-by-default protects the applicant/grievance/staff PII). This
+> is the identical schema + security path a provisioned Supabase project runs.
+
 ---
 
 ## 3. Integration go-live matrix
