@@ -21,6 +21,7 @@ export default function SecretaryDashboardPage() {
         { label: "Policies & Circulars", href: "/policies" },
         { label: "Government Structure", href: "/governance/org" },
         { label: "Risk Register (Challenges)", href: "/tracking/challenges" },
+        { label: "Assembly Q&A Briefing Pack", href: "/governance/assembly-briefing" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
       ]}
     />

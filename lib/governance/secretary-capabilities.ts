@@ -49,7 +49,7 @@ export const SECRETARY_CAPABILITIES: SecretaryCapability[] = [
   { id: "recognition-oversight", dimension: "functional", responsibility: "School recognition / approvals oversight", featureRef: "lib/recognition/index.ts", route: "/recognition", status: "partial" },
   { id: "cadre-postings", dimension: "functional", responsibility: "Cadre management & transfer-posting policy at scale", featureRef: "lib/postings/index.ts", route: "/postings", status: "partial" },
   { id: "budget-sanction", dimension: "functional", responsibility: "Budget sanction, allocation & re-appropriation authority", featureRef: "", route: "", status: "pending" },
-  { id: "assembly-prep", dimension: "functional", responsibility: "Assembly / legislative Q&A briefing-pack preparation", featureRef: "", route: "", status: "pending" },
+  { id: "assembly-prep", dimension: "functional", responsibility: "Assembly / legislative Q&A briefing-pack preparation", featureRef: "lib/governance/assembly-briefing.ts", route: "/governance/assembly-briefing", status: "built" },
   { id: "cabinet-notes", dimension: "functional", responsibility: "Cabinet-note / policy-drafting tooling", featureRef: "", route: "", status: "pending" },
 ]
 
