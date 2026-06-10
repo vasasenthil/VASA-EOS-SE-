@@ -1,4 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
+import { csvField } from "@/lib/csv"
+
+/** Escape a value for safe interpolation into HTML (defence-in-depth for report data). */
+function htmlEscape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
 
 /**
  * Report Export API
@@ -69,22 +80,22 @@ const DEFAULT_REPORT = {
 }
 
 function toCSV(title: string, headers: string[], rows: string[][]): string {
-  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`
+  // csvField applies RFC-4180 quoting AND neutralises CSV formula injection.
   const lines = [
-    escape(title),
+    csvField(title),
     "",
-    headers.map(escape).join(","),
-    ...rows.map((r) => r.map(escape).join(",")),
+    headers.map(csvField).join(","),
+    ...rows.map((r) => r.map(csvField).join(",")),
   ]
   return lines.join("\n")
 }
 
 function toHTML(title: string, headers: string[], rows: string[][]): string {
-  const headerCells = headers.map((h) => `<th style="padding:8px 12px;background:#1e40af;color:white;text-align:left">${h}</th>`).join("")
+  const headerCells = headers.map((h) => `<th style="padding:8px 12px;background:#1e40af;color:white;text-align:left">${htmlEscape(h)}</th>`).join("")
   const bodyRows = rows
     .map(
       (r, i) =>
-        `<tr style="background:${i % 2 === 0 ? "#f8fafc" : "white"}">${r.map((c) => `<td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">${c}</td>`).join("")}</tr>`
+        `<tr style="background:${i % 2 === 0 ? "#f8fafc" : "white"}">${r.map((c) => `<td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">${htmlEscape(c)}</td>`).join("")}</tr>`
     )
     .join("")
 
@@ -92,7 +103,7 @@ function toHTML(title: string, headers: string[], rows: string[][]): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>${title}</title>
+  <title>${htmlEscape(title)}</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 40px; color: #1e293b; }
     h1 { color: #1e40af; font-size: 20px; margin-bottom: 8px; }
@@ -102,7 +113,7 @@ function toHTML(title: string, headers: string[], rows: string[][]): string {
   </style>
 </head>
 <body>
-  <h1>${title}</h1>
+  <h1>${htmlEscape(title)}</h1>
   <p>Generated on ${new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })} · VASA-EOS-SE Platform</p>
   <table>
     <thead><tr>${headerCells}</tr></thead>
@@ -128,9 +139,11 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  // Default: CSV
+  // Default: CSV. Sanitise the user-supplied reportId before it reaches the response header
+  // (prevents header injection / filename spoofing via Content-Disposition).
+  const safeId = reportId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64) || "report"
   const csv = toCSV(title, headers, rows)
-  const filename = `${reportId}-${new Date().toISOString().slice(0, 10)}.csv`
+  const filename = `${safeId}-${new Date().toISOString().slice(0, 10)}.csv`
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
