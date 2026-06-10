@@ -31,7 +31,7 @@ export const SECRETARY_CAPABILITIES: SecretaryCapability[] = [
   { id: "org-structure", dimension: "general", responsibility: "Government structure / org-hierarchy command of the department", featureRef: "app/governance/org/page.tsx", route: "/governance/org", status: "built" },
   { id: "jurisdiction-scope", dimension: "general", responsibility: "State-tier jurisdiction — govern TN node and all descendants", featureRef: "lib/access/scope.ts", route: "/governance/scope", status: "built" },
   { id: "forum-authority", dimension: "general", responsibility: "Convene forums and exercise RACI quorum authority", featureRef: "app/governance/forums/page.tsx", route: "/governance/forums", status: "built" },
-  { id: "interdept-coordination", dimension: "general", responsibility: "Inter-departmental & CSR / donor coordination workspace", featureRef: "", route: "", status: "pending" },
+  { id: "interdept-coordination", dimension: "general", responsibility: "Inter-departmental & CSR / donor coordination workspace", featureRef: "lib/governance/coordination.ts", route: "/governance/coordination", status: "built" },
 
   // Technical — platform mechanisms the office relies on
   { id: "access-pdp", dimension: "technical", responsibility: "Role-based authority via the 5-model access PDP", featureRef: "lib/access/policy.ts", route: "/governance/access", status: "built" },
