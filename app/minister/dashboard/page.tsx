@@ -21,6 +21,7 @@ export default function MinisterDashboardPage() {
         { label: "Election-Commitment Milestones", href: "/tracking/milestones" },
         { label: "Reports & Benchmarking", href: "/tracking/reports" },
         { label: "Crisis / Emergency Centre", href: "/emergency" },
+        { label: "My Capability Coverage (honest)", href: "/governance/minister-capabilities" },
       ]}
     />
   )
