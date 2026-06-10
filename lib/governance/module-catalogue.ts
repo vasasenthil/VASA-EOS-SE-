@@ -52,7 +52,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "Real-Time Executive Dashboards", repoRef: "lib/portal-data/index.ts", status: "built" },
   { tier: "State", name: "Welfare-scheme launch & budget priorities", repoRef: "lib/governance/scheme-launch.ts", status: "built" },
   { tier: "State", name: "GeM Procurement", repoRef: "lib/procurement/gem.ts", status: "built" },
-  { tier: "State", name: "Grants & Finance Management", repoRef: "lib/finance/index.ts", status: "partial" },
+  { tier: "State", name: "Grants & Finance Management", repoRef: "lib/finance/grants.ts", status: "built" },
   { tier: "State", name: "Legal Case Management", repoRef: "lib/legal/index.ts", status: "built" },
 
   // Directorate tier
