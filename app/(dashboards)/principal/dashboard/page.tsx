@@ -29,6 +29,7 @@ import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import { CHART_COLORS } from "@/components/charts/chart-colors"
 import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
+import { listResolutionsAction } from "@/app/smc-approvals/actions"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
@@ -132,8 +133,10 @@ export default async function PrincipalDashboardPage() {
 
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create).
-  const tickets = await listTicketFlowsAction()
+  const [tickets, resolutions] = await Promise.all([listTicketFlowsAction(), listResolutionsAction()])
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
+  const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
+  const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-8 space-y-6">
@@ -486,20 +489,22 @@ export default async function PrincipalDashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-600 to-teal-800 text-white border-0">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <Users className="h-5 w-5 text-white" />
+        <Link href="/smc-approvals" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="bg-gradient-to-br from-teal-600 to-teal-800 text-white border-0">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Vote className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-teal-200">SMC Resolutions · Live</div>
+                  <div className="text-2xl font-bold">{pendingResolutions} pending</div>
+                  <div className="text-xs text-teal-100">{adoptedResolutions} adopted · tap to open the inbox</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-medium text-teal-200">SMC Members</div>
-                <div className="text-2xl font-bold">12 / 15</div>
-                <div className="text-xs text-teal-100">Active · Last meeting: 15 Mar</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   )
