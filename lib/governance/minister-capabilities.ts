@@ -45,7 +45,7 @@ export const MINISTER_CAPABILITIES: MinisterCapability[] = [
   { id: "budget-priorities", dimension: "functional", responsibility: "Executive budget priorities & sanction view", featureRef: "lib/finance/sanction.ts", route: "/governance/budget-sanction", status: "partial" },
   { id: "constituency-grievance", dimension: "functional", responsibility: "Constituency grievance redress", featureRef: "lib/grievance/index.ts", route: "/grievance", status: "partial" },
   { id: "scheme-launch", dimension: "functional", responsibility: "New welfare-scheme design & launch tooling", featureRef: "lib/governance/scheme-launch.ts", route: "/governance/scheme-launch", status: "built" },
-  { id: "public-communication", dimension: "functional", responsibility: "Public address / press & citizen messaging", featureRef: "", route: "", status: "pending" },
+  { id: "public-communication", dimension: "functional", responsibility: "Public address / press & citizen messaging", featureRef: "lib/governance/public-communication.ts", route: "/governance/public-communication", status: "built" },
 ]
 
 export function capabilityById(id: string): MinisterCapability | undefined {

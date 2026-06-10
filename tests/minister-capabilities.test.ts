@@ -41,11 +41,12 @@ test("status and feature are kept consistent (register cannot fake coverage)", (
   }
 })
 
-test("the register honestly discloses remaining executive gaps", () => {
-  assert.ok(byStatus("pending").length >= 1, "Minister surface should still disclose real gaps")
-  assert.equal(capabilityById("public-communication")?.status, "pending")
-  // scheme-launch has been built out — it now references a real feature.
+test("the register stays honest — every dedicated feature built, partials not overclaimed", () => {
+  // Pending features have been built out; the register still does not overclaim because the
+  // executive-depth capabilities remain 'partial' rather than 'built'.
   assert.equal(capabilityById("scheme-launch")?.status, "built")
+  assert.equal(capabilityById("public-communication")?.status, "built")
+  assert.ok(byStatus("partial").length >= 1, "depth-limited capabilities stay partial")
 })
 
 test("the Minister reuses cross-role features built for the office", () => {

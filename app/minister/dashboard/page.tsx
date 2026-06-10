@@ -22,6 +22,7 @@ export default function MinisterDashboardPage() {
         { label: "Reports & Benchmarking", href: "/tracking/reports" },
         { label: "Crisis / Emergency Centre", href: "/emergency" },
         { label: "Welfare-Scheme Launch", href: "/governance/scheme-launch" },
+        { label: "Public Communication Desk", href: "/governance/public-communication" },
         { label: "My Capability Coverage (honest)", href: "/governance/minister-capabilities" },
       ]}
     />
