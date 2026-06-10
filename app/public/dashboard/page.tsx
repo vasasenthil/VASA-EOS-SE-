@@ -24,6 +24,7 @@ export default async function PublicDashboardPage() {
         { label: "RTI Register", href: "/rti" },
         { label: "Citizen Feedback", href: "/feedback" },
         { label: "Grievances", href: "/grievance" },
+        { label: "File a Grievance (tracked & escalated)", href: "/grievance-approvals/new" },
       ]}
     />
   )

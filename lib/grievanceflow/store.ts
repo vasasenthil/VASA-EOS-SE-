@@ -15,12 +15,24 @@ function id(): string {
 
 export const GRIEVANCE_CATEGORIES = ["Scheme / DBT", "Fees", "Safety", "Teacher conduct", "Infrastructure", "Other"]
 
+/** Rich detail captured by the citizen grievance filing form. */
+export interface GrievanceDetails {
+  relationship?: string
+  contactPhone?: string
+  contactEmail?: string
+  school?: string
+  district?: string
+  subject?: string
+  urgency?: string
+}
+
 export interface GrievanceFlowRecord {
   id: string
   applicant: string
   category: string
   description: string
   instance: WorkflowInstance
+  details?: GrievanceDetails
 }
 
 interface Row {
@@ -29,11 +41,12 @@ interface Row {
   category: string
   description: string
   instance: WorkflowInstance
+  details?: GrievanceDetails
   created_at: string
 }
 
 function fromRow(r: Row): GrievanceFlowRecord {
-  return { id: r.id, applicant: r.applicant, category: r.category, description: r.description, instance: r.instance }
+  return { id: r.id, applicant: r.applicant, category: r.category, description: r.description, instance: r.instance, details: r.details }
 }
 
 const store: GrievanceFlowRecord[] = []
@@ -42,6 +55,7 @@ export interface NewGrievance {
   applicant: string
   category: string
   description: string
+  details?: GrievanceDetails
 }
 
 export async function fileGrievanceFlow(input: NewGrievance): Promise<GrievanceFlowRecord> {
@@ -51,6 +65,7 @@ export async function fileGrievanceFlow(input: NewGrievance): Promise<GrievanceF
     category: input.category,
     description: input.description,
     instance: startInstance(GRIEVANCE_ESCALATION, {}),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -60,12 +75,18 @@ export async function fileGrievanceFlow(input: NewGrievance): Promise<GrievanceF
       category: rec.category,
       description: rec.description,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
     store.unshift(rec)
   }
-  await appendAudit({ actor: rec.applicant, action: "grievanceflow.file", resource: rec.id, details: { category: rec.category } })
+  await appendAudit({
+    actor: rec.applicant,
+    action: "grievanceflow.file",
+    resource: rec.id,
+    details: { category: rec.category, urgency: rec.details?.urgency, school: rec.details?.school },
+  })
   return rec
 }
 

@@ -1,5 +1,8 @@
 import { Shell } from "@/components/shell"
-import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
+import { PageHeader, PageHeaderHeading, PageHeaderDescription, PageHeaderActions } from "@/components/page-header"
+import { Button } from "@/components/ui/button"
+import { FilePlus } from "lucide-react"
+import Link from "next/link"
 import { GrievanceApprovalBoard } from "./grievance-approval-board"
 import { listGrievanceFlowsAction } from "./actions"
 import { getCurrentRole } from "@/lib/auth/current-role"
@@ -15,6 +18,11 @@ export default async function GrievanceApprovalsPage() {
           {" "}it to the next level — School (Principal) → Block (BEO) → District (DEO). Acts as your signed-in role, with
           a full audit trail and SLA-style visibility.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild>
+            <Link href="/grievance-approvals/new"><FilePlus className="mr-2 h-4 w-4" />File a grievance</Link>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       <GrievanceApprovalBoard initial={initial} sessionRole={role} />
     </Shell>
