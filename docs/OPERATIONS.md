@@ -64,6 +64,14 @@ scoping). When `SUPABASE_SERVICE_ROLE_KEY` is present, `getDb()` returns the
 privileged client and the stores persist automatically; `/health` reports
 `Persistence mode: durable`.
 
+> **Fresh bootstrap:** the numbered scripts are an evolving history, not all of
+> which replay cleanly onto an empty database. For standing up a **new** durable
+> database, follow the verified, ordered subset in
+> [`scripts/MIGRATIONS.md`](../scripts/MIGRATIONS.md) (which also explains why
+> the legacy `008`–`012` / `016` / `018` scripts are excluded). On an existing
+> Supabase project the schema is already in place — this concerns new
+> environments only.
+
 ### Verify the schema after provisioning
 
 A configured key does **not** guarantee the tables exist — if migrations have not
