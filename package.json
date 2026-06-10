@@ -18,7 +18,6 @@
       "sharp"
     ],
     "overrides": {
-      "undici": ">=6.24.0",
       "minimatch": ">=9.0.7",
       "picomatch": ">=2.3.2",
       "glob": ">=10.5.0",
