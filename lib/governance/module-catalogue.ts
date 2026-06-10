@@ -42,7 +42,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "National", name: "DBT / APBS", repoRef: "lib/integrations/live/dbt.ts", status: "partial" },
   { tier: "National", name: "Bhashini Language Stack", repoRef: "lib/integrations/live/bhashini.ts", status: "partial" },
   { tier: "National", name: "PARAKH Self-Assessment", repoRef: "lib/diagnostic/index.ts", status: "partial" },
-  { tier: "National", name: "CPGRAMS Federation", repoRef: "", status: "pending" },
+  { tier: "National", name: "CPGRAMS Federation", repoRef: "lib/grievance/cpgrams.ts", status: "built" },
 
   // State tier
   { tier: "State", name: "Compliance Dashboard", repoRef: "lib/compliance/index.ts", status: "built" },
