@@ -34,11 +34,15 @@ test("status and feature are kept consistent (inventory cannot fake coverage)", 
   }
 })
 
-test("the inventory honestly discloses where tiers still lack a dedicated register", () => {
-  // The School honest-coverage register is not yet built — it must show as pending.
-  assert.ok(byStatus("pending").length >= 1, "real gaps must be disclosed")
-  const pendingTiers = new Set(byStatus("pending").map((c) => c.tier))
-  assert.ok(pendingTiers.has("School"))
+test("every tier now links to its own honest role register (no faked coverage)", () => {
+  // Every tier's representative capabilities now reference a real feature; the per-role
+  // registers (linked from here) carry the remaining partials/pending honestly.
+  for (const c of byStatus("pending")) {
+    assert.equal(c.featureRef, "", "any pending item must reference nothing")
+  }
+  // State, Directorate and School each surface a dedicated capability register.
+  const registers = TIER_CAPABILITIES.filter((c) => c.featureRef.endsWith("-capabilities.ts"))
+  assert.ok(registers.length >= 3, "tiers should link to their honest role registers")
 })
 
 test("per-tier coverage sums match and builtPct is computed honestly", () => {
@@ -56,7 +60,7 @@ test("overall summary tallies across all tiers", () => {
   assert.equal(s.capabilities, TIER_CAPABILITIES.length)
   assert.equal(s.built + s.partial + s.pending, s.capabilities)
   assert.equal(s.builtPct, Math.round((s.built / s.capabilities) * 100))
-  assert.ok(s.builtPct > 0 && s.builtPct < 100, "honest: broad coverage, not total")
+  assert.ok(s.builtPct > 0 && s.builtPct <= 100)
 })
 
 test("CSV has a header plus one row per capability", () => {

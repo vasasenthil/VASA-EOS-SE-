@@ -40,9 +40,10 @@ export default function TierCoveragePage() {
           The omission-free answer to &ldquo;are general/technical/functional features built across State/Executive,
           every Directorate, District, Block, Cluster, School and the Citizen?&rdquo; — an inspectable inventory, not a
           claim. Each tier maps representative capabilities to the in-repo feature that delivers them, honestly marked
-          built/partial/pending. It does not pretend completeness: {s.pending} capabilities are openly pending (the
-          Director and School honest-coverage registers are not yet built). Overall {s.built} of {s.capabilities} built
-          ({s.builtPct}%) across {s.tiers} tiers.
+          built/partial/pending. Every tier is now represented with core features and its own honest capability register
+          — {s.built} of {s.capabilities} built ({s.builtPct}%) across {s.tiers} tiers. This measures tier representation,
+          not total completion: drill into each role register (Secretary, Minister, Director, School Head) for the
+          remaining per-role partials and pending items.
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">

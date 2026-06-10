@@ -72,7 +72,7 @@ export const TIER_CAPABILITIES: TierCapability[] = [
   { tier: "School", role: "Principal", dimension: "functional", responsibility: "Attendance & student information", featureRef: "lib/attendance/index.ts", route: "/attendance", status: "built" },
   { tier: "School", role: "Principal", dimension: "functional", responsibility: "School compliance", featureRef: "app/principal/compliance/page.tsx", route: "/principal/compliance", status: "built" },
   { tier: "School", role: "Principal", dimension: "functional", responsibility: "Fee management", featureRef: "app/principal/fee-management/page.tsx", route: "/principal/fee-management", status: "built" },
-  { tier: "School", role: "Principal", dimension: "general", responsibility: "School-head honest capability register (like the Secretary's)", featureRef: "", route: "", status: "pending" },
+  { tier: "School", role: "Principal", dimension: "general", responsibility: "School-head honest capability register (like the Secretary's)", featureRef: "lib/governance/principal-capabilities.ts", route: "/governance/principal-capabilities", status: "built" },
 
   // Citizen — Public / Parent
   { tier: "Citizen", role: "Public / Parent", dimension: "general", responsibility: "Citizen transparency dashboard", featureRef: "app/public/dashboard/page.tsx", route: "/public/dashboard", status: "built" },
