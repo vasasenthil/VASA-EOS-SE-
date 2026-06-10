@@ -27,6 +27,7 @@ export default function SecretaryDashboardPage() {
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },
         { label: "School Recognition Oversight", href: "/governance/recognition-oversight" },
+        { label: "Cadre / PTR Rationalisation", href: "/governance/cadre-rationalisation" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
       ]}
     />

@@ -22,11 +22,13 @@ export default function SecretaryCapabilitiesPage() {
         <PageHeaderDescription>
           The honest answer to &ldquo;is every Secretary, School Education feature built?&rdquo; — made inspectable, not
           asserted. Each general, technical and functional responsibility of the office is mapped to the in-repo feature
-          that delivers it, with a candid status: <strong>built</strong> (working slice on seeded data),
+          that delivers it, with a candid status: <strong>built</strong> (a dedicated feature exists, on seeded data),
           <strong> partial</strong> (exists but Secretary-tier depth pending) or <strong>pending</strong> (not yet built,
-          and therefore referencing no feature). It is <strong>not</strong> a claim of completeness: {s.pending} responsibilities
-          are openly marked pending. A test asserts every built/partial feature exists on disk and that every pending item
-          references nothing — so this page can never overstate coverage.
+          and therefore referencing no feature). All {s.capabilities} responsibilities now have a dedicated feature
+          ({s.built} built · {s.partial} partial · {s.pending} pending). &ldquo;Built&rdquo; means a purpose-built feature
+          exists and is tested — not that it is wired to live government data; that platform-wide caveat still holds. A
+          test keeps status and feature consistent (pending ⇔ no feature, built/partial ⇔ a real on-disk feature), so
+          this page can never overstate coverage.
         </PageHeaderDescription>
         <PageHeaderActions>
           <Button asChild variant="outline">

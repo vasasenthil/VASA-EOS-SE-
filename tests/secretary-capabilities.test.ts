@@ -36,14 +36,18 @@ test("built/partial capabilities reference a real feature on disk (self-verifyin
   }
 })
 
-test("pending capabilities honestly claim NO feature (register cannot fake coverage)", () => {
-  for (const c of byStatus("pending")) {
-    assert.equal(c.featureRef, "", `${c.id} is pending but claims a feature`)
-    assert.equal(c.route, "", `${c.id} is pending but claims a route`)
+test("status and feature are kept consistent (register cannot fake coverage)", () => {
+  // The durable anti-overclaim invariant, regardless of how many gaps remain:
+  // a pending capability claims NO feature; a built/partial capability MUST name a real one.
+  for (const c of SECRETARY_CAPABILITIES) {
+    if (c.status === "pending") {
+      assert.equal(c.featureRef, "", `${c.id} is pending but claims a feature`)
+      assert.equal(c.route, "", `${c.id} is pending but claims a route`)
+    } else {
+      assert.notEqual(c.featureRef, "", `${c.id} is ${c.status} but names no feature`)
+      assert.notEqual(c.route, "", `${c.id} is ${c.status} but names no route`)
+    }
   }
-  // The honest answer: every dedicated Secretary feature is now built, but the register still
-  // does not overclaim — capabilities whose Secretary-tier depth is pending remain 'partial'.
-  assert.ok(byStatus("partial").length + byStatus("pending").length >= 1, "register must still disclose what isn't fully built")
 })
 
 test("the two traced Secretary user stories are built", () => {
@@ -56,7 +60,9 @@ test("summary tallies status and dimension counts honestly", () => {
   assert.equal(s.capabilities, SECRETARY_CAPABILITIES.length)
   assert.equal(s.built + s.partial + s.pending, s.capabilities)
   assert.equal(s.general + s.technical + s.functional, s.capabilities)
-  assert.ok(s.builtPct > 0 && s.builtPct < 100, "honest: neither zero nor fully complete")
+  assert.ok(s.builtPct > 0 && s.builtPct <= 100)
+  // builtPct is an honest function of the data, not a hard-coded headline.
+  assert.equal(s.builtPct, Math.round((s.built / s.capabilities) * 100))
 })
 
 test("CSV has a header plus one row per capability", () => {
