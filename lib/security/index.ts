@@ -27,14 +27,31 @@ export const ZERO_TRUST_PRINCIPLES: string[] = [
   "Data-centric — encryption everywhere",
 ]
 
-// Applied to every response (middleware.ts). A strict CSP is documented as the
-// target but not enforced here to avoid breaking framework inline assets.
+// Applied to every response (middleware.ts).
+//
+// CSP posture (honest): we enforce the four high-value directives that add real OWASP
+// protection without any risk of blocking legitimate Next.js assets — frame-ancestors
+// (clickjacking), base-uri (base-tag injection), object-src (plugin XSS) and form-action
+// (form hijacking / data exfil). default-src is kept permissive so no resource the app
+// already loads is blocked. A strict per-type, nonce-based script-src is the documented
+// next step — it needs nonce wiring through the App Router and live-browser testing, so it
+// is not enabled blind here.
+const CSP = [
+  "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https: wss:",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "form-action 'self'",
+].join("; ")
+
 export const SECURITY_HEADERS: { name: string; value: string }[] = [
+  { name: "Content-Security-Policy", value: CSP },
   { name: "X-Frame-Options", value: "DENY" },
   { name: "X-Content-Type-Options", value: "nosniff" },
   { name: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { name: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { name: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { name: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { name: "X-DNS-Prefetch-Control", value: "off" },
 ]
 
