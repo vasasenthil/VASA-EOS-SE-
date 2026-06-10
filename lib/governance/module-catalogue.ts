@@ -60,7 +60,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Directorate", name: "TN 1973 Act Recognition", repoRef: "lib/recognition/index.ts", status: "built" },
   { tier: "Directorate", name: "Quality Indicator Tracking", repoRef: "lib/quality/index.ts", status: "built" },
   { tier: "Directorate", name: "Teacher Deployment Optimisation", repoRef: "lib/postings/cadre.ts", status: "built" },
-  { tier: "Directorate", name: "NPST Competency Tracking", repoRef: "lib/cpd/index.ts", status: "partial" },
+  { tier: "Directorate", name: "NPST Competency Tracking", repoRef: "lib/cpd/npst.ts", status: "built" },
   { tier: "Directorate", name: "Need-weighted Resource Allocation", repoRef: "lib/governance/resource-allocation.ts", status: "built" },
 
   // District tier
