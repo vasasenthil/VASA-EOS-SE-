@@ -16,6 +16,9 @@ import {
   Wrench,
   Bell,
   ArrowUpRight,
+  Vote,
+  Stamp,
+  FilePlus,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -95,6 +98,17 @@ const announcements = [
   { text: "NIPUN Bharat assessment: Grade III & V — April 10", date: "3 days ago", type: "important" },
 ]
 
+// --- Workflow create entry points the school head initiates ---
+// Each routes to a rich, validated create form that enters a real multi-tier
+// approval workflow with a tamper-evident audit trail.
+const workflowActions = [
+  { label: "Raise Maintenance Ticket", href: "/maintenance-approvals/new", icon: Wrench, color: "bg-orange-100 text-orange-700" },
+  { label: "Propose SMC Resolution", href: "/smc-approvals/new", icon: Vote, color: "bg-purple-100 text-purple-700" },
+  { label: "File Recognition / Renewal", href: "/recognition-approvals/new", icon: Stamp, color: "bg-indigo-100 text-indigo-700" },
+  { label: "New RTE Admission", href: "/admissions-approvals/new", icon: GraduationCap, color: "bg-green-100 text-green-700" },
+  { label: "Apply for Leave", href: "/leave-approvals/new", icon: CalendarDays, color: "bg-blue-100 text-blue-700" },
+]
+
 function RiskBadge({ risk }: { risk: string }) {
   const map: Record<string, string> = {
     High: "bg-red-100 text-red-700",
@@ -154,6 +168,34 @@ export default function PrincipalDashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Quick Actions — initiate a real, audited workflow */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <FilePlus className="h-4 w-4 text-blue-600" /> Quick Actions
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Initiate a workflow — each opens a validated form that enters a multi-tier approval with a full audit trail.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {workflowActions.map((a) => (
+              <Link
+                key={a.label}
+                href={a.href}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-lg border hover:shadow-sm transition-shadow text-center"
+              >
+                <div className={`w-9 h-9 flex items-center justify-center rounded-lg ${a.color}`}>
+                  <a.icon className="h-4 w-4" />
+                </div>
+                <span className="text-xs font-medium text-gray-700 leading-tight">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Class-wise Attendance */}
@@ -347,8 +389,10 @@ export default function PrincipalDashboardPage() {
                   <RiskBadge risk={issue.severity} />
                 </div>
               ))}
-              <Button variant="outline" size="sm" className="w-full text-xs mt-1">
-                <ArrowUpRight className="h-3 w-3 mr-1" /> Report New Issue
+              <Button asChild variant="outline" size="sm" className="w-full text-xs mt-1">
+                <Link href="/maintenance-approvals/new">
+                  <ArrowUpRight className="h-3 w-3 mr-1" /> Report New Issue
+                </Link>
               </Button>
             </CardContent>
           </Card>
