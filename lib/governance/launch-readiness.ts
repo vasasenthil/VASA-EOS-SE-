@@ -33,11 +33,11 @@ export interface ReadinessCriterion {
 
 export const READINESS_CRITERIA: ReadinessCriterion[] = [
   // Real data — the central gap (scoped state-wide, not a pilot)
-  { id: "udise-registry", category: "Real data", criterion: "Real UDISE+/EMIS school registry loaded (state-wide)", status: "not-started", note: "Demo seeds only; needs the actual ~50k-school registry", evidenceRef: "" },
+  { id: "udise-registry", category: "Real data", criterion: "Real UDISE+/EMIS school registry loaded (state-wide)", status: "not-started", note: "Ingestion adapter is ready (see ingestion-adapter); still needs the actual ~50k-school export to be supplied and loaded", evidenceRef: "" },
   { id: "sis-records", category: "Real data", criterion: "Real student records (SIS) at scale (~1 crore)", status: "not-started", note: "7 seed students; needs real enrolment import", evidenceRef: "" },
   { id: "teacher-rosters", category: "Real data", criterion: "Real teacher rosters & sanctioned posts", status: "not-started", note: "Illustrative cadre data only", evidenceRef: "" },
   { id: "data-mous", category: "Real data", criterion: "Data-sharing MoUs with TN departments", status: "not-started", note: "Organisational; not a code task", evidenceRef: "" },
-  { id: "ingestion-adapter", category: "Real data", criterion: "Ingestion adapter + schema mapping + validation", status: "not-started", note: "No CSV/API ingestion pipeline built yet", evidenceRef: "" },
+  { id: "ingestion-adapter", category: "Real data", criterion: "Ingestion adapter + schema mapping + validation + idempotent load", status: "done", note: "Schema-driven CSV pipeline with validation and idempotent upsert; UDISE+ school adapter is the reference template, tested", evidenceRef: "lib/ingestion/index.ts" },
 
   // Live integrations
   { id: "india-stack-live", category: "Live integrations", criterion: "India-Stack live (APAAR/Aadhaar/DigiLocker/DBT/UDISE+)", status: "partial", note: "Live HTTP adapters exist behind the seam; need credentials/MoUs/sandboxes", evidenceRef: "lib/integrations/live" },
