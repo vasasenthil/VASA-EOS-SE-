@@ -25,6 +25,7 @@ export default function SecretaryDashboardPage() {
         { label: "Budget Sanction & Re-appropriation", href: "/governance/budget-sanction" },
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
+        { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
       ]}
     />

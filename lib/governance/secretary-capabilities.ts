@@ -45,7 +45,7 @@ export const SECRETARY_CAPABILITIES: SecretaryCapability[] = [
   { id: "scheme-impact", dimension: "functional", responsibility: "Scheme impact dashboards (Samagra Shiksha, PM POSHAN, etc.)", featureRef: "app/schemes/page.tsx", route: "/schemes", status: "built" },
   { id: "policies-circulars", dimension: "functional", responsibility: "Policies & circulars issuance and tracking", featureRef: "app/policies/page.tsx", route: "/policies", status: "built" },
   { id: "risk-register", dimension: "functional", responsibility: "Statewide risk register of implementation challenges", featureRef: "app/tracking/challenges/page.tsx", route: "/tracking/challenges", status: "built" },
-  { id: "grievance-disposal", dimension: "functional", responsibility: "State-tier grievance escalation & disposal", featureRef: "lib/grievance/index.ts", route: "/grievance", status: "partial" },
+  { id: "grievance-disposal", dimension: "functional", responsibility: "State-tier grievance escalation & disposal", featureRef: "lib/grievance/disposal.ts", route: "/governance/grievance-disposal", status: "built" },
   { id: "recognition-oversight", dimension: "functional", responsibility: "School recognition / approvals oversight", featureRef: "lib/recognition/index.ts", route: "/recognition", status: "partial" },
   { id: "cadre-postings", dimension: "functional", responsibility: "Cadre management & transfer-posting policy at scale", featureRef: "lib/postings/index.ts", route: "/postings", status: "partial" },
   { id: "budget-sanction", dimension: "functional", responsibility: "Budget sanction, allocation & re-appropriation authority", featureRef: "lib/finance/sanction.ts", route: "/governance/budget-sanction", status: "built" },
