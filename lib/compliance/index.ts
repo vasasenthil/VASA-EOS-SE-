@@ -31,6 +31,7 @@ import { leakageSummary } from "@/lib/compliance/leakage"
 import { safeguardingSummary } from "@/lib/safety/safeguarding"
 import { examIntegritySummary } from "@/lib/exams/integrity"
 import { greenSummary } from "@/lib/esg/green-school"
+import { finTransparencySummary } from "@/lib/finance/transparency"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -72,6 +73,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const equity = equitySummary()
   const rte = rteEntitlementSummary()
   const leakage = leakageSummary()
+  const finTransparency = finTransparencySummary()
   const safeguarding = safeguardingSummary()
   const examIntegrity = examIntegritySummary()
   const green = greenSummary()
@@ -102,6 +104,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "equity", name: "12 equity dimensions", pillar: "Accessibility", registerRef: "lib/compliance/equity.ts", route: "/governance/equity", items: equity.dimensions, headline: `${equity.dimensions} dimensions · ${equity.implemented} implemented · ${equity.articles} constitutional Articles` },
     { id: "rte-entitlements", name: "RTE Act entitlements", pillar: "Accessibility", registerRef: "lib/compliance/rte-entitlements.ts", route: "/governance/rte-entitlements", items: rte.entitlements, headline: `${rte.entitlements} entitlements · ${rte.enforced} enforced · ${rte.sectionsCovered} RTE sections` },
     { id: "leakage", name: "Welfare leakage prevention", pillar: "Data", registerRef: "lib/compliance/leakage.ts", route: "/governance/leakage", items: leakage.controls, headline: `${leakage.controls} controls · ${leakage.enforced} enforced · ${leakage.targetLeakageReductionPct}% target reduction` },
+    { id: "financial-transparency", name: "Financial transparency", pillar: "Data", registerRef: "lib/finance/transparency.ts", route: "/governance/financial-transparency", items: finTransparency.controls, headline: `${finTransparency.controls} principles · ${finTransparency.enforced} enforced · ${finTransparency.frameworksCovered} frameworks` },
     { id: "safeguarding", name: "Child safeguarding (POCSO)", pillar: "Security", registerRef: "lib/safety/safeguarding.ts", route: "/governance/safeguarding", items: safeguarding.controls, headline: `${safeguarding.controls} controls · ${safeguarding.enforced} enforced · ${safeguarding.statutesCovered} statutes discharged` },
     { id: "exam-integrity", name: "Examination integrity", pillar: "Security", registerRef: "lib/exams/integrity.ts", route: "/governance/exam-integrity", items: examIntegrity.controls, headline: `${examIntegrity.controls} controls · ${examIntegrity.enforced} enforced · ${examIntegrity.stagesCovered} lifecycle stages guarded` },
     { id: "green-school", name: "Green-school sustainability", pillar: "Operations", registerRef: "lib/esg/green-school.ts", route: "/governance/green-school", items: green.commitments, headline: `${green.commitments} commitments · ${green.enforced} enforced · ${green.sdgsCovered} SDGs advanced` },

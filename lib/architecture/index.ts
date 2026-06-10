@@ -72,6 +72,7 @@ export const PILLARS: Pillar[] = [
       { name: "Durable persistence seam", ref: "lib/persistence" },
       { name: "Hash-chained audit ledger", ref: "lib/audit" },
       { name: "Welfare leakage-prevention controls (vector→control)", ref: "lib/compliance/leakage.ts" },
+      { name: "Financial transparency & accountability (principle→mechanism)", ref: "lib/finance/transparency.ts" },
       { name: "Snapshot stores", ref: "lib/results/store.ts" },
     ],
     status: "partial",
