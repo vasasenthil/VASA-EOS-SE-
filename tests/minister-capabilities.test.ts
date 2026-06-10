@@ -41,10 +41,11 @@ test("status and feature are kept consistent (register cannot fake coverage)", (
   }
 })
 
-test("the register honestly discloses executive gaps on day one", () => {
-  assert.ok(byStatus("pending").length >= 1, "Minister surface should disclose real gaps")
-  assert.equal(capabilityById("scheme-launch")?.status, "pending")
+test("the register honestly discloses remaining executive gaps", () => {
+  assert.ok(byStatus("pending").length >= 1, "Minister surface should still disclose real gaps")
   assert.equal(capabilityById("public-communication")?.status, "pending")
+  // scheme-launch has been built out — it now references a real feature.
+  assert.equal(capabilityById("scheme-launch")?.status, "built")
 })
 
 test("the Minister reuses cross-role features built for the office", () => {

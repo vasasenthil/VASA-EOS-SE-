@@ -44,7 +44,7 @@ export const MINISTER_CAPABILITIES: MinisterCapability[] = [
   { id: "assembly-answers", dimension: "functional", responsibility: "Assembly floor Q&A (the Minister answers)", featureRef: "lib/governance/assembly-briefing.ts", route: "/governance/assembly-briefing", status: "built" },
   { id: "budget-priorities", dimension: "functional", responsibility: "Executive budget priorities & sanction view", featureRef: "lib/finance/sanction.ts", route: "/governance/budget-sanction", status: "partial" },
   { id: "constituency-grievance", dimension: "functional", responsibility: "Constituency grievance redress", featureRef: "lib/grievance/index.ts", route: "/grievance", status: "partial" },
-  { id: "scheme-launch", dimension: "functional", responsibility: "New welfare-scheme design & launch tooling", featureRef: "", route: "", status: "pending" },
+  { id: "scheme-launch", dimension: "functional", responsibility: "New welfare-scheme design & launch tooling", featureRef: "lib/governance/scheme-launch.ts", route: "/governance/scheme-launch", status: "built" },
   { id: "public-communication", dimension: "functional", responsibility: "Public address / press & citizen messaging", featureRef: "", route: "", status: "pending" },
 ]
 
