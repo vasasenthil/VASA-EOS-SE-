@@ -110,6 +110,7 @@ export const PILLARS: Pillar[] = [
       { name: "SLI catalogue + error budgets (SLO-bound)", ref: "lib/ops-posture/sli.ts" },
       { name: "DR runbook + on-call/SLA (per-scenario procedures)", ref: "lib/ops-posture/runbook.ts" },
       { name: "Tracing seam (OTLP export)", ref: "lib/tracing" },
+      { name: "Green-school sustainability commitments (commitment→mechanism, SDG-mapped)", ref: "lib/esg/green-school.ts" },
     ],
     status: "partial",
     gap: "Live OTel collector + log shipping/SIEM, and a DR drill that *exercises* the runbook (runbook + on-call/SLA now modelled).",
