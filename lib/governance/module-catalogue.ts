@@ -53,7 +53,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "Welfare-scheme launch & budget priorities", repoRef: "lib/governance/scheme-launch.ts", status: "built" },
   { tier: "State", name: "GeM Procurement", repoRef: "lib/procurement/index.ts", status: "partial" },
   { tier: "State", name: "Grants & Finance Management", repoRef: "lib/finance/index.ts", status: "partial" },
-  { tier: "State", name: "Legal Case Management", repoRef: "", status: "pending" },
+  { tier: "State", name: "Legal Case Management", repoRef: "lib/legal/index.ts", status: "built" },
 
   // Directorate tier
   { tier: "Directorate", name: "DSE / DGE / SCERT Operations", repoRef: "lib/governance/directorates.ts", status: "built" },
