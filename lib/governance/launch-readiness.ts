@@ -46,7 +46,7 @@ export const READINESS_CRITERIA: ReadinessCriterion[] = [
   // Security & privacy
   { id: "security-audit", category: "Security & privacy", criterion: "Independent security audit (SAST/DAST/pentest)", status: "not-started", note: "Not performed", evidenceRef: "" },
   { id: "production-auth", category: "Security & privacy", criterion: "Production auth (SSO/MFA), not the demo password", status: "partial", note: "Auth seam + demo fallback exist; real IdP/MFA not wired", evidenceRef: "lib/demo-auth/index.ts" },
-  { id: "secrets-mgmt", category: "Security & privacy", criterion: "Secrets management (Vault/HSM)", status: "not-started", note: "Env-var secrets only", evidenceRef: "" },
+  { id: "secrets-mgmt", category: "Security & privacy", criterion: "Secrets management (Vault/HSM)", status: "partial", note: "Provider-abstracted secrets seam with redaction + presence-only report (env-backed); real Vault/HSM provisioning pending", evidenceRef: "lib/secrets/index.ts" },
   { id: "zero-trust-infra", category: "Security & privacy", criterion: "Zero-trust infra (WAF/SIEM/mTLS)", status: "not-started", note: "Documented; not provisioned", evidenceRef: "" },
   { id: "dpdp-audit", category: "Security & privacy", criterion: "DPDP compliance audit (children's data)", status: "not-started", note: "Consent/PII modelled; independent audit pending", evidenceRef: "" },
   { id: "audit-ledger", category: "Security & privacy", criterion: "Tamper-evident audit ledger", status: "done", note: "Hash-chained, verified, tested", evidenceRef: "lib/audit/trail.ts" },
@@ -76,7 +76,7 @@ export const READINESS_CRITERIA: ReadinessCriterion[] = [
 
   // Quality & testing
   { id: "unit-coverage", category: "Quality & testing", criterion: "Automated tests + enforced coverage gate", status: "done", note: "900+ tests, ~97% lines, CI-gated", evidenceRef: "lib/compliance/index.ts" },
-  { id: "e2e-tests", category: "Quality & testing", criterion: "End-to-end tests beyond the unit suite", status: "not-started", note: "No browser/E2E suite", evidenceRef: "" },
+  { id: "e2e-tests", category: "Quality & testing", criterion: "End-to-end tests beyond the unit suite", status: "partial", note: "Cross-module integration scenarios (ingest→join→reload, self-assessment consistency); a browser/Playwright E2E suite is still pending", evidenceRef: "tests/e2e-scenario.test.ts" },
 ]
 
 const SCORE: Record<ReadinessStatus, number> = { done: 1, partial: 0.5, "not-started": 0 }
