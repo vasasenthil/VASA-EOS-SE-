@@ -125,6 +125,7 @@ export const PILLARS: Pillar[] = [
       { name: "Multi-channel & IVR voice access catalogue", ref: "lib/accessibility/channels.ts" },
       { name: "Last-mile delivery posture (offline/2G/solar/dialects)", ref: "lib/accessibility/delivery.ts" },
       { name: "12 equity dimensions → constitutional Articles", ref: "lib/compliance/equity.ts" },
+      { name: "RTE Act entitlements → enforcement (entitlement→mechanism)", ref: "lib/compliance/rte-entitlements.ts" },
       { name: "Bhashini language port (translate/TTS/ASR)", ref: "lib/integrations/live/bhashini.ts" },
     ],
     status: "partial",

@@ -26,6 +26,7 @@ import { languageSummary } from "@/lib/i18n/languages"
 import { channelSummary } from "@/lib/accessibility/channels"
 import { deliverySummary } from "@/lib/accessibility/delivery"
 import { equitySummary } from "@/lib/compliance/equity"
+import { rteEntitlementSummary } from "@/lib/compliance/rte-entitlements"
 import { leakageSummary } from "@/lib/compliance/leakage"
 import { safeguardingSummary } from "@/lib/safety/safeguarding"
 import { lineageSummary } from "@/lib/data/lineage"
@@ -67,6 +68,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const chan = channelSummary()
   const delivery = deliverySummary()
   const equity = equitySummary()
+  const rte = rteEntitlementSummary()
   const leakage = leakageSummary()
   const safeguarding = safeguardingSummary()
   const lineage = lineageSummary()
@@ -94,6 +96,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "channels", name: "Multi-channel & IVR", pillar: "Accessibility", registerRef: "lib/accessibility/channels.ts", route: "/accessibility/channels", items: chan.channels, headline: `${chan.ivrFlows} IVR flows · ${chan.noLiteracyChannels} no-literacy channels` },
     { id: "delivery", name: "Last-mile delivery posture", pillar: "Accessibility", registerRef: "lib/accessibility/delivery.ts", route: "/accessibility/delivery", items: delivery.capabilities, headline: `${delivery.barriersCovered} barriers · ${delivery.geographies} geographies · ${delivery.tamilDialects} dialects` },
     { id: "equity", name: "12 equity dimensions", pillar: "Accessibility", registerRef: "lib/compliance/equity.ts", route: "/governance/equity", items: equity.dimensions, headline: `${equity.dimensions} dimensions · ${equity.implemented} implemented · ${equity.articles} constitutional Articles` },
+    { id: "rte-entitlements", name: "RTE Act entitlements", pillar: "Accessibility", registerRef: "lib/compliance/rte-entitlements.ts", route: "/governance/rte-entitlements", items: rte.entitlements, headline: `${rte.entitlements} entitlements · ${rte.enforced} enforced · ${rte.sectionsCovered} RTE sections` },
     { id: "leakage", name: "Welfare leakage prevention", pillar: "Data", registerRef: "lib/compliance/leakage.ts", route: "/governance/leakage", items: leakage.controls, headline: `${leakage.controls} controls · ${leakage.enforced} enforced · ${leakage.targetLeakageReductionPct}% target reduction` },
     { id: "safeguarding", name: "Child safeguarding (POCSO)", pillar: "Security", registerRef: "lib/safety/safeguarding.ts", route: "/governance/safeguarding", items: safeguarding.controls, headline: `${safeguarding.controls} controls · ${safeguarding.enforced} enforced · ${safeguarding.statutesCovered} statutes discharged` },
     { id: "data-lineage", name: "Medallion data lineage", pillar: "Data", registerRef: "lib/data/lineage.ts", route: "/data-lineage", items: lineage.datasets, headline: `${lineage.bronze}/${lineage.silver}/${lineage.gold} bronze/silver/gold · ${lineage.piiDatasets} PII` },
