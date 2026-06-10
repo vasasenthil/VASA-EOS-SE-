@@ -24,6 +24,7 @@ export default async function DirectorDashboardPage() {
         { label: "Quality & Inspection", href: "/quality" },
         { label: "Reports & Analytics", href: "/tracking/reports" },
         { label: "Governance Overview", href: "/governance/dashboard" },
+        { label: "My Capability Coverage (honest)", href: "/governance/director-capabilities" },
       ]}
     />
   )

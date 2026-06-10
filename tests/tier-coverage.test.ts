@@ -35,10 +35,10 @@ test("status and feature are kept consistent (inventory cannot fake coverage)", 
 })
 
 test("the inventory honestly discloses where tiers still lack a dedicated register", () => {
-  // We have NOT yet built Director/School honest-coverage registers — they must show as pending.
+  // The School honest-coverage register is not yet built — it must show as pending.
   assert.ok(byStatus("pending").length >= 1, "real gaps must be disclosed")
   const pendingTiers = new Set(byStatus("pending").map((c) => c.tier))
-  assert.ok(pendingTiers.has("Directorate") && pendingTiers.has("School"))
+  assert.ok(pendingTiers.has("School"))
 })
 
 test("per-tier coverage sums match and builtPct is computed honestly", () => {

@@ -47,7 +47,7 @@ export const TIER_CAPABILITIES: TierCapability[] = [
   { tier: "Directorate", role: "Director", dimension: "functional", responsibility: "School recognition pipeline (TN 1973)", featureRef: "lib/recognition/index.ts", route: "/recognition", status: "built" },
   { tier: "Directorate", role: "Director", dimension: "functional", responsibility: "Quality & inspection oversight", featureRef: "lib/quality/index.ts", route: "/quality", status: "built" },
   { tier: "Directorate", role: "Director", dimension: "functional", responsibility: "Policy-implementation (NEP) tracking", featureRef: "lib/tracking/analytics.ts", route: "/tracking/dashboard", status: "built" },
-  { tier: "Directorate", role: "Director", dimension: "general", responsibility: "Director honest capability register (like the Secretary's)", featureRef: "", route: "", status: "pending" },
+  { tier: "Directorate", role: "Director", dimension: "general", responsibility: "Director honest capability register (like the Secretary's)", featureRef: "lib/governance/director-capabilities.ts", route: "/governance/director-capabilities", status: "built" },
 
   // District — DEO / CEO
   { tier: "District", role: "DEO / CEO", dimension: "general", responsibility: "District KPI dashboard & heat maps", featureRef: "app/deo/dashboard/page.tsx", route: "/deo/dashboard", status: "built" },
