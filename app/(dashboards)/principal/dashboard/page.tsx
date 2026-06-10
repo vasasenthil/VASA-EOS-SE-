@@ -28,6 +28,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import { CHART_COLORS } from "@/components/charts/chart-colors"
+import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
+import { currentStep } from "@/lib/workflow"
+import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
 // --- Mock School Operational Data (Module 70.4) ---
 const schoolStats = [
@@ -83,13 +86,6 @@ const complianceItems = [
   { item: "Teacher CPD Hours (Q1)", status: "In Progress" },
 ]
 
-// --- Infrastructure Issues ---
-const infraIssues = [
-  { item: "Girls' toilet — tap broken", raised: "3 days ago", severity: "High" },
-  { item: "Lab projector not working", raised: "1 week ago", severity: "Medium" },
-  { item: "Classroom 12 — roof leak", raised: "2 weeks ago", severity: "High" },
-]
-
 // --- Announcements ---
 const announcements = [
   { text: "Board Exam Date Sheet released — Class X & XII", date: "Today", type: "important" },
@@ -126,13 +122,18 @@ function RiskBadge({ risk }: { risk: string }) {
   )
 }
 
-export default function PrincipalDashboardPage() {
+export default async function PrincipalDashboardPage() {
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   })
+
+  // Live: open maintenance tickets raised through the workflow (the same ones
+  // the "Raise Maintenance Ticket" / "Report New Issue" actions create).
+  const tickets = await listTicketFlowsAction()
+  const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-8 space-y-6">
@@ -141,7 +142,7 @@ export default function PrincipalDashboardPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Principal&apos;s Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Govt. Senior Secondary School, Delhi · {today}
+            Govt. Higher Secondary School, Chennai · {today}
           </p>
         </div>
         <div className="flex gap-2">
@@ -375,20 +376,39 @@ export default function PrincipalDashboardPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Wrench className="h-4 w-4 text-orange-600" /> Infrastructure Issues
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Wrench className="h-4 w-4 text-orange-600" /> Infrastructure Issues
+                </CardTitle>
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
+              </div>
+              <CardDescription className="text-xs">
+                {openTickets.length} open maintenance ticket{openTickets.length === 1 ? "" : "s"} in the workflow
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {infraIssues.map((issue, i) => (
-                <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg border bg-orange-50 text-xs">
-                  <div>
-                    <p className="font-medium text-gray-800">{issue.item}</p>
-                    <p className="text-muted-foreground">Raised: {issue.raised}</p>
-                  </div>
-                  <RiskBadge risk={issue.severity} />
-                </div>
-              ))}
+              {openTickets.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">
+                  No open tickets. Raise one below and it will appear here, in the workflow inbox, and in the audit trail.
+                </p>
+              ) : (
+                openTickets.slice(0, 5).map((t) => {
+                  const step = currentStep(MAINTENANCE_WORKFLOW, t.instance)
+                  const where = t.details?.location ? `${t.details.location} · ` : ""
+                  return (
+                    <div key={t.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg border bg-orange-50 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800 truncate">{where}{t.category}</p>
+                        <p className="text-muted-foreground truncate">{t.description}</p>
+                        <p className="text-orange-700 mt-0.5">Awaiting: {step?.name ?? "—"}</p>
+                      </div>
+                      <RiskBadge risk={t.priority.charAt(0).toUpperCase() + t.priority.slice(1)} />
+                    </div>
+                  )
+                })
+              )}
               <Button asChild variant="outline" size="sm" className="w-full text-xs mt-1">
                 <Link href="/maintenance-approvals/new">
                   <ArrowUpRight className="h-3 w-3 mr-1" /> Report New Issue
