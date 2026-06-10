@@ -37,6 +37,7 @@ import { ministerCapabilitySummary } from "@/lib/governance/minister-capabilitie
 import { directorCapabilitySummary } from "@/lib/governance/director-capabilities"
 import { principalCapabilitySummary } from "@/lib/governance/principal-capabilities"
 import { tierCoverageSummary } from "@/lib/governance/tier-coverage"
+import { directorateSummary } from "@/lib/governance/directorates"
 import { lineageSummary } from "@/lib/data/lineage"
 import { standardsSummary } from "@/lib/data/standards"
 import { matrixSummary } from "@/lib/access/matrix"
@@ -65,6 +66,7 @@ export function complianceDomains(): ComplianceDomain[] {
   const directorCap = directorCapabilitySummary()
   const principalCap = principalCapabilitySummary()
   const tierCoverage = tierCoverageSummary()
+  const directorates = directorateSummary()
   const tenancy = tenancySummary()
   const sovereignty = sovereigntySummary()
   const ndear = ndearSummary()
@@ -100,6 +102,7 @@ export function complianceDomains(): ComplianceDomain[] {
     { id: "director-capabilities", name: "Director capability coverage", pillar: "All pillars", registerRef: "lib/governance/director-capabilities.ts", route: "/governance/director-capabilities", items: directorCap.capabilities, headline: `${directorCap.built} built · ${directorCap.partial} partial · ${directorCap.pending} pending (${directorCap.builtPct}% built)` },
     { id: "principal-capabilities", name: "School-head capability coverage", pillar: "All pillars", registerRef: "lib/governance/principal-capabilities.ts", route: "/governance/principal-capabilities", items: principalCap.capabilities, headline: `${principalCap.built} built · ${principalCap.partial} partial · ${principalCap.pending} pending (${principalCap.builtPct}% built)` },
     { id: "tier-coverage", name: "Org-chart coverage (all tiers)", pillar: "Multi-Tenancy", registerRef: "lib/governance/tier-coverage.ts", route: "/governance/tier-coverage", items: tierCoverage.capabilities, headline: `${tierCoverage.built} built · ${tierCoverage.partial} partial · ${tierCoverage.pending} pending across ${tierCoverage.tiers} tiers (${tierCoverage.builtPct}%)` },
+    { id: "directorates", name: "The seven directorates", pillar: "Multi-Tenancy", registerRef: "lib/governance/directorates.ts", route: "/governance/directorates", items: directorates.directorates, headline: `${directorates.directorates} directorates · ${directorates.supported} supported · ${directorates.modulesLinked} modules linked` },
     { id: "tenancy", name: "Sovereign tenancy tiers", pillar: "Multi-Tenancy", registerRef: "lib/tenancy/catalogue.ts", route: "/governance/tenancy", items: tenancy.tiers, headline: `${tenancy.tiers} tiers · depth ${tenancy.depth} · sovereign ${tenancy.sovereignState}` },
     { id: "sovereignty", name: "Five sovereignty guarantees", pillar: "Multi-Tenancy", registerRef: "lib/compliance/sovereignty.ts", route: "/governance/sovereignty", items: sovereignty.guarantees, headline: `${sovereignty.enforced} enforced · ${sovereignty.partial} complete at deploy` },
     { id: "ndear", name: "NDEAR compliance", pillar: "Integration", registerRef: "lib/compliance/ndear.ts", route: "/governance/ndear", items: ndear.total, headline: `${ndear.implemented} implemented · ${ndear.partial} partial · ${ndear.coveragePct}% coverage` },

@@ -40,9 +40,11 @@ test("status and feature are kept consistent (register cannot fake coverage)", (
   }
 })
 
-test("the register honestly discloses a directorate-specialisation gap", () => {
-  assert.equal(capabilityById("directorate-specialisation")?.status, "pending")
-  assert.ok(byStatus("pending").length >= 1)
+test("directorate-specialisation is now built; the register stays honest via its partial", () => {
+  assert.equal(capabilityById("directorate-specialisation")?.status, "built")
+  // Still does not overclaim: directorate budget/resource allocation remains partial.
+  assert.equal(capabilityById("budget-allocation")?.status, "partial")
+  assert.ok(byStatus("partial").length >= 1)
 })
 
 test("summary tallies status and dimensions honestly", () => {

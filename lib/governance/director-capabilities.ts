@@ -42,7 +42,7 @@ export const DIRECTOR_CAPABILITIES: DirectorCapability[] = [
   { id: "cadre-deployment", dimension: "functional", responsibility: "Teacher cadre / PTR deployment", featureRef: "lib/postings/cadre.ts", route: "/governance/cadre-rationalisation", status: "built" },
   { id: "teacher-vacancy", dimension: "functional", responsibility: "Teacher vacancy tracking", featureRef: "lib/vacancy/index.ts", route: "/vacancy", status: "built" },
   { id: "budget-allocation", dimension: "functional", responsibility: "Directorate budget & resource allocation across districts", featureRef: "lib/finance/index.ts", route: "/governance/budget-sanction", status: "partial" },
-  { id: "directorate-specialisation", dimension: "functional", responsibility: "Per-directorate specialised ops (DGE exams, SCERT curriculum, ELCTSL, Library…)", featureRef: "", route: "", status: "pending" },
+  { id: "directorate-specialisation", dimension: "functional", responsibility: "Per-directorate specialised ops (DGE exams, SCERT curriculum, ELCTSL, Library…)", featureRef: "lib/governance/directorates.ts", route: "/governance/directorates", status: "built" },
 ]
 
 export function capabilityById(id: string): DirectorCapability | undefined {
