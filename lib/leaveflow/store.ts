@@ -14,6 +14,13 @@ function id(): string {
   return `LF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
+/** Rich detail captured by the leave application form. */
+export interface LeaveDetails {
+  substitute?: string
+  contact?: string
+  medicalCert?: boolean
+}
+
 export interface LeaveFlowRecord {
   id: string
   teacher: string
@@ -23,6 +30,7 @@ export interface LeaveFlowRecord {
   days: number
   reason: string
   instance: WorkflowInstance
+  details?: LeaveDetails
 }
 
 interface Row {
@@ -34,6 +42,7 @@ interface Row {
   days: number
   reason: string
   instance: WorkflowInstance
+  details?: LeaveDetails
   created_at: string
 }
 
@@ -47,6 +56,7 @@ function fromRow(r: Row): LeaveFlowRecord {
     days: r.days,
     reason: r.reason,
     instance: r.instance,
+    details: r.details,
   }
 }
 
@@ -58,6 +68,7 @@ export interface NewLeaveFlow {
   from: string
   to: string
   reason: string
+  details?: LeaveDetails
 }
 
 export async function fileLeaveFlow(input: NewLeaveFlow): Promise<LeaveFlowRecord> {
@@ -71,6 +82,7 @@ export async function fileLeaveFlow(input: NewLeaveFlow): Promise<LeaveFlowRecor
     days,
     reason: input.reason,
     instance: startInstance(LEAVE_APPROVAL, { days }),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -83,6 +95,7 @@ export async function fileLeaveFlow(input: NewLeaveFlow): Promise<LeaveFlowRecor
       days: rec.days,
       reason: rec.reason,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
