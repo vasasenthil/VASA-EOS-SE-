@@ -58,7 +58,7 @@ export const READINESS_CRITERIA: ReadinessCriterion[] = [
   { id: "container-iac", category: "Hosting & infrastructure", criterion: "Container / IaC (Dockerfile, Terraform)", status: "partial", note: "Dockerfile (multi-stage, non-root, standalone) + k8s manifests + docker-compose + Terraform skeleton checked in (deploy/); provider blocks pending the chosen sovereign cloud", evidenceRef: "deploy/terraform/main.tf" },
 
   // Scale & performance
-  { id: "db-provisioned", category: "Scale & performance", criterion: "Durable database provisioned + migrations run", status: "partial", note: "Migrations exist; not provisioned at scale", evidenceRef: "scripts" },
+  { id: "db-provisioned", category: "Scale & performance", criterion: "Durable database provisioned + migrations run", status: "partial", note: "Migrations exist for all schema incl. the six workflow-backed transactional flow tables (RLS deny-by-default); not provisioned at scale", evidenceRef: "scripts" },
   { id: "load-testing", category: "Scale & performance", criterion: "Load/performance testing at state scale", status: "not-started", note: "Not done", evidenceRef: "" },
 
   // Observability & DR
