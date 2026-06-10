@@ -7,13 +7,23 @@ import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
 import { act, startInstance, type ActInput, type WorkflowInstance } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
+import { MAINT_CATEGORIES, type Priority } from "@/lib/maintenance/ticket"
 
 function id(): string {
   return `MT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
-export const MAINT_CATEGORIES = ["Electrical", "Plumbing", "Furniture", "Building", "IT / Smart class", "Sanitation"]
-export type Priority = "low" | "medium" | "high"
+export { MAINT_CATEGORIES }
+export type { Priority }
+
+/** Rich detail captured by the maintenance ticket form. */
+export interface TicketDetails {
+  location?: string
+  reportedBy?: string
+  estimatedCost?: number
+  preferredDate?: string
+  safetyHazard?: boolean
+}
 
 export interface MaintFlowRecord {
   id: string
@@ -21,6 +31,7 @@ export interface MaintFlowRecord {
   description: string
   priority: Priority
   instance: WorkflowInstance
+  details?: TicketDetails
 }
 
 interface Row {
@@ -29,11 +40,12 @@ interface Row {
   description: string
   priority: Priority
   instance: WorkflowInstance
+  details?: TicketDetails
   created_at: string
 }
 
 function fromRow(r: Row): MaintFlowRecord {
-  return { id: r.id, category: r.category, description: r.description, priority: r.priority, instance: r.instance }
+  return { id: r.id, category: r.category, description: r.description, priority: r.priority, instance: r.instance, details: r.details }
 }
 
 const store: MaintFlowRecord[] = []
@@ -42,6 +54,7 @@ export interface NewTicket {
   category: string
   description: string
   priority: Priority
+  details?: TicketDetails
 }
 
 export async function raiseTicketFlow(input: NewTicket): Promise<MaintFlowRecord> {
@@ -51,6 +64,7 @@ export async function raiseTicketFlow(input: NewTicket): Promise<MaintFlowRecord
     description: input.description,
     priority: input.priority,
     instance: startInstance(MAINTENANCE_WORKFLOW, {}),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -60,12 +74,13 @@ export async function raiseTicketFlow(input: NewTicket): Promise<MaintFlowRecord
       description: rec.description,
       priority: rec.priority,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
     store.unshift(rec)
   }
-  await appendAudit({ actor: "facilities", action: "maintflow.raise", resource: rec.id, details: { priority: rec.priority } })
+  await appendAudit({ actor: "facilities", action: "maintflow.raise", resource: rec.id, details: { priority: rec.priority, location: rec.details?.location, safetyHazard: rec.details?.safetyHazard } })
   return rec
 }
 
