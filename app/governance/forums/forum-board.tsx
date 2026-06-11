@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { FORUM_RESOLUTION } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
 import type { ForumDetails } from "@/lib/forumflow/store"
-import { fileForumAction, decideForumAction } from "./actions"
+import { decideForumAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
+import { FilePlus } from "lucide-react"
 
 interface Rec {
   id: string
@@ -28,33 +27,9 @@ const ROLES = [
   { role: "MINISTER", label: "Minister (chair)" },
 ]
 
-const FORUMS = [
-  "State Steering Committee",
-  "Executive Steering",
-  "Programme Management",
-  "District Education Coordination",
-  "AI Ethics Council",
-]
-
 export function ForumBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [forum, setForum] = useState(FORUMS[0])
-  const [title, setTitle] = useState("")
-  const [items, setItems] = useState("")
-  const [requiresMinister, setRequiresMinister] = useState(false)
   const [pending, startTransition] = useTransition()
-
-  function file() {
-    if (!title.trim()) return
-    const actionItems = items.split("\n").map((s) => s.trim()).filter(Boolean)
-    startTransition(async () => {
-      const saved = await fileForumAction({ forum, title: title.trim(), requiresMinister, actionItems })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setTitle("")
-    setItems("")
-    setRequiresMinister(false)
-  }
 
   function decide(id: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -85,48 +60,15 @@ export function ForumBoard({ initial = [], sessionRole }: { initial?: Rec[]; ses
           <CardTitle>Table an agenda item</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="forum">Forum</Label>
-            <select
-              id="forum"
-              value={forum}
-              onChange={(e) => setForum(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
-            >
-              {FORUMS.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="title">Resolution / agenda subject</Label>
-            <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Adopt revised CMBS menu" />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="items">Action items (one per line)</Label>
-            <textarea
-              id="items"
-              value={items}
-              onChange={(e) => setItems(e.target.value)}
-              rows={3}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder={"Notify district offices\nPublish circular"}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox id="rm" checked={requiresMinister} onCheckedChange={(v) => setRequiresMinister(v === true)} />
-            <Label htmlFor="rm" className="font-normal">
-              Significant — requires Minister ratification
-            </Label>
-          </div>
-          <Button onClick={file} disabled={pending || !title.trim()} className="w-full">
-            Table resolution
+          <p className="text-sm text-muted-foreground">
+            Open the full governance resolution form — forum, category, meeting date, RACI ownership, fund implication
+            and action items — with automatic Minister-ratification routing for significant or high-value items.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/governance/forums/new"><FilePlus className="mr-2 h-4 w-4" />Table a resolution</Link>
           </Button>
           <p className="text-xs text-muted-foreground">
-            RACI: Secretary convenes &amp; adopts the agenda, a quorum of 2 Directors adopts the resolution, and the
-            Minister ratifies significant items (routine items skip ratification).
+            Secretary convenes &amp; adopts → a quorum of 2 Directors adopts → the Minister ratifies significant items.
           </p>
         </CardContent>
       </Card>

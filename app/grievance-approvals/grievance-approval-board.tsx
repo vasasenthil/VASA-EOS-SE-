@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { GRIEVANCE_ESCALATION } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem, type InboxAction } from "@/components/approval-inbox"
 import type { GrievanceDetails } from "@/lib/grievanceflow/store"
-import { fileGrievanceFlowAction, actGrievanceAction } from "./actions"
+import { actGrievanceAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { FilePlus } from "lucide-react"
 
 interface Rec {
   id: string
@@ -20,8 +19,6 @@ interface Rec {
   instance: WorkflowInstance
   details?: GrievanceDetails
 }
-
-const GRIEVANCE_CATEGORIES = ["Scheme / DBT", "Fees", "Safety", "Teacher conduct", "Infrastructure", "Other"]
 
 const ROLES = [
   { role: "PRINCIPAL", label: "Principal (school)" },
@@ -38,20 +35,7 @@ const ACTIONS: InboxAction[] = [
 
 export function GrievanceApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [applicant, setApplicant] = useState("")
-  const [category, setCategory] = useState(GRIEVANCE_CATEGORIES[0])
-  const [description, setDescription] = useState("")
   const [pending, startTransition] = useTransition()
-
-  function file() {
-    if (!applicant.trim() || !description.trim()) return
-    startTransition(async () => {
-      const saved = await fileGrievanceFlowAction({ applicant: applicant.trim(), category, description: description.trim() })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setApplicant("")
-    setDescription("")
-  }
 
   function decide(idv: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -81,15 +65,13 @@ export function GrievanceApprovalBoard({ initial = [], sessionRole }: { initial?
           <CardTitle>File a grievance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5"><Label htmlFor="a">Applicant</Label><Input id="a" value={applicant} onChange={(e) => setApplicant(e.target.value)} placeholder="Name" /></div>
-          <div className="space-y-1.5">
-            <Label>Category</Label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-              {GRIEVANCE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="d">Description</Label><Textarea id="d" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What happened?" /></div>
-          <Button onClick={file} disabled={pending || !applicant.trim() || !description.trim()} className="w-full">Submit grievance</Button>
+          <p className="text-sm text-muted-foreground">
+            Open the full grievance form — category, urgency, school/district, contact and DPDP consent — validated
+            before it enters the School → Block → District escalation flow.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/grievance-approvals/new"><FilePlus className="mr-2 h-4 w-4" />File a grievance</Link>
+          </Button>
           <p className="text-xs text-muted-foreground">Starts at the school; each tier can resolve or escalate to the next.</p>
         </CardContent>
       </Card>

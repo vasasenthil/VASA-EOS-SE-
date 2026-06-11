@@ -1,16 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { SMC_RESOLUTION } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
 import type { ResolutionDetails } from "@/lib/smcflow/store"
-import { fileResolutionAction, decideResolutionAction } from "./actions"
+import { decideResolutionAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { FilePlus } from "lucide-react"
 
 interface Rec {
   id: string
@@ -27,19 +26,7 @@ const ROLES = [
 
 export function SmcApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
   const [pending, startTransition] = useTransition()
-
-  function file() {
-    if (!title.trim()) return
-    startTransition(async () => {
-      const saved = await fileResolutionAction({ title: title.trim(), description: description.trim() })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setTitle("")
-    setDescription("")
-  }
 
   function decide(id: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -67,12 +54,16 @@ export function SmcApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[
     <div className="grid gap-4 lg:grid-cols-[1fr_1.7fr]">
       <Card>
         <CardHeader>
-          <CardTitle>Move a resolution</CardTitle>
+          <CardTitle>Table a resolution</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5"><Label htmlFor="t">Resolution title</Label><Input id="t" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Approve ₹40,000 repair grant" /></div>
-          <div className="space-y-1.5"><Label htmlFor="d">Details</Label><Textarea id="d" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Background and amount" /></div>
-          <Button onClick={file} disabled={pending || !title.trim()} className="w-full">Table resolution</Button>
+          <p className="text-sm text-muted-foreground">
+            Open the full SMC resolution form — category, meeting date, proposer and seconder, quorum and fund
+            implication — with live validation and a completeness check before it enters the quorum workflow.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/smc-approvals/new"><FilePlus className="mr-2 h-4 w-4" />Propose a resolution</Link>
+          </Button>
           <p className="text-xs text-muted-foreground">Needs 3 SMC-member approvals (quorum), then the Principal counter-signs.</p>
         </CardContent>
       </Card>

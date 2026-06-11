@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { RECOGNITION_APPROVAL } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
-import { fileRecognitionAction, decideRecognitionAction } from "./actions"
+import { decideRecognitionAction } from "./actions"
 import type { RecognitionType, RecognitionDetails } from "@/lib/recognitionflow/store"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FilePlus } from "lucide-react"
 
 interface Rec {
   id: string
@@ -26,28 +26,9 @@ const ROLES = [
   { role: "DIRECTOR", label: "Director (Directorate)" },
 ]
 
-const TYPES: { key: RecognitionType; label: string }[] = [
-  { key: "new", label: "New recognition" },
-  { key: "renewal", label: "Renewal" },
-  { key: "upgrade", label: "Upgrade" },
-]
-
 export function RecognitionApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [school, setSchool] = useState("")
-  const [district, setDistrict] = useState("")
-  const [type, setType] = useState<RecognitionType>("new")
   const [pending, startTransition] = useTransition()
-
-  function file() {
-    if (!school.trim() || !district.trim()) return
-    startTransition(async () => {
-      const saved = await fileRecognitionAction({ school: school.trim(), district: district.trim(), type })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setSchool("")
-    setDistrict("")
-  }
 
   function decide(id: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -78,15 +59,13 @@ export function RecognitionApprovalBoard({ initial = [], sessionRole }: { initia
           <CardTitle>File a recognition application</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5"><Label htmlFor="s">School</Label><Input id="s" value={school} onChange={(e) => setSchool(e.target.value)} placeholder="e.g. GHSS Egmore" /></div>
-          <div className="space-y-1.5"><Label htmlFor="d">District</Label><Input id="d" value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="e.g. Chennai" /></div>
-          <div className="space-y-1.5">
-            <Label>Type</Label>
-            <select value={type} onChange={(e) => setType(e.target.value as RecognitionType)} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-              {TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-            </select>
-          </div>
-          <Button onClick={file} disabled={pending || !school.trim() || !district.trim()} className="w-full">Submit application</Button>
+          <p className="text-sm text-muted-foreground">
+            Open the full recognition form — management, UDISE/trust registration, land status and the statutory
+            criteria — validated by type (new vs renewal) before it enters the BEO → DEO → Director workflow.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/recognition-approvals/new"><FilePlus className="mr-2 h-4 w-4" />File an application</Link>
+          </Button>
           <p className="text-xs text-muted-foreground">Routes BEO → DEO → Director; any tier can reject with the trail preserved.</p>
         </CardContent>
       </Card>

@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem, type InboxAction } from "@/components/approval-inbox"
 import type { TicketDetails } from "@/lib/maintenanceflow/store"
-import { raiseTicketFlowAction, actTicketAction } from "./actions"
+import { actTicketAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FilePlus } from "lucide-react"
 
 type Priority = "low" | "medium" | "high"
 
@@ -21,8 +21,6 @@ interface Rec {
   instance: WorkflowInstance
   details?: TicketDetails
 }
-
-const CATEGORIES = ["Electrical", "Plumbing", "Furniture", "Building", "IT / Smart class", "Sanitation"]
 
 const ROLES = [
   { role: "PRINCIPAL", label: "Principal (triage / close)" },
@@ -37,19 +35,7 @@ const ACTIONS: InboxAction[] = [
 
 export function MaintenanceApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [category, setCategory] = useState(CATEGORIES[0])
-  const [description, setDescription] = useState("")
-  const [priority, setPriority] = useState<Priority>("medium")
   const [pending, startTransition] = useTransition()
-
-  function raise() {
-    if (!description.trim()) return
-    startTransition(async () => {
-      const saved = await raiseTicketFlowAction({ category, description: description.trim(), priority })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setDescription("")
-  }
 
   function decide(idv: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -79,20 +65,13 @@ export function MaintenanceApprovalBoard({ initial = [], sessionRole }: { initia
           <CardTitle>Raise a maintenance ticket</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>Category</Label>
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="d">Description</Label><Input id="d" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Class 7 fan not working" /></div>
-          <div className="space-y-1.5">
-            <Label>Priority</Label>
-            <select value={priority} onChange={(e) => setPriority(e.target.value as Priority)} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-              {(["low", "medium", "high"] as Priority[]).map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-          <Button onClick={raise} disabled={pending || !description.trim()} className="w-full">Raise ticket</Button>
+          <p className="text-sm text-muted-foreground">
+            Open the full ticket form — category, location, priority, estimated cost, preferred date and a safety-hazard
+            flag — before it enters the Principal → Vendor → Principal flow.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/maintenance-approvals/new"><FilePlus className="mr-2 h-4 w-4" />Raise a ticket</Link>
+          </Button>
           <p className="text-xs text-muted-foreground">Principal triages → Vendor completes → Principal verifies &amp; closes.</p>
         </CardContent>
       </Card>

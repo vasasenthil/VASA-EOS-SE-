@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { LEAVE_TYPES, leaveDays, type LeaveType } from "@/lib/leave"
+import Link from "next/link"
+import type { LeaveType } from "@/lib/leave"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { LEAVE_APPROVAL } from "@/lib/workflow/definitions"
 import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
 import type { LeaveDetails } from "@/lib/leaveflow/store"
-import { fileLeaveFlowAction, decideLeaveFlowAction } from "./actions"
+import { decideLeaveFlowAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FilePlus } from "lucide-react"
 
 interface Rec {
   id: string
@@ -32,24 +32,7 @@ const ROLES = [
 
 export function LeaveApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[]; sessionRole?: string | null }) {
   const [records, setRecords] = useState<Rec[]>(initial)
-  const [teacher, setTeacher] = useState("")
-  const [type, setType] = useState<LeaveType>("casual")
-  const [from, setFrom] = useState("")
-  const [to, setTo] = useState("")
-  const [reason, setReason] = useState("")
   const [pending, startTransition] = useTransition()
-
-  const days = from && to ? leaveDays(from, to) : 0
-
-  function file() {
-    if (!teacher.trim() || !from || !to || days === 0) return
-    startTransition(async () => {
-      const saved = await fileLeaveFlowAction({ teacher: teacher.trim(), type, from, to, reason: reason.trim() })
-      if (saved) setRecords((prev) => [saved as Rec, ...prev])
-    })
-    setTeacher("")
-    setReason("")
-  }
 
   function decide(id: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
@@ -77,24 +60,14 @@ export function LeaveApprovalBoard({ initial = [], sessionRole }: { initial?: Re
           <CardTitle>Apply for leave</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5"><Label htmlFor="tc">Teacher</Label><Input id="tc" value={teacher} onChange={(e) => setTeacher(e.target.value)} placeholder="Teacher name" /></div>
-          <div className="space-y-1.5">
-            <Label>Type</Label>
-            <select value={type} onChange={(e) => setType(e.target.value as LeaveType)} className="h-9 w-full rounded-md border bg-background px-3 text-sm">
-              {LEAVE_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1.5"><Label htmlFor="f">From</Label><Input id="f" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label htmlFor="t">To</Label><Input id="t" type="date" value={to} onChange={(e) => setTo(e.target.value)} /></div>
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="r">Reason</Label><Input id="r" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" /></div>
-          {days > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {days} day(s) → routes to: Principal{days > 5 ? " → BEO" : ""}{days > 15 ? " → DEO" : ""}
-            </p>
-          ) : null}
-          <Button onClick={file} disabled={pending || !teacher.trim() || !from || !to || days === 0} className="w-full">Submit request</Button>
+          <p className="text-sm text-muted-foreground">
+            Open the full leave form — type, date range (duration computed for you), reason, substitute and medical
+            certificate where required — before it enters the Principal → BEO → DEO flow.
+          </p>
+          <Button asChild className="w-full">
+            <Link href="/leave-approvals/new"><FilePlus className="mr-2 h-4 w-4" />Apply for leave</Link>
+          </Button>
+          <p className="text-xs text-muted-foreground">Principal always approves; over 5 days adds the BEO, over 15 the DEO.</p>
         </CardContent>
       </Card>
 
