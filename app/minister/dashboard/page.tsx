@@ -1,8 +1,17 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
 import { stateRollup, schemeBeneficiaries } from "@/lib/portal-data"
+import { listForumsAction } from "@/app/governance/forums/actions"
+import { currentStep } from "@/lib/workflow"
+import { FORUM_RESOLUTION } from "@/lib/workflow/definitions"
 
-export default function MinisterDashboardPage() {
+export const dynamic = "force-dynamic"
+
+export default async function MinisterDashboardPage() {
   const r = stateRollup()
+  const forums = await listForumsAction()
+  const awaitingMinister = forums.filter(
+    (f) => f.instance.status === "in_progress" && currentStep(FORUM_RESOLUTION, f.instance)?.approverRole === "MINISTER",
+  ).length
   return (
     <PortalDashboard
       title="Hon'ble Minister / Chief Minister"
@@ -12,10 +21,11 @@ export default function MinisterDashboardPage() {
         { label: "Pudhumai Penn", value: String(schemeBeneficiaries("Pudhumai Penn")), hint: "girls supported" },
         { label: "CMBS", value: String(schemeBeneficiaries("CMBS")), hint: "breakfast beneficiaries" },
         { label: "Scheme Coverage", value: `${r.schemeCoveragePct}%` },
-        { label: "Districts", value: String(r.districts) },
+        { label: "Awaiting your ratification", value: String(awaitingMinister), hint: "live · forum items" },
       ]}
       modules={[
         { label: "Executive Outcomes (NEP Tracker)", href: "/tracking/dashboard" },
+        { label: "Governance Forums — ratify resolutions", href: "/governance/forums" },
         { label: "Scheme Impact (CMBS / Pudhumai Penn)", href: "/schemes" },
         { label: "Constituency / Stakeholder View", href: "/tracking/stakeholders" },
         { label: "Election-Commitment Milestones", href: "/tracking/milestones" },
