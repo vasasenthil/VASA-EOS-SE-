@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { GRIEVANCE_ESCALATION } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem, type InboxAction } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem, type InboxAction } from "@/components/approval-inbox"
+import type { GrievanceDetails } from "@/lib/grievanceflow/store"
 import { fileGrievanceFlowAction, actGrievanceAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,7 @@ interface Rec {
   category: string
   description: string
   instance: WorkflowInstance
+  details?: GrievanceDetails
 }
 
 const GRIEVANCE_CATEGORIES = ["Scheme / DBT", "Fees", "Safety", "Teacher conduct", "Infrastructure", "Other"]
@@ -63,6 +65,13 @@ export function GrievanceApprovalBoard({ initial = [], sessionRole }: { initial?
     instance: r.instance,
     title: `${r.applicant} · ${r.category}`,
     subtitle: r.description,
+    details: inboxDetails([
+      detailRow("Urgency", r.details?.urgency),
+      detailRow("School", r.details?.school),
+      detailRow("District", r.details?.district),
+      detailRow("Relationship", r.details?.relationship),
+      detailRow("Phone", r.details?.contactPhone),
+    ]),
   }))
 
   return (

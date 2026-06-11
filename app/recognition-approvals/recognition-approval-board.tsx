@@ -3,9 +3,9 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { RECOGNITION_APPROVAL } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
 import { fileRecognitionAction, decideRecognitionAction } from "./actions"
-import type { RecognitionType } from "@/lib/recognitionflow/store"
+import type { RecognitionType, RecognitionDetails } from "@/lib/recognitionflow/store"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,7 @@ interface Rec {
   district: string
   type: RecognitionType
   instance: WorkflowInstance
+  details?: RecognitionDetails
 }
 
 const ROLES = [
@@ -60,6 +61,14 @@ export function RecognitionApprovalBoard({ initial = [], sessionRole }: { initia
     instance: r.instance,
     title: r.school,
     subtitle: `${r.district} · ${r.type}`,
+    details: inboxDetails([
+      detailRow("Management", r.details?.management),
+      detailRow("Block", r.details?.block),
+      detailRow("UDISE", r.details?.udiseCode),
+      detailRow("Trust reg.", r.details?.trustRegNo),
+      detailRow("Land", r.details?.landStatus),
+      detailRow("Criteria met", r.details?.criteriaMet?.length ? `${r.details.criteriaMet.length}/6` : undefined),
+    ]),
   }))
 
   return (

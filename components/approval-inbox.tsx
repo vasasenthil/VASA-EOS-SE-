@@ -13,12 +13,28 @@ export interface InboxItem {
   instance: WorkflowInstance
   title: string
   subtitle?: string
+  /** Rich, captured-at-filing fields surfaced on the case card (label/value). */
+  details?: { label: string; value: string }[]
 }
 
 export interface InboxAction {
   decision: Decision
   label: string
   variant?: "default" | "outline" | "secondary" | "destructive"
+}
+
+export type DetailRow = { label: string; value: string }
+
+/** A labelled detail, or null when the value is empty (filtered out by inboxDetails). */
+export function detailRow(label: string, value: string | number | undefined | null): DetailRow | null {
+  if (value === undefined || value === null || value === "") return null
+  return { label, value: typeof value === "number" ? value.toLocaleString("en-IN") : value }
+}
+
+/** Compact a list of possibly-empty rows into the InboxItem.details array (or undefined). */
+export function inboxDetails(rows: (DetailRow | null)[]): DetailRow[] | undefined {
+  const out = rows.filter((r): r is DetailRow => r !== null)
+  return out.length ? out : undefined
 }
 
 const DEFAULT_ACTIONS: InboxAction[] = [
@@ -135,6 +151,16 @@ export function ApprovalInbox({
                       <Badge variant={STATUS_VARIANT[i.instance.status]}>{i.instance.status.replace("_", " ")}</Badge>
                     </div>
                     {i.subtitle ? <p className="mt-1 text-xs text-muted-foreground">{i.subtitle}</p> : null}
+                    {i.details && i.details.length > 0 ? (
+                      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
+                        {i.details.map((d, idx) => (
+                          <div key={idx} className="min-w-0">
+                            <dt className="text-muted-foreground">{d.label}</dt>
+                            <dd className="truncate font-medium">{d.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : null}
                     <div className="mt-2">
                       <Progress value={p.pct} className="h-1.5" />
                     </div>

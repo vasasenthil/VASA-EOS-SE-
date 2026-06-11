@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { SMC_RESOLUTION } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
+import type { ResolutionDetails } from "@/lib/smcflow/store"
 import { fileResolutionAction, decideResolutionAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,7 @@ interface Rec {
   title: string
   description: string
   instance: WorkflowInstance
+  details?: ResolutionDetails
 }
 
 const ROLES = [
@@ -46,7 +48,20 @@ export function SmcApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[
     })
   }
 
-  const items: InboxItem[] = records.map((r) => ({ id: r.id, instance: r.instance, title: r.title, subtitle: r.description }))
+  const items: InboxItem[] = records.map((r) => ({
+    id: r.id,
+    instance: r.instance,
+    title: r.title,
+    subtitle: r.description,
+    details: inboxDetails([
+      detailRow("Category", r.details?.category),
+      detailRow("Meeting", r.details?.meetingDate),
+      detailRow("Proposed by", r.details?.proposedBy),
+      detailRow("Seconded by", r.details?.secondedBy),
+      detailRow("Members", r.details?.membersPresent),
+      r.details?.fundImplication ? detailRow("Fund ₹", r.details.fundImplication) : null,
+    ]),
+  }))
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.7fr]">

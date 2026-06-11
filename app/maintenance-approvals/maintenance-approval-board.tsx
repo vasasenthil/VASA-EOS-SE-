@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem, type InboxAction } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem, type InboxAction } from "@/components/approval-inbox"
+import type { TicketDetails } from "@/lib/maintenanceflow/store"
 import { raiseTicketFlowAction, actTicketAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ interface Rec {
   description: string
   priority: Priority
   instance: WorkflowInstance
+  details?: TicketDetails
 }
 
 const CATEGORIES = ["Electrical", "Plumbing", "Furniture", "Building", "IT / Smart class", "Sanitation"]
@@ -61,6 +63,13 @@ export function MaintenanceApprovalBoard({ initial = [], sessionRole }: { initia
     instance: r.instance,
     title: `${r.category} · ${r.priority}`,
     subtitle: r.description,
+    details: inboxDetails([
+      detailRow("Location", r.details?.location),
+      detailRow("Reported by", r.details?.reportedBy),
+      detailRow("Est. cost ₹", r.details?.estimatedCost),
+      detailRow("Preferred", r.details?.preferredDate),
+      detailRow("Safety hazard", r.details?.safetyHazard ? "Yes" : undefined),
+    ]),
   }))
 
   return (

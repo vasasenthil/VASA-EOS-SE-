@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { ADMISSION_APPROVAL } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
+import type { AdmissionDetails } from "@/lib/admissionsflow/store"
 import { fileApplicantAction, decideApplicantAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ interface Rec {
   className: string
   apaarId?: string
   instance: WorkflowInstance
+  details?: AdmissionDetails
 }
 
 const ROLES = [
@@ -60,6 +62,13 @@ export function AdmissionsApprovalBoard({ initial = [], sessionRole }: { initial
     instance: r.instance,
     title: r.name,
     subtitle: `Class ${r.className} · ${r.category}${r.apaarId ? ` · ${r.apaarId}` : ""}`,
+    details: inboxDetails([
+      detailRow("Guardian", r.details?.guardianName),
+      detailRow("Phone", r.details?.guardianPhone),
+      detailRow("Prev. school", r.details?.previousSchool),
+      detailRow("RTE quota", r.details?.rteQuota ? "Yes" : undefined),
+      detailRow("Documents", r.details?.documents?.length ? String(r.details.documents.length) : undefined),
+    ]),
   }))
 
   return (

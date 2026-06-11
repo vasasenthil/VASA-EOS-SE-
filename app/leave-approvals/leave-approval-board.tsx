@@ -4,7 +4,8 @@ import { useState, useTransition } from "react"
 import { LEAVE_TYPES, leaveDays, type LeaveType } from "@/lib/leave"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { LEAVE_APPROVAL } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
+import type { LeaveDetails } from "@/lib/leaveflow/store"
 import { fileLeaveFlowAction, decideLeaveFlowAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ interface Rec {
   days: number
   reason: string
   instance: WorkflowInstance
+  details?: LeaveDetails
 }
 
 const ROLES = [
@@ -61,6 +63,11 @@ export function LeaveApprovalBoard({ initial = [], sessionRole }: { initial?: Re
     instance: r.instance,
     title: `${r.teacher} · ${r.days}d`,
     subtitle: `${r.type} · ${r.from} → ${r.to}${r.reason ? ` · ${r.reason}` : ""}`,
+    details: inboxDetails([
+      detailRow("Substitute", r.details?.substitute),
+      detailRow("Contact", r.details?.contact),
+      detailRow("Medical cert.", r.details?.medicalCert ? "Attached" : undefined),
+    ]),
   }))
 
   return (

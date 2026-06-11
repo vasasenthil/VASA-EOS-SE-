@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import type { Decision, WorkflowInstance } from "@/lib/workflow"
 import { FORUM_RESOLUTION } from "@/lib/workflow/definitions"
-import { ApprovalInbox, type InboxItem } from "@/components/approval-inbox"
+import { ApprovalInbox, inboxDetails, detailRow, type InboxItem } from "@/components/approval-inbox"
+import type { ForumDetails } from "@/lib/forumflow/store"
 import { fileForumAction, decideForumAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ interface Rec {
   requiresMinister: boolean
   actionItems: string[]
   instance: WorkflowInstance
+  details?: ForumDetails
 }
 
 const ROLES = [
@@ -66,6 +68,14 @@ export function ForumBoard({ initial = [], sessionRole }: { initial?: Rec[]; ses
     instance: r.instance,
     title: r.title,
     subtitle: `${r.forum}${r.actionItems.length ? ` · ${r.actionItems.length} action item${r.actionItems.length > 1 ? "s" : ""}` : ""}`,
+    details: inboxDetails([
+      detailRow("Category", r.details?.category),
+      detailRow("Meeting", r.details?.meetingDate),
+      detailRow("Responsible", r.details?.responsible),
+      detailRow("Accountable", r.details?.accountable),
+      r.details?.fundImplication ? detailRow("Fund ₹", r.details.fundImplication) : null,
+      detailRow("Ratification", r.requiresMinister ? "Minister" : "Routine"),
+    ]),
   }))
 
   return (
