@@ -52,6 +52,8 @@ export interface WorkflowInstance {
   /** Approvals accumulated on the current step (toward its quorum). */
   approvalsInStep: number
   history: ActionRecord[]
+  /** ISO time the case was filed — the basis for SLA / ageing when no action yet. */
+  startedAt?: string
 }
 
 export interface ActInput {
@@ -77,6 +79,7 @@ export function startInstance(
   def: WorkflowDef,
   ctx: Record<string, unknown>,
   id = `wf-${Math.random().toString(36).slice(2, 10)}`,
+  at: string = new Date().toISOString(),
 ): WorkflowInstance {
   const steps = effectiveSteps(def, ctx)
   return {
@@ -87,6 +90,7 @@ export function startInstance(
     stepIndex: 0,
     approvalsInStep: 0,
     history: [],
+    startedAt: at,
   }
 }
 

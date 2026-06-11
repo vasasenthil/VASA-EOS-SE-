@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { currentStep, progress, type Decision, type WorkflowDef, type WorkflowInstance } from "@/lib/workflow"
 import { describeAction } from "@/lib/workflow/history"
+import { slaBadge, type SlaTone } from "@/lib/workflow/sla"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -47,6 +48,23 @@ const STATUS_VARIANT: Record<string, "secondary" | "default" | "destructive"> = 
   in_progress: "secondary",
   approved: "default",
   rejected: "destructive",
+}
+
+const SLA_TONE: Record<SlaTone, string> = {
+  ontime: "border-muted-foreground/30 text-muted-foreground",
+  due: "border-amber-500 text-amber-600 dark:text-amber-500",
+  overdue: "border-red-500 text-red-600 dark:text-red-500",
+}
+
+/** Age/SLA pill for an open case (nothing for finished cases). */
+function SlaPill({ instance }: { instance: WorkflowInstance }) {
+  const sla = slaBadge(instance)
+  if (!sla) return null
+  return (
+    <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${SLA_TONE[sla.tone]}`}>
+      {sla.label}
+    </span>
+  )
 }
 
 // Reusable approver console: an "Acting as" role switcher, the role's pending inbox
@@ -114,9 +132,12 @@ export function ApprovalInbox({
             <ul className="space-y-2">
               {inbox.map((i) => (
                 <li key={i.id} className="rounded-md border p-3 text-sm">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="font-medium">{i.title}</span>
-                    <Badge variant="secondary">{currentStep(def, i.instance)?.name}</Badge>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <SlaPill instance={i.instance} />
+                      <Badge variant="secondary">{currentStep(def, i.instance)?.name}</Badge>
+                    </div>
                   </div>
                   {i.subtitle ? <p className="mt-1 text-xs text-muted-foreground">{i.subtitle}</p> : null}
                   <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -159,9 +180,12 @@ export function ApprovalInbox({
                 const p = progress(def, i.instance)
                 return (
                   <li key={i.id} className="rounded-md border p-3 text-sm">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <span className="font-medium">{i.title}</span>
-                      <Badge variant={STATUS_VARIANT[i.instance.status]}>{i.instance.status.replace("_", " ")}</Badge>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <SlaPill instance={i.instance} />
+                        <Badge variant={STATUS_VARIANT[i.instance.status]}>{i.instance.status.replace("_", " ")}</Badge>
+                      </div>
                     </div>
                     {i.subtitle ? <p className="mt-1 text-xs text-muted-foreground">{i.subtitle}</p> : null}
                     {i.details && i.details.length > 0 ? (
