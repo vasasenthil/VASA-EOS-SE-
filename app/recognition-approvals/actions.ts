@@ -27,10 +27,10 @@ export async function fileRecognitionAction(input: NewRecognition): Promise<Reco
   }
 }
 
-export async function decideRecognitionAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: RecognitionFlowRecord; reason?: string }> {
+export async function decideRecognitionAction(input: { id: string; actorRole: string; actor: string; decision: Decision; note?: string }): Promise<{ ok: boolean; record?: RecognitionFlowRecord; reason?: string }> {
   if (!(await canDo("approve:recognition"))) return { ok: false, reason: "You do not have permission to act on recognition applications." }
   try {
-    const res = await actOnRecognition(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnRecognition(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/recognition-approvals")
     return res
   } catch (e) {

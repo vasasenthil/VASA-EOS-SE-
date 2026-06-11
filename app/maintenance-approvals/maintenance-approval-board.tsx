@@ -51,9 +51,9 @@ export function MaintenanceApprovalBoard({ initial = [], sessionRole }: { initia
     setDescription("")
   }
 
-  function decide(idv: string, role: string, decision: Decision) {
+  function decide(idv: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
-      const res = await actTicketAction({ id: idv, actorRole: role, actor: `${role} (demo)`, decision })
+      const res = await actTicketAction({ id: idv, actorRole: role, actor: `${role} (demo)`, decision, note })
       if (res.ok && res.record) setRecords((prev) => prev.map((r) => (r.id === idv ? (res.record as Rec) : r)))
     })
   }

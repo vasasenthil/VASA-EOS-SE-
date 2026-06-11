@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { Input } from "@/components/ui/input"
 
 export interface InboxItem {
   id: string
@@ -63,7 +64,7 @@ export function ApprovalInbox({
   def: WorkflowDef
   items: InboxItem[]
   roles: { role: string; label: string }[]
-  onDecide: (id: string, role: string, decision: Decision) => void
+  onDecide: (id: string, role: string, decision: Decision, note?: string) => void
   pending: boolean
   /** When provided (and not ADMIN), the inbox locks to the signed-in role. */
   sessionRole?: string | null
@@ -73,6 +74,7 @@ export function ApprovalInbox({
   // Lock to the signed-in role unless they're an admin (admins may act as any tier).
   const locked = !!sessionRole && sessionRole !== "ADMIN"
   const [asRole, setAsRole] = useState(locked ? (sessionRole as string) : roles[0]?.role ?? "")
+  const [notes, setNotes] = useState<Record<string, string>>({})
 
   const sessionLabel = roles.find((r) => r.role === sessionRole)?.label ?? sessionRole
   const inbox = items.filter(
@@ -117,18 +119,29 @@ export function ApprovalInbox({
                     <Badge variant="secondary">{currentStep(def, i.instance)?.name}</Badge>
                   </div>
                   {i.subtitle ? <p className="mt-1 text-xs text-muted-foreground">{i.subtitle}</p> : null}
-                  <div className="mt-2 flex justify-end gap-2">
-                    {actions.map((a) => (
-                      <Button
-                        key={a.decision}
-                        size="sm"
-                        variant={a.variant ?? "default"}
-                        onClick={() => onDecide(i.id, asRole, a.decision)}
-                        disabled={pending}
-                      >
-                        {a.label}
-                      </Button>
-                    ))}
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Input
+                      value={notes[i.id] ?? ""}
+                      onChange={(e) => setNotes((prev) => ({ ...prev, [i.id]: e.target.value }))}
+                      placeholder="Add a remark (recorded in the audit trail)…"
+                      className="h-8 flex-1 text-xs"
+                    />
+                    <div className="flex justify-end gap-2">
+                      {actions.map((a) => (
+                        <Button
+                          key={a.decision}
+                          size="sm"
+                          variant={a.variant ?? "default"}
+                          onClick={() => {
+                            onDecide(i.id, asRole, a.decision, notes[i.id]?.trim() || undefined)
+                            setNotes((prev) => ({ ...prev, [i.id]: "" }))
+                          }}
+                          disabled={pending}
+                        >
+                          {a.label}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </li>
               ))}

@@ -33,12 +33,13 @@ export async function decideForumAction(input: {
   actorRole: string
   actor: string
   decision: Decision
+  note?: string
 }): Promise<{ ok: boolean; record?: ForumFlowRecord; reason?: string }> {
   if (!(await canDo("manage:governance"))) {
     return { ok: false, reason: "You do not have permission to act on forum resolutions." }
   }
   try {
-    const res = await actOnForum(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnForum(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/governance/forums")
     return res
   } catch (e) {

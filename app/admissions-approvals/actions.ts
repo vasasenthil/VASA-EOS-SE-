@@ -27,10 +27,10 @@ export async function fileApplicantAction(input: NewApplicant): Promise<Admissio
   }
 }
 
-export async function decideApplicantAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: AdmissionFlowRecord; reason?: string }> {
+export async function decideApplicantAction(input: { id: string; actorRole: string; actor: string; decision: Decision; note?: string }): Promise<{ ok: boolean; record?: AdmissionFlowRecord; reason?: string }> {
   if (!(await canDo("manage:school"))) return { ok: false, reason: "You do not have permission to process admissions." }
   try {
-    const res = await actOnApplicant(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnApplicant(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/admissions-approvals")
     return res
   } catch (e) {

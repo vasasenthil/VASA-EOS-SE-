@@ -41,9 +41,9 @@ export function SmcApprovalBoard({ initial = [], sessionRole }: { initial?: Rec[
     setDescription("")
   }
 
-  function decide(id: string, role: string, decision: Decision) {
+  function decide(id: string, role: string, decision: Decision, note?: string) {
     startTransition(async () => {
-      const res = await decideResolutionAction({ id, actorRole: role, actor: `${role} (demo)`, decision })
+      const res = await decideResolutionAction({ id, actorRole: role, actor: `${role} (demo)`, decision, note })
       if (res.ok && res.record) setRecords((prev) => prev.map((r) => (r.id === id ? (res.record as Rec) : r)))
     })
   }

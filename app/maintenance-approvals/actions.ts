@@ -27,10 +27,10 @@ export async function raiseTicketFlowAction(input: NewTicket): Promise<MaintFlow
   }
 }
 
-export async function actTicketAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: MaintFlowRecord; reason?: string }> {
+export async function actTicketAction(input: { id: string; actorRole: string; actor: string; decision: Decision; note?: string }): Promise<{ ok: boolean; record?: MaintFlowRecord; reason?: string }> {
   if (!(await canDo("manage:school"))) return { ok: false, reason: "You do not have permission to act on maintenance tickets." }
   try {
-    const res = await actOnTicket(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnTicket(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/maintenance-approvals")
     return res
   } catch (e) {

@@ -27,10 +27,10 @@ export async function fileGrievanceFlowAction(input: NewGrievance): Promise<Grie
   }
 }
 
-export async function actGrievanceAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: GrievanceFlowRecord; reason?: string }> {
+export async function actGrievanceAction(input: { id: string; actorRole: string; actor: string; decision: Decision; note?: string }): Promise<{ ok: boolean; record?: GrievanceFlowRecord; reason?: string }> {
   if (!(await canDo("resolve:grievance"))) return { ok: false, reason: "You do not have permission to act on grievances." }
   try {
-    const res = await actOnGrievance(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnGrievance(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/grievance-approvals")
     return res
   } catch (e) {

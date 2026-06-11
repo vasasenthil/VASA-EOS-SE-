@@ -27,10 +27,10 @@ export async function fileResolutionAction(input: NewResolution): Promise<SmcFlo
   }
 }
 
-export async function decideResolutionAction(input: { id: string; actorRole: string; actor: string; decision: Decision }): Promise<{ ok: boolean; record?: SmcFlowRecord; reason?: string }> {
+export async function decideResolutionAction(input: { id: string; actorRole: string; actor: string; decision: Decision; note?: string }): Promise<{ ok: boolean; record?: SmcFlowRecord; reason?: string }> {
   if (!(await canDo("vote:smc"))) return { ok: false, reason: "You do not have permission to act on SMC resolutions." }
   try {
-    const res = await actOnResolution(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision })
+    const res = await actOnResolution(input.id, { actorRole: input.actorRole, actor: input.actor, decision: input.decision, note: input.note })
     revalidatePath("/smc-approvals")
     return res
   } catch (e) {
