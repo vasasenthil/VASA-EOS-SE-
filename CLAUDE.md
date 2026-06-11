@@ -15,6 +15,24 @@ AI-native Education Operating System for **school education**.
   approval → DB → audit → inbox, surfaced on every relevant feature) over listing
   capabilities. Be honest about what is wired to live data vs pending.
 
+## Brochure build scope (IMPORTANT — locked until finished)
+Directive: build the brochure (BRO-TN-002) pillars to "built", tracked by the
+self-verifying register `lib/governance/brochure-coverage.ts` + `/governance/
+brochure-coverage`. Drive these to built, one tested vertical at a time:
+- **6 AI Engines** (Reasoning · Personalisation · Assessment · Policy · Analytics
+  · Conversational) — `lib/ai/engines`.
+- **6 AI Agents + 8 Native-AI pillars** (under human authority / HITL).
+- **All 312 (brochure says 391) functional modules** across the 7 tiers.
+- **NDEAR-S 29/29 + federation** (DIKSHA · UDISE+ · APAAR · PFMS) — live-shaped.
+- **Scale to ~1.27 Cr students / ~69,000 schools** (validated).
+- **WCAG 2.1 AAA across all routes**; **independent-audit register** kept honest
+  (activities the platform truly does = pass; commissioned audits may fail).
+- **OUT OF SCOPE (do NOT build):** sovereign infrastructure — HSM/state-held key
+  custody, source-code escrow, off-switch, multi-cloud/data-residency topology.
+  Keep `brochure-coverage` honest: leave those rows pending by design.
+Each pillar moved to "built" must be real (no stubs), tested, green-bar, and the
+register/its test updated to match.
+
 ## Scope & roadmap (IMPORTANT — keep in mind)
 - **This platform is for the State of Tamil Nadu ONLY** at present. It is **not**
   an all-India / national deployment.

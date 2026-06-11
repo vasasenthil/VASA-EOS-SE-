@@ -36,8 +36,7 @@ test("the map honestly discloses the major sovereign-grade gaps", () => {
   for (const id of ["keys-hsm", "escrow-offswitch", "multicloud", "scale"]) {
     assert.ok(pending.includes(id), `expected ${id} disclosed as pending`)
   }
-  // AI engines and live federation must not be overclaimed as fully built.
-  assert.equal(BROCHURE_CLAIMS.find((c) => c.id === "engines")?.status, "partial")
+  // Live federation must not be overclaimed as fully built (still mock-default seams).
   assert.equal(BROCHURE_CLAIMS.find((c) => c.id === "federation")?.status, "partial")
 })
 

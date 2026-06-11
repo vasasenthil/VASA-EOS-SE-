@@ -70,7 +70,7 @@ export const BROCHURE_CLAIMS: BrochureClaim[] = [
 
   // --- Native-AI ---
   { id: "agents", area: "Native-AI", claim: "Six purpose-built AI agents under human authority (HITL)", status: "partial", note: "a human-in-the-loop agent framework (catalogue, dispatch, execute, guardrails) + a teacher-assistant; the named six with full five-part anatomy are scaffolded, not all built", repoRef: "lib/agents/index.ts" },
-  { id: "engines", area: "Native-AI", claim: "Six AI engines (Reasoning, Personalisation, Assessment, Policy, Analytics, Conversational)", status: "partial", note: "a single provider-abstracted agent/LLM seam (mock by default, live on env key); NOT six independently-built engines with state-held weights", repoRef: "lib/integrations/live/agents.ts" },
+  { id: "engines", area: "Native-AI", claim: "Six AI engines (Reasoning, Personalisation, Assessment, Policy, Analytics, Conversational)", status: "built", note: "six real, deterministic, explainable, tested engines (advisory — no side effects) at /ai-engines; an LLM seam may refine, not replace, them", repoRef: "lib/ai/engines/index.ts" },
   { id: "hitl", area: "Native-AI", claim: "Humans decide, AI assists — human authority across every layer", status: "built", note: "every agent tool call is queued for human approval before any side effect", repoRef: "lib/agentflow/store.ts" },
 
   // --- Federation & interoperability ---
