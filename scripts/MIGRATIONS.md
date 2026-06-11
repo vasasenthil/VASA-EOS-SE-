@@ -26,11 +26,17 @@ Run these on a fresh database to get the full durable runtime schema:
 019-tenant-rls.sql
 020-agent-tool-requests.sql
 021-create-workflow-flow-tables.sql
+022-create-forum-flow-table.sql
+023-create-operational-module-tables.sql
 ```
 
-This produces 24 public tables, including the six workflow-backed flow tables
-(`recognition_flows`, `grievance_flows`, `admission_flows`, `leave_flows`,
-`smc_flows`, `maintenance_flows`). Confirm afterwards with `pnpm db:verify`.
+This produces the durable runtime schema, including the seven workflow-backed
+flow tables (`recognition_flows`, `grievance_flows`, `admission_flows`,
+`leave_flows`, `smc_flows`, `maintenance_flows`, `forum_flows`) and 43
+operational-module tables (Safety, CWSN, Discipline, visitors, water tests,
+drills, library, MDM, notices, …). `023` must run after `019` — its
+tenant_isolation policies use `public.in_tenant_subtree` from `019`. Confirm the
+workflow tables afterwards with `pnpm db:verify`.
 
 > **Supabase prerequisites:** these scripts assume the `auth` schema,
 > `auth.users`, `auth.uid()`, `auth.role()` and the `anon` / `authenticated` /
@@ -53,8 +59,18 @@ rewrite them without reconciling against the live database's actual state.
 | `011-create-scheme-management-tables.sql` | legacy | FK depends on tables from the failed `008`/`010`. |
 | `012-seed-scheme-data.sql` | legacy seed | Depends on `011`'s tables. |
 | `016-seed-org-and-users.sql` | broken demo seed | Inserts `users.status`, a column the `013` schema does not define. |
-| `018-add-tenant-scoping.sql` | runtime-dependent | Alters `safety_concerns`, a table created by the app at runtime, not by any migration. |
+| `018-add-tenant-scoping.sql` | superseded | Tried to add `tenant_id` to operational tables that did not yet exist; `023` now creates those tables with `tenant_id` and the tenant policy directly. |
 | `012`, `017` | optional seeds | Demo/sample data, not required for a durable schema. |
+
+### Operational tables still pending a migration (follow-up)
+
+`023` covers the 43 operational stores with a regular `insert({...})` shape. A few
+stores use an irregular shape that needs individual attention and are **not** yet
+covered: `audit_logs`, `notifications`, `distribution`, `promotion_runs`,
+`question_papers`, `seating_plans`, `stock_movements`. A handful of names that
+only appear in read paths (`challenges`, `reports`, `stakeholders`) resolve to
+tables owned by other migrations and need no new table. Until covered, those few
+stores fall back to in-memory.
 
 ## Security posture (verified)
 
