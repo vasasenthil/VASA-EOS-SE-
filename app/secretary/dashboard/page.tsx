@@ -42,6 +42,7 @@ export default async function SecretaryDashboardPage() {
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
         { label: "Brochure Coverage Map (honest)", href: "/governance/brochure-coverage" },
         { label: "The Six AI Engines (advisory)", href: "/ai-engines" },
+        { label: "The Native-AI Fabric (pillars · engines · agents)", href: "/ai-fabric" },
       ]}
     />
   )

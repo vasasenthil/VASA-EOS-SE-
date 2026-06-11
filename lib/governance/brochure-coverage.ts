@@ -69,7 +69,8 @@ export const BROCHURE_CLAIMS: BrochureClaim[] = [
   { id: "multicloud", area: "Security & sovereignty", claim: "Sovereign / hybrid / multi-cloud topology, data residency", status: "pending", note: "deployment topology; not built in this repo", repoRef: "" },
 
   // --- Native-AI ---
-  { id: "agents", area: "Native-AI", claim: "Six purpose-built AI agents under human authority (HITL)", status: "partial", note: "a human-in-the-loop agent framework (catalogue, dispatch, execute, guardrails) + a teacher-assistant; the named six with full five-part anatomy are scaffolded, not all built", repoRef: "lib/agents/index.ts" },
+  { id: "agents", area: "Native-AI", claim: "Six purpose-built AI agents under human authority (HITL)", status: "built", note: "six agents (Policy/Teacher/Student/Governance/Grievance/Compliance) with the full five-part anatomy, composing the engines into advisory recommendations; high-stakes/low-confidence require approval; tested, at /ai-fabric", repoRef: "lib/ai/agents/index.ts" },
+  { id: "pillars", area: "Native-AI", claim: "Eight Native-AI pillars (NLU/NLG, reasoning, personalisation, …)", status: "partial", note: "8-pillar fabric mapped: 5 built via the engines, language + speech are live-shaped seams, vision/document AI honestly pending", repoRef: "lib/ai/pillars.ts" },
   { id: "engines", area: "Native-AI", claim: "Six AI engines (Reasoning, Personalisation, Assessment, Policy, Analytics, Conversational)", status: "built", note: "six real, deterministic, explainable, tested engines (advisory — no side effects) at /ai-engines; an LLM seam may refine, not replace, them", repoRef: "lib/ai/engines/index.ts" },
   { id: "hitl", area: "Native-AI", claim: "Humans decide, AI assists — human authority across every layer", status: "built", note: "every agent tool call is queued for human approval before any side effect", repoRef: "lib/agentflow/store.ts" },
 
