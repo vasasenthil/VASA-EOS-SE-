@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { currentStep, progress, type Decision, type WorkflowDef, type WorkflowInstance } from "@/lib/workflow"
+import { describeAction } from "@/lib/workflow/history"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -143,12 +144,15 @@ export function ApprovalInbox({
                     </p>
                     {i.instance.history.length > 0 ? (
                       <ul className="mt-2 space-y-0.5 border-t pt-2 text-xs text-muted-foreground">
-                        {i.instance.history.map((h, idx) => (
-                          <li key={idx}>
-                            {h.decision === "reject" ? "✗" : "✓"} {h.actorRole} {h.decision}d
-                            {h.note ? ` — ${h.note}` : ""}
-                          </li>
-                        ))}
+                        {i.instance.history.map((h, idx) => {
+                          const d = describeAction(h)
+                          return (
+                            <li key={idx} className="flex items-baseline justify-between gap-2">
+                              <span>{d.mark} {d.text}</span>
+                              {d.when ? <span className="shrink-0 tabular-nums opacity-70">{d.when}</span> : null}
+                            </li>
+                          )
+                        })}
                       </ul>
                     ) : null}
                   </li>
