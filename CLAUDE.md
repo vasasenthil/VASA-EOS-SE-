@@ -2,6 +2,19 @@
 
 AI-native Education Operating System for **school education**.
 
+## Build mandate (IMPORTANT — non-negotiable, do not regress)
+- **This is NOT an MVP / prototype / demo.** Build the **entire platform as per
+  the repo** to be **deployment-ready, operationalise-grade, implementation-grade,
+  enterprise-grade and government-grade** — full general/technical/functional
+  features, real multi-tier workflows, durable persistence, audit, role-gated
+  inboxes. No "broad but shallow" framing anywhere (code, docs, PR/commit text).
+- Every turn ends **green** (see Green-bar requirement) and CI must be fully
+  successful (all jobs, both Node 20.x + 22.x). Treat "some jobs were not
+  successful" as a hard stop to diagnose and fix before moving on.
+- Depth over breadth-claims: prefer finishing a feature end-to-end (form →
+  approval → DB → audit → inbox, surfaced on every relevant feature) over listing
+  capabilities. Be honest about what is wired to live data vs pending.
+
 ## Scope & roadmap (IMPORTANT — keep in mind)
 - **This platform is for the State of Tamil Nadu ONLY** at present. It is **not**
   an all-India / national deployment.
