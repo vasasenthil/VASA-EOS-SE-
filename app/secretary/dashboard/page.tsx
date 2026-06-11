@@ -40,6 +40,7 @@ export default async function SecretaryDashboardPage() {
         { label: "School Recognition Oversight", href: "/governance/recognition-oversight" },
         { label: "Cadre / PTR Rationalisation", href: "/governance/cadre-rationalisation" },
         { label: "My Capability Coverage (honest)", href: "/governance/secretary-capabilities" },
+        { label: "Brochure Coverage Map (honest)", href: "/governance/brochure-coverage" },
       ]}
     />
   )
