@@ -28,6 +28,7 @@ Run these on a fresh database to get the full durable runtime schema:
 021-create-workflow-flow-tables.sql
 022-create-forum-flow-table.sql
 023-create-operational-module-tables.sql
+024-create-remaining-store-tables.sql
 ```
 
 This produces the durable runtime schema, including the seven workflow-backed
@@ -62,15 +63,15 @@ rewrite them without reconciling against the live database's actual state.
 | `018-add-tenant-scoping.sql` | superseded | Tried to add `tenant_id` to operational tables that did not yet exist; `023` now creates those tables with `tenant_id` and the tenant policy directly. |
 | `012`, `017` | optional seeds | Demo/sample data, not required for a durable schema. |
 
-### Operational tables still pending a migration (follow-up)
+### Coverage
 
-`023` covers the 43 operational stores with a regular `insert({...})` shape. A few
-stores use an irregular shape that needs individual attention and are **not** yet
-covered: `audit_logs`, `notifications`, `distribution`, `promotion_runs`,
-`question_papers`, `seating_plans`, `stock_movements`. A handful of names that
-only appear in read paths (`challenges`, `reports`, `stakeholders`) resolve to
-tables owned by other migrations and need no new table. Until covered, those few
-stores fall back to in-memory.
+`023` covers 43 operational stores; `024` covers the remaining five tenant-scoped
+operational stores (`distribution`, `promotion_runs`, `question_papers`,
+`seating_plans`, `stock_movements`) plus the two user-context system tables
+(`audit_logs`, `notifications`, governed by an own-row `auth.uid()` policy).
+**Every store that performs writes now has a durable table.** A few names that
+appear only in read paths (`challenges`, `reports`, `stakeholders`) resolve to
+tables owned by other migrations and need no new table.
 
 ## Security posture (verified)
 
