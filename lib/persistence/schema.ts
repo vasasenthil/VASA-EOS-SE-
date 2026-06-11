@@ -13,7 +13,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-/** The transactional tables the workflow-backed modules persist to (scripts/021). */
+/** The transactional tables the workflow-backed modules persist to (scripts/021–022). */
 export const WORKFLOW_FLOW_TABLES = [
   "recognition_flows",
   "grievance_flows",
@@ -21,6 +21,7 @@ export const WORKFLOW_FLOW_TABLES = [
   "leave_flows",
   "smc_flows",
   "maintenance_flows",
+  "forum_flows",
 ] as const
 
 export interface TableProbe {

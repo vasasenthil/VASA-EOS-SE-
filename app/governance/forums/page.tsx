@@ -1,5 +1,8 @@
 import { Shell } from "@/components/shell"
-import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
+import { PageHeader, PageHeaderHeading, PageHeaderDescription, PageHeaderActions } from "@/components/page-header"
+import { Button } from "@/components/ui/button"
+import { FilePlus } from "lucide-react"
+import Link from "next/link"
 import { ForumBoard } from "./forum-board"
 import { listForumsAction } from "./actions"
 import { getCurrentRole } from "@/lib/auth/current-role"
@@ -18,6 +21,11 @@ export default async function GovernanceForumsPage() {
           ratification for routine business. Items flow into the Oversight Command Centre. Switch role to act as the
           Secretary, a Director, or the Minister.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild>
+            <Link href="/governance/forums/new"><FilePlus className="mr-2 h-4 w-4" />Table a resolution</Link>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       <ForumBoard initial={initial} sessionRole={role} />
     </Shell>

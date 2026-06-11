@@ -14,6 +14,16 @@ function id(): string {
   return `FM-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
+/** Rich detail captured by the governance forum resolution form. */
+export interface ForumDetails {
+  category?: string
+  meetingDate?: string
+  decisionText?: string
+  responsible?: string
+  accountable?: string
+  fundImplication?: number
+}
+
 export interface ForumFlowRecord {
   id: string
   forum: string
@@ -21,6 +31,7 @@ export interface ForumFlowRecord {
   requiresMinister: boolean
   actionItems: string[]
   instance: WorkflowInstance
+  details?: ForumDetails
 }
 
 interface Row {
@@ -30,6 +41,7 @@ interface Row {
   requires_minister: boolean
   action_items: string[]
   instance: WorkflowInstance
+  details?: ForumDetails
   created_at: string
 }
 
@@ -41,6 +53,7 @@ function fromRow(r: Row): ForumFlowRecord {
     requiresMinister: r.requires_minister,
     actionItems: r.action_items ?? [],
     instance: r.instance,
+    details: r.details,
   }
 }
 
@@ -98,6 +111,7 @@ export interface NewForum {
   title: string
   requiresMinister: boolean
   actionItems?: string[]
+  details?: ForumDetails
 }
 
 export async function fileForum(input: NewForum): Promise<ForumFlowRecord> {
@@ -108,6 +122,7 @@ export async function fileForum(input: NewForum): Promise<ForumFlowRecord> {
     requiresMinister: input.requiresMinister,
     actionItems: input.actionItems ?? [],
     instance: startInstance(FORUM_RESOLUTION, { requiresMinister: input.requiresMinister, forum: input.forum }),
+    details: input.details,
   }
   const db = getDb()
   if (db) {
@@ -118,12 +133,18 @@ export async function fileForum(input: NewForum): Promise<ForumFlowRecord> {
       requires_minister: rec.requiresMinister,
       action_items: rec.actionItems,
       instance: rec.instance,
+      details: rec.details,
       created_at: new Date().toISOString(),
     })
   } else {
     store.unshift(rec)
   }
-  await appendAudit({ actor: "secretariat", action: "forumflow.file", resource: rec.id })
+  await appendAudit({
+    actor: "secretariat",
+    action: "forumflow.file",
+    resource: rec.id,
+    details: { forum: rec.forum, category: rec.details?.category, requiresMinister: rec.requiresMinister },
+  })
   return rec
 }
 
