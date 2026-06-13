@@ -1,7 +1,8 @@
 "use server" // This directive is crucial
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { schemeDemoData } from "@/lib/schemes/demo"
 import { hasPermission } from "@/app/governance/rbac" // Ensure this file is correct
 import { PERMISSIONS } from "@/app/governance/types" // Ensure this file is correct (no "use server")
 import { getSupabaseAuthUser } from "@/lib/auth/server"
@@ -28,6 +29,11 @@ const ITEMS_PER_PAGE = 10
 // Ensure ALL functions exported from this file are async
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
+  // No database configured — demonstrate with representative TN welfare schemes.
+  if (!isSupabaseAdminConfigured()) {
+    const schemes = schemeDemoData()
+    return { schemes, totalPages: 1, currentPage: 1, totalCount: schemes.length, demo: true }
+  }
   try {
   const supabase = await createClient()
   const {

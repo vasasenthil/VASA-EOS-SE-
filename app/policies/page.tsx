@@ -155,6 +155,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
     totalPages,
     itemsPerPage: effectiveItemsPerPage,
     error: policiesError,
+    demo: isDemo,
   } = policiesResponse
 
   const currentFiltersSearchAndDateForHeader = {
@@ -191,6 +192,12 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
             </div>
           </CardHeader>
           <CardContent>
+            {isDemo ? (
+              <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                Showing representative <strong>demo policies</strong> — no database is configured. Provision Supabase and
+                seed to manage live policy drafts.
+              </div>
+            ) : null}
             <PolicyFilters />
             {policiesError ? (
               <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-md">

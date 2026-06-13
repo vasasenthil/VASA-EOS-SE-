@@ -90,7 +90,7 @@ export default async function SchemesPage({ searchParams }: SchemesPageProps) {
 }
 
 async function SchemesList({ searchParams }: { searchParams: GetSchemesParams }) {
-  const { schemes, totalPages, currentPage, totalCount } = await getSchemesAction(searchParams)
+  const { schemes, totalPages, currentPage, totalCount, demo } = await getSchemesAction(searchParams)
 
   if (totalCount === 0) {
     return (
@@ -105,6 +105,12 @@ async function SchemesList({ searchParams }: { searchParams: GetSchemesParams })
 
   return (
     <>
+      {demo ? (
+        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          Showing representative <strong>demo schemes</strong> — no database is configured. Provision Supabase and seed
+          to manage live schemes.
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {schemes.map((scheme) => (
           <SchemeListItem key={scheme.id} scheme={scheme} />

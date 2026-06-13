@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { policyDemoData } from "@/lib/policy/demo"
 import { put as vercelBlobPut, del as vercelBlobDel } from "@vercel/blob"
 
 // Fallback/simulation functions (signatures match original intent)
@@ -488,6 +489,8 @@ export interface PaginatedPoliciesResponse {
   currentPage: number
   itemsPerPage: number
   error?: string
+  /** True when the no-database demo dataset is being shown. */
+  demo?: boolean
 }
 
 const DEFAULT_ITEMS_PER_PAGE_ACTION = 10
@@ -507,7 +510,9 @@ export async function getPoliciesAction(params?: {
 }): Promise<PaginatedPoliciesResponse> {
   const { page = 1, itemsPerPage = params?.itemsPerPage || DEFAULT_ITEMS_PER_PAGE_ACTION } = params || {}
   if (!isSupabaseAdminConfigured()) {
-    return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: CRITICAL_DB_ERROR_MSG }
+    // No database configured — demonstrate with representative TN / NEP-2020 policy drafts.
+    const policies = policyDemoData()
+    return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
   }
   const {
     sortBy: sortKey = "last_modified",
