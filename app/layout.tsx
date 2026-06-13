@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Header } from "@/components/layout/header"
+import { getHeaderUser } from "@/lib/auth/current-role"
 import { Footer } from "@/components/layout/footer"
 import { I18nProvider } from "@/components/i18n-provider"
 import { AccessibilityProvider } from "@/components/accessibility-provider"
@@ -26,11 +27,12 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const headerUser = await getHeaderUser()
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -47,7 +49,7 @@ export default function RootLayout({
               <I18nProvider>
                 <TooltipProvider>
                   <div className="flex flex-col min-h-screen">
-                    <Header />
+                    <Header userData={headerUser} />
                     <main id="main-content" tabIndex={-1} className="flex-grow bg-slate-50 outline-none">
                       <Breadcrumbs />
                       {children}
