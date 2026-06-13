@@ -45,6 +45,7 @@ export default async function SecretaryDashboardPage() {
         { label: "The Native-AI Fabric (pillars · engines · agents)", href: "/ai-fabric" },
         { label: "NDEAR-S 29 Building Blocks", href: "/governance/ndear-s" },
         { label: "State-Scale Validation (1.27 Cr)", href: "/governance/scale" },
+        { label: "WCAG 2.1 Conformance Map", href: "/governance/wcag" },
       ]}
     />
   )
