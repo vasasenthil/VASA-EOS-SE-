@@ -43,6 +43,7 @@ export default async function SecretaryDashboardPage() {
         { label: "Brochure Coverage Map (honest)", href: "/governance/brochure-coverage" },
         { label: "The Six AI Engines (advisory)", href: "/ai-engines" },
         { label: "The Native-AI Fabric (pillars · engines · agents)", href: "/ai-fabric" },
+        { label: "NDEAR-S 29 Building Blocks", href: "/governance/ndear-s" },
       ]}
     />
   )

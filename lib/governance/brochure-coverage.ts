@@ -75,7 +75,8 @@ export const BROCHURE_CLAIMS: BrochureClaim[] = [
   { id: "hitl", area: "Native-AI", claim: "Humans decide, AI assists — human authority across every layer", status: "built", note: "every agent tool call is queued for human approval before any side effect", repoRef: "lib/agentflow/store.ts" },
 
   // --- Federation & interoperability ---
-  { id: "federation", area: "Federation & interoperability", claim: "NDEAR-S 29/29; federation with DIKSHA, UDISE+, APAAR, PFMS", status: "partial", note: "12 adapter ports behind one interface, mock by default and live only when env-configured; not live-federated with the national registries", repoRef: "lib/integrations/index.ts" },
+  { id: "ndear-s", area: "Federation & interoperability", claim: "NDEAR-S 29/29 building-block alignment", status: "built", note: "all 29 NDEAR-S blocks mapped to a real in-repo component (cite-checked); ~24 built in-repo, 5 are live-ready federation seams", repoRef: "lib/integrations/ndear-s.ts" },
+  { id: "federation", area: "Federation & interoperability", claim: "Live federation with DIKSHA, UDISE+, APAAR, PFMS", status: "partial", note: "12 typed adapter ports behind one interface, mock by default and live only when env-configured; not live-federated with the national registries at runtime", repoRef: "lib/integrations/index.ts" },
   { id: "ingestion", area: "Federation & interoperability", claim: "Real-data ingestion (UDISE+ / EMIS / SIS)", status: "partial", note: "schema-driven, idempotent CSV adapters ready to load real exports; not bound to a live feed", repoRef: "lib/ingestion/index.ts" },
   { id: "languages", area: "Experience & access", claim: "22 Indian languages; WCAG AAA / RPwD-21 accessibility", status: "partial", note: "i18n scaffolding lists the languages and accessibility is a design intent; full translation + audited AAA across all routes is not verified", repoRef: "lib/i18n/languages.ts" },
 
