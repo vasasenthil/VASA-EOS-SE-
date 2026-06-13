@@ -1,6 +1,8 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
+import { DEMO_COOKIE } from "@/lib/demo-auth"
 import { SYSTEM_ROLES } from "./types" // Assuming PERMISSIONS constant is also in types.ts
 
 const CRITICAL_DB_ERROR_MSG =
@@ -25,8 +27,13 @@ interface PermissionCheckParams {
  */
 export async function hasPermission({ userId, permissionString, ouId }: PermissionCheckParams): Promise<boolean> {
   if (!isSupabaseAdminConfigured()) {
+    // Credential-free demo walkthrough: a demo session is granted access so the
+    // governance/admin screens are viewable. Production always has a DB, so this
+    // branch never runs there and the real RBAC check below applies.
+    const demoRole = (await cookies()).get(DEMO_COOKIE)?.value
+    if (demoRole) return true
     console.error("hasPermission check failed:", CRITICAL_DB_ERROR_MSG)
-    return false // Or throw an error, depending on desired strictness
+    return false
   }
   if (!userId || !permissionString) {
     console.warn("hasPermission called with invalid userId or permissionString.")

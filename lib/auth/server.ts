@@ -1,6 +1,29 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server"
+import { DEMO_COOKIE } from "@/lib/demo-auth"
+import type { User } from "@supabase/supabase-js"
+
+// Demo session: when the credential-free walkthrough is active (no Supabase DB and a
+// demo_role cookie set), treat the visitor as an authenticated demo user. Gated on the
+// absence of a real database, so production always uses real Supabase auth.
+async function demoSession(): Promise<{ id: string; role: string } | null> {
+  if (isSupabaseAdminConfigured()) return null
+  const role = (await cookies()).get(DEMO_COOKIE)?.value
+  return role ? { id: `demo-${role.toLowerCase()}`, role: role.toUpperCase() } : null
+}
+
+function syntheticDemoUser(id: string): User {
+  return {
+    id,
+    aud: "authenticated",
+    role: "authenticated",
+    email: "demo@vasa-eos.local",
+    app_metadata: { provider: "demo" },
+    user_metadata: { demo: true },
+    created_at: new Date(0).toISOString(),
+  } as unknown as User
+}
 
 // Helper to get the Supabase server client for user session
 async function createSupabaseServerClient() {
@@ -46,12 +69,12 @@ export async function getUserIdFromAction(): Promise<string | null> {
 
     if (error) {
       console.error("Error getting user from action:", error.message)
-      return null
+      return (await demoSession())?.id ?? null
     }
-    return user?.id || null
+    return user?.id || (await demoSession())?.id || null
   } catch (e: any) {
     console.error("Unexpected error in getUserIdFromAction:", e.message)
-    return null
+    return (await demoSession())?.id ?? null
   }
 }
 
@@ -92,12 +115,16 @@ export async function getSupabaseAuthUser() {
 
     if (error) {
       console.error("Error getting Supabase auth user:", error.message)
-      return null
+      const demo = await demoSession()
+      return demo ? syntheticDemoUser(demo.id) : null
     }
-    return user // Returns the full user object or null
+    if (user) return user
+    const demo = await demoSession()
+    return demo ? syntheticDemoUser(demo.id) : null
   } catch (e: any) {
     console.error("Unexpected error in getSupabaseAuthUser:", e.message)
-    return null
+    const demo = await demoSession()
+    return demo ? syntheticDemoUser(demo.id) : null
   }
 }
 
