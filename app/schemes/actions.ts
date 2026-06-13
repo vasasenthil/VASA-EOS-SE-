@@ -111,6 +111,10 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
 export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
+  // No database — resolve the demo scheme so list -> detail navigation works.
+  if (!isSupabaseAdminConfigured()) {
+    return schemeDemoData().find((s) => s.id === id) ?? null
+  }
   try {
   const supabase = await createClient()
 

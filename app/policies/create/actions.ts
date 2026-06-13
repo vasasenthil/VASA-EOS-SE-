@@ -581,7 +581,8 @@ export async function getPoliciesAction(params?: {
 }
 
 export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | undefined> {
-  if (!isSupabaseAdminConfigured()) return undefined
+  // No database — resolve the demo policy so list -> view navigation works.
+  if (!isSupabaseAdminConfigured()) return policyDemoData().find((p) => p.id === id)
   try {
     const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
     if (error) {
