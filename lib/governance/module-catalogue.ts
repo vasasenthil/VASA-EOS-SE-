@@ -56,6 +56,16 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "GeM Procurement", repoRef: "lib/procurement/gem.ts", status: "built" },
   { tier: "State", name: "Grants & Finance Management", repoRef: "lib/finance/grants.ts", status: "built" },
   { tier: "State", name: "Legal Case Management", repoRef: "lib/legal/index.ts", status: "built" },
+  { tier: "State", name: "Assembly Q&A Briefing Pack", repoRef: "lib/governance/assembly-briefing.ts", status: "built" },
+  { tier: "State", name: "Cabinet Note Drafting", repoRef: "lib/governance/cabinet-note.ts", status: "built" },
+  { tier: "State", name: "Inter-Departmental & CSR Coordination", repoRef: "lib/governance/coordination.ts", status: "built" },
+  { tier: "State", name: "Public Communication Desk", repoRef: "lib/governance/public-communication.ts", status: "built" },
+  { tier: "State", name: "Executive Budget Priorities", repoRef: "lib/governance/budget-priorities.ts", status: "built" },
+  { tier: "State", name: "Oversight Command Centre", repoRef: "lib/governance/oversight.ts", status: "built" },
+  { tier: "State", name: "Data Fabric & Lineage", repoRef: "lib/data/lineage.ts", status: "built" },
+  { tier: "State", name: "Go-Live Readiness Console", repoRef: "lib/golive/index.ts", status: "built" },
+  { tier: "State", name: "Observability / SIEM Export", repoRef: "lib/observability/siem.ts", status: "partial" },
+  { tier: "State", name: "Operational Posture (SLO / DR)", repoRef: "lib/ops-posture/index.ts", status: "partial" },
 
   // Directorate tier
   { tier: "Directorate", name: "DSE / DGE / SCERT Operations", repoRef: "lib/governance/directorates.ts", status: "built" },
@@ -64,6 +74,11 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Directorate", name: "Teacher Deployment Optimisation", repoRef: "lib/postings/cadre.ts", status: "built" },
   { tier: "Directorate", name: "NPST Competency Tracking", repoRef: "lib/cpd/npst.ts", status: "built" },
   { tier: "Directorate", name: "Need-weighted Resource Allocation", repoRef: "lib/governance/resource-allocation.ts", status: "built" },
+  { tier: "Directorate", name: "DTERT Teacher Education & Research", repoRef: "lib/cpd/index.ts", status: "built" },
+  { tier: "Directorate", name: "Academic Supervision & Inspection", repoRef: "lib/inspection/index.ts", status: "built" },
+  { tier: "Directorate", name: "Performance Grading Index (PGI)", repoRef: "lib/metrics/index.ts", status: "built" },
+  { tier: "Directorate", name: "Statutory Reporting & Traceability", repoRef: "lib/traceability/index.ts", status: "built" },
+  { tier: "Directorate", name: "Teacher Cadre Management", repoRef: "lib/postings/index.ts", status: "built" },
 
   // District tier
   { tier: "District", name: "District KPI Dashboard", repoRef: "app/deo/dashboard/page.tsx", status: "built" },
@@ -71,17 +86,29 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "District", name: "AI-Prioritised Inspections", repoRef: "lib/inspection/index.ts", status: "built" },
   { tier: "District", name: "Dropout & Re-Entry (OOSC)", repoRef: "lib/oosc/index.ts", status: "built" },
   { tier: "District", name: "Teacher Vacancy & Transfer", repoRef: "lib/vacancy/index.ts", status: "built" },
+  { tier: "District", name: "Quality & Compliance (RTE / RPwD)", repoRef: "lib/quality/index.ts", status: "built" },
+  { tier: "District", name: "Constituency Grievance Redress", repoRef: "lib/governance/constituency-grievance.ts", status: "built" },
+  { tier: "District", name: "District Welfare Operations", repoRef: "lib/governance/school-welfare-ops.ts", status: "built" },
+  { tier: "District", name: "Staff Attendance Monitoring", repoRef: "lib/staff-attendance/index.ts", status: "built" },
+  { tier: "District", name: "Diagnostic Assessment Rounds", repoRef: "lib/diagnostic/index.ts", status: "built" },
 
   // Block tier
   { tier: "Block", name: "BEO Operations Dashboard", repoRef: "app/beo/dashboard/page.tsx", status: "built" },
   { tier: "Block", name: "Scheme Implementation Tracking", repoRef: "app/schemes/page.tsx", status: "built" },
   { tier: "Block", name: "Leave Approvals (Block tier)", repoRef: "app/leave-approvals/page.tsx", status: "built" },
+  { tier: "Block", name: "AI-Prioritised Inspections (Block)", repoRef: "lib/inspection/index.ts", status: "built" },
+  { tier: "Block", name: "Grievance Escalation (Block)", repoRef: "app/grievance-approvals/page.tsx", status: "built" },
+  { tier: "Block", name: "Block Academic Monitoring", repoRef: "lib/quality/index.ts", status: "built" },
+  { tier: "Block", name: "BRC Teacher Mentoring", repoRef: "lib/cpd/index.ts", status: "built" },
 
   // Cluster tier
   { tier: "Cluster", name: "NIPUN Cluster Tracking", repoRef: "lib/diagnostic/index.ts", status: "built" },
   { tier: "Cluster", name: "Teacher Mentoring (CPD)", repoRef: "lib/cpd/index.ts", status: "built" },
   { tier: "Cluster", name: "Reading Campaign (Ennum Ezhuthum)", repoRef: "lib/reading/index.ts", status: "built" },
   { tier: "Cluster", name: "CRCC Mobile Field App / GPS Visits", repoRef: "app/crcc/dashboard/page.tsx", status: "partial" },
+  { tier: "Cluster", name: "School Self-Assessment (Shaala Siddhi)", repoRef: "lib/governance/school-self-assessment.ts", status: "built" },
+  { tier: "Cluster", name: "Peer-Learning Circles", repoRef: "lib/cpd/index.ts", status: "built" },
+  { tier: "Cluster", name: "Cluster Remedial Support", repoRef: "lib/remedial/index.ts", status: "built" },
 
   // School tier
   { tier: "School", name: "AI-Powered Daily Attendance", repoRef: "lib/attendance/index.ts", status: "built" },
