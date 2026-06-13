@@ -33,7 +33,8 @@ test("built/partial claims cite real repo evidence; pending cite nothing (no ove
 
 test("the map honestly discloses the major sovereign-grade gaps", () => {
   const pending = byStatus("pending").map((c) => c.id)
-  for (const id of ["keys-hsm", "escrow-offswitch", "multicloud", "scale"]) {
+  // The out-of-scope sovereign-infrastructure items stay pending by design.
+  for (const id of ["keys-hsm", "escrow-offswitch", "multicloud"]) {
     assert.ok(pending.includes(id), `expected ${id} disclosed as pending`)
   }
   // Live federation must not be overclaimed as fully built (still mock-default seams).

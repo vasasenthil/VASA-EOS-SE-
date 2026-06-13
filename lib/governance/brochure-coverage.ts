@@ -89,7 +89,7 @@ export const BROCHURE_CLAIMS: BrochureClaim[] = [
   // --- Scale & assurance ---
   { id: "persistence", area: "Scale & assurance", claim: "Durable persistence at state scale", status: "partial", note: "Supabase service-role seam + migrations verified against PostgreSQL 16; falls back to in-memory until a database is provisioned", repoRef: "lib/persistence/schema.ts" },
   { id: "auth", area: "Scale & assurance", claim: "Real multi-user identity & authentication", status: "partial", note: "Supabase-profile role resolution with a credential-free demo role-switch fallback; real multi-user auth not the live default", repoRef: "lib/auth/current-role.ts" },
-  { id: "scale", area: "Scale & assurance", claim: "Serves ~1.27 crore students / ~69,000 schools", status: "pending", note: "no load/scale validation has been performed at this magnitude", repoRef: "" },
+  { id: "scale", area: "Scale & assurance", claim: "Serves ~1.27 crore students / ~69,000 schools", status: "partial", note: "administrative tree validated at true cardinality (69k schools / ~73k nodes) with governance correct at scale, plus a data-tier capacity model (/governance/scale); a live load/performance test of provisioned infrastructure is still pending", repoRef: "lib/scale/index.ts" },
 ]
 
 export const BROCHURE_AREAS: BrochureArea[] = [
