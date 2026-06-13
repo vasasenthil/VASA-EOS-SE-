@@ -5,26 +5,29 @@ import { listRecognitionsAction } from "@/app/recognition-approvals/actions"
 import { listLeaveFlowsAction } from "@/app/leave-approvals/actions"
 import { listGrievanceFlowsAction } from "@/app/grievance-approvals/actions"
 import { listScholarshipsAction } from "@/app/scholarship-approvals/actions"
+import { listReferralsAction } from "@/app/health-referrals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function BeoDashboardPage() {
   const r = stateRollup()
-  const [grievances, recognitions, leaves, grievanceFlows, scholarships] = await Promise.all([
+  const [grievances, recognitions, leaves, grievanceFlows, scholarships, referrals] = await Promise.all([
     listGrievances(),
     listRecognitionsAction(),
     listLeaveFlowsAction(),
     listGrievanceFlowsAction(),
     listScholarshipsAction(),
+    listReferralsAction(),
   ])
   const open = grievances.filter((g) => g.status !== "resolved").length
   const awaitingBeo =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "BEO") +
     countAwaiting(leaves, LEAVE_APPROVAL, "BEO") +
     countAwaiting(grievanceFlows, GRIEVANCE_ESCALATION, "BEO") +
-    countAwaiting(scholarships, SCHOLARSHIP_SANCTION, "BEO")
+    countAwaiting(scholarships, SCHOLARSHIP_SANCTION, "BEO") +
+    countAwaiting(referrals, HEALTH_REFERRAL, "BEO")
   return (
     <PortalDashboard
       title="Block Education Officer"
@@ -41,6 +44,7 @@ export default async function BeoDashboardPage() {
         { label: "Leave Approvals (BEO tier)", href: "/leave-approvals" },
         { label: "Grievance Escalation (Block)", href: "/grievance-approvals" },
         { label: "Scholarship / Benefit Sanction", href: "/scholarship-approvals" },
+        { label: "RBSK Health Referrals", href: "/health-referrals" },
         { label: "AI-Prioritised Inspections", href: "/inspections" },
         { label: "Grievance Management", href: "/grievance" },
         { label: "Scheme Implementation", href: "/schemes" },

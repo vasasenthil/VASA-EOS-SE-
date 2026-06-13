@@ -123,6 +123,25 @@ export const SCHOLARSHIP_SANCTION: WorkflowDef = {
   ],
 }
 
+// RBSK child-health referral (Health, Safety & Welfare): a school health screening flags a
+// condition (the RBSK "4 Ds"); the Headmaster verifies and forwards; the Block Medical Officer
+// reviews; cases needing specialist care escalate to the District Early-Intervention Centre
+// (DEIC). Dynamic: non-referral cases close at the block (the DEIC step is skipped).
+export const HEALTH_REFERRAL: WorkflowDef = {
+  id: "health-referral",
+  name: "RBSK Health Referral",
+  steps: [
+    { id: "verify", name: "School verification (Headmaster)", approverRole: "PRINCIPAL" },
+    { id: "bmo", name: "Block Medical Officer review", approverRole: "BEO" },
+    {
+      id: "deic",
+      name: "District Early-Intervention (DEIC) specialist",
+      approverRole: "DEO",
+      skipIf: (ctx) => !ctx.specialistReferral,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -132,4 +151,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   MAINTENANCE_WORKFLOW,
   FORUM_RESOLUTION,
   SCHOLARSHIP_SANCTION,
+  HEALTH_REFERRAL,
 ]
