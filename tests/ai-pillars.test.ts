@@ -22,8 +22,15 @@ test("built/partial pillars cite real evidence; pending cite nothing (no oversta
   }
 })
 
-test("vision/document AI is honestly disclosed as pending", () => {
-  assert.equal(AI_PILLARS.find((p) => p.id === "vision")?.status, "pending")
+test("vision/document AI is built to partial (real scoring/extraction + a camera seam)", () => {
+  const vision = AI_PILLARS.find((p) => p.id === "vision")
+  assert.equal(vision?.status, "partial")
+  assert.notEqual(vision?.repoRef, "") // now cites real evidence
+})
+
+test("seam-dependent pillars (language, speech) remain honestly partial", () => {
+  assert.equal(AI_PILLARS.find((p) => p.id === "language")?.status, "partial")
+  assert.equal(AI_PILLARS.find((p) => p.id === "speech")?.status, "partial")
 })
 
 test("pillar coverage is an honest weighted figure under 100%", () => {

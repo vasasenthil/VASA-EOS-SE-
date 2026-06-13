@@ -25,7 +25,7 @@ export const AI_PILLARS: AiPillar[] = [
   { id: "analytics", name: "Analytics & Prediction", capability: "Statistics, trend and anomaly/risk detection.", status: "built", note: "Analytics engine (leave-one-out anomaly detection)", repoRef: "lib/ai/engines/analytics.ts" },
   { id: "conversational", name: "Conversational & Dialogue", capability: "Grounded, cited retrieval-augmented dialogue.", status: "built", note: "Conversational engine (grounded answers + citations)", repoRef: "lib/ai/engines/conversational.ts" },
   { id: "speech", name: "Speech (ASR / TTS)", capability: "Text-to-speech and speech recognition.", status: "partial", note: "Bhashini TTS via the language seam is live-capable; ASR is not wired (opaque audioRef)", repoRef: "lib/integrations/live/bhashini.ts" },
-  { id: "vision", name: "Vision & Document AI", capability: "OMR, document extraction, accessibility vision.", status: "pending", note: "no vision/OMR adapter is built yet", repoRef: "" },
+  { id: "vision", name: "Vision & Document AI", capability: "OMR scoring + document field extraction.", status: "partial", note: "deterministic OMR answer-grid scoring + labelled field extraction from OCR'd TC/mark-sheet/form text (lib/ai/vision); on-device camera capture / handwriting OCR remains behind a seam", repoRef: "lib/ai/vision.ts" },
 ]
 
 export const PILLAR_COUNT = AI_PILLARS.length
