@@ -103,6 +103,26 @@ export const FORUM_RESOLUTION: WorkflowDef = {
   ],
 }
 
+// Scholarship / benefit sanction (Schemes & Welfare): a student's benefit application is
+// verified by the Headmaster, sanctioned by the BEO (block tier), and released as a DBT by
+// the District (treasury). Dynamic routing: high-value sanctions (≥ ₹25,000) additionally
+// require the DEO before release. Bottom-to-top approval that ends in a benefit disbursement.
+export const SCHOLARSHIP_SANCTION: WorkflowDef = {
+  id: "scholarship-sanction",
+  name: "Scholarship / Benefit Sanction",
+  steps: [
+    { id: "verify", name: "Headmaster verification", approverRole: "PRINCIPAL" },
+    { id: "sanction", name: "Block sanction (BEO)", approverRole: "BEO" },
+    {
+      id: "scrutiny",
+      name: "District scrutiny (DEO)",
+      approverRole: "DEO",
+      skipIf: (ctx) => Number(ctx.amount ?? 0) < 25000,
+    },
+    { id: "release", name: "DBT release (Treasury)", approverRole: "DEO" },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -111,4 +131,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   GRIEVANCE_ESCALATION,
   MAINTENANCE_WORKFLOW,
   FORUM_RESOLUTION,
+  SCHOLARSHIP_SANCTION,
 ]
