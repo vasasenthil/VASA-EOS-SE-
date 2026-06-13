@@ -5,26 +5,29 @@ import { listLeaveFlowsAction } from "@/app/leave-approvals/actions"
 import { listGrievanceFlowsAction } from "@/app/grievance-approvals/actions"
 import { listScholarshipsAction } from "@/app/scholarship-approvals/actions"
 import { listReferralsAction } from "@/app/health-referrals/actions"
+import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DeoDashboardPage() {
   const r = stateRollup()
-  const [recognitions, leaves, grievanceFlows, scholarships, referrals] = await Promise.all([
+  const [recognitions, leaves, grievanceFlows, scholarships, referrals, transfers] = await Promise.all([
     listRecognitionsAction(),
     listLeaveFlowsAction(),
     listGrievanceFlowsAction(),
     listScholarshipsAction(),
     listReferralsAction(),
+    listTransfersAction(),
   ])
   const awaitingDeo =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "DEO") +
     countAwaiting(leaves, LEAVE_APPROVAL, "DEO") +
     countAwaiting(grievanceFlows, GRIEVANCE_ESCALATION, "DEO") +
     countAwaiting(scholarships, SCHOLARSHIP_SANCTION, "DEO") +
-    countAwaiting(referrals, HEALTH_REFERRAL, "DEO")
+    countAwaiting(referrals, HEALTH_REFERRAL, "DEO") +
+    countAwaiting(transfers, TRANSFER_REQUEST, "DEO")
   return (
     <PortalDashboard
       title="District Education Officer / CEO"
@@ -43,6 +46,7 @@ export default async function DeoDashboardPage() {
         { label: "Grievance Escalation (District)", href: "/grievance-approvals" },
         { label: "Scholarship Sanction & DBT Release", href: "/scholarship-approvals" },
         { label: "RBSK Health Referrals (DEIC)", href: "/health-referrals" },
+        { label: "Teacher Transfer & Counselling", href: "/transfer-approvals" },
         { label: "Quality & Compliance", href: "/quality" },
         { label: "Teacher Deployment / Vacancy", href: "/vacancy" },
         { label: "Grievances", href: "/grievance" },

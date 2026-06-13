@@ -142,6 +142,25 @@ export const HEALTH_REFERRAL: WorkflowDef = {
   ],
 }
 
+// Teacher transfer & counselling (Roles & Hierarchy / Staff): a teacher's transfer request is
+// cleared by the Headmaster (relieving NOC), recommended by the BEO, and counselled/ordered by
+// the District (DEO); inter-district transfers additionally need Directorate sanction (dynamic).
+export const TRANSFER_REQUEST: WorkflowDef = {
+  id: "transfer-request",
+  name: "Teacher Transfer Request",
+  steps: [
+    { id: "noc", name: "Headmaster relieving NOC", approverRole: "PRINCIPAL" },
+    { id: "recommend", name: "Block recommendation (BEO)", approverRole: "BEO" },
+    { id: "counsel", name: "District counselling & order (DEO)", approverRole: "DEO" },
+    {
+      id: "sanction",
+      name: "Directorate sanction (inter-district)",
+      approverRole: "DIRECTOR",
+      skipIf: (ctx) => !ctx.interDistrict,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -152,4 +171,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   FORUM_RESOLUTION,
   SCHOLARSHIP_SANCTION,
   HEALTH_REFERRAL,
+  TRANSFER_REQUEST,
 ]

@@ -3,22 +3,25 @@ import { stateRollup } from "@/lib/portal-data"
 import { listApplications } from "@/lib/recognition/store"
 import { listRecognitionsAction } from "@/app/recognition-approvals/actions"
 import { listForumsAction } from "@/app/governance/forums/actions"
+import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, FORUM_RESOLUTION } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, FORUM_RESOLUTION, TRANSFER_REQUEST } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DirectorDashboardPage() {
   const r = stateRollup()
-  const [apps, recognitions, forums] = await Promise.all([
+  const [apps, recognitions, forums, transfers] = await Promise.all([
     listApplications(),
     listRecognitionsAction(),
     listForumsAction(),
+    listTransfersAction(),
   ])
   const pending = apps.filter((a) => a.status === "in_progress").length
   const awaitingDirector =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "DIRECTOR") +
-    countAwaiting(forums, FORUM_RESOLUTION, "DIRECTOR")
+    countAwaiting(forums, FORUM_RESOLUTION, "DIRECTOR") +
+    countAwaiting(transfers, TRANSFER_REQUEST, "DIRECTOR")
   return (
     <PortalDashboard
       title="State Director (Directorate)"
@@ -34,6 +37,7 @@ export default async function DirectorDashboardPage() {
         { label: "School Recognition (TN 1973)", href: "/recognition" },
         { label: "Recognition Approvals — file & decide (BEO→DEO→Director)", href: "/recognition-approvals" },
         { label: "Governance Forums — adopt resolutions (Director quorum)", href: "/governance/forums" },
+        { label: "Teacher Transfer — inter-district sanction", href: "/transfer-approvals" },
         { label: "Policy Implementation Tracking", href: "/tracking/dashboard" },
         { label: "Schemes", href: "/schemes" },
         { label: "Quality & Inspection", href: "/quality" },

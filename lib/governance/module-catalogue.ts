@@ -80,6 +80,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Directorate", name: "Performance Grading Index (PGI)", repoRef: "lib/metrics/index.ts", status: "built" },
   { tier: "Directorate", name: "Statutory Reporting & Traceability", repoRef: "lib/traceability/index.ts", status: "built" },
   { tier: "Directorate", name: "Teacher Cadre Management", repoRef: "lib/postings/index.ts", status: "built" },
+  { tier: "Directorate", name: "Teacher Transfer & Counselling (workflow)", repoRef: "lib/transferflow/store.ts", status: "built" },
 
   // District tier
   { tier: "District", name: "District KPI Dashboard", repoRef: "app/deo/dashboard/page.tsx", status: "built" },

@@ -6,20 +6,22 @@ import { listLeaveFlowsAction } from "@/app/leave-approvals/actions"
 import { listGrievanceFlowsAction } from "@/app/grievance-approvals/actions"
 import { listScholarshipsAction } from "@/app/scholarship-approvals/actions"
 import { listReferralsAction } from "@/app/health-referrals/actions"
+import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function BeoDashboardPage() {
   const r = stateRollup()
-  const [grievances, recognitions, leaves, grievanceFlows, scholarships, referrals] = await Promise.all([
+  const [grievances, recognitions, leaves, grievanceFlows, scholarships, referrals, transfers] = await Promise.all([
     listGrievances(),
     listRecognitionsAction(),
     listLeaveFlowsAction(),
     listGrievanceFlowsAction(),
     listScholarshipsAction(),
     listReferralsAction(),
+    listTransfersAction(),
   ])
   const open = grievances.filter((g) => g.status !== "resolved").length
   const awaitingBeo =
@@ -27,7 +29,8 @@ export default async function BeoDashboardPage() {
     countAwaiting(leaves, LEAVE_APPROVAL, "BEO") +
     countAwaiting(grievanceFlows, GRIEVANCE_ESCALATION, "BEO") +
     countAwaiting(scholarships, SCHOLARSHIP_SANCTION, "BEO") +
-    countAwaiting(referrals, HEALTH_REFERRAL, "BEO")
+    countAwaiting(referrals, HEALTH_REFERRAL, "BEO") +
+    countAwaiting(transfers, TRANSFER_REQUEST, "BEO")
   return (
     <PortalDashboard
       title="Block Education Officer"
@@ -45,6 +48,7 @@ export default async function BeoDashboardPage() {
         { label: "Grievance Escalation (Block)", href: "/grievance-approvals" },
         { label: "Scholarship / Benefit Sanction", href: "/scholarship-approvals" },
         { label: "RBSK Health Referrals", href: "/health-referrals" },
+        { label: "Teacher Transfer & Counselling", href: "/transfer-approvals" },
         { label: "AI-Prioritised Inspections", href: "/inspections" },
         { label: "Grievance Management", href: "/grievance" },
         { label: "Scheme Implementation", href: "/schemes" },
