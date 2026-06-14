@@ -26,13 +26,25 @@ import {
 
 const ITEMS_PER_PAGE = 10
 
+// Representative demo result + an "unfiltered first page" test: the demo dataset is shown
+// whenever the live, unfiltered first page comes back empty (no DB, no auth, empty/unseeded
+// DB, or a query error) so the flagship page is never blank in a walkthrough. A genuine
+// filtered/searched query that returns nothing is respected (no demo).
+function schemesDemoResult(): GetSchemesResult {
+  const schemes = schemeDemoData()
+  return { schemes, totalPages: 1, currentPage: 1, totalCount: schemes.length, demo: true }
+}
+
+function isUnfilteredSchemes(p: GetSchemesParams): boolean {
+  return !p.query && !(p.categoryIds?.length) && !(p.status?.length) && !(p.issuingAuthorityOuIds?.length) && (p.page ?? 1) === 1
+}
+
 // Ensure ALL functions exported from this file are async
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
   // No database configured — demonstrate with representative TN welfare schemes.
   if (!isSupabaseAdminConfigured()) {
-    const schemes = schemeDemoData()
-    return { schemes, totalPages: 1, currentPage: 1, totalCount: schemes.length, demo: true }
+    return schemesDemoResult()
   }
   try {
   const supabase = await createClient()
@@ -53,7 +65,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
   if (!canView) {
-    return { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
   }
 
   let queryBuilder = supabase.from("schemes").select(
@@ -85,10 +97,11 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
   if (error) {
     console.error("Error fetching schemes (returning empty):", error)
-    return { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 
   const totalCount = count ?? 0
+  if (totalCount === 0 && isUnfilteredSchemes(params)) return schemesDemoResult()
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const schemes =
@@ -103,9 +116,9 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
   return { schemes, totalPages, currentPage: page, totalCount }
   } catch (e) {
-    // Network/DB unreachable (e.g. Supabase paused on a preview) — fail soft.
-    console.error("getSchemesAction failed; returning empty result:", e)
-    return { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+    // Network/DB unreachable (e.g. Supabase paused on a preview) — fail soft to demo.
+    console.error("getSchemesAction failed; returning demo result:", e)
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 }
 
@@ -122,7 +135,7 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   const canView = user
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
-  if (!canView) return null
+  if (!canView) return schemeDemoData().find((s) => s.id === id) ?? null
 
   const { data, error } = await supabase
     .from("schemes")
@@ -149,10 +162,10 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
     .maybeSingle()
 
   if (error) {
-    console.error(`Error fetching scheme by ID (${id}) — returning null:`, error)
-    return null
+    console.error(`Error fetching scheme by ID (${id}) — falling back to demo:`, error)
+    return schemeDemoData().find((s) => s.id === id) ?? null
   }
-  if (!data) return null
+  if (!data) return schemeDemoData().find((s) => s.id === id) ?? null
 
   // Process joins correctly
   const applicable_ou_subtypes =

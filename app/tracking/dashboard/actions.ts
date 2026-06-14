@@ -151,6 +151,12 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       ? [...new Set(distinctRegionTypeData.map((item: any) => item.region_type).filter(Boolean))]
       : []
 
+    // Empty/unseeded DB on an unfiltered view — show the demo dataset rather than a blank
+    // dashboard (a filtered view that returns nothing is respected below).
+    const unfiltered = !filters?.status && !filters?.regionType
+    if ((!implementationData || implementationData.length === 0) && unfiltered) {
+      return trackerDemoData()
+    }
     if (!implementationData) {
       return {
         stats: [],

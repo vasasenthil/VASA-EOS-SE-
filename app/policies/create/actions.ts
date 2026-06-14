@@ -558,25 +558,28 @@ export async function getPoliciesAction(params?: {
   query = query.order(dbSortBy, { ascending: sortOrder === "asc" })
   const startIndex = (page - 1) * itemsPerPage
   query = query.range(startIndex, startIndex + itemsPerPage - 1)
+  // Demo dataset shown when the unfiltered first page comes back empty (empty/unseeded DB,
+  // no auth, or a query error) so the page is never blank in a walkthrough; a real
+  // filtered/searched query that returns nothing is respected.
+  const unfiltered =
+    !params?.searchQuery && !params?.filterByStatus && !params?.filterByDomain &&
+    !params?.modifiedAfter && !params?.modifiedBefore && !params?.createdAfter && !params?.createdBefore && page === 1
+  const policiesDemoResponse = (): PaginatedPoliciesResponse => {
+    const policies = policyDemoData()
+    return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
+  }
   try {
     const { data, error, count } = await query
-    if (error)
-      return {
-        policies: [],
-        totalCount: 0,
-        totalPages: 0,
-        currentPage: page,
-        itemsPerPage,
-        error: `DB error: ${error.message}`,
-      }
+    if (error) return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: `DB error: ${error.message}` }
     const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
     const totalCount = count || 0
+    if (totalCount === 0 && unfiltered) return policiesDemoResponse()
     const totalPages = Math.ceil(totalCount / itemsPerPage)
     return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
   } catch (e) {
-    // Supabase unreachable — fail soft so the page still renders.
-    console.error("getPoliciesAction failed; returning empty result:", e)
-    return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage }
+    // Supabase unreachable — fail soft to demo so the page still renders.
+    console.error("getPoliciesAction failed; returning demo result:", e)
+    return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage }
   }
 }
 
@@ -586,11 +589,12 @@ export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | und
   try {
     const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
     if (error) {
-      if (error.code === "PGRST116") return undefined // No row found, not an error for this function
+      // No row / unseeded — fall back to a demo policy so a demo card opens.
+      if (error.code === "PGRST116") return policyDemoData().find((p) => p.id === id)
       console.error("Supabase error fetching policy by ID:", error)
-      return undefined
+      return policyDemoData().find((p) => p.id === id)
     }
-    return data ? mapDbPolicyToPolicyDraft(data) : undefined
+    return data ? mapDbPolicyToPolicyDraft(data) : policyDemoData().find((p) => p.id === id)
   } catch (e) {
     console.error("getPolicyByIdAction failed; returning undefined:", e)
     return undefined
