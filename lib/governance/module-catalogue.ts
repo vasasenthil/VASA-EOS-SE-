@@ -121,6 +121,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "RBSK Health Screening", repoRef: "lib/health/index.ts", status: "built" },
   { tier: "School", name: "RBSK Health Referral (workflow → DEIC)", repoRef: "lib/healthflow/store.ts", status: "built" },
   { tier: "School", name: "Building & Asset Management", repoRef: "lib/assets/index.ts", status: "built" },
+  { tier: "School", name: "Infrastructure Works Sanction (workflow)", repoRef: "lib/infraflow/store.ts", status: "built" },
   { tier: "School", name: "Public Library Network", repoRef: "lib/library/index.ts", status: "built" },
   { tier: "School", name: "Sports Management", repoRef: "lib/sports/index.ts", status: "built" },
   { tier: "School", name: "Co-Curricular Activities", repoRef: "lib/cocurricular/index.ts", status: "built" },

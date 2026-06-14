@@ -105,6 +105,7 @@ const workflowActions = [
   { label: "New RTE Admission", href: "/admissions-approvals/new", icon: GraduationCap, color: "bg-green-100 text-green-700" },
   { label: "Apply for Leave", href: "/leave-approvals/new", icon: CalendarDays, color: "bg-blue-100 text-blue-700" },
   { label: "RBSK Health Referral", href: "/health-referrals/new", icon: ShieldAlert, color: "bg-rose-100 text-rose-700" },
+  { label: "Infrastructure Works", href: "/works-approvals/new", icon: Wrench, color: "bg-amber-100 text-amber-700" },
 ]
 
 function RiskBadge({ risk }: { risk: string }) {

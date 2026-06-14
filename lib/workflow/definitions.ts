@@ -161,6 +161,26 @@ export const TRANSFER_REQUEST: WorkflowDef = {
   ],
 }
 
+// Infrastructure works sanction (Infrastructure & Records): a school's civil-works proposal
+// (new classroom, toilet block, ramp, drinking water…) is estimated by the Headmaster,
+// technically scrutinised at the block, sanctioned at the district, and — for high-value works
+// (≥ ₹10 lakh) — approved by the Directorate. Capital works under Samagra Shiksha / PM SHRI.
+export const INFRA_WORKS: WorkflowDef = {
+  id: "infra-works",
+  name: "Infrastructure Works Sanction",
+  steps: [
+    { id: "propose", name: "Headmaster proposal & estimate", approverRole: "PRINCIPAL" },
+    { id: "technical", name: "Block technical scrutiny (AE)", approverRole: "BEO" },
+    { id: "district", name: "District sanction (EE / DEO)", approverRole: "DEO" },
+    {
+      id: "state",
+      name: "Directorate approval (high-value)",
+      approverRole: "DIRECTOR",
+      skipIf: (ctx) => Number(ctx.cost ?? 0) < 1000000,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -172,4 +192,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   SCHOLARSHIP_SANCTION,
   HEALTH_REFERRAL,
   TRANSFER_REQUEST,
+  INFRA_WORKS,
 ]
