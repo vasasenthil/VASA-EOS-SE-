@@ -133,6 +133,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Adolescent Mental-Health / Anti-Stress", repoRef: "lib/health/mental-health.ts", status: "built" },
   { tier: "School", name: "Staff Background Verification", repoRef: "lib/staff/background-verification.ts", status: "built" },
   { tier: "School", name: "Child Safety & POCSO Register", repoRef: "lib/safety/index.ts", status: "built" },
+  { tier: "School", name: "Child-Safety Incident Escalation (workflow → DCPU)", repoRef: "lib/safetyflow/store.ts", status: "built" },
   { tier: "School", name: "Student Discipline & Incidents", repoRef: "lib/discipline/index.ts", status: "built" },
   { tier: "School", name: "CWSN / Inclusive Education (IEP)", repoRef: "lib/cwsn/index.ts", status: "built" },
   { tier: "School", name: "Visitor Management", repoRef: "lib/visitors/index.ts", status: "built" },

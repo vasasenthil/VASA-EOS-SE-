@@ -7,14 +7,15 @@ import { listScholarshipsAction } from "@/app/scholarship-approvals/actions"
 import { listReferralsAction } from "@/app/health-referrals/actions"
 import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { listWorksAction } from "@/app/works-approvals/actions"
+import { listIncidentsAction } from "@/app/safety-incidents/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS, SAFETY_INCIDENT } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DeoDashboardPage() {
   const r = stateRollup()
-  const [recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works] = await Promise.all([
+  const [recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works, incidents] = await Promise.all([
     listRecognitionsAction(),
     listLeaveFlowsAction(),
     listGrievanceFlowsAction(),
@@ -22,6 +23,7 @@ export default async function DeoDashboardPage() {
     listReferralsAction(),
     listTransfersAction(),
     listWorksAction(),
+    listIncidentsAction(),
   ])
   const awaitingDeo =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "DEO") +
@@ -30,7 +32,8 @@ export default async function DeoDashboardPage() {
     countAwaiting(scholarships, SCHOLARSHIP_SANCTION, "DEO") +
     countAwaiting(referrals, HEALTH_REFERRAL, "DEO") +
     countAwaiting(transfers, TRANSFER_REQUEST, "DEO") +
-    countAwaiting(works, INFRA_WORKS, "DEO")
+    countAwaiting(works, INFRA_WORKS, "DEO") +
+    countAwaiting(incidents, SAFETY_INCIDENT, "DEO")
   return (
     <PortalDashboard
       title="District Education Officer / CEO"
@@ -51,6 +54,7 @@ export default async function DeoDashboardPage() {
         { label: "RBSK Health Referrals (DEIC)", href: "/health-referrals" },
         { label: "Teacher Transfer & Counselling", href: "/transfer-approvals" },
         { label: "Infrastructure Works Sanction (EE)", href: "/works-approvals" },
+        { label: "Child-Safety Incidents (DCPU)", href: "/safety-incidents" },
         { label: "Quality & Compliance", href: "/quality" },
         { label: "Teacher Deployment / Vacancy", href: "/vacancy" },
         { label: "Grievances", href: "/grievance" },

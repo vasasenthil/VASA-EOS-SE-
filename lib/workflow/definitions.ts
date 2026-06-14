@@ -181,6 +181,25 @@ export const INFRA_WORKS: WorkflowDef = {
   ],
 }
 
+// Child-safety incident escalation (Health, Safety & Welfare): a reported incident is verified
+// by the Headmaster (who makes any mandatory CWC/Police report), reviewed at the block, and —
+// for mandatory-report or high-severity cases — escalated to the District Child Protection Unit.
+// POCSO confidentiality: NO victim identity is captured; cases use an anonymised reference.
+export const SAFETY_INCIDENT: WorkflowDef = {
+  id: "safety-incident",
+  name: "Child-Safety Incident",
+  steps: [
+    { id: "verify", name: "School verification & mandatory report (Headmaster)", approverRole: "PRINCIPAL" },
+    { id: "block", name: "Block safety review (BEO)", approverRole: "BEO" },
+    {
+      id: "dcpu",
+      name: "District Child Protection Unit (DCPU)",
+      approverRole: "DEO",
+      skipIf: (ctx) => !ctx.escalate,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -193,4 +212,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   HEALTH_REFERRAL,
   TRANSFER_REQUEST,
   INFRA_WORKS,
+  SAFETY_INCIDENT,
 ]
