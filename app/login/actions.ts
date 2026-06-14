@@ -2,9 +2,11 @@
 
 import { z } from "zod"
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { PORTALS, type PortalRole } from "@/config/portals"
 import { demoAuthenticate, isUnreachableError, DEMO_COOKIE } from "@/lib/demo-auth"
+import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
 
 // Demo-login fallback: used only when Supabase Auth is unconfigured or unreachable
 // (the "fetch failed" case). A reachable Supabase always takes precedence. Returns a
@@ -19,6 +21,19 @@ async function tryDemo(email: string, password: string): Promise<LoginState | nu
     message: "Login successful! Redirecting...",
     redirectPath: PORTALS[role as PortalRole].home,
   }
+}
+
+// One-click demo sign-in for the walkthrough directory. SECURITY: only honoured when no
+// real database/auth is configured — when Supabase is present, real authentication is
+// required and this redirects to the password login instead of granting a session.
+export async function demoLoginAction(formData: FormData): Promise<void> {
+  const role = String(formData.get("role") ?? "").toUpperCase()
+  if (isSupabaseAdminConfigured()) redirect("/login?message=Use+your+credentials+to+sign+in.")
+  const portal = PORTALS[role as PortalRole]
+  if (!portal) redirect("/login?error=unknown_role")
+  const cookieStore = await cookies()
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", path: "/" })
+  redirect(portal.home)
 }
 
 const INVALID_CREDS: LoginState = {

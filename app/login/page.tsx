@@ -140,6 +140,9 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2">
+          <Link href="/login/stakeholders" className="text-sm font-medium text-primary hover:underline">
+            Browse all stakeholder roles & one-click demo sign-in →
+          </Link>
           <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
             Forgot your password?
           </Link>
