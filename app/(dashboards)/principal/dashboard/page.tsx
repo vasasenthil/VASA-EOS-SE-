@@ -107,6 +107,7 @@ const workflowActions = [
   { label: "RBSK Health Referral", href: "/health-referrals/new", icon: ShieldAlert, color: "bg-rose-100 text-rose-700" },
   { label: "Infrastructure Works", href: "/works-approvals/new", icon: Wrench, color: "bg-amber-100 text-amber-700" },
   { label: "Report Safety Incident", href: "/safety-incidents/new", icon: ShieldAlert, color: "bg-red-100 text-red-700" },
+  { label: "Procurement Indent (GeM)", href: "/procurement-approvals/new", icon: IndianRupee, color: "bg-emerald-100 text-emerald-700" },
 ]
 
 function RiskBadge({ risk }: { risk: string }) {

@@ -5,26 +5,29 @@ import { listRecognitionsAction } from "@/app/recognition-approvals/actions"
 import { listForumsAction } from "@/app/governance/forums/actions"
 import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { listWorksAction } from "@/app/works-approvals/actions"
+import { listIndentsAction } from "@/app/procurement-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, FORUM_RESOLUTION, TRANSFER_REQUEST, INFRA_WORKS } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, FORUM_RESOLUTION, TRANSFER_REQUEST, INFRA_WORKS, GEM_PROCUREMENT } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DirectorDashboardPage() {
   const r = stateRollup()
-  const [apps, recognitions, forums, transfers, works] = await Promise.all([
+  const [apps, recognitions, forums, transfers, works, indents] = await Promise.all([
     listApplications(),
     listRecognitionsAction(),
     listForumsAction(),
     listTransfersAction(),
     listWorksAction(),
+    listIndentsAction(),
   ])
   const pending = apps.filter((a) => a.status === "in_progress").length
   const awaitingDirector =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "DIRECTOR") +
     countAwaiting(forums, FORUM_RESOLUTION, "DIRECTOR") +
     countAwaiting(transfers, TRANSFER_REQUEST, "DIRECTOR") +
-    countAwaiting(works, INFRA_WORKS, "DIRECTOR")
+    countAwaiting(works, INFRA_WORKS, "DIRECTOR") +
+    countAwaiting(indents, GEM_PROCUREMENT, "DIRECTOR")
   return (
     <PortalDashboard
       title="State Director (Directorate)"
@@ -42,6 +45,7 @@ export default async function DirectorDashboardPage() {
         { label: "Governance Forums — adopt resolutions (Director quorum)", href: "/governance/forums" },
         { label: "Teacher Transfer — inter-district sanction", href: "/transfer-approvals" },
         { label: "Infrastructure Works — high-value approval", href: "/works-approvals" },
+        { label: "GeM Procurement — tender approval", href: "/procurement-approvals" },
         { label: "Policy Implementation Tracking", href: "/tracking/dashboard" },
         { label: "Schemes", href: "/schemes" },
         { label: "Quality & Inspection", href: "/quality" },

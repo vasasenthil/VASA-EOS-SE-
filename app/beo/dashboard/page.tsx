@@ -9,14 +9,15 @@ import { listReferralsAction } from "@/app/health-referrals/actions"
 import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { listWorksAction } from "@/app/works-approvals/actions"
 import { listIncidentsAction } from "@/app/safety-incidents/actions"
+import { listIndentsAction } from "@/app/procurement-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS, SAFETY_INCIDENT } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS, SAFETY_INCIDENT, GEM_PROCUREMENT } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function BeoDashboardPage() {
   const r = stateRollup()
-  const [grievances, recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works, incidents] = await Promise.all([
+  const [grievances, recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works, incidents, indents] = await Promise.all([
     listGrievances(),
     listRecognitionsAction(),
     listLeaveFlowsAction(),
@@ -26,6 +27,7 @@ export default async function BeoDashboardPage() {
     listTransfersAction(),
     listWorksAction(),
     listIncidentsAction(),
+    listIndentsAction(),
   ])
   const open = grievances.filter((g) => g.status !== "resolved").length
   const awaitingBeo =
@@ -36,7 +38,8 @@ export default async function BeoDashboardPage() {
     countAwaiting(referrals, HEALTH_REFERRAL, "BEO") +
     countAwaiting(transfers, TRANSFER_REQUEST, "BEO") +
     countAwaiting(works, INFRA_WORKS, "BEO") +
-    countAwaiting(incidents, SAFETY_INCIDENT, "BEO")
+    countAwaiting(incidents, SAFETY_INCIDENT, "BEO") +
+    countAwaiting(indents, GEM_PROCUREMENT, "BEO")
   return (
     <PortalDashboard
       title="Block Education Officer"
@@ -57,6 +60,7 @@ export default async function BeoDashboardPage() {
         { label: "Teacher Transfer & Counselling", href: "/transfer-approvals" },
         { label: "Infrastructure Works Sanction", href: "/works-approvals" },
         { label: "Child-Safety Incidents (POCSO)", href: "/safety-incidents" },
+        { label: "GeM Procurement Sanction", href: "/procurement-approvals" },
         { label: "AI-Prioritised Inspections", href: "/inspections" },
         { label: "Grievance Management", href: "/grievance" },
         { label: "Scheme Implementation", href: "/schemes" },

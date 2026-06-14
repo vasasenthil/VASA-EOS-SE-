@@ -214,6 +214,26 @@ export const RTI_REQUEST: WorkflowDef = {
   ],
 }
 
+// GeM procurement (Schemes & Welfare / procurement): a school's goods indent is estimated by
+// the Headmaster, verified at the block, financially sanctioned at the district, and — for
+// high-value tenders (≥ ₹5 lakh) — approved by the Directorate. Purchase mode follows GeM /
+// GFR thresholds (direct purchase / GeM bid / tender).
+export const GEM_PROCUREMENT: WorkflowDef = {
+  id: "gem-procurement",
+  name: "GeM Procurement",
+  steps: [
+    { id: "indent", name: "Indent & estimate (Headmaster)", approverRole: "PRINCIPAL" },
+    { id: "verify", name: "Block verification (BEO)", approverRole: "BEO" },
+    { id: "sanction", name: "District financial sanction (DEO)", approverRole: "DEO" },
+    {
+      id: "tender",
+      name: "Directorate approval (tender)",
+      approverRole: "DIRECTOR",
+      skipIf: (ctx) => Number(ctx.cost ?? 0) < 500000,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -228,4 +248,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   INFRA_WORKS,
   SAFETY_INCIDENT,
   RTI_REQUEST,
+  GEM_PROCUREMENT,
 ]
