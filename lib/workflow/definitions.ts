@@ -200,6 +200,20 @@ export const SAFETY_INCIDENT: WorkflowDef = {
   ],
 }
 
+// RTI request (Identity & Data / civic transparency, L12): a citizen's application is answered
+// by the Public Information Officer (PIO); each tier may PROVIDE/close the information or the
+// citizen may APPEAL — first to the First Appellate Authority (FAA), then to the State
+// Information Commission (SIC). Mirrors the RTI Act 2005 escalation.
+export const RTI_REQUEST: WorkflowDef = {
+  id: "rti-request",
+  name: "RTI Request",
+  steps: [
+    { id: "pio", name: "Public Information Officer (PIO)", approverRole: "BEO" },
+    { id: "faa", name: "First Appellate Authority (FAA)", approverRole: "DEO" },
+    { id: "sic", name: "State Information Commission (SIC)", approverRole: "SECRETARY" },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -213,4 +227,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   TRANSFER_REQUEST,
   INFRA_WORKS,
   SAFETY_INCIDENT,
+  RTI_REQUEST,
 ]

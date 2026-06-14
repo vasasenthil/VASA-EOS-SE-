@@ -1,17 +1,20 @@
 import { PortalDashboard } from "@/components/portal-dashboard"
 import { stateRollup } from "@/lib/portal-data"
 import { listForumsAction } from "@/app/governance/forums/actions"
+import { listRtisAction } from "@/app/rti-approvals/actions"
 import { currentStep } from "@/lib/workflow"
-import { FORUM_RESOLUTION } from "@/lib/workflow/definitions"
+import { countAwaiting } from "@/lib/workflow/pending"
+import { FORUM_RESOLUTION, RTI_REQUEST } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function SecretaryDashboardPage() {
   const r = stateRollup()
-  const forums = await listForumsAction()
+  const [forums, rtis] = await Promise.all([listForumsAction(), listRtisAction()])
   const awaitingSecretary = forums.filter(
     (f) => f.instance.status === "in_progress" && currentStep(FORUM_RESOLUTION, f.instance)?.approverRole === "SECRETARY",
   ).length
+  const rtiAppeals = countAwaiting(rtis, RTI_REQUEST, "SECRETARY")
   return (
     <PortalDashboard
       title="Secretary, School Education"
@@ -23,10 +26,12 @@ export default async function SecretaryDashboardPage() {
         { label: "Avg Quality Index", value: String(r.avgQualityIndex), hint: "0-100" },
         { label: "At-risk learners", value: String(r.atRisk), hint: "risk register" },
         { label: "Forum items: your adoption", value: String(awaitingSecretary), hint: "live · awaiting Secretary" },
+        { label: "RTI second appeals (SIC)", value: String(rtiAppeals), hint: "live · awaiting Commission" },
       ]}
       modules={[
         { label: "All-Directorate KPIs", href: "/governance/dashboard" },
         { label: "Governance Forums & Meetings (RACI)", href: "/governance/forums" },
+        { label: "RTI Second Appeals (State Information Commission)", href: "/rti-approvals" },
         { label: "Policy Implementation (NEP)", href: "/tracking/dashboard" },
         { label: "Scheme Impact Dashboards", href: "/schemes" },
         { label: "Policies & Circulars", href: "/policies" },

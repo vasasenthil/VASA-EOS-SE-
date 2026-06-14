@@ -8,14 +8,15 @@ import { listReferralsAction } from "@/app/health-referrals/actions"
 import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { listWorksAction } from "@/app/works-approvals/actions"
 import { listIncidentsAction } from "@/app/safety-incidents/actions"
+import { listRtisAction } from "@/app/rti-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS, SAFETY_INCIDENT } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, LEAVE_APPROVAL, GRIEVANCE_ESCALATION, SCHOLARSHIP_SANCTION, HEALTH_REFERRAL, TRANSFER_REQUEST, INFRA_WORKS, SAFETY_INCIDENT, RTI_REQUEST } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DeoDashboardPage() {
   const r = stateRollup()
-  const [recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works, incidents] = await Promise.all([
+  const [recognitions, leaves, grievanceFlows, scholarships, referrals, transfers, works, incidents, rtis] = await Promise.all([
     listRecognitionsAction(),
     listLeaveFlowsAction(),
     listGrievanceFlowsAction(),
@@ -24,6 +25,7 @@ export default async function DeoDashboardPage() {
     listTransfersAction(),
     listWorksAction(),
     listIncidentsAction(),
+    listRtisAction(),
   ])
   const awaitingDeo =
     countAwaiting(recognitions, RECOGNITION_APPROVAL, "DEO") +
@@ -33,7 +35,8 @@ export default async function DeoDashboardPage() {
     countAwaiting(referrals, HEALTH_REFERRAL, "DEO") +
     countAwaiting(transfers, TRANSFER_REQUEST, "DEO") +
     countAwaiting(works, INFRA_WORKS, "DEO") +
-    countAwaiting(incidents, SAFETY_INCIDENT, "DEO")
+    countAwaiting(incidents, SAFETY_INCIDENT, "DEO") +
+    countAwaiting(rtis, RTI_REQUEST, "DEO")
   return (
     <PortalDashboard
       title="District Education Officer / CEO"
@@ -55,6 +58,7 @@ export default async function DeoDashboardPage() {
         { label: "Teacher Transfer & Counselling", href: "/transfer-approvals" },
         { label: "Infrastructure Works Sanction (EE)", href: "/works-approvals" },
         { label: "Child-Safety Incidents (DCPU)", href: "/safety-incidents" },
+        { label: "RTI — First Appellate Authority", href: "/rti-approvals" },
         { label: "Quality & Compliance", href: "/quality" },
         { label: "Teacher Deployment / Vacancy", href: "/vacancy" },
         { label: "Grievances", href: "/grievance" },

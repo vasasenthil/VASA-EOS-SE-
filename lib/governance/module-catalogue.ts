@@ -63,6 +63,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "Public Communication Desk", repoRef: "lib/governance/public-communication.ts", status: "built" },
   { tier: "State", name: "Executive Budget Priorities", repoRef: "lib/governance/budget-priorities.ts", status: "built" },
   { tier: "State", name: "Oversight Command Centre", repoRef: "lib/governance/oversight.ts", status: "built" },
+  { tier: "State", name: "RTI Request & Appeals (workflow → SIC)", repoRef: "lib/rtiflow/store.ts", status: "built" },
   { tier: "State", name: "Data Fabric & Lineage", repoRef: "lib/data/lineage.ts", status: "built" },
   { tier: "State", name: "Go-Live Readiness Console", repoRef: "lib/golive/index.ts", status: "built" },
   { tier: "State", name: "Observability / SIEM Export", repoRef: "lib/observability/siem.ts", status: "partial" },

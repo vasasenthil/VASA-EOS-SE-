@@ -27,6 +27,7 @@ export default async function PublicDashboardPage() {
         { label: "File a Grievance (tracked & escalated)", href: "/grievance-approvals/new" },
         { label: "Apply for RTE Admission (25% quota)", href: "/admissions-approvals/new" },
         { label: "Apply for a Scholarship / Benefit (DBT)", href: "/scholarship-approvals/new" },
+        { label: "File an RTI (RTI Act 2005)", href: "/rti-approvals/new" },
       ]}
     />
   )
