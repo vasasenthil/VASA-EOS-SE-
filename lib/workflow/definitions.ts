@@ -234,6 +234,25 @@ export const GEM_PROCUREMENT: WorkflowDef = {
   ],
 }
 
+// Budget sanction & re-appropriation (Policy & Governance / Finance, State tier): a Directorate
+// proposes a fresh sanction, a re-appropriation between heads, or a supplementary; the
+// Secretariat (with Finance concurrence) scrutinises; and new schemes or high-value proposals
+// (>= ₹50 Cr) additionally need Cabinet/Minister approval. A top-down executive financial flow.
+export const BUDGET_SANCTION: WorkflowDef = {
+  id: "budget-sanction",
+  name: "Budget Sanction & Re-appropriation",
+  steps: [
+    { id: "propose", name: "Directorate proposal (Director)", approverRole: "DIRECTOR" },
+    { id: "scrutiny", name: "Secretariat & Finance scrutiny (Secretary)", approverRole: "SECRETARY" },
+    {
+      id: "cabinet",
+      name: "Cabinet / Minister approval",
+      approverRole: "MINISTER",
+      skipIf: (ctx) => !ctx.needsCabinet,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -249,4 +268,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   SAFETY_INCIDENT,
   RTI_REQUEST,
   GEM_PROCUREMENT,
+  BUDGET_SANCTION,
 ]

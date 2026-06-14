@@ -23,6 +23,7 @@ import {
   SAFETY_INCIDENT,
   RTI_REQUEST,
   GEM_PROCUREMENT,
+  BUDGET_SANCTION,
 } from "@/lib/workflow/definitions"
 import { listRecognitionsAction } from "@/app/recognition-approvals/actions"
 import { listGrievanceFlowsAction } from "@/app/grievance-approvals/actions"
@@ -38,6 +39,7 @@ import { listWorksAction } from "@/app/works-approvals/actions"
 import { listIncidentsAction } from "@/app/safety-incidents/actions"
 import { listRtisAction } from "@/app/rti-approvals/actions"
 import { listIndentsAction } from "@/app/procurement-approvals/actions"
+import { listBudgetsAction } from "@/app/budget-approvals/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -66,6 +68,7 @@ const VERTICALS: Vertical[] = [
   { label: "Child-Safety Incident (POCSO)", route: "/safety-incidents", def: SAFETY_INCIDENT, domain: "Health, Safety & Welfare", fetch: listIncidentsAction },
   { label: "RTI Request", route: "/rti-approvals", def: RTI_REQUEST, domain: "Identity & Data", fetch: listRtisAction },
   { label: "GeM Procurement", route: "/procurement-approvals", def: GEM_PROCUREMENT, domain: "Schemes & Welfare", fetch: listIndentsAction },
+  { label: "Budget Sanction", route: "/budget-approvals", def: BUDGET_SANCTION, domain: "Policy & Governance", fetch: listBudgetsAction },
 ]
 
 export default async function ApprovalsHubPage() {

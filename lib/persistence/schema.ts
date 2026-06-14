@@ -29,6 +29,7 @@ export const WORKFLOW_FLOW_TABLES = [
   "safety_flows",
   "rti_flows",
   "procurement_flows",
+  "budget_flows",
 ] as const
 
 export interface TableProbe {

@@ -6,20 +6,22 @@ import { listForumsAction } from "@/app/governance/forums/actions"
 import { listTransfersAction } from "@/app/transfer-approvals/actions"
 import { listWorksAction } from "@/app/works-approvals/actions"
 import { listIndentsAction } from "@/app/procurement-approvals/actions"
+import { listBudgetsAction } from "@/app/budget-approvals/actions"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { RECOGNITION_APPROVAL, FORUM_RESOLUTION, TRANSFER_REQUEST, INFRA_WORKS, GEM_PROCUREMENT } from "@/lib/workflow/definitions"
+import { RECOGNITION_APPROVAL, FORUM_RESOLUTION, TRANSFER_REQUEST, INFRA_WORKS, GEM_PROCUREMENT, BUDGET_SANCTION } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function DirectorDashboardPage() {
   const r = stateRollup()
-  const [apps, recognitions, forums, transfers, works, indents] = await Promise.all([
+  const [apps, recognitions, forums, transfers, works, indents, budgets] = await Promise.all([
     listApplications(),
     listRecognitionsAction(),
     listForumsAction(),
     listTransfersAction(),
     listWorksAction(),
     listIndentsAction(),
+    listBudgetsAction(),
   ])
   const pending = apps.filter((a) => a.status === "in_progress").length
   const awaitingDirector =
@@ -27,7 +29,8 @@ export default async function DirectorDashboardPage() {
     countAwaiting(forums, FORUM_RESOLUTION, "DIRECTOR") +
     countAwaiting(transfers, TRANSFER_REQUEST, "DIRECTOR") +
     countAwaiting(works, INFRA_WORKS, "DIRECTOR") +
-    countAwaiting(indents, GEM_PROCUREMENT, "DIRECTOR")
+    countAwaiting(indents, GEM_PROCUREMENT, "DIRECTOR") +
+    countAwaiting(budgets, BUDGET_SANCTION, "DIRECTOR")
   return (
     <PortalDashboard
       title="State Director (Directorate)"
@@ -47,6 +50,7 @@ export default async function DirectorDashboardPage() {
         { label: "Teacher Transfer — inter-district sanction", href: "/transfer-approvals" },
         { label: "Infrastructure Works — high-value approval", href: "/works-approvals" },
         { label: "GeM Procurement — tender approval", href: "/procurement-approvals" },
+        { label: "Budget Sanction — propose & route (Directorate→Finance→Cabinet)", href: "/budget-approvals" },
         { label: "Policy Implementation Tracking", href: "/tracking/dashboard" },
         { label: "Schemes", href: "/schemes" },
         { label: "Quality & Inspection", href: "/quality" },

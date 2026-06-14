@@ -57,6 +57,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "GeM Procurement", repoRef: "lib/procurement/gem.ts", status: "built" },
   { tier: "School", name: "GeM Procurement Sanction (workflow)", repoRef: "lib/procurementflow/store.ts", status: "built" },
   { tier: "State", name: "Grants & Finance Management", repoRef: "lib/finance/grants.ts", status: "built" },
+  { tier: "State", name: "Budget Sanction & Re-appropriation (workflow → Cabinet)", repoRef: "lib/budgetflow/store.ts", status: "built" },
   { tier: "State", name: "Legal Case Management", repoRef: "lib/legal/index.ts", status: "built" },
   { tier: "State", name: "Assembly Q&A Briefing Pack", repoRef: "lib/governance/assembly-briefing.ts", status: "built" },
   { tier: "State", name: "Cabinet Note Drafting", repoRef: "lib/governance/cabinet-note.ts", status: "built" },

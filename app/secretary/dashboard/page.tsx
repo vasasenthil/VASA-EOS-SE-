@@ -2,19 +2,21 @@ import { PortalDashboard } from "@/components/portal-dashboard"
 import { stateRollup } from "@/lib/portal-data"
 import { listForumsAction } from "@/app/governance/forums/actions"
 import { listRtisAction } from "@/app/rti-approvals/actions"
+import { listBudgetsAction } from "@/app/budget-approvals/actions"
 import { currentStep } from "@/lib/workflow"
 import { countAwaiting } from "@/lib/workflow/pending"
-import { FORUM_RESOLUTION, RTI_REQUEST } from "@/lib/workflow/definitions"
+import { FORUM_RESOLUTION, RTI_REQUEST, BUDGET_SANCTION } from "@/lib/workflow/definitions"
 
 export const dynamic = "force-dynamic"
 
 export default async function SecretaryDashboardPage() {
   const r = stateRollup()
-  const [forums, rtis] = await Promise.all([listForumsAction(), listRtisAction()])
+  const [forums, rtis, budgets] = await Promise.all([listForumsAction(), listRtisAction(), listBudgetsAction()])
   const awaitingSecretary = forums.filter(
     (f) => f.instance.status === "in_progress" && currentStep(FORUM_RESOLUTION, f.instance)?.approverRole === "SECRETARY",
   ).length
   const rtiAppeals = countAwaiting(rtis, RTI_REQUEST, "SECRETARY")
+  const budgetScrutiny = countAwaiting(budgets, BUDGET_SANCTION, "SECRETARY")
   return (
     <PortalDashboard
       title="Secretary, School Education"
@@ -27,6 +29,7 @@ export default async function SecretaryDashboardPage() {
         { label: "At-risk learners", value: String(r.atRisk), hint: "risk register" },
         { label: "Forum items: your adoption", value: String(awaitingSecretary), hint: "live · awaiting Secretary" },
         { label: "RTI second appeals (SIC)", value: String(rtiAppeals), hint: "live · awaiting Commission" },
+        { label: "Budget proposals: your scrutiny", value: String(budgetScrutiny), hint: "live · awaiting Finance" },
       ]}
       modules={[
         { label: "My Approvals — all workflows", href: "/approvals" },
@@ -39,7 +42,7 @@ export default async function SecretaryDashboardPage() {
         { label: "Government Structure", href: "/governance/org" },
         { label: "Risk Register (Challenges)", href: "/tracking/challenges" },
         { label: "Assembly Q&A Briefing Pack", href: "/governance/assembly-briefing" },
-        { label: "Budget Sanction & Re-appropriation", href: "/governance/budget-sanction" },
+        { label: "Budget Sanction & Re-appropriation — scrutinise (Finance)", href: "/budget-approvals" },
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },
