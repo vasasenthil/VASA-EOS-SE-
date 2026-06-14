@@ -29,6 +29,7 @@ export default async function SecretaryDashboardPage() {
         { label: "RTI second appeals (SIC)", value: String(rtiAppeals), hint: "live · awaiting Commission" },
       ]}
       modules={[
+        { label: "My Approvals — all workflows", href: "/approvals" },
         { label: "All-Directorate KPIs", href: "/governance/dashboard" },
         { label: "Governance Forums & Meetings (RACI)", href: "/governance/forums" },
         { label: "RTI Second Appeals (State Information Commission)", href: "/rti-approvals" },

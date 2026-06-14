@@ -52,6 +52,7 @@ export default async function DeoDashboardPage() {
         { label: "Compliance", value: complianceLabel(r.compliance), hint: "RTE/RPwD/DPDP" },
       ]}
       modules={[
+        { label: "My Approvals — all workflows", href: "/approvals" },
         { label: "District KPI & Heat Maps", href: "/tracking/dashboard" },
         { label: "Recognition Approvals (DEO scrutiny)", href: "/recognition-approvals" },
         { label: "Leave Approvals (DEO tier)", href: "/leave-approvals" },

@@ -40,6 +40,7 @@ export default async function DirectorDashboardPage() {
         { label: "Avg Quality Index", value: String(r.avgQualityIndex), hint: "0-100" },
       ]}
       modules={[
+        { label: "My Approvals — all workflows", href: "/approvals" },
         { label: "School Recognition (TN 1973)", href: "/recognition" },
         { label: "Recognition Approvals — file & decide (BEO→DEO→Director)", href: "/recognition-approvals" },
         { label: "Governance Forums — adopt resolutions (Director quorum)", href: "/governance/forums" },

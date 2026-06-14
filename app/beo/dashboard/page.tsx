@@ -52,6 +52,7 @@ export default async function BeoDashboardPage() {
         { label: "Open Grievances", value: String(open), hint: "live · SLA-tracked" },
       ]}
       modules={[
+        { label: "My Approvals — all workflows", href: "/approvals" },
         { label: "Recognition Approvals (BEO verification)", href: "/recognition-approvals" },
         { label: "Leave Approvals (BEO tier)", href: "/leave-approvals" },
         { label: "Grievance Escalation (Block)", href: "/grievance-approvals" },
