@@ -37,6 +37,7 @@ import { latestEnrolmentAction } from "@/app/enrolment/actions"
 import { listDropoutRiskAction } from "@/app/dropout/actions"
 import { listComplianceAction } from "@/app/compliance/actions"
 import { listSyllabusAction } from "@/app/syllabus/actions"
+import { listAssessmentsAction } from "@/app/assessment-schedule/actions"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
@@ -47,14 +48,6 @@ import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 // --- School Operational Data (Module 70.4) ---
 // Note: all four headline KPIs (Total Students, Teachers Present, Student Attendance,
 // Fee Collection) are now LIVE from durable stores.
-
-// --- Upcoming Assessments ---
-const upcomingAssessments = [
-  { subject: "Mathematics", class: "Class X", type: "Unit Test", date: "Apr 2", status: "Scheduled" },
-  { subject: "Science", class: "Class IX", type: "Practical", date: "Apr 4", status: "Scheduled" },
-  { subject: "English", class: "All Classes", type: "FA-2", date: "Apr 8–12", status: "Preparation" },
-  { subject: "Social Studies", class: "Class VIII", type: "Project Eval", date: "Apr 10", status: "Scheduled" },
-]
 
 // --- Announcements ---
 const announcements = [
@@ -108,7 +101,7 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion, upcomingAssessments] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
@@ -118,6 +111,7 @@ export default async function PrincipalDashboardPage() {
     listDropoutRiskAction(),
     listComplianceAction(),
     listSyllabusAction(),
+    listAssessmentsAction(),
   ])
   const complianceSummary = summariseCompliance(complianceItems)
   const syllabusSummary = summariseSyllabus(syllabusCompletion)
@@ -357,19 +351,25 @@ export default async function PrincipalDashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-indigo-600" /> Upcoming Assessments
+              <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                <Activity className="h-3 w-3 mr-1" /> Live
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {upcomingAssessments.map((a, i) => (
-              <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-gray-50 border text-xs">
+            {upcomingAssessments.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">No assessments scheduled.</p>
+            ) : (
+              upcomingAssessments.map((a) => (
+              <div key={a.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-gray-50 border text-xs">
                 <div>
                   <p className="font-semibold text-gray-800">{a.subject}</p>
-                  <p className="text-muted-foreground">{a.class} · {a.type}</p>
+                  <p className="text-muted-foreground">{a.cls} · {a.type}</p>
                   <p className="text-blue-600 font-medium mt-0.5">{a.date}</p>
                 </div>
                 <RiskBadge risk={a.status} />
               </div>
-            ))}
+            )))}
           </CardContent>
         </Card>
 

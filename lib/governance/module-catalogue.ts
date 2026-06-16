@@ -124,6 +124,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Admission & Enrolment", repoRef: "lib/admissions/index.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
+  { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
   { tier: "School", name: "Teacher Profile & Cadre", repoRef: "lib/directory/index.ts", status: "built" },
   { tier: "School", name: "Formative Assessment (CCE / HPC)", repoRef: "lib/hpc/index.ts", status: "built" },
   { tier: "School", name: "Board Exam Preparation & Security", repoRef: "lib/exams/board-prep.ts", status: "built" },
