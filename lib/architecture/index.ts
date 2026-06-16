@@ -109,6 +109,7 @@ export const PILLARS: Pillar[] = [
       { name: "Readiness/liveness/health/metrics probes", ref: "lib/readiness" },
       { name: "Structured logger + metrics", ref: "lib/metrics" },
       { name: "Live ops console", ref: "app/ops/page.tsx" },
+      { name: "Operational efficiency register (process→improvement)", ref: "lib/compliance/operations-efficiency.ts" },
       { name: "DR + SLO posture model", ref: "lib/ops-posture" },
       { name: "SLI catalogue + error budgets (SLO-bound)", ref: "lib/ops-posture/sli.ts" },
       { name: "DR runbook + on-call/SLA (per-scenario procedures)", ref: "lib/ops-posture/runbook.ts" },
