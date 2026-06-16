@@ -1,7 +1,6 @@
 import type React from "react"
 import { Suspense } from "react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
 import { getSchemeByIdAction } from "../actions"
 import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription, PageHeaderActions } from "@/components/page-header"
@@ -77,7 +76,21 @@ async function SchemeDetails({ schemeId }: { schemeId: string }) {
   const scheme = await getSchemeByIdAction(schemeId)
 
   if (!scheme) {
-    notFound()
+    // Render a friendly, in-page message instead of a hard 404 so a missed lookup
+    // (e.g. an unseeded database) never dumps the user to a generic "page not found".
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Scheme not found</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <p>We couldn&apos;t find a scheme with this reference. It may have been removed, or the database is not yet seeded.</p>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/schemes"><ArrowLeft className="mr-2 h-4 w-4" />Back to all schemes</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

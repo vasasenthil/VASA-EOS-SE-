@@ -1,6 +1,6 @@
 import type React from "react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -231,7 +231,7 @@ export default async function PolicyTrackerDashboardPage({ searchParams }: Polic
                           </TableCell>
                           <TableCell className="text-center hidden md:table-cell">{policy.statesAffected}</TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            {format(new Date(policy.lastUpdate), "dd MMM yyyy")}
+                            {safeDate(policy.lastUpdate, "dd MMM yyyy")}
                           </TableCell>
                           <TableCell className="text-right">
                             {policy.implementation_status_id ? (

@@ -21,7 +21,7 @@ import { Edit3, Trash2, CalendarDays, CheckCircle, XCircle, Hourglass, Info } fr
 import type { ImplementationMilestone, MilestoneStatus } from "../types"
 import { deleteMilestoneAction } from "../../dashboard/actions"
 import { useToast } from "@/hooks/use-toast"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 
 interface MilestoneListItemProps {
   milestone: ImplementationMilestone
@@ -100,14 +100,14 @@ export function MilestoneListItem({ milestone, onEdit, onDeleted }: MilestoneLis
           <CalendarDays className="h-4 w-4 mr-2 text-gray-500" />
           <strong>Target Date:</strong>
           <span className="ml-1">
-            {milestone.target_date ? format(new Date(milestone.target_date), "PPP") : "—"}
+            {safeDate(milestone.target_date, "PPP", "—")}
           </span>
         </div>
         {milestone.actual_completion_date && (
           <div className="flex items-center">
             <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
             <strong>Completed On:</strong>
-            <span className="ml-1">{format(new Date(milestone.actual_completion_date), "PPP")}</span>
+            <span className="ml-1">{safeDate(milestone.actual_completion_date, "PPP", "—")}</span>
           </div>
         )}
         {milestone.notes && (
