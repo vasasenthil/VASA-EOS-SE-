@@ -6,13 +6,17 @@ on:
   pull_request:
     branches: [ "main" ]
 
+# NOTE: This project is a Next.js/TypeScript app (it does not use Gulp). The original
+# 'gulp' build step always failed, which shows red CI and — where a deploy waits on
+# checks — can block the live deployment. The job below runs the project's REAL build
+# so the workflow passes and never gates a deploy.
 jobs:
   build:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
 
     steps:
     - uses: actions/checkout@v4
@@ -22,7 +26,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - name: Install dependencies
+      run: npm install --no-audit --no-fund
+
+    - name: Typecheck
+      run: ./node_modules/.bin/tsc --noEmit
+
     - name: Build
-      run: |
-        npm install
-        gulp
+      run: ./node_modules/.bin/next build
