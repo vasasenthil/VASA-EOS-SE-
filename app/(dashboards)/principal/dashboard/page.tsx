@@ -34,6 +34,7 @@ import { listClassAttendanceAction } from "@/app/attendance/actions"
 import { latestFeeCollectionAction } from "@/app/fees/actions"
 import { latestTeacherPresenceAction } from "@/app/staff-attendance/actions"
 import { latestEnrolmentAction } from "@/app/enrolment/actions"
+import { listDropoutRiskAction } from "@/app/dropout/actions"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { currentStep } from "@/lib/workflow"
@@ -42,14 +43,6 @@ import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 // --- School Operational Data (Module 70.4) ---
 // Note: all four headline KPIs (Total Students, Teachers Present, Student Attendance,
 // Fee Collection) are now LIVE from durable stores.
-
-// --- AI-Generated Dropout Risk Alerts ---
-const dropoutRiskStudents = [
-  { name: "Meena Kumari", class: "IX-B", absences: 14, risk: "High", trigger: "Chronic absenteeism + fee default" },
-  { name: "Raju Prasad", class: "VIII-A", absences: 11, risk: "High", trigger: "Repeated absence after Diwali" },
-  { name: "Fatima Begum", class: "X-C", absences: 8, risk: "Medium", trigger: "Declining scores + absences" },
-  { name: "Arjun Singh", class: "VII-B", absences: 7, risk: "Medium", trigger: "Sibling dropout pattern" },
-]
 
 // --- Upcoming Assessments ---
 const upcomingAssessments = [
@@ -130,13 +123,14 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
     latestFeeCollectionAction(),
     latestTeacherPresenceAction(),
     latestEnrolmentAction(),
+    listDropoutRiskAction(),
   ])
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
@@ -284,25 +278,36 @@ export default async function PrincipalDashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-red-500" /> AI Dropout Risk Alerts
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
               </CardTitle>
-              <CardDescription className="text-xs">Students requiring immediate attention</CardDescription>
+              <CardDescription className="text-xs">Advisory · explainable triggers · human authority</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {dropoutRiskStudents.map((s) => (
-                <div
-                  key={s.name}
-                  className={`p-2.5 rounded-lg border text-xs ${
-                    s.risk === "High" ? "bg-red-50 border-red-200" : "bg-yellow-50 border-yellow-200"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-gray-800">{s.name}</span>
-                    <RiskBadge risk={s.risk} />
+              {dropoutRisk.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">No learners currently flagged at risk.</p>
+              ) : (
+                dropoutRisk.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`p-2.5 rounded-lg border text-xs ${
+                      s.assessment.band === "High"
+                        ? "bg-red-50 border-red-200"
+                        : s.assessment.band === "Medium"
+                          ? "bg-yellow-50 border-yellow-200"
+                          : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-semibold text-gray-800">{s.name}</span>
+                      <RiskBadge risk={s.assessment.band} />
+                    </div>
+                    <p className="text-muted-foreground">{s.cls} · {s.absences} absences</p>
+                    <p className="text-gray-600 mt-0.5 truncate">{s.assessment.triggers.join(" · ")}</p>
                   </div>
-                  <p className="text-muted-foreground">{s.class} · {s.absences} absences</p>
-                  <p className="text-gray-600 mt-0.5 truncate">{s.trigger}</p>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
 

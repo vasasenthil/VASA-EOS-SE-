@@ -90,6 +90,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "District", name: "CEO/DEO Approvals Workflow Hub", repoRef: "app/recognition-approvals/page.tsx", status: "built" },
   { tier: "District", name: "AI-Prioritised Inspections", repoRef: "lib/inspection/index.ts", status: "built" },
   { tier: "District", name: "Dropout & Re-Entry (OOSC)", repoRef: "lib/oosc/index.ts", status: "built" },
+  { tier: "School", name: "Dropout Early-Warning (live, explainable, advisory)", repoRef: "lib/dropout/store.ts", status: "built" },
   { tier: "District", name: "Teacher Vacancy & Transfer", repoRef: "lib/vacancy/index.ts", status: "built" },
   { tier: "District", name: "Quality & Compliance (RTE / RPwD)", repoRef: "lib/quality/index.ts", status: "built" },
   { tier: "District", name: "Constituency Grievance Redress", repoRef: "lib/governance/constituency-grievance.ts", status: "built" },
