@@ -71,7 +71,8 @@ Commit + push to `claude/platform-foundation`, then fast-forward `main`
 - To scope a module: add `tenantId` to its record type + `tenant_id` to the
   store/Row (+ migration `scripts/018`), seed across nodes, wrap the listing action
   in `scopeForCurrentSubject(...)`, update the board's optimistic object & test helper.
-- Scoped so far: Safety, Discipline, CWSN, RBSK Health Referrals (workflow flow, scripts/042).
+- Scoped so far: Safety, Discipline, CWSN, RBSK Health Referrals (flow, scripts/042),
+  Child-Safety Incidents (POCSO flow, scripts/043).
 
 ## Conventions
 - Model id `claude-opus-4-8` must NOT appear in commits/PRs/code/artifacts (chat only).

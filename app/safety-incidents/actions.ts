@@ -4,12 +4,15 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileIncident, actOnIncident, listIncidents, type NewIncident, type SafetyFlowRecord } from "@/lib/safetyflow/store"
 import type { Decision } from "@/lib/workflow"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listIncidentsAction(): Promise<SafetyFlowRecord[]> {
   noStore()
   try {
-    return await listIncidents()
+    // Per-role jurisdiction scoping: a POCSO/child-safety case is visible only to a subject
+    // whose tenant subtree includes the reporting school. Fail-closed (empty).
+    return await scopeForCurrentSubject(await listIncidents())
   } catch (e) {
     logger.error("safetyflow.list failed", { error: String(e) })
     return []

@@ -6,6 +6,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { act, startInstance, type ActInput, type WorkflowInstance } from "@/lib/workflow"
 import { SAFETY_INCIDENT } from "@/lib/workflow/definitions"
 
@@ -29,6 +30,8 @@ export interface SafetyFlowRecord {
   escalate: boolean
   instance: WorkflowInstance
   details?: IncidentDetails
+  /** Tenant node (reporting school); drives per-role jurisdiction scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -38,11 +41,12 @@ interface Row {
   escalate: boolean
   instance: WorkflowInstance
   details?: IncidentDetails
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): SafetyFlowRecord {
-  return { id: r.id, caseRef: r.case_ref, category: r.category, escalate: r.escalate, instance: r.instance, details: r.details }
+  return { id: r.id, caseRef: r.case_ref, category: r.category, escalate: r.escalate, instance: r.instance, details: r.details, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: SafetyFlowRecord[] = []
@@ -52,6 +56,8 @@ export interface NewIncident {
   category: string
   escalate: boolean
   details?: IncidentDetails
+  /** Reporting tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function fileIncident(input: NewIncident): Promise<SafetyFlowRecord> {
@@ -62,6 +68,7 @@ export async function fileIncident(input: NewIncident): Promise<SafetyFlowRecord
     escalate: input.escalate,
     instance: startInstance(SAFETY_INCIDENT, { escalate: input.escalate }),
     details: input.details,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -72,6 +79,7 @@ export async function fileIncident(input: NewIncident): Promise<SafetyFlowRecord
       escalate: rec.escalate,
       instance: rec.instance,
       details: rec.details,
+      tenant_id: rec.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
