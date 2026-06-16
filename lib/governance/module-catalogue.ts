@@ -48,6 +48,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
 
   // State tier
   { tier: "State", name: "Compliance Dashboard", repoRef: "lib/compliance/index.ts", status: "built" },
+  { tier: "School", name: "Statutory Compliance Checklist (live dashboard store)", repoRef: "lib/compliance/checklist-store.ts", status: "built" },
   { tier: "State", name: "Scholarship Portal", repoRef: "lib/scholarship/index.ts", status: "built" },
   { tier: "State", name: "Scholarship / Benefit Sanction (workflow → DBT)", repoRef: "lib/scholarshipflow/store.ts", status: "built" },
   { tier: "State", name: "CMBS Breakfast Operations", repoRef: "lib/meals/index.ts", status: "built" },

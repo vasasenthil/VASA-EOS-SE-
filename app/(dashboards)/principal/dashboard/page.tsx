@@ -35,8 +35,10 @@ import { latestFeeCollectionAction } from "@/app/fees/actions"
 import { latestTeacherPresenceAction } from "@/app/staff-attendance/actions"
 import { latestEnrolmentAction } from "@/app/enrolment/actions"
 import { listDropoutRiskAction } from "@/app/dropout/actions"
+import { listComplianceAction } from "@/app/compliance/actions"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
+import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
@@ -59,16 +61,6 @@ const syllabusCompletion = [
   { subject: "English", teacher: "Ms. Verma", pct: 91 },
   { subject: "Social Studies", teacher: "Mr. Khan", pct: 74 },
   { subject: "Hindi", teacher: "Mrs. Gupta", pct: 88 },
-]
-
-// --- Compliance Checklist ---
-const complianceItems = [
-  { item: "SMC Meeting (March)", status: "Done" },
-  { item: "UDISE+ Data Submission", status: "Done" },
-  { item: "Mid-Day Meal Register (today)", status: "Done" },
-  { item: "Fire Safety Drill (Q1)", status: "Overdue" },
-  { item: "Annual Health Screening", status: "Pending" },
-  { item: "Teacher CPD Hours (Q1)", status: "In Progress" },
 ]
 
 // --- Announcements ---
@@ -123,7 +115,7 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
@@ -131,7 +123,9 @@ export default async function PrincipalDashboardPage() {
     latestTeacherPresenceAction(),
     latestEnrolmentAction(),
     listDropoutRiskAction(),
+    listComplianceAction(),
   ])
+  const complianceSummary = summariseCompliance(complianceItems)
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
@@ -382,13 +376,22 @@ export default async function PrincipalDashboardPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" /> Compliance Checklist
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" /> Compliance Checklist
+                  <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                    <Activity className="h-3 w-3 mr-1" /> Live
+                  </Badge>
+                </CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                {complianceSummary.done}/{complianceSummary.total} done ({complianceSummary.pct}%)
+                {complianceSummary.overdue > 0 ? ` · ${complianceSummary.overdue} overdue` : ""}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {complianceItems.map((c, i) => (
-                <div key={i} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
+              {complianceItems.map((c) => (
+                <div key={c.id} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
                   <span className="text-gray-700">{c.item}</span>
                   <RiskBadge risk={c.status} />
                 </div>
