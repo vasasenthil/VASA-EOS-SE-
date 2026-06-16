@@ -38,6 +38,8 @@ import { listDropoutRiskAction } from "@/app/dropout/actions"
 import { listComplianceAction } from "@/app/compliance/actions"
 import { listSyllabusAction } from "@/app/syllabus/actions"
 import { listAssessmentsAction } from "@/app/assessment-schedule/actions"
+import { listNoticesAction } from "@/app/notices/actions"
+import { sortNotices } from "@/lib/notices"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
@@ -46,16 +48,9 @@ import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
 // --- School Operational Data (Module 70.4) ---
-// Note: all four headline KPIs (Total Students, Teachers Present, Student Attendance,
-// Fee Collection) are now LIVE from durable stores.
-
-// --- Announcements ---
-const announcements = [
-  { text: "Board Exam Date Sheet released — Class X & XII", date: "Today", type: "important" },
-  { text: "Parent-Teacher Meeting scheduled for April 15", date: "Yesterday", type: "normal" },
-  { text: "Annual Sports Day — April 22. Volunteers needed.", date: "2 days ago", type: "normal" },
-  { text: "NIPUN Bharat assessment: Grade III & V — April 10", date: "3 days ago", type: "important" },
-]
+// Note: every data block on this dashboard — the four headline KPIs, class attendance,
+// fees, dropout risk, compliance, syllabus, assessments and notices — is now LIVE from
+// durable stores.
 
 // --- Workflow create entry points the school head initiates ---
 // Each routes to a rich, validated create form that enters a real multi-tier
@@ -101,7 +96,7 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion, upcomingAssessments] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion, upcomingAssessments, notices] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
@@ -112,9 +107,11 @@ export default async function PrincipalDashboardPage() {
     listComplianceAction(),
     listSyllabusAction(),
     listAssessmentsAction(),
+    listNoticesAction(),
   ])
   const complianceSummary = summariseCompliance(complianceItems)
   const syllabusSummary = summariseSyllabus(syllabusCompletion)
+  const announcements = sortNotices(notices).slice(0, 4)
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
@@ -299,24 +296,31 @@ export default async function PrincipalDashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Bell className="h-4 w-4 text-blue-500" /> School Notices
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {announcements.map((a, i) => (
-                <div
-                  key={i}
-                  className={`flex gap-2 p-2 rounded-lg text-xs border ${
-                    a.type === "important" ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800 leading-snug">{a.text}</p>
-                    <p className="text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <Clock className="h-3 w-3" /> {a.date}
-                    </p>
+              {announcements.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">No notices published.</p>
+              ) : (
+                announcements.map((a) => (
+                  <div
+                    key={a.id}
+                    className={`flex gap-2 p-2 rounded-lg text-xs border ${
+                      a.pinned ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800 leading-snug">{a.title}</p>
+                      <p className="text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Clock className="h-3 w-3" /> {a.date} · {a.category}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
