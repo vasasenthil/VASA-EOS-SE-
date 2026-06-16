@@ -117,6 +117,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
 
   // School tier
   { tier: "School", name: "AI-Powered Daily Attendance", repoRef: "lib/attendance/index.ts", status: "built" },
+  { tier: "School", name: "Class-wise Attendance (live dashboard store)", repoRef: "lib/attendance/store.ts", status: "built" },
   { tier: "School", name: "Admission & Enrolment", repoRef: "lib/admissions/index.ts", status: "built" },
   { tier: "School", name: "Teacher Profile & Cadre", repoRef: "lib/directory/index.ts", status: "built" },
   { tier: "School", name: "Formative Assessment (CCE / HPC)", repoRef: "lib/hpc/index.ts", status: "built" },

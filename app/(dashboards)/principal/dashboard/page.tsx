@@ -30,26 +30,18 @@ import { RadarChart } from "@/components/charts/radar-chart"
 import { CHART_COLORS } from "@/components/charts/chart-colors"
 import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
 import { listResolutionsAction } from "@/app/smc-approvals/actions"
+import { listClassAttendanceAction } from "@/app/attendance/actions"
+import { rollup } from "@/lib/attendance/class-day"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
 // --- Mock School Operational Data (Module 70.4) ---
+// Note: Student Attendance is now LIVE (lib/attendance/store). The remaining three
+// figures are illustrative pending their own durable stores.
 const schoolStats = [
   { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
   { label: "Teachers Present", value: "38 / 42", icon: Users, color: "text-green-600", bg: "bg-green-50" },
-  { label: "Student Attendance", value: "91.4%", icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
   { label: "Fee Collection (Apr)", value: "₹8.4L", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
-]
-
-// --- Today's Class-wise Student Attendance ---
-const classAttendance = [
-  { class: "Class VI", enrolled: 180, present: 168, pct: 93.3 },
-  { class: "Class VII", enrolled: 195, present: 178, pct: 91.3 },
-  { class: "Class VIII", enrolled: 210, present: 188, pct: 89.5 },
-  { class: "Class IX", enrolled: 225, present: 205, pct: 91.1 },
-  { class: "Class X", enrolled: 238, present: 224, pct: 94.1 },
-  { class: "Class XI", enrolled: 115, present: 102, pct: 88.7 },
-  { class: "Class XII", enrolled: 85, present: 78, pct: 91.8 },
 ]
 
 // --- AI-Generated Dropout Risk Alerts ---
@@ -137,11 +129,25 @@ export default async function PrincipalDashboardPage() {
   })
 
   // Live: open maintenance tickets raised through the workflow (the same ones
-  // the "Raise Maintenance Ticket" / "Report New Issue" actions create).
-  const [tickets, resolutions] = await Promise.all([listTicketFlowsAction(), listResolutionsAction()])
+  // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
+  // class-wise attendance roll-up from the durable attendance store.
+  const [tickets, resolutions, attendanceRows] = await Promise.all([
+    listTicketFlowsAction(),
+    listResolutionsAction(),
+    listClassAttendanceAction(),
+  ])
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
+  const att = rollup(attendanceRows)
+
+  // KPI cards: Student Attendance is live from the attendance store; the rest are illustrative.
+  const kpiStats = [
+    schoolStats[0],
+    schoolStats[1],
+    { label: "Student Attendance", value: `${att.pct}%`, icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
+    schoolStats[2],
+  ]
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-8 space-y-6">
@@ -165,7 +171,7 @@ export default async function PrincipalDashboardPage() {
 
       {/* School KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {schoolStats.map((s) => (
+        {kpiStats.map((s) => (
           <Card key={s.label}>
             <CardContent className="pt-4 pb-3 px-4">
               <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${s.bg} mb-2`}>
@@ -214,7 +220,7 @@ export default async function PrincipalDashboardPage() {
               <div>
                 <CardTitle className="text-base font-semibold">Today&apos;s Attendance — Class-wise</CardTitle>
                 <CardDescription className="text-xs">
-                  Total present: 1,143 / 1,248 · School avg: 91.6%
+                  Total present: {att.present.toLocaleString("en-IN")} / {att.enrolled.toLocaleString("en-IN")} · School avg: {att.pct}%
                 </CardDescription>
               </div>
               <Badge className="bg-green-100 text-green-700 border-0 text-xs">
@@ -224,10 +230,10 @@ export default async function PrincipalDashboardPage() {
           </CardHeader>
           <CardContent>
             <HorizontalBarChart
-              data={classAttendance.map((c) => ({
-                label: c.class,
+              data={att.classes.map((c) => ({
+                label: c.cls,
                 value: c.pct,
-                color: c.pct >= 90 ? CHART_COLORS.green : CHART_COLORS.orange,
+                color: c.status === "Good" ? CHART_COLORS.green : CHART_COLORS.orange,
               }))}
               height={240}
               yAxisWidth={80}
@@ -244,14 +250,14 @@ export default async function PrincipalDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {classAttendance.map((c) => (
-                  <TableRow key={c.class} className="text-xs">
-                    <TableCell className="font-medium">{c.class}</TableCell>
+                {att.classes.map((c) => (
+                  <TableRow key={c.cls} className="text-xs">
+                    <TableCell className="font-medium">{c.cls}</TableCell>
                     <TableCell className="text-center">{c.enrolled}</TableCell>
                     <TableCell className="text-center">{c.present}</TableCell>
                     <TableCell className="text-center font-semibold">{c.pct}%</TableCell>
                     <TableCell>
-                      {c.pct >= 90 ? (
+                      {c.status === "Good" ? (
                         <span className="flex items-center gap-1 text-green-600">
                           <TrendingUp className="h-3 w-3" /> Good
                         </span>
