@@ -253,6 +253,26 @@ export const BUDGET_SANCTION: WorkflowDef = {
   ],
 }
 
+// Transfer Certificate (TC) issuance (Academic & Assessment / Records): when a student leaves a
+// school, the class teacher / academic head verifies the academic record and clears dues; the
+// Headmaster issues and signs the TC against the student's APAAR id; and inter-state transfers or
+// duplicate (lost-original) certificates additionally need a BEO counter-signature (dynamic).
+// The issued TC updates the APAAR/UDISE migration trail — Academic records meeting Identity.
+export const TC_ISSUANCE: WorkflowDef = {
+  id: "tc-issuance",
+  name: "Transfer Certificate Issuance",
+  steps: [
+    { id: "verify", name: "Academic record & dues clearance (Class Teacher)", approverRole: "ACADEMIC_HEAD" },
+    { id: "issue", name: "Headmaster issues & signs TC", approverRole: "PRINCIPAL" },
+    {
+      id: "countersign",
+      name: "Block counter-signature (inter-state / duplicate)",
+      approverRole: "BEO",
+      skipIf: (ctx) => !ctx.needsCountersign,
+    },
+  ],
+}
+
 export const WORKFLOW_DEFS: WorkflowDef[] = [
   LEAVE_APPROVAL,
   SMC_RESOLUTION,
@@ -269,4 +289,5 @@ export const WORKFLOW_DEFS: WorkflowDef[] = [
   RTI_REQUEST,
   GEM_PROCUREMENT,
   BUDGET_SANCTION,
+  TC_ISSUANCE,
 ]

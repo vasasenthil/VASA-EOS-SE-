@@ -152,6 +152,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Textbook Indent & Distribution", repoRef: "lib/textbooks/index.ts", status: "built" },
   { tier: "School", name: "Promotion / Detention Runs", repoRef: "lib/promotion/index.ts", status: "built" },
   { tier: "School", name: "Transfer Certificate (TC)", repoRef: "lib/tc/index.ts", status: "built" },
+  { tier: "School", name: "Transfer Certificate Issuance (workflow → APAAR)", repoRef: "lib/tcflow/store.ts", status: "built" },
   { tier: "School", name: "School Events & Excursions", repoRef: "lib/events/index.ts", status: "built" },
   { tier: "School", name: "Eco-Club / Green School", repoRef: "lib/eco/index.ts", status: "built" },
   { tier: "School", name: "Student Council & Elections", repoRef: "lib/council/index.ts", status: "built" },

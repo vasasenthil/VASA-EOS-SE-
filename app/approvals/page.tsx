@@ -24,6 +24,7 @@ import {
   RTI_REQUEST,
   GEM_PROCUREMENT,
   BUDGET_SANCTION,
+  TC_ISSUANCE,
 } from "@/lib/workflow/definitions"
 import { listRecognitionsAction } from "@/app/recognition-approvals/actions"
 import { listGrievanceFlowsAction } from "@/app/grievance-approvals/actions"
@@ -40,6 +41,7 @@ import { listIncidentsAction } from "@/app/safety-incidents/actions"
 import { listRtisAction } from "@/app/rti-approvals/actions"
 import { listIndentsAction } from "@/app/procurement-approvals/actions"
 import { listBudgetsAction } from "@/app/budget-approvals/actions"
+import { listTcsAction } from "@/app/tc-approvals/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -69,6 +71,7 @@ const VERTICALS: Vertical[] = [
   { label: "RTI Request", route: "/rti-approvals", def: RTI_REQUEST, domain: "Identity & Data", fetch: listRtisAction },
   { label: "GeM Procurement", route: "/procurement-approvals", def: GEM_PROCUREMENT, domain: "Schemes & Welfare", fetch: listIndentsAction },
   { label: "Budget Sanction", route: "/budget-approvals", def: BUDGET_SANCTION, domain: "Policy & Governance", fetch: listBudgetsAction },
+  { label: "Transfer Certificate", route: "/tc-approvals", def: TC_ISSUANCE, domain: "Academic & Assessment", fetch: listTcsAction },
 ]
 
 export default async function ApprovalsHubPage() {
