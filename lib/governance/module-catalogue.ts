@@ -95,6 +95,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "District", name: "Constituency Grievance Redress", repoRef: "lib/governance/constituency-grievance.ts", status: "built" },
   { tier: "District", name: "District Welfare Operations", repoRef: "lib/governance/school-welfare-ops.ts", status: "built" },
   { tier: "District", name: "Staff Attendance Monitoring", repoRef: "lib/staff-attendance/index.ts", status: "built" },
+  { tier: "School", name: "Teacher Presence (live dashboard store)", repoRef: "lib/staff-attendance/presence-store.ts", status: "built" },
   { tier: "District", name: "Diagnostic Assessment Rounds", repoRef: "lib/diagnostic/index.ts", status: "built" },
 
   // Block tier

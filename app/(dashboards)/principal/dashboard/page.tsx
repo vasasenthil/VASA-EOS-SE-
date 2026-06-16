@@ -32,18 +32,16 @@ import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
 import { listResolutionsAction } from "@/app/smc-approvals/actions"
 import { listClassAttendanceAction } from "@/app/attendance/actions"
 import { latestFeeCollectionAction } from "@/app/fees/actions"
+import { latestTeacherPresenceAction } from "@/app/staff-attendance/actions"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
 // --- School Operational Data (Module 70.4) ---
-// Note: Student Attendance and Fee Collection are now LIVE (durable stores). Total
-// Students and Teachers Present remain illustrative pending their own stores.
-const schoolStats = [
-  { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
-  { label: "Teachers Present", value: "38 / 42", icon: Users, color: "text-green-600", bg: "bg-green-50" },
-]
+// Note: Student Attendance, Teachers Present and Fee Collection are now LIVE (durable
+// stores). Total Students remains illustrative pending its own enrolment store.
+const totalStudentsStat = { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" }
 
 // --- AI-Generated Dropout Risk Alerts ---
 const dropoutRiskStudents = [
@@ -132,11 +130,12 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
     latestFeeCollectionAction(),
+    latestTeacherPresenceAction(),
   ])
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
@@ -144,10 +143,11 @@ export default async function PrincipalDashboardPage() {
   const att = rollup(attendanceRows)
   const fee = feeSnapshot ? viewFor(feeSnapshot) : null
 
-  // KPI cards: Student Attendance and Fee Collection are live from durable stores; the rest are illustrative.
+  // KPI cards: Student Attendance, Teachers Present and Fee Collection are live from durable
+  // stores; Total Students remains illustrative pending its own enrolment store.
   const kpiStats = [
-    schoolStats[0],
-    schoolStats[1],
+    totalStudentsStat,
+    { label: "Teachers Present", value: presence ? `${presence.present} / ${presence.total}` : "—", icon: Users, color: "text-green-600", bg: "bg-green-50" },
     { label: "Student Attendance", value: `${att.pct}%`, icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
     { label: `Fee Collection${fee ? ` (${fee.month.split(" ")[0].slice(0, 3)})` : ""}`, value: fee ? inrLakh(fee.collected) : "—", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
   ]
