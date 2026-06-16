@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { fundFlowView, inrCrore, TRACKED_SCHEMES } from "@/lib/finance/fund-flow"
+import { fundFlowView, inrCrore, sanctionBadgeVariant, TRACKED_SCHEMES } from "@/lib/finance/fund-flow"
 import { mockPfms } from "@/lib/integrations/mock"
 import type { PfmsExpenditure } from "@/lib/integrations/types"
 
@@ -40,4 +40,25 @@ test("the mock PFMS port varies by scheme but preserves allocated >= released >=
   }
   // At least two distinct allocations across the tracked schemes (deterministic variation).
   assert.ok(new Set(views.map((v) => v.allocated)).size >= 2)
+})
+
+test("sanctionBadgeVariant maps fund statuses to badge styles", () => {
+  assert.equal(sanctionBadgeVariant("utilised"), "default")
+  assert.equal(sanctionBadgeVariant("released"), "default")
+  assert.equal(sanctionBadgeVariant("sanctioned"), "secondary")
+  assert.equal(sanctionBadgeVariant("pending"), "outline")
+})
+
+test("mock PFMS sanction lookup echoes the id, varies by id, and is well-formed", async () => {
+  const a = await mockPfms.getSanction("SANC-2026-0001")
+  assert.equal(a.ok, true)
+  assert.equal(a.data?.sanctionId, "SANC-2026-0001")
+  assert.ok((a.data?.amount ?? 0) > 0)
+  assert.ok(["sanctioned", "released", "utilised", "pending"].includes(a.data?.status ?? ""))
+  // releasedAt is present only for released/utilised sanctions.
+  if (a.data?.status === "released" || a.data?.status === "utilised") assert.ok(a.data?.releasedAt)
+  else assert.equal(a.data?.releasedAt, undefined)
+  // Distinct ids can yield distinct schemes (deterministic variation).
+  const b = await mockPfms.getSanction("ZZZ-9999")
+  assert.ok(a.data?.scheme && b.data?.scheme)
 })

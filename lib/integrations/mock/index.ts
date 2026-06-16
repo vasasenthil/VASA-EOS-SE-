@@ -88,13 +88,20 @@ export const mockDbt: PaymentBridge = {
 
 export const mockPfms: PfmsGateway = {
   async getSanction(sanctionId) {
+    // Deterministic, id-varying sanction so lookups feel real in the demo.
+    let h = 0
+    for (let i = 0; i < sanctionId.length; i++) h = (h * 31 + sanctionId.charCodeAt(i)) >>> 0
+    const statuses = ["sanctioned", "released", "utilised", "pending"] as const
+    const schemes = ["Samagra Shiksha", "PM POSHAN", "Pudhumai Penn", "CM Breakfast Scheme", "PM SHRI"]
+    const status = statuses[h % statuses.length]
+    const released = status === "released" || status === "utilised"
     return ok({
       sanctionId,
-      scheme: "Samagra Shiksha",
-      amount: 2500000,
+      scheme: schemes[h % schemes.length],
+      amount: 1000000 + (h % 90) * 100000,
       agency: "TN State Project Office (SPD)",
-      status: "released" as const,
-      releasedAt: "2026-04-15",
+      status,
+      releasedAt: released ? "2026-04-15" : undefined,
     })
   },
   async schemeExpenditure(schemeCode) {

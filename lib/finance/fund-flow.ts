@@ -51,3 +51,10 @@ export function fundFlowView(e: PfmsExpenditure): FundFlowView {
 export function inrCrore(rupees: number): string {
   return `₹${(rupees / 10000000).toFixed(2)} Cr`
 }
+
+/** Badge styling for a PFMS sanction status (utilised/released are "good", pending is open). */
+export function sanctionBadgeVariant(status: string): "default" | "secondary" | "outline" {
+  if (status === "utilised" || status === "released") return "default"
+  if (status === "sanctioned") return "secondary"
+  return "outline"
+}

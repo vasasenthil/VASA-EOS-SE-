@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { integrations, integrationModes } from "@/lib/integrations"
 import { TRACKED_SCHEMES, fundFlowView, inrCrore, type FundFlowView } from "@/lib/finance/fund-flow"
+import { SanctionLookup } from "./sanction-lookup"
 
 export const dynamic = "force-dynamic"
 
@@ -55,6 +56,10 @@ export default async function FundFlowPage() {
             <div className="text-2xl font-bold text-green-600">{inrCrore(totals.utilised)}</div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mb-4">
+        <SanctionLookup />
       </div>
 
       <Card>
