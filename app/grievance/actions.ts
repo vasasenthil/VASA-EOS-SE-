@@ -14,17 +14,24 @@ export async function grievanceAction(_prev: GrievanceState, formData: FormData)
   const op = (formData.get("op") as string) || "file"
   const id = (formData.get("id") as string) || ""
 
+  // Resolve the subject once. The grievance register contains complainant descriptions
+  // (potentially sensitive), so the LIST is officer-only: only a subject that may handle
+  // grievances receives it. Citizens (filers) and denied callers get an empty list.
+  const subject = await resolveSubject()
+  const canHandle = can(subject, "resolve:grievance", { type: "grievance" }).permitted
+  const list = async (): Promise<Grievance[]> => (canHandle ? await listGrievances() : [])
+
   // Filing is open to citizens; handling (escalate/resolve/delete) is officer-only.
   if (op !== "file") {
     const action = op === "delete" ? "delete:grievance" : "resolve:grievance"
-    const decision = can(await resolveSubject(), action, { type: "grievance", id })
-    if (!decision.permitted) return { grievances: await listGrievances(), error: `Not allowed: ${decision.reason}` }
+    const decision = can(subject, action, { type: "grievance", id })
+    if (!decision.permitted) return { grievances: await list(), error: `Not allowed: ${decision.reason}` }
   }
 
   if (op === "file") {
     const category = (formData.get("category") as string) || "Other"
     const description = ((formData.get("description") as string) || "").trim()
-    if (!description) return { grievances: await listGrievances(), error: "Please describe the grievance." }
+    if (!description) return { grievances: await list(), error: "Please describe the grievance." }
     await fileGrievance({ category, description })
   } else if (op === "escalate") {
     await escalateGrievance(id)
@@ -34,5 +41,5 @@ export async function grievanceAction(_prev: GrievanceState, formData: FormData)
     await deleteGrievance(id)
   }
 
-  return { grievances: await listGrievances() }
+  return { grievances: await list() }
 }

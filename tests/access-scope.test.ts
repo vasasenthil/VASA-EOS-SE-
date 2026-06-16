@@ -49,6 +49,19 @@ test("nodeForRole maps roles to anchors; unknown/out-of-hierarchy → undefined"
   assert.equal(nodeForRole(null), undefined)
 })
 
+// SECURITY: the production fail-closed subject (resolveSubject → fallbackSubject(true))
+// has roles=[], so the scope anchor is nodeForRole(roles[0]) = nodeForRole(undefined).
+// scopeForCurrentSubject() returns [] when the anchor is undefined — verify no data leaks.
+test("an anonymous, role-less subject resolves to no scope anchor (empty scope)", () => {
+  const anonymousRoles: string[] = []
+  assert.equal(nodeForRole(anonymousRoles[0]), undefined) // roles[0] is undefined
+  assert.equal(nodeForRole(undefined), undefined)
+  assert.equal(nodeForRole(""), undefined)
+  // With no anchor, the jurisdiction-scoped dataset is empty (matches scopeForCurrentSubject's
+  // `if (!node) return []`): there is no node whose subtree could include any record.
+  assert.equal(scopeRecords(SCOPE_TENANTS, "", SCOPE_RECORDS).length, 0)
+})
+
 test("jurisdictionLabel describes the node and governed count", () => {
   assert.match(jurisdictionLabel(SCOPE_TENANTS, "TN-CHN-B1-S1"), /GHSS Egmore — governs 1 node/)
   assert.match(jurisdictionLabel(SCOPE_TENANTS, "TN-CHN-B1"), /Egmore Block — governs 3 nodes/)

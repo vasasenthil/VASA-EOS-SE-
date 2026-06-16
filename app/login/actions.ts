@@ -15,7 +15,7 @@ async function tryDemo(email: string, password: string): Promise<LoginState | nu
   const role = demoAuthenticate(email, password)
   if (!role || !PORTALS[role as PortalRole]) return null
   const cookieStore = await cookies()
-  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", path: "/" })
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" })
   return {
     success: true,
     message: "Login successful! Redirecting...",
@@ -32,7 +32,7 @@ export async function demoLoginAction(formData: FormData): Promise<void> {
   const portal = PORTALS[role as PortalRole]
   if (!portal) redirect("/login?error=unknown_role")
   const cookieStore = await cookies()
-  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", path: "/" })
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" })
   redirect(portal.home)
 }
 
