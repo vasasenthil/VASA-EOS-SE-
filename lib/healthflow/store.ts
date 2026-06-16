@@ -6,6 +6,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { act, startInstance, type ActInput, type WorkflowInstance } from "@/lib/workflow"
 import { HEALTH_REFERRAL } from "@/lib/workflow/definitions"
 
@@ -30,6 +31,8 @@ export interface HealthFlowRecord {
   specialistReferral: boolean
   instance: WorkflowInstance
   details?: ReferralDetails
+  /** Tenant node (filing school); drives per-role jurisdiction scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -39,11 +42,12 @@ interface Row {
   specialist_referral: boolean
   instance: WorkflowInstance
   details?: ReferralDetails
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): HealthFlowRecord {
-  return { id: r.id, student: r.student, category: r.category, specialistReferral: r.specialist_referral, instance: r.instance, details: r.details }
+  return { id: r.id, student: r.student, category: r.category, specialistReferral: r.specialist_referral, instance: r.instance, details: r.details, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: HealthFlowRecord[] = []
@@ -53,6 +57,8 @@ export interface NewReferral {
   category: string
   specialistReferral: boolean
   details?: ReferralDetails
+  /** Filing tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function fileReferral(input: NewReferral): Promise<HealthFlowRecord> {
@@ -63,6 +69,7 @@ export async function fileReferral(input: NewReferral): Promise<HealthFlowRecord
     specialistReferral: input.specialistReferral,
     instance: startInstance(HEALTH_REFERRAL, { specialistReferral: input.specialistReferral }),
     details: input.details,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -73,6 +80,7 @@ export async function fileReferral(input: NewReferral): Promise<HealthFlowRecord
       specialist_referral: rec.specialistReferral,
       instance: rec.instance,
       details: rec.details,
+      tenant_id: rec.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {

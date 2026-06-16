@@ -4,12 +4,15 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileReferral, actOnReferral, listReferrals, type NewReferral, type HealthFlowRecord } from "@/lib/healthflow/store"
 import type { Decision } from "@/lib/workflow"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listReferralsAction(): Promise<HealthFlowRecord[]> {
   noStore()
   try {
-    return await listReferrals()
+    // Per-role jurisdiction scoping: a referral (child-health PII) is visible only to a
+    // subject whose tenant subtree includes the filing school. Fail-closed (empty).
+    return await scopeForCurrentSubject(await listReferrals())
   } catch (e) {
     logger.error("healthflow.list failed", { error: String(e) })
     return []
