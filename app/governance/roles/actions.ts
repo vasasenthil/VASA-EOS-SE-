@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import type { Role, RoleInput, Permission, RolePermission } from "../types"
 import { redirect } from "next/navigation"
@@ -50,6 +51,9 @@ const mapDbPermissionToType = (dbPermission: any): Permission => ({
 })
 
 export async function createRoleAction(roleData: RoleInput): Promise<RoleActionState<Role>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -202,6 +206,9 @@ export async function updateRoleAndPermissionsAction(
   roleData: Partial<RoleInput>,
   permissionIds: string[],
 ): Promise<RoleActionState<Role>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -270,6 +277,9 @@ export async function updateRoleAndPermissionsAction(
 }
 
 export async function deleteRoleAction(id: string): Promise<RoleActionState<null>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }
@@ -334,6 +344,9 @@ export async function assignPermissionToRoleAction(
   roleId: string,
   permissionId: string,
 ): Promise<RoleActionState<RolePermission>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }
@@ -373,6 +386,9 @@ export async function revokePermissionFromRoleAction(
   roleId: string,
   permissionId: string,
 ): Promise<RoleActionState<null>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }
@@ -406,6 +422,9 @@ export async function setRolePermissionsAction(
   roleId: string,
   permissionIds: string[],
 ): Promise<RoleActionState<Role>> {
+  if (!(await canDo("manage:roles"))) {
+    return { success: false, message: "You do not have permission to manage roles." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }

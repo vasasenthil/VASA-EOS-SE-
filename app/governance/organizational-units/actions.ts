@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation" // Import redirect
 import type { OrganizationalUnit, OrganizationalUnitInput, GovernanceTier } from "../types"
@@ -48,6 +49,9 @@ const mapDbOUToType = (dbOu: any): OrganizationalUnit => ({
 export async function createOrganizationalUnitAction(
   ouData: OrganizationalUnitInput,
 ): Promise<OUActionState<OrganizationalUnit>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -214,6 +218,9 @@ export async function updateOrganizationalUnitAction(
   id: string,
   ouData: Partial<OrganizationalUnitInput>,
 ): Promise<OUActionState<OrganizationalUnit>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -284,6 +291,9 @@ export async function updateOrganizationalUnitAction(
 }
 
 export async function deleteOrganizationalUnitAction(id: string): Promise<OUActionState<null>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }

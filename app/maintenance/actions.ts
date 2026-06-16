@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { raiseTicket, advanceTicket, deleteTicket, listTickets, type NewTicket } from "@/lib/maintenance/store"
 import type { Ticket } from "@/lib/maintenance"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listTicketsAction(): Promise<Ticket[]> {
@@ -27,6 +28,7 @@ export async function raiseTicketAction(input: NewTicket): Promise<Ticket | null
 }
 
 export async function advanceTicketAction(id: string): Promise<Ticket | null> {
+  if (!(await canDo("manage:school"))) return null
   try {
     const t = await advanceTicket(id)
     revalidatePath("/maintenance")
@@ -38,6 +40,7 @@ export async function advanceTicketAction(id: string): Promise<Ticket | null> {
 }
 
 export async function deleteTicketAction(id: string): Promise<boolean> {
+  if (!(await canDo("manage:school"))) return false
   try {
     const ok = await deleteTicket(id)
     revalidatePath("/maintenance")

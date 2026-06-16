@@ -3,6 +3,7 @@
 import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileLeave, decideLeave, deleteLeave, listLeave, type NewLeave } from "@/lib/leave/store"
 import type { LeaveRequest, LeaveStatus } from "@/lib/leave"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 export async function listLeaveAction(): Promise<LeaveRequest[]> {
@@ -27,6 +28,7 @@ export async function fileLeaveAction(input: NewLeave): Promise<LeaveRequest | n
 }
 
 export async function decideLeaveAction(id: string, status: LeaveStatus): Promise<LeaveRequest | null> {
+  if (!(await canDo("manage:staff"))) return null
   try {
     const r = await decideLeave(id, status)
     revalidatePath("/leave")
@@ -38,6 +40,7 @@ export async function decideLeaveAction(id: string, status: LeaveStatus): Promis
 }
 
 export async function deleteLeaveAction(id: string): Promise<boolean> {
+  if (!(await canDo("manage:staff"))) return false
   try {
     const ok = await deleteLeave(id)
     revalidatePath("/leave")

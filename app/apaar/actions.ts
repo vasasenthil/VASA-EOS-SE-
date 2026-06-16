@@ -3,6 +3,7 @@
 import { integrations } from "@/lib/integrations"
 import type { ApaarRecord } from "@/lib/integrations"
 import { gatePiiClass } from "@/lib/consent/gate-server"
+import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
 /**
@@ -30,6 +31,10 @@ export interface ApaarState {
 }
 
 export async function provisionApaarAction(_prev: ApaarState, formData: FormData): Promise<ApaarState> {
+  // Provisioning a lifelong learner identity is a privileged write — authority-only, fail-closed.
+  if (!(await canDo("manage:students"))) {
+    return { error: "You do not have permission to provision APAAR identities." }
+  }
   const name = ((formData.get("name") as string) || "").trim()
   const dateOfBirth = ((formData.get("dob") as string) || "").trim() || undefined
   const aadhaarConsent = formData.get("consent") === "on"

@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import type { UserOUAssignment, UserOUAssignmentInput, AuthUser } from "../types"
 
@@ -64,6 +65,9 @@ const mapDbUserAssignmentToType = (dbAssignment: any): UserOUAssignment => {
 export async function assignUserToOuAction(
   assignmentData: UserOUAssignmentInput,
 ): Promise<UserAssignmentActionState<UserOUAssignment>> {
+  if (!(await canDo("manage:users"))) {
+    return { success: false, message: "You do not have permission to manage user assignments." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -175,6 +179,9 @@ export async function updateUserAssignmentAction(
   assignmentId: string,
   updates: Partial<Pick<UserOUAssignmentInput, "role_id" | "is_primary_assignment">>,
 ): Promise<UserAssignmentActionState<UserOUAssignment>> {
+  if (!(await canDo("manage:users"))) {
+    return { success: false, message: "You do not have permission to manage user assignments." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -260,6 +267,9 @@ export async function updateUserAssignmentAction(
 }
 
 export async function removeUserAssignmentAction(assignmentId: string): Promise<UserAssignmentActionState<null>> {
+  if (!(await canDo("manage:users"))) {
+    return { success: false, message: "You do not have permission to manage user assignments." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }
