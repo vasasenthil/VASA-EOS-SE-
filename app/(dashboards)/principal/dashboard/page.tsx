@@ -36,9 +36,11 @@ import { latestTeacherPresenceAction } from "@/app/staff-attendance/actions"
 import { latestEnrolmentAction } from "@/app/enrolment/actions"
 import { listDropoutRiskAction } from "@/app/dropout/actions"
 import { listComplianceAction } from "@/app/compliance/actions"
+import { listSyllabusAction } from "@/app/syllabus/actions"
 import { rollup } from "@/lib/attendance/class-day"
 import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
+import { summarise as summariseSyllabus } from "@/lib/syllabus"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
@@ -52,15 +54,6 @@ const upcomingAssessments = [
   { subject: "Science", class: "Class IX", type: "Practical", date: "Apr 4", status: "Scheduled" },
   { subject: "English", class: "All Classes", type: "FA-2", date: "Apr 8–12", status: "Preparation" },
   { subject: "Social Studies", class: "Class VIII", type: "Project Eval", date: "Apr 10", status: "Scheduled" },
-]
-
-// --- Syllabus Completion ---
-const syllabusCompletion = [
-  { subject: "Mathematics", teacher: "Mr. Sharma", pct: 78 },
-  { subject: "Science", teacher: "Ms. Rao", pct: 82 },
-  { subject: "English", teacher: "Ms. Verma", pct: 91 },
-  { subject: "Social Studies", teacher: "Mr. Khan", pct: 74 },
-  { subject: "Hindi", teacher: "Mrs. Gupta", pct: 88 },
 ]
 
 // --- Announcements ---
@@ -115,7 +108,7 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
@@ -124,8 +117,10 @@ export default async function PrincipalDashboardPage() {
     latestEnrolmentAction(),
     listDropoutRiskAction(),
     listComplianceAction(),
+    listSyllabusAction(),
   ])
   const complianceSummary = summariseCompliance(complianceItems)
+  const syllabusSummary = summariseSyllabus(syllabusCompletion)
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
@@ -339,8 +334,14 @@ export default async function PrincipalDashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-teal-600" /> Syllabus Completion
+              <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                <Activity className="h-3 w-3 mr-1" /> Live
+              </Badge>
             </CardTitle>
-            <CardDescription className="text-xs">Subject-wise teaching portion status</CardDescription>
+            <CardDescription className="text-xs">
+              Avg {syllabusSummary.avgPct}% across {syllabusSummary.subjects} subjects
+              {syllabusSummary.behind > 0 ? ` · ${syllabusSummary.behind} behind` : ""}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RadarChart
