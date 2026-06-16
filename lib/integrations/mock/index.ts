@@ -14,6 +14,7 @@ import type {
   IntegrationResult,
   LanguageService,
   PaymentBridge,
+  PfmsGateway,
   PublicPortal,
   RetrievalProvider,
   SchoolRegistry,
@@ -82,6 +83,23 @@ export const mockDbt: PaymentBridge = {
   },
   async status(apbsReference) {
     return ok({ status: "settled" as const, apbsReference })
+  },
+}
+
+export const mockPfms: PfmsGateway = {
+  async getSanction(sanctionId) {
+    return ok({
+      sanctionId,
+      scheme: "Samagra Shiksha",
+      amount: 2500000,
+      agency: "TN State Project Office (SPD)",
+      status: "released" as const,
+      releasedAt: "2026-04-15",
+    })
+  },
+  async schemeExpenditure(schemeCode) {
+    // Deterministic illustrative allocation/release/utilisation for the scheme.
+    return ok({ scheme: schemeCode, allocated: 100000000, released: 72000000, utilised: 58000000 })
   },
 }
 

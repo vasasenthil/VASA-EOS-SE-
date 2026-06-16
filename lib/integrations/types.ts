@@ -75,6 +75,32 @@ export interface PaymentBridge {
   status(apbsReference: string): Promise<IntegrationResult<DisbursementResult>>
 }
 
+// ── PFMS — public financial management (fund flow / sanction tracking) ─────────
+// Distinct from the DBT beneficiary leg: PFMS tracks the SANCTION → RELEASE →
+// UTILISATION flow of scheme funds from treasury to the implementing agency (DDO),
+// so a programme can be reconciled end-to-end (allocated vs released vs utilised).
+export type PfmsStatus = "sanctioned" | "released" | "utilised" | "pending"
+export interface PfmsSanction {
+  sanctionId: string
+  scheme: string
+  /** Amount in rupees. */
+  amount: number
+  /** Implementing agency / Drawing & Disbursing Officer. */
+  agency: string
+  status: PfmsStatus
+  releasedAt?: string
+}
+export interface PfmsExpenditure {
+  scheme: string
+  allocated: number
+  released: number
+  utilised: number
+}
+export interface PfmsGateway {
+  getSanction(sanctionId: string): Promise<IntegrationResult<PfmsSanction>>
+  schemeExpenditure(schemeCode: string): Promise<IntegrationResult<PfmsExpenditure>>
+}
+
 // ── UDISE+ — school registry federation ───────────────────────────────────────
 export interface SchoolRecord {
   udiseCode: string
@@ -206,4 +232,5 @@ export interface IntegrationRegistry {
   portal: PublicPortal
   exams: ExamBoard
   retrieval: RetrievalProvider
+  pfms: PfmsGateway
 }

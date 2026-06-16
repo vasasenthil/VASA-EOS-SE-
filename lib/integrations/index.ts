@@ -19,6 +19,7 @@ import {
   mockPortal,
   mockExams,
   mockRetrieval,
+  mockPfms,
 } from "./mock"
 import {
   liveAadhaar,
@@ -33,6 +34,7 @@ import {
   livePortal,
   liveExams,
   liveRetrieval,
+  livePfms,
 } from "./live"
 import type { IntegrationRegistry } from "./types"
 
@@ -61,6 +63,8 @@ export const integrations: IntegrationRegistry = {
   exams: integrationModes.exams === "live" ? liveExams : mockExams,
   // Retrieval (RAG / vector search) — grounds the AI agents on real corpora.
   retrieval: integrationModes.retrieval === "live" ? liveRetrieval : mockRetrieval,
+  // PFMS — scheme fund-flow (sanction → release → utilisation) via a treasury gateway.
+  pfms: integrationModes.pfms === "live" ? livePfms : mockPfms,
 }
 
 export { integrationModes }

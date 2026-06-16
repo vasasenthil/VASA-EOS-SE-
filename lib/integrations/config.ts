@@ -21,6 +21,7 @@ export const integrationModes = {
   portal: modeFor("TNPORTAL"),
   exams: modeFor("EXAMS"),
   retrieval: modeFor("RETRIEVAL"),
+  pfms: modeFor("PFMS"),
 } as const
 
 export type IntegrationKey = keyof typeof integrationModes
@@ -96,6 +97,16 @@ export function dbtBaseUrl(): string | undefined {
 /** API key / access token for the DBT gateway. */
 export function dbtApiKey(): string | undefined {
   return process.env.DBT_API_KEY || undefined
+}
+
+// ── PFMS — public financial management (fund flow / sanction tracking) ─────────
+/** PFMS gateway origin (state treasury / PFMS federation). No safe default. */
+export function pfmsBaseUrl(): string | undefined {
+  return process.env.PFMS_BASE_URL?.replace(/\/$/, "") || undefined
+}
+/** API key / access token for the PFMS gateway. */
+export function pfmsApiKey(): string | undefined {
+  return process.env.PFMS_API_KEY || undefined
 }
 
 // ── Aadhaar authentication (UIDAI) — verify-only via AUA/KUA gateway ──────────

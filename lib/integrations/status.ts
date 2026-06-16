@@ -155,6 +155,15 @@ function build(): Def[] {
       mode: integrationModes.retrieval,
       env: [envVar("RETRIEVAL_BASE_URL"), envVar("RETRIEVAL_API_KEY")],
     },
+    {
+      key: "pfms",
+      label: "PFMS (Fund Flow)",
+      port: "PfmsGateway",
+      note: "Scheme fund flow — sanction → release → utilisation — via a treasury/PFMS gateway.",
+      flag: "INTEGRATION_PFMS",
+      mode: integrationModes.pfms,
+      env: [envVar("PFMS_BASE_URL"), envVar("PFMS_API_KEY", false)],
+    },
   ]
 }
 
