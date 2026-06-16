@@ -4,12 +4,15 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileApplicant, actOnApplicant, deleteApplicant, listApplicants, type NewApplicant, type AdmissionFlowRecord } from "@/lib/admissionsflow/store"
 import type { Decision } from "@/lib/workflow"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listApplicantsAction(): Promise<AdmissionFlowRecord[]> {
   noStore()
   try {
-    return await listApplicants()
+    // Per-role jurisdiction scoping: an applicant record (student identity, guardian PII, APAAR)
+    // is visible only to a subject whose tenant subtree includes the admitting school. Fail-closed.
+    return await scopeForCurrentSubject(await listApplicants())
   } catch (e) {
     logger.error("admissionflow.list failed", { error: String(e) })
     return []

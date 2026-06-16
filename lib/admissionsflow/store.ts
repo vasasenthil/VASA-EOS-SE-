@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { makeApaarId } from "@/lib/admissions"
 import { act, startInstance, type ActInput, type WorkflowInstance } from "@/lib/workflow"
 import { ADMISSION_APPROVAL } from "@/lib/workflow/definitions"
@@ -34,6 +35,8 @@ export interface AdmissionFlowRecord {
   apaarId?: string
   instance: WorkflowInstance
   details?: AdmissionDetails
+  /** Tenant node (admitting school); drives per-role jurisdiction scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -46,6 +49,7 @@ interface Row {
   apaar_id: string | null
   instance: WorkflowInstance
   details?: AdmissionDetails
+  tenant_id: string
   created_at: string
 }
 
@@ -60,6 +64,7 @@ function fromRow(r: Row): AdmissionFlowRecord {
     apaarId: r.apaar_id ?? undefined,
     instance: r.instance,
     details: r.details,
+    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
   }
 }
 
@@ -72,6 +77,8 @@ export interface NewApplicant {
   category: string
   className: string
   details?: AdmissionDetails
+  /** Admitting school tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowRecord> {
@@ -84,6 +91,7 @@ export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowR
     className: input.className,
     instance: startInstance(ADMISSION_APPROVAL, {}),
     details: input.details,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -97,6 +105,7 @@ export async function fileApplicant(input: NewApplicant): Promise<AdmissionFlowR
       details: rec.details,
       apaar_id: null,
       instance: rec.instance,
+      tenant_id: rec.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
