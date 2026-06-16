@@ -72,7 +72,7 @@ Commit + push to `claude/platform-foundation`, then fast-forward `main`
   store/Row (+ migration `scripts/018`), seed across nodes, wrap the listing action
   in `scopeForCurrentSubject(...)`, update the board's optimistic object & test helper.
 - Scoped so far: Safety, Discipline, CWSN, RBSK Health Referrals (flow, scripts/042),
-  Child-Safety Incidents (POCSO flow, scripts/043).
+  Child-Safety Incidents (POCSO flow, scripts/043), Scholarship/DBT (flow, scripts/044).
 
 ## Conventions
 - Model id `claude-opus-4-8` must NOT appear in commits/PRs/code/artifacts (chat only).

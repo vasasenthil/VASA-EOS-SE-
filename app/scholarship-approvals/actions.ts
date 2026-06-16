@@ -4,12 +4,15 @@ import { revalidatePath, unstable_noStore as noStore } from "next/cache"
 import { fileScholarship, actOnScholarship, listScholarships, type NewScholarship, type ScholarshipFlowRecord } from "@/lib/scholarshipflow/store"
 import type { Decision } from "@/lib/workflow"
 import { canDo } from "@/lib/access/guard"
+import { scopeForCurrentSubject } from "@/lib/access/scope-server"
 import { logger } from "@/lib/logger"
 
 export async function listScholarshipsAction(): Promise<ScholarshipFlowRecord[]> {
   noStore()
   try {
-    return await listScholarships()
+    // Per-role jurisdiction scoping: a benefit application (DBT bank details) is visible only to
+    // a subject whose tenant subtree includes the applicant's school. Fail-closed (empty).
+    return await scopeForCurrentSubject(await listScholarships())
   } catch (e) {
     logger.error("scholarshipflow.list failed", { error: String(e) })
     return []

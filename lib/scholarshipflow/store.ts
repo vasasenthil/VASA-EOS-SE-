@@ -5,6 +5,7 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { getDb } from "@/lib/persistence"
+import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { act, startInstance, type ActInput, type WorkflowInstance } from "@/lib/workflow"
 import { SCHOLARSHIP_SANCTION } from "@/lib/workflow/definitions"
 
@@ -30,6 +31,8 @@ export interface ScholarshipFlowRecord {
   amount: number
   instance: WorkflowInstance
   details?: ScholarshipDetails
+  /** Tenant node (applicant's school); drives per-role jurisdiction scoping. */
+  tenantId: string
 }
 
 interface Row {
@@ -39,11 +42,12 @@ interface Row {
   amount: number
   instance: WorkflowInstance
   details?: ScholarshipDetails
+  tenant_id: string
   created_at: string
 }
 
 function fromRow(r: Row): ScholarshipFlowRecord {
-  return { id: r.id, student: r.student, scheme: r.scheme, amount: r.amount, instance: r.instance, details: r.details }
+  return { id: r.id, student: r.student, scheme: r.scheme, amount: r.amount, instance: r.instance, details: r.details, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
 }
 
 const store: ScholarshipFlowRecord[] = []
@@ -53,6 +57,8 @@ export interface NewScholarship {
   scheme: string
   amount: number
   details?: ScholarshipDetails
+  /** Applicant's school tenant node; defaults to the demo school. */
+  tenantId?: string
 }
 
 export async function fileScholarship(input: NewScholarship): Promise<ScholarshipFlowRecord> {
@@ -63,6 +69,7 @@ export async function fileScholarship(input: NewScholarship): Promise<Scholarshi
     amount: input.amount,
     instance: startInstance(SCHOLARSHIP_SANCTION, { amount: input.amount }),
     details: input.details,
+    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
   const db = getDb()
   if (db) {
@@ -73,6 +80,7 @@ export async function fileScholarship(input: NewScholarship): Promise<Scholarshi
       amount: rec.amount,
       instance: rec.instance,
       details: rec.details,
+      tenant_id: rec.tenantId,
       created_at: new Date().toISOString(),
     })
   } else {
