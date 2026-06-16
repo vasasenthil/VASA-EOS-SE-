@@ -43,6 +43,7 @@ export default async function SecretaryDashboardPage() {
         { label: "Risk Register (Challenges)", href: "/tracking/challenges" },
         { label: "Assembly Q&A Briefing Pack", href: "/governance/assembly-briefing" },
         { label: "Budget Sanction & Re-appropriation — scrutinise (Finance)", href: "/budget-approvals" },
+        { label: "Scheme Fund Flow (PFMS) — sanction → release → utilisation", href: "/governance/fund-flow" },
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },

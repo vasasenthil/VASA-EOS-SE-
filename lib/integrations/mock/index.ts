@@ -98,8 +98,14 @@ export const mockPfms: PfmsGateway = {
     })
   },
   async schemeExpenditure(schemeCode) {
-    // Deterministic illustrative allocation/release/utilisation for the scheme.
-    return ok({ scheme: schemeCode, allocated: 100000000, released: 72000000, utilised: 58000000 })
+    // Deterministic, scheme-varying illustrative figures that preserve the fund-flow
+    // invariant allocated >= released >= utilised.
+    let h = 0
+    for (let i = 0; i < schemeCode.length; i++) h = (h * 31 + schemeCode.charCodeAt(i)) >>> 0
+    const allocated = 50000000 + (h % 50) * 10000000
+    const released = Math.round(allocated * (0.6 + (h % 30) / 100))
+    const utilised = Math.round(released * (0.6 + (h % 25) / 100))
+    return ok({ scheme: schemeCode, allocated, released, utilised })
   },
 }
 

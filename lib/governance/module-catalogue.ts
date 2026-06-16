@@ -43,6 +43,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "National", name: "DigiLocker Integration", repoRef: "lib/integrations/live/digilocker.ts", status: "partial" },
   { tier: "National", name: "DBT / APBS", repoRef: "lib/integrations/live/dbt.ts", status: "partial" },
   { tier: "National", name: "PFMS Fund-Flow (sanction → release → utilisation)", repoRef: "lib/integrations/live/pfms.ts", status: "partial" },
+  { tier: "State", name: "Scheme Fund-Flow Dashboard (PFMS-driven)", repoRef: "app/governance/fund-flow/page.tsx", status: "built" },
   { tier: "National", name: "Bhashini Language Stack", repoRef: "lib/integrations/live/bhashini.ts", status: "partial" },
   { tier: "National", name: "PARAKH Self-Assessment", repoRef: "lib/diagnostic/parakh.ts", status: "built" },
   { tier: "National", name: "CPGRAMS Federation", repoRef: "lib/grievance/cpgrams.ts", status: "built" },

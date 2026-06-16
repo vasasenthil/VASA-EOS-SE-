@@ -39,6 +39,7 @@ export default async function MinisterDashboardPage() {
         { label: "Public Communication Desk", href: "/governance/public-communication" },
         { label: "Executive Budget Priorities", href: "/governance/budget-priorities" },
         { label: "Budget Sanction — Cabinet approval (new / ≥ ₹50 Cr)", href: "/budget-approvals" },
+        { label: "Scheme Fund Flow (PFMS) — utilisation tracking", href: "/governance/fund-flow" },
         { label: "Constituency Grievance Redress", href: "/governance/constituency-grievance" },
         { label: "My Capability Coverage (honest)", href: "/governance/minister-capabilities" },
       ]}
