@@ -124,7 +124,8 @@ export async function getOrganizationalUnitsAction(params?: {
   includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
   if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+    // Demo walkthrough (no database): return a clean empty result so the page renders.
+    return { success: true, message: "No database configured — showing an empty unit set (demo).", data: [] }
   }
 
   try {
@@ -369,7 +370,8 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
 
 export async function getGovernanceTiersAction(): Promise<OUActionState<GovernanceTier[]>> {
   if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+    // Demo walkthrough (no database): return a clean empty result so the page renders.
+    return { success: true, message: "No database configured — showing an empty tier set (demo).", data: [] }
   }
   try {
     const { data, error } = await supabaseAdmin!

@@ -120,7 +120,8 @@ export async function getRolesAction(params?: {
   includeAssignedUserCount?: boolean
 }): Promise<RoleActionState<Role[]>> {
   if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+    // Demo walkthrough (no database): return a clean empty result so the page renders.
+    return { success: true, message: "No database configured — showing an empty role set (demo).", data: [] }
   }
 
   try {

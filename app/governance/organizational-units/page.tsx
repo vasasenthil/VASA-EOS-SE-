@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell"
 import { OrganizationalUnitTable } from "@/components/organizational-unit-table"
 import { TierTable } from "@/components/tier-table"
 import { getUserIdFromAction } from "@/lib/auth/server"
+import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { Button } from "@/components/ui/button"
@@ -24,8 +25,11 @@ export default function OrganizationalUnitsPage() {
 }
 
 async function OULoader() {
+  // Walkthrough (no database): browseable; mutations stay guarded by server-action canDo
+  // checks. Production requires a real authenticated session.
+  const demoMode = !isSupabaseAdminConfigured()
   const userId = await getUserIdFromAction()
-  if (!userId) {
+  if (!userId && !demoMode) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
@@ -35,10 +39,7 @@ async function OULoader() {
     )
   }
 
-  const canViewPage = await hasPermission({
-    userId,
-    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM, // A general view permission
-  })
+  const canViewPage = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
 
   if (!canViewPage) {
     return (
@@ -50,10 +51,7 @@ async function OULoader() {
     )
   }
 
-  const canManageOUs = await hasPermission({
-    userId,
-    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM,
-  })
+  const canManageOUs = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
 
   const ous = await getOUs() // Fetches { includeTier: true, includeUserCount: true } by default from actions/get-ous.ts
   const tiers = await getTiers()

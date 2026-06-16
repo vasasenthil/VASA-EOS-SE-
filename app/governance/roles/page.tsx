@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { Shell } from "@/components/shell"
 import { getUserIdFromAction } from "@/lib/auth/server"
+import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -22,8 +23,12 @@ export default function RolesPage() {
 }
 
 async function RolesLoader() {
+  // In the credential-free walkthrough (no database configured) the admin pages are
+  // browseable; mutations remain guarded by the server-action canDo checks. In production
+  // a real authenticated session is required.
+  const demoMode = !isSupabaseAdminConfigured()
   const userId = await getUserIdFromAction()
-  if (!userId) {
+  if (!userId && !demoMode) {
     return (
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
@@ -33,10 +38,7 @@ async function RolesLoader() {
     )
   }
 
-  const canViewPage = await hasPermission({
-    userId,
-    permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM,
-  })
+  const canViewPage = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
 
   if (!canViewPage) {
     return (
@@ -48,10 +50,7 @@ async function RolesLoader() {
     )
   }
 
-  const canManageRoles = await hasPermission({
-    userId,
-    permissionString: PERMISSIONS.ROLES_MANAGE_SYSTEM,
-  })
+  const canManageRoles = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.ROLES_MANAGE_SYSTEM }))
 
   const rolesResult = await getRoles()
 

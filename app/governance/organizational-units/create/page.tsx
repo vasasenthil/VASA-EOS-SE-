@@ -3,6 +3,7 @@ import { Shell } from "@/components/shell"
 import { OUForm } from "../components/ou-form"
 import { getGovernanceTiersAction, getOrganizationalUnitsAction } from "../actions"
 import { getUserIdFromAction } from "@/lib/auth/server"
+import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { redirect } from "next/navigation"
@@ -12,13 +13,14 @@ import { AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 async function CreateOUPageLoader() {
+  const demoMode = !isSupabaseAdminConfigured()
   const userId = await getUserIdFromAction()
-  if (!userId) {
+  if (!userId && !demoMode) {
     // This should ideally be caught by middleware or a higher-level auth check
     redirect("/login") // Or your login page
   }
 
-  const canManageOUs = await hasPermission({ userId, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM })
+  const canManageOUs = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
   if (!canManageOUs) {
     return (
       <Alert variant="destructive">
@@ -49,7 +51,7 @@ async function CreateOUPageLoader() {
   }
 
   return (
-    <OUForm tiers={tiersResult.data || []} allOUs={ousResult.data || []} userId={userId} canManage={canManageOUs} />
+    <OUForm tiers={tiersResult.data || []} allOUs={ousResult.data || []} userId={userId ?? "demo"} canManage={canManageOUs} />
   )
 }
 
