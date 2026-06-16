@@ -149,6 +149,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Timetable & Scheduling", repoRef: "lib/timetable/index.ts", status: "built" },
   { tier: "School", name: "School Transport / Bus Routes", repoRef: "lib/transport/index.ts", status: "built" },
   { tier: "School", name: "Fee Management", repoRef: "lib/fees/index.ts", status: "built" },
+  { tier: "School", name: "Fee Collection (live dashboard store)", repoRef: "lib/fees/store.ts", status: "built" },
   { tier: "School", name: "Infrastructure Gap Analysis (RTE/RPwD)", repoRef: "lib/infrastructure/index.ts", status: "built" },
   { tier: "School", name: "Textbook Indent & Distribution", repoRef: "lib/textbooks/index.ts", status: "built" },
   { tier: "School", name: "Promotion / Detention Runs", repoRef: "lib/promotion/index.ts", status: "built" },

@@ -31,17 +31,18 @@ import { CHART_COLORS } from "@/components/charts/chart-colors"
 import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
 import { listResolutionsAction } from "@/app/smc-approvals/actions"
 import { listClassAttendanceAction } from "@/app/attendance/actions"
+import { latestFeeCollectionAction } from "@/app/fees/actions"
 import { rollup } from "@/lib/attendance/class-day"
+import { viewFor, inrLakh } from "@/lib/fees/collection"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
-// --- Mock School Operational Data (Module 70.4) ---
-// Note: Student Attendance is now LIVE (lib/attendance/store). The remaining three
-// figures are illustrative pending their own durable stores.
+// --- School Operational Data (Module 70.4) ---
+// Note: Student Attendance and Fee Collection are now LIVE (durable stores). Total
+// Students and Teachers Present remain illustrative pending their own stores.
 const schoolStats = [
   { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
   { label: "Teachers Present", value: "38 / 42", icon: Users, color: "text-green-600", bg: "bg-green-50" },
-  { label: "Fee Collection (Apr)", value: "₹8.4L", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
 ]
 
 // --- AI-Generated Dropout Risk Alerts ---
@@ -131,22 +132,24 @@ export default async function PrincipalDashboardPage() {
   // Live: open maintenance tickets raised through the workflow (the same ones
   // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
   // class-wise attendance roll-up from the durable attendance store.
-  const [tickets, resolutions, attendanceRows] = await Promise.all([
+  const [tickets, resolutions, attendanceRows, feeSnapshot] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
     listClassAttendanceAction(),
+    latestFeeCollectionAction(),
   ])
   const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
   const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
   const att = rollup(attendanceRows)
+  const fee = feeSnapshot ? viewFor(feeSnapshot) : null
 
-  // KPI cards: Student Attendance is live from the attendance store; the rest are illustrative.
+  // KPI cards: Student Attendance and Fee Collection are live from durable stores; the rest are illustrative.
   const kpiStats = [
     schoolStats[0],
     schoolStats[1],
     { label: "Student Attendance", value: `${att.pct}%`, icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
-    schoolStats[2],
+    { label: `Fee Collection${fee ? ` (${fee.month.split(" ")[0].slice(0, 3)})` : ""}`, value: fee ? inrLakh(fee.collected) : "—", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
   ]
 
   return (
@@ -433,42 +436,47 @@ export default async function PrincipalDashboardPage() {
         </div>
       </div>
 
-      {/* Fee Collection Summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <IndianRupee className="h-4 w-4 text-purple-600" /> Fee Collection — April 2025
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Total billed: ₹12.4L · Collected: ₹8.4L · Defaulters: 87 students
-              </CardDescription>
+      {/* Fee Collection Summary — live from the durable fee-collection store */}
+      {fee ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4 text-purple-600" /> Fee Collection — {fee.month}
+                  <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                    <Activity className="h-3 w-3 mr-1" /> Live
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Total billed: {inrLakh(fee.billed)} · Collected: {inrLakh(fee.collected)} · Defaulters: {fee.defaulters} students
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-purple-600">{fee.collectedPct}%</div>
+                <div className="text-xs text-muted-foreground">Collection rate</div>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-purple-600">67.7%</div>
-              <div className="text-xs text-muted-foreground">Collection rate</div>
+          </CardHeader>
+          <CardContent>
+            <Progress value={fee.collectedPct} className="h-2 mb-3" />
+            <div className="grid grid-cols-3 gap-4 text-center text-xs">
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-green-600">{inrLakh(fee.collected)}</div>
+                <div className="text-muted-foreground">Collected</div>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-yellow-600">{inrLakh(fee.outstanding)}</div>
+                <div className="text-muted-foreground">Outstanding</div>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-blue-600">{fee.rteStudents}</div>
+                <div className="text-muted-foreground">RTE Students (Free)</div>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Progress value={67.7} className="h-2 mb-3" />
-          <div className="grid grid-cols-3 gap-4 text-center text-xs">
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-green-600">₹8.4L</div>
-              <div className="text-muted-foreground">Collected</div>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-yellow-600">₹4.0L</div>
-              <div className="text-muted-foreground">Outstanding</div>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-blue-600">213</div>
-              <div className="text-muted-foreground">RTE Students (Free)</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* RTE Compliance Footer */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
