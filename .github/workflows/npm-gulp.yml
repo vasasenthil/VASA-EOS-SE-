@@ -26,8 +26,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    # react-simple-maps@3 declares a React 16-18 peer range while this app is on
+    # React 19, so a strict npm install fails with ERESOLVE. --legacy-peer-deps
+    # (also set in .npmrc) accepts the newer React, matching what the pnpm-based CI does.
     - name: Install dependencies
-      run: npm install --no-audit --no-fund
+      run: npm install --legacy-peer-deps --no-audit --no-fund
 
     - name: Typecheck
       run: ./node_modules/.bin/tsc --noEmit
