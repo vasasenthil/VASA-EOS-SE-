@@ -201,52 +201,72 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   }
 }
 
+// These three feed the (client) scheme filters. They must NEVER throw or return a non-array:
+// a null/undefined result makes `categories.map(...)` / `authorities.map(...)` crash after
+// hydration, surfacing as "Something went wrong". So each is fully guarded and array-safe.
 export async function getSchemeCategoriesAction(): Promise<SchemeCategory[]> {
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase.from("scheme_categories").select("*").order("name", { ascending: true })
-  if (error) {
-    console.error("Error fetching scheme categories:", error)
-    return [] // Or throw error
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from("scheme_categories").select("*").order("name", { ascending: true })
+    if (error) {
+      console.error("Error fetching scheme categories:", error)
+      return []
+    }
+    return (data as SchemeCategory[] | null) ?? []
+  } catch (e) {
+    console.error("getSchemeCategoriesAction failed:", e)
+    return []
   }
-  return data as SchemeCategory[]
 }
 
 export async function getOrganizationalUnitSubtypesAction(): Promise<OrganizationalUnitSubtype[]> {
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("organizational_unit_subtypes")
-    .select("id, name, description, governance_tier:governance_tiers(id, name)")
-    .order("name", { ascending: true })
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("organizational_unit_subtypes")
+      .select("id, name, description, governance_tier:governance_tiers(id, name)")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error fetching OU subtypes:", error)
+    if (error) {
+      console.error("Error fetching OU subtypes:", error)
+      return []
+    }
+    return ((data ?? []) as any[]).map((st: any) => ({
+      ...st,
+      governance_tier: st.governance_tier as GovernanceTier | null,
+    })) as OrganizationalUnitSubtype[]
+  } catch (e) {
+    console.error("getOrganizationalUnitSubtypesAction failed:", e)
     return []
   }
-  return data.map((st: any) => ({
-    ...st,
-    governance_tier: st.governance_tier as GovernanceTier | null,
-  })) as OrganizationalUnitSubtype[]
 }
 
 export async function getIssuingAuthoritiesAction(): Promise<OrganizationalUnit[]> {
-  // This function might need to be more specific, e.g., filter OUs that can be issuing authorities
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("organizational_units")
-    .select("id, name, region_code, tier:governance_tiers(id, name)")
-    .order("name", { ascending: true })
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("organizational_units")
+      .select("id, name, region_code, tier:governance_tiers(id, name)")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error fetching issuing authorities:", error)
+    if (error) {
+      console.error("Error fetching issuing authorities:", error)
+      return []
+    }
+    return ((data ?? []) as any[]).map((ou: any) => ({
+      ...ou,
+      tier: ou.tier as GovernanceTier | null,
+    })) as OrganizationalUnit[]
+  } catch (e) {
+    console.error("getIssuingAuthoritiesAction failed:", e)
     return []
   }
-  return data.map((ou: any) => ({
-    ...ou,
-    tier: ou.tier as GovernanceTier | null, // Ensure correct casting
-  })) as OrganizationalUnit[]
 }
 
 export async function createSchemeAction(

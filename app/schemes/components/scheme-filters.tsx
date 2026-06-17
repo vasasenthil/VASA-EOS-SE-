@@ -38,12 +38,18 @@ export function SchemeFilters() {
 
   useEffect(() => {
     async function fetchFilterData() {
-      const [fetchedCategories, fetchedAuthorities] = await Promise.all([
-        getSchemeCategoriesAction(),
-        getIssuingAuthoritiesAction(), // Fetch authorities
-      ])
-      setCategories(fetchedCategories)
-      setAuthorities(fetchedAuthorities)
+      try {
+        const [fetchedCategories, fetchedAuthorities] = await Promise.all([
+          getSchemeCategoriesAction(),
+          getIssuingAuthoritiesAction(), // Fetch authorities
+        ])
+        setCategories(Array.isArray(fetchedCategories) ? fetchedCategories : [])
+        setAuthorities(Array.isArray(fetchedAuthorities) ? fetchedAuthorities : [])
+      } catch {
+        // Never let a filter-data fetch crash the page; keep empty option lists.
+        setCategories([])
+        setAuthorities([])
+      }
     }
     fetchFilterData()
   }, [])
