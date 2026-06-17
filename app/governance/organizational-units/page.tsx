@@ -25,39 +25,29 @@ export default function OrganizationalUnitsPage() {
 }
 
 async function OULoader() {
-  // Walkthrough (no database): browseable; mutations stay guarded by server-action canDo
-  // checks. Production requires a real authenticated session.
+  // Browseable everywhere: a signed-in admin sees and manages live units; an unauthenticated
+  // visitor sees a read-only empty view with a sign-in note instead of a hard error. Real unit
+  // data is only loaded for a signed-in session; mutations stay guarded by canDo checks.
   const demoMode = !isSupabaseAdminConfigured()
   const userId = await getUserIdFromAction()
-  if (!userId && !demoMode) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Authentication Required</AlertTitle>
-        <AlertDescription>You must be logged in to view this page.</AlertDescription>
-      </Alert>
-    )
-  }
+  const authed = !!userId
 
-  const canViewPage = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
+  const canManageOUs =
+    demoMode || (authed && (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM })))
 
-  if (!canViewPage) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Access Denied</AlertTitle>
-        <AlertDescription>You do not have permission to view this page.</AlertDescription>
-      </Alert>
-    )
-  }
-
-  const canManageOUs = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
-
-  const ous = await getOUs() // Fetches { includeTier: true, includeUserCount: true } by default from actions/get-ous.ts
-  const tiers = await getTiers()
+  const empty = { success: true, message: "Sign in to view units.", data: [] as never[] }
+  const ous = authed || demoMode ? await getOUs() : empty
+  const tiers = authed || demoMode ? await getTiers() : empty
 
   return (
     <div className="space-y-8">
+      {!authed && !demoMode ? (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Sign in to manage units</AlertTitle>
+          <AlertDescription>You&apos;re viewing a read-only preview. Sign in with an administrator account to view and manage the organizational hierarchy.</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Organizational Units</h1>

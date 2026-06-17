@@ -23,39 +23,27 @@ export default function RolesPage() {
 }
 
 async function RolesLoader() {
-  // In the credential-free walkthrough (no database configured) the admin pages are
-  // browseable; mutations remain guarded by the server-action canDo checks. In production
-  // a real authenticated session is required.
+  // Browseable everywhere: a signed-in admin sees and manages live roles; an unauthenticated
+  // visitor (walkthrough / public browse) sees a read-only empty view with a sign-in note instead
+  // of a hard "Authentication Required" error. Real role data is only loaded for a signed-in
+  // session (no disclosure); mutations stay guarded by the server-action canDo checks.
   const demoMode = !isSupabaseAdminConfigured()
   const userId = await getUserIdFromAction()
-  if (!userId && !demoMode) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Authentication Required</AlertTitle>
-        <AlertDescription>You must be logged in to view this page.</AlertDescription>
-      </Alert>
-    )
-  }
+  const authed = !!userId
 
-  const canViewPage = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.OUS_MANAGE_SYSTEM }))
-
-  if (!canViewPage) {
-    return (
-      <Alert variant="destructive">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Access Denied</AlertTitle>
-        <AlertDescription>You do not have permission to view this page.</AlertDescription>
-      </Alert>
-    )
-  }
-
-  const canManageRoles = demoMode || (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.ROLES_MANAGE_SYSTEM }))
-
-  const rolesResult = await getRoles()
+  const canManageRoles =
+    demoMode || (authed && (await hasPermission({ userId: userId as string, permissionString: PERMISSIONS.ROLES_MANAGE_SYSTEM })))
+  const rolesResult = authed || demoMode ? await getRoles() : { success: true, message: "Sign in to view roles.", data: [] }
 
   return (
     <div className="space-y-6">
+      {!authed && !demoMode ? (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Sign in to manage roles</AlertTitle>
+          <AlertDescription>You&apos;re viewing a read-only preview. Sign in with an administrator account to view and manage roles and permissions.</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Role Management</h1>
