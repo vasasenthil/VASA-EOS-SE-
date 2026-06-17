@@ -1,6 +1,7 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
+import { demoRoles } from "@/lib/governance/demo"
 import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import type { Role, RoleInput, Permission, RolePermission } from "../types"
@@ -120,8 +121,8 @@ export async function getRolesAction(params?: {
   includeAssignedUserCount?: boolean
 }): Promise<RoleActionState<Role[]>> {
   if (!isSupabaseAdminConfigured()) {
-    // Demo walkthrough (no database): return a clean empty result so the page renders.
-    return { success: true, message: "No database configured — showing an empty role set (demo).", data: [] }
+    // Demo walkthrough (no database): show the representative demo role set so the page renders.
+    return { success: true, message: "No database configured — showing demo roles.", data: demoRoles() }
   }
 
   try {
@@ -155,6 +156,10 @@ export async function getRolesAction(params?: {
         })
       : []
 
+    // An empty table in demo mode shows the demo roles so the page is never blank.
+    if (roles.length === 0 && isDemoModeEnabled()) {
+      return { success: true, message: "Showing demo roles (no roles in the database yet).", data: demoRoles() }
+    }
     return { success: true, message: "Roles fetched successfully.", data: roles }
   } catch (e: any) {
     console.error("Unexpected error fetching roles:", e)

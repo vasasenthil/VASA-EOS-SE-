@@ -1,6 +1,7 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
+import { demoOrganizationalUnits, demoTiers } from "@/lib/governance/demo"
 import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation" // Import redirect
@@ -124,8 +125,8 @@ export async function getOrganizationalUnitsAction(params?: {
   includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
   if (!isSupabaseAdminConfigured()) {
-    // Demo walkthrough (no database): return a clean empty result so the page renders.
-    return { success: true, message: "No database configured — showing an empty unit set (demo).", data: [] }
+    // Demo walkthrough (no database): show the representative demo hierarchy so the page renders.
+    return { success: true, message: "No database configured — showing demo units.", data: demoOrganizationalUnits() }
   }
 
   try {
@@ -157,6 +158,9 @@ export async function getOrganizationalUnitsAction(params?: {
     }
 
     const ous = data ? data.map(mapDbOUToType) : []
+    if (ous.length === 0 && isDemoModeEnabled()) {
+      return { success: true, message: "Showing demo units (none in the database yet).", data: demoOrganizationalUnits() }
+    }
     return { success: true, message: "Organizational Units fetched successfully.", data: ous }
   } catch (e: any) {
     console.error("Unexpected error fetching OUs:", e)
@@ -370,8 +374,8 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
 
 export async function getGovernanceTiersAction(): Promise<OUActionState<GovernanceTier[]>> {
   if (!isSupabaseAdminConfigured()) {
-    // Demo walkthrough (no database): return a clean empty result so the page renders.
-    return { success: true, message: "No database configured — showing an empty tier set (demo).", data: [] }
+    // Demo walkthrough (no database): show the representative demo tiers so the page renders.
+    return { success: true, message: "No database configured — showing demo tiers.", data: demoTiers() }
   }
   try {
     const { data, error } = await supabaseAdmin!
@@ -383,7 +387,11 @@ export async function getGovernanceTiersAction(): Promise<OUActionState<Governan
       console.error("Error fetching governance tiers:", error)
       return { success: false, message: `Failed to fetch governance tiers: ${error.message}`, data: [] }
     }
-    return { success: true, message: "Governance tiers fetched successfully.", data: data || [] }
+    const tiers = (data as GovernanceTier[] | null) ?? []
+    if (tiers.length === 0 && isDemoModeEnabled()) {
+      return { success: true, message: "Showing demo tiers (none in the database yet).", data: demoTiers() }
+    }
+    return { success: true, message: "Governance tiers fetched successfully.", data: tiers }
   } catch (e: any) {
     console.error("Unexpected error fetching governance tiers:", e)
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }

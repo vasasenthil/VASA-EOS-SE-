@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server"
+import { isSupabaseAdminConfigured, isDemoModeEnabled, supabaseAdmin } from "@/lib/supabase/server"
 import { DEMO_COOKIE } from "@/lib/demo-auth"
 import type { User } from "@supabase/supabase-js"
 
@@ -8,7 +8,7 @@ import type { User } from "@supabase/supabase-js"
 // demo_role cookie set), treat the visitor as an authenticated demo user. Gated on the
 // absence of a real database, so production always uses real Supabase auth.
 async function demoSession(): Promise<{ id: string; role: string } | null> {
-  if (isSupabaseAdminConfigured()) return null
+  if (!isDemoModeEnabled()) return null
   const role = (await cookies()).get(DEMO_COOKIE)?.value
   return role ? { id: `demo-${role.toLowerCase()}`, role: role.toUpperCase() } : null
 }

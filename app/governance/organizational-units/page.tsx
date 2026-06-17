@@ -5,7 +5,7 @@ import { Shell } from "@/components/shell"
 import { OrganizationalUnitTable } from "@/components/organizational-unit-table"
 import { TierTable } from "@/components/tier-table"
 import { getUserIdFromAction } from "@/lib/auth/server"
-import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { isDemoModeEnabled } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,7 @@ async function OULoader() {
   // Browseable everywhere: a signed-in admin sees and manages live units; an unauthenticated
   // visitor sees a read-only empty view with a sign-in note instead of a hard error. Real unit
   // data is only loaded for a signed-in session; mutations stay guarded by canDo checks.
-  const demoMode = !isSupabaseAdminConfigured()
+  const demoMode = isDemoModeEnabled()
   const userId = await getUserIdFromAction()
   const authed = !!userId
 

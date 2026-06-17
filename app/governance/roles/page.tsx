@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { Shell } from "@/components/shell"
 import { getUserIdFromAction } from "@/lib/auth/server"
-import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { isDemoModeEnabled } from "@/lib/supabase/server"
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -27,7 +27,7 @@ async function RolesLoader() {
   // visitor (walkthrough / public browse) sees a read-only empty view with a sign-in note instead
   // of a hard "Authentication Required" error. Real role data is only loaded for a signed-in
   // session (no disclosure); mutations stay guarded by the server-action canDo checks.
-  const demoMode = !isSupabaseAdminConfigured()
+  const demoMode = isDemoModeEnabled()
   const userId = await getUserIdFromAction()
   const authed = !!userId
 
