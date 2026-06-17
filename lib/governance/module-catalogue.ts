@@ -131,6 +131,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Student Records / SIS (full CRUD: master register, demographics, filter/create/view/edit/delete/seed)", repoRef: "lib/students/store.ts", status: "built" },
   { tier: "School", name: "Attendance Register (full CRUD: per-student daily records, rate, filter/create/view/edit/delete/seed)", repoRef: "lib/attendance-register/store.ts", status: "built" },
   { tier: "School", name: "Timetable Manager (full CRUD: per-period entries, clash detection, filter/create/view/edit/delete/seed)", repoRef: "lib/timetable-manager/store.ts", status: "built" },
+  { tier: "School", name: "Lesson Plans (full CRUD: topic/prev-further topics, materials, homework, planner link, class notes A/V/doc, filter/create/view/edit/delete/seed)", repoRef: "lib/lessonplans/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
