@@ -124,6 +124,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "AI-Powered Daily Attendance", repoRef: "lib/attendance/index.ts", status: "built" },
   { tier: "School", name: "Class-wise Attendance (live dashboard store)", repoRef: "lib/attendance/store.ts", status: "built" },
   { tier: "School", name: "Admission & Enrolment", repoRef: "lib/admissions/index.ts", status: "built" },
+  { tier: "School", name: "Course Catalogue (full CRUD: list/filter/create/view/edit/delete/seed)", repoRef: "lib/courses/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
