@@ -141,6 +141,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Asset Register & Inventory (full CRUD: categories, condition, assignment, straight-line depreciation/book value, reorder/low-stock)", repoRef: "lib/assetmgmt/store.ts", status: "built" },
   { tier: "School", name: "Staff Directory / HR (full CRUD: designation/cadre, qualification, service years, leave balances, retirement-due)", repoRef: "lib/staffmaster/store.ts", status: "built" },
   { tier: "School", name: "Student Early-Warning System (Native-AI: Analytics Engine + risk model over Attendance+Fees+ReportCards; HITL case workflow)", repoRef: "lib/earlywarning/index.ts", status: "built" },
+  { tier: "School", name: "Diagnostic Assessment & Remediation (Native-AI: Assessment Engine per-objective mastery + weak-objective remediation; HITL plan approval)", repoRef: "lib/diagnostics/index.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
