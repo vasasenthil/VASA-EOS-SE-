@@ -134,6 +134,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Lesson Plans (full CRUD: topic/prev-further topics, materials, homework, planner link, class notes A/V/doc, filter/create/view/edit/delete/seed)", repoRef: "lib/lessonplans/store.ts", status: "built" },
   { tier: "School", name: "Holiday Calendar (full CRUD: all categories, date ranges, recurring annual, per-year; isHoliday seam for the scheduler)", repoRef: "lib/holidays/store.ts", status: "built" },
   { tier: "School", name: "Working-Time Scheduler (full CRUD: term window, working weekdays, daily bell-schedule; resolves school days by joining holidays)", repoRef: "lib/worktime/store.ts", status: "built" },
+  { tier: "School", name: "Day Plan (capstone resolver: joins Working-Time + Holidays + Timetable + Lesson Plans into one resolved school day)", repoRef: "lib/dayplan/index.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
