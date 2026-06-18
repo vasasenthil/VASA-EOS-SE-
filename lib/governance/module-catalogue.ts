@@ -138,6 +138,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Student Fees & DBT collections (full CRUD: fee heads, concessions, receipts ledger, DBT linkage, demand-vs-collection, defaulter workflow)", repoRef: "lib/studentfees/store.ts", status: "built" },
   { tier: "School", name: "Library Circulation (full CRUD: issue/return, members, due dates, renewals, overdue-fine calculation)", repoRef: "lib/librarycirc/store.ts", status: "built" },
   { tier: "School", name: "Transport Routes (full CRUD: routes/stops, vehicle+driver, capacity/occupancy/overload, term fare)", repoRef: "lib/transportmgmt/store.ts", status: "built" },
+  { tier: "School", name: "Asset Register & Inventory (full CRUD: categories, condition, assignment, straight-line depreciation/book value, reorder/low-stock)", repoRef: "lib/assetmgmt/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
