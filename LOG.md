@@ -206,3 +206,14 @@
 - Green bar holds: **27 Go modules pass** (24 layers + engines + agents + integration), OPA 28/28, tsc 0
   errors. Every brochure AI pillar — 6 engines + 6 agents — is now built, tested, and wired under human
   authority. Reference-impl untouched.
+
+## Runnable · platformd (the merged platform as a live HTTP service)
+- Built `platform/integration/cmd/platformd` — a small HTTP harness that mounts the composition root and
+  serves the end-to-end workflows so the build can be exercised live: `/healthz`, `/readiness`, `/scenarios`,
+  `POST /admission`, `POST /tutor`, and a one-click web console at `/`. Uses the live Rego plane when opa +
+  `policies/` are present, else an in-process mirror, so it runs on any host.
+- **Proven live**: ran the binary against the real OPA plane and curled the workflows — admit → permitted with
+  a notarised verifiable credential (audit seq 1); EWS reject → require-approval routed to a human (TR-0001);
+  offshore PII → residency block; tutor injection → refused. 6 httptest cases. Self-verifying status page also
+  added at `public/platform-status.html` (27 modules · 213 tests, generated from the tree).
+- Reference Next.js app `next build` verified green (exit 0). Reference-impl business logic untouched.
