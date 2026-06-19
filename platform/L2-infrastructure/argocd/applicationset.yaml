@@ -1,0 +1,18 @@
+# CC-SPEC-001 §23 — ArgoCD ApplicationSet: one Application per layer/tier, self-healing GitOps.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata: { name: vasa-platform, namespace: argocd }
+spec:
+  generators:
+    - list:
+        elements:
+          - { layer: L3-data-fabric }
+          - { layer: L5-security }
+          - { layer: L6-platform-services }
+  template:
+    metadata: { name: 'vasa-{{layer}}' }
+    spec:
+      project: vasa
+      source: { repoURL: 'https://gitlab.tn-sdc.gov.in/vasa/vasa-eos-se-tn.git', targetRevision: main, path: 'platform/{{layer}}/deploy' }
+      destination: { server: 'https://kubernetes.default.svc', namespace: vasa-platform }
+      syncPolicy: { automated: { prune: true, selfHeal: true }, syncOptions: [CreateNamespace=true] }

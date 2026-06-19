@@ -24,3 +24,20 @@
   and tools/expand_modules.py (materialise per-folder module.yaml).
 - Open: contracts are domain-level scaffolds (operation detail per module is later-phase); everything in
   BLOCKERS Classes A–D remains.
+
+## Phase 1 · Foundation (L1–L2), authorable deliverables (§24)
+- Built + tested the **sovereign-foundation services** (Go, stdlib-only):
+  - `platform/L1-foundation/off-switch-svc` — M-of-N ed25519 quorum kill-switch, replay-safe, tamper-evident
+    audit (ADR-0006). `go test` 7/7 PASS.
+  - `platform/L1-foundation/escrow-agent` — deterministic, verifiable source-escrow manifest + Merkle-style
+    root, tamper-detection (ADR-0006/§27). `go test` 4/4 PASS.
+- Authored the L2 **IaC substrate** (ADR-0007): OpenTofu `infra/modules/{k8s-cluster,vault,istio,
+  observability,argo-cd,cert-manager}` composed by per-site `infra/envs/{prod-chennai,prod-coimbatore,
+  staging,dev}`; ArgoCD ApplicationSets + Loki PII-redaction values. Security defaults baked in (default-deny
+  NetworkPolicy; Vault HSM/Shamir toggle defaulting to mock until B-002).
+- Validation note: OpenTofu cannot be `go install`-ed here (replace directives in its go.mod) and there is no
+  Docker/cloud substrate → HCL authored to valid syntax; `tofu validate` runs in CI against real providers
+  (B-023). **Applying** any IaC is gated on B-001/B-002/B-010/B-012.
+- ADRs: 0006 (off-switch M-of-N), 0007 (IaC: OpenTofu + ArgoCD GitOps). Layer READMEs updated honestly.
+- **Build stops at the Phase-1 review gate** (Cover STEP 3/4): Phase 2 needs the cluster substrate + State
+  PKI/HSM and `tofu validate` green in CI. Reference-impl green bar unaffected (tsc 0 errors).

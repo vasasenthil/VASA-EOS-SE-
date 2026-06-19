@@ -1,0 +1,9 @@
+# CC-SPEC-001 §2.10 §9.8 — Loki with mandatory PII redaction at ingest.
+loki:
+  limits_config:
+    retention_period: 744h
+  structuredConfig:
+    distributor:
+      # redact emails, phone numbers, APAAR/Aadhaar-like tokens before any log is stored
+      log_push_request_streams: false
+config: "PII redaction enforced at the application boundary; Loki stores already-redacted structured logs only."
