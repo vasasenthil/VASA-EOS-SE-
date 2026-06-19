@@ -14,12 +14,18 @@ export function I18nDemo() {
           <LanguageSwitcher />
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
+      <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">{t("demo.heading")}</p>
         <p className="text-lg font-medium">{t("welcome")}</p>
-        <p>
-          {t("nav.dashboard")} · {t("nav.attendance")} · {t("nav.fees")} · {t("nav.schemes")}
-        </p>
+        <p className="text-xs text-muted-foreground">{t("app.tagline")}</p>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("nav.dashboard")}</div>
+          <p>{t("nav.attendance")} · {t("nav.fees")} · {t("nav.schemes")} · {t("nav.students")} · {t("nav.staff")} · {t("nav.timetable")}</p>
+        </div>
+        <div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">{t("status")}</div>
+          <p>{t("action.save")} · {t("action.cancel")} · {t("action.search")} · {t("action.edit")} · {t("action.delete")} · {t("action.view")}</p>
+        </div>
       </CardContent>
     </Card>
   )

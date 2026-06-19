@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Progress } from "@/components/ui/progress"
 import { Download } from "lucide-react"
 import { LANGUAGE_CATALOGUE, languageSummary, scripts, type TnRole } from "@/lib/i18n/languages"
+import { coverageReport } from "@/lib/i18n/translate"
 
 const ROLE_VARIANT: Record<TnRole, "default" | "secondary" | "outline"> = {
   primary: "default",
@@ -17,6 +19,7 @@ const ROLE_VARIANT: Record<TnRole, "default" | "secondary" | "outline"> = {
 
 export default function LanguagesPage() {
   const s = languageSummary()
+  const cov = coverageReport()
   return (
     <Shell>
       <PageHeader>
@@ -69,6 +72,31 @@ export default function LanguagesPage() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <h2 className="text-lg font-semibold">In-app UI string coverage</h2>
+          <p className="mt-1 mb-4 text-sm text-muted-foreground">
+            Honest, measured coverage of the {cov.coreKeys} committed core UI strings (navigation + common actions) across the
+            switchable locales — not just a catalogue claim. Tamil is fully localised (TN-first); English and Hindi are
+            complete; the neighbouring scheduled languages carry the core set and fall back to English for the rest.
+            <strong> {cov.complete} complete · {cov.partial} partial</strong>, {cov.averagePct}% mean coverage. The remaining
+            scheduled languages route through the Bhashini language port at runtime.
+          </p>
+          <div className="space-y-3">
+            {cov.locales.map((l) => (
+              <div key={l.locale} className="grid grid-cols-12 items-center gap-3">
+                <div className="col-span-4 sm:col-span-3 text-sm"><span lang={l.locale} className="font-medium">{l.nativeLabel}</span> <span className="text-muted-foreground">({l.label})</span></div>
+                <div className="col-span-5 sm:col-span-7"><Progress value={l.pct} /></div>
+                <div className="col-span-3 sm:col-span-2 text-right text-sm">
+                  <Badge variant={l.pct === 100 ? "default" : "secondary"}>{l.pct}%</Badge>
+                  <span className="ml-2 text-xs text-muted-foreground">{l.covered}/{l.total}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

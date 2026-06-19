@@ -172,9 +172,9 @@ export const ARCHITECTURE_LAYERS: ArchitectureLayer[] = [
       "Delivers every stakeholder their own experience: 13 role-tailored portals across ~271 routes, the shared design system, and the accessibility/i18n conformance the platform commits to.",
     status: "partial",
     note:
-      "13 portals and the design system are built across the route estate. WCAG 2.1 A/AA is met by automated audit and the design system; AAA criteria needing assistive-tech/manual verification and full 22-language translation coverage are honestly tracked as audit-required / partial.",
-    components: ["13 stakeholder portals", "Shared design system / shell", "Accessibility conformance map", "Multilingual (i18n) scaffolding"],
-    repoRefs: ["config/portals.ts", "lib/accessibility/conformance.ts"],
+      "13 portals and the design system are built across the route estate. WCAG 2.1 A/AA is met by automated audit and the design system. Multilingual is real, not just a catalogue: a measured UI-string layer covers the core navigation/action set — Tamil (TN-first), English and Hindi complete; Telugu/Malayalam/Kannada/Urdu carry the core set with honest per-locale coverage at /accessibility/languages. AAA criteria needing assistive-tech/manual verification and full 22-language translation remain audit-required / partial.",
+    components: ["13 stakeholder portals", "Shared design system / shell", "Accessibility conformance map", "Multilingual UI-string layer (measured coverage)"],
+    repoRefs: ["config/portals.ts", "lib/accessibility/conformance.ts", "lib/i18n/translate.ts"],
     pendingAspects: ["WCAG 2.1 AAA criteria requiring assistive-tech / manual verification", "Full 22-language translation coverage across all routes"],
   },
   {
