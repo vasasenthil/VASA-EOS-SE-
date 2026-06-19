@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import type { CredentialKind, VerifiableCredential } from "@/lib/credentials"
-import { mintAction, verifyAction } from "./actions"
+import Link from "next/link"
+import { credentialStatus, credentialSummary, type CredentialKind, type VerifiableCredential } from "@/lib/credentials"
+import { mintAction, verifyAction, seedCredentialsAction } from "./actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Database, ArrowRight } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -20,12 +22,13 @@ const KINDS: CredentialKind[] = ["certificate", "badge", "micro-credential", "tr
 
 export function CredentialIssuer({ initial }: { initial: VerifiableCredential[] }) {
   const [issued, setIssued] = useState<VerifiableCredential[]>(initial)
-  const [apaarId, setApaarId] = useState("APAAR-0001")
+  const [apaarId, setApaarId] = useState("100200300401")
   const [title, setTitle] = useState("Foundational Numeracy — Grade 4")
   const [kind, setKind] = useState<CredentialKind>("micro-credential")
   const [results, setResults] = useState<Record<string, string>>({})
   const [mintError, setMintError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const summary = credentialSummary(issued)
 
   function mint() {
     startTransition(async () => {
@@ -36,6 +39,13 @@ export function CredentialIssuer({ initial }: { initial: VerifiableCredential[] 
       } else {
         setMintError(r.error ?? "Mint failed.")
       }
+    })
+  }
+
+  function seed() {
+    startTransition(async () => {
+      const r = await seedCredentialsAction()
+      if (r.ok) setIssued(await (await import("./actions")).listAction())
     })
   }
 
@@ -87,42 +97,55 @@ export function CredentialIssuer({ initial }: { initial: VerifiableCredential[] 
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
           <CardTitle>Registry</CardTitle>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>{summary.issued} issued · {summary.revoked} revoked · {summary.holders} holders</span>
+            <Button size="sm" variant="outline" onClick={seed} disabled={pending}><Database className="mr-1 h-4 w-4" />Seed</Button>
+          </div>
         </CardHeader>
         <CardContent>
           {issued.length ? (
             <ul className="space-y-3">
-              {issued.map((c) => (
-                <li key={c.id} className="rounded-md border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{c.title}</span>
-                    <Badge variant="outline">{c.kind}</Badge>
-                  </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                    <span>{c.id}</span>
-                    <span>holder {c.apaarId}</span>
-                    <span>anchor #{c.anchorSeq}</span>
-                    <span className="font-mono">hash {c.contentHash}</span>
-                    <Badge variant="secondary">soulbound</Badge>
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <Button size="sm" variant="outline" onClick={() => verify(c.id)} disabled={pending}>
-                      Verify
-                    </Button>
-                    {results[c.id] ? (
-                      <span
-                        className={`text-xs ${results[c.id].startsWith("✓") ? "text-emerald-600" : "text-destructive"}`}
-                      >
-                        {results[c.id]}
-                      </span>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+              {issued.map((c) => {
+                const revoked = credentialStatus(c) === "Revoked"
+                return (
+                  <li key={c.id} className="rounded-md border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium">{c.title}</span>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline">{c.kind}</Badge>
+                        <Badge className={`border-0 ${revoked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>{revoked ? "Revoked" : "Issued"}</Badge>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <span>{c.id}</span>
+                      <span>holder {c.apaarId}</span>
+                      <span>anchor #{c.anchorSeq}</span>
+                      <span className="font-mono">hash {c.contentHash}</span>
+                      <Badge variant="secondary">soulbound</Badge>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3">
+                      <Button size="sm" variant="outline" onClick={() => verify(c.id)} disabled={pending}>
+                        Verify
+                      </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link href={`/credentials/${c.id}`}>Details<ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+                      </Button>
+                      {results[c.id] ? (
+                        <span
+                          className={`text-xs ${results[c.id].startsWith("✓") ? "text-emerald-600" : "text-destructive"}`}
+                        >
+                          {results[c.id]}
+                        </span>
+                      ) : null}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No credentials minted yet.</p>
+            <p className="text-sm text-muted-foreground">No credentials minted yet. Mint one, or seed demo credentials.</p>
           )}
         </CardContent>
       </Card>

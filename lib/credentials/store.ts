@@ -33,6 +33,9 @@ interface CredentialRow {
   soulbound: boolean
   content_hash: string
   anchor_seq: number
+  revoked?: boolean
+  revoked_at?: string | null
+  revoke_reason?: string | null
 }
 
 function fromRow(r: CredentialRow): VerifiableCredential {
@@ -46,6 +49,9 @@ function fromRow(r: CredentialRow): VerifiableCredential {
     soulbound: true,
     contentHash: r.content_hash,
     anchorSeq: r.anchor_seq,
+    revoked: r.revoked ?? false,
+    revokedAt: r.revoked_at ?? "",
+    revokeReason: r.revoke_reason ?? "",
   }
 }
 
@@ -111,4 +117,56 @@ export async function verifyById(id: string): Promise<VerificationResult> {
   const c = store.find((x) => x.id === id)
   if (!c) return { valid: false, reason: "Credential not found in registry." }
   return verifyCredential(c)
+}
+
+export async function getCredential(id: string): Promise<VerifiableCredential | undefined> {
+  const db = getDb()
+  if (db) {
+    const { data } = await db.from("verifiable_credentials").select("*").eq("id", id).maybeSingle()
+    return data ? fromRow(data as CredentialRow) : undefined
+  }
+  return store.find((x) => x.id === id)
+}
+
+/**
+ * Revoke an authentically-minted credential (append-only — the mint and its content hash are NEVER
+ * altered, so authenticity still verifies; revocation is recorded as a separate, audited fact).
+ */
+export async function revokeCredential(id: string, reason: string): Promise<VerifiableCredential | undefined> {
+  const revokedAt = new Date().toISOString()
+  const db = getDb()
+  if (db) {
+    const { data } = await db.from("verifiable_credentials").select("*").eq("id", id).maybeSingle()
+    if (!data) return undefined
+    await db.from("verifiable_credentials").update({ revoked: true, revoked_at: revokedAt, revoke_reason: reason }).eq("id", id)
+    await appendAudit({ actor: "registrar", action: "credential.revoke", resource: id, details: { reason } })
+    return { ...fromRow(data as CredentialRow), revoked: true, revokedAt, revokeReason: reason }
+  }
+  const c = store.find((x) => x.id === id)
+  if (!c) return undefined
+  c.revoked = true
+  c.revokedAt = revokedAt
+  c.revokeReason = reason
+  await appendAudit({ actor: "registrar", action: "credential.revoke", resource: id, details: { reason } })
+  return c
+}
+
+/** Seed a few demo credentials (idempotent) so the registry has data without minting on every load. */
+export async function seedCredentials(): Promise<number> {
+  const demos: MintInput[] = [
+    { apaarId: "100200300401", kind: "transcript", title: "Class X Marksheet — 2025-26", issuer: "Directorate of Government Examinations, TN" },
+    { apaarId: "100200300401", kind: "micro-credential", title: "Foundational Numeracy — NIPUN Bharat", issuer: "Directorate of School Education, TN" },
+    { apaarId: "100200300402", kind: "certificate", title: "School Leaving Certificate", issuer: "GHSS Egmore" },
+    { apaarId: "100200300403", kind: "badge", title: "State Science Fair — Merit", issuer: "DTERT, TN" },
+  ]
+  const existing = await listCredentials()
+  if (existing.length >= demos.length) return 0
+  let n = 0
+  for (const d of demos) {
+    if (!existing.some((c) => c.apaarId === d.apaarId && c.title === d.title)) {
+      await mintCredential(d)
+      n++
+    }
+  }
+  return n
 }
