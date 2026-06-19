@@ -136,3 +136,19 @@
 - **Build stops at the Phase-6 review gate**: live anchoring needs the Besu validator network (B-020); the
   graph persists in Neo4j + Milvus RAG (B-013); credentials push to DigiLocker (B-022). Reference-impl
   untouched; green bar holds (18 Go modules pass, OPA 28/28, tsc 0 errors).
+
+## Phase 7 · Surfaces & Scale (L10), authorable deliverables (§10.3, §10.6, §10.8)
+- Built + tested the L10 **scale spine** (Go, stdlib-only) — the design-time gate the load rig later confirms:
+  - `platform/L10-surfaces/capacity` — analytical planner: sizes a topology (shards by data volume, app nodes
+    by surge RPS, DB nodes by shard×replication, 30% headroom) and validates a proposed topology. Canonical TN
+    load tested: 1.27 Cr / 69k schools → 17 shards / 207 app nodes / 67 DB nodes at modelled capacities. (ADR-0014)
+  - `platform/L10-surfaces/ratelimit` — per-key token-bucket limiter (fair-shares tenants) + admission control
+    that sheds load rather than collapsing under surge. Deterministic clock. (ADR-0014)
+  - `platform/L10-surfaces/loadmodel` — the §10.8 scenarios (1 Cr × 1h, 2 Cr surge, 72h soak) as staged ramps
+    + a deterministic arrival-shape model; the exact scenarios the rig runs. (ADR-0014)
+- Scale posture is HONEST: "validated by model, pending the empirical rig run" — model + rig use the same
+  numbers. The 13 portal surfaces RE-AUTHOR the reference app's UX (build/host gated on the cluster).
+- ADR-0014; PHASE-7-PLAN; L10 README + LOG updated to honest Phase-7 status.
+- **Build stops at the Phase-7 review gate**: the empirical 1-crore proof runs `loadmodel` on the dedicated
+  rig (B-032) against the cluster (B-010); surfaces build/host need the cluster (B-010) + serving (B-011).
+  Reference-impl untouched; green bar holds (21 Go modules pass, OPA 28/28, tsc 0 errors).
