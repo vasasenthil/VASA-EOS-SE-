@@ -152,3 +152,22 @@
 - **Build stops at the Phase-7 review gate**: the empirical 1-crore proof runs `loadmodel` on the dedicated
   rig (B-032) against the cluster (B-010); surfaces build/host need the cluster (B-010) + serving (B-011).
   Reference-impl untouched; green bar holds (21 Go modules pass, OPA 28/28, tsc 0 errors).
+
+## Phase 8 · Cutover & Operations (final build phase), authorable deliverables (§24 Phase 8, §26.8)
+- Built + tested the **operational spine** (Go, stdlib-only) — go-live logic the human team executes on real
+  infra:
+  - `platform/operations/cutover` — ordered, idempotent, reversible go-live runbook engine: each step has a
+    precondition + action + verify + rollback; a failure rolls back completed steps in reverse (never
+    half-cut-over); a re-run skips already-satisfied steps; every transition audited. (ADR-0015)
+  - `platform/operations/dr` — Chennai→Coimbatore failover controller: grades the realised data-loss window
+    vs RPO and promotion time vs RTO, refuses an unhealthy standby, and DRILLS non-destructively (no role
+    change); failback restores Chennai. Residency holds across failover (both sites TN-sovereign). (ADR-0015)
+  - `platform/operations/slo` — SLO + error-budget engine: success rate, budget consumed, burn rate (fast-burn
+    alerting), and a deploy-FREEZE gate when the budget is spent. Canonical availability/latency SLOs. (ADR-0015)
+  - `platform/operations/runbooks/go-live.md` — the go-live runbook with commissioning preconditions.
+- ADR-0015; PHASE-8-PLAN; operations README + LOG updated to honest Phase-8 status.
+- **Phase 8 is the final build phase.** On commissioning (BLOCKERS Classes A–D satisfied by the human team),
+  the platform runs the go-live runbook under the cutover engine, the DR drill to prove RPO/RTO, and the
+  error-budget release gate. The **authorable build is complete**; what remains is commissioning + the
+  empirical proofs on real infrastructure. Reference-impl untouched; green bar holds (24 Go modules pass,
+  OPA 28/28, tsc 0 errors).
