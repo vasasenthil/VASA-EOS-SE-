@@ -36,6 +36,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
+	github.com/vasa-eos-se-tn/platform/seed v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
 )
@@ -105,3 +106,5 @@ replace github.com/vasa-eos-se-tn/platform/tokens => ../L8-engines/tokens
 replace github.com/vasa-eos-se-tn/platform/loop => ../L9-agents/loop
 
 replace github.com/vasa-eos-se-tn/platform/retrieval => ../L7-knowledge/retrieval
+
+replace github.com/vasa-eos-se-tn/platform/seed => ../L3-data-fabric/seed

@@ -28,6 +28,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/pep"
 	"github.com/vasa-eos-se-tn/platform/ratelimit"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
+	"github.com/vasa-eos-se-tn/platform/seed"
 	"github.com/vasa-eos-se-tn/platform/serving"
 	"github.com/vasa-eos-se-tn/platform/slo"
 	"github.com/vasa-eos-se-tn/platform/tokens"
@@ -78,6 +79,10 @@ type Platform struct {
 	// operations
 	SLO slo.SLO
 	DR  *dr.Controller
+	// L3 seed (DAT-TN-001) — the application is not productive until the seed is loaded.
+	Seed         *seed.Loader
+	seedReport   seed.Report
+	seedManifest seed.Manifest
 
 	now func() string
 
@@ -220,6 +225,15 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 		return nil, err
 	}
 	p.Orchestrator = orch
+
+	// L3: load the DAT-TN-001 seed inventory at construction — signed by the authority (the issuer key; HSM in
+	// production), loaded once idempotently into this production environment. The platform is not productive
+	// until the seed is in (DAT-TN-001 §C).
+	inv := seed.Inventory()
+	man := seed.BuildManifest(inv, "v1", "DSE", cfg.IssuerKey)
+	loader := seed.NewLoader(true)
+	p.Seed, p.seedManifest = loader, man
+	p.seedReport = loader.Load(inv, man)
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

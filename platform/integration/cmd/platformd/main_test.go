@@ -96,6 +96,22 @@ func TestNotificationsEndpoint(t *testing.T) {
 	}
 }
 
+func TestSeedEndpoint(t *testing.T) {
+	rr := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr, httptest.NewRequest("GET", "/seed", nil))
+	if rr.Code != 200 {
+		t.Fatalf("seed code %d", rr.Code)
+	}
+	var st struct {
+		OK     bool `json:"ok"`
+		Loaded int  `json:"loaded"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &st)
+	if !st.OK || st.Loaded == 0 {
+		t.Fatalf("the platform should report a loaded seed: %+v", st)
+	}
+}
+
 func TestRetrieveEndpoint(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler(t).ServeHTTP(rr, httptest.NewRequest("POST", "/retrieve", strings.NewReader(`{"query":"explain fractions","concept":"frac"}`)))

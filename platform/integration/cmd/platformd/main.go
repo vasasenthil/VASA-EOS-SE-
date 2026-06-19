@@ -105,6 +105,9 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/tokens", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.Tokens.Stats(), nil)
 	}))
+	mux.HandleFunc("/seed", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.SeedStatus(), nil)
+	}))
 	mux.HandleFunc("/retrieve", s.count(s.handleRetrieve))
 	mux.HandleFunc("/remediation", s.count(s.handleRemediation))
 	mux.HandleFunc("/metrics", s.metrics)

@@ -1,0 +1,228 @@
+# seed-manifest.yaml — DAT-TN-001 seed inventory (content checksums; signed by the authority at load)
+seeds:
+  - id: SYN-TEACHERS
+    phase: C7
+    category: B-identity
+    steward: Dev
+    pii_class: 4
+    checksum: 51051d73b96ea6a0ac268034cbee2843891d82d052dd72c05fb3a966c03744f5
+  - id: SYN-WORKFLOWS
+    phase: C7
+    category: F-governance
+    steward: Dev
+    pii_class: 4
+    checksum: 97ca34dbeb01437f346081c727846064f28e9d9a52322049d16307134de7395e
+  - id: SYN-PARENTS
+    phase: C7
+    category: B-identity
+    steward: Dev
+    pii_class: 4
+    checksum: 08dd8b2a8bfcfca02f40afb1847a3a66890f92cd7525d8a8747113376349cad4
+  - id: SYN-SCHOOLS
+    phase: C7
+    category: A-master
+    steward: Dev
+    pii_class: 4
+    checksum: f8742e4579c6c94d0fbd407e899ef4274a3c04a03ac67f4c0a67d007a8371dc5
+  - id: SYN-STUDENTS
+    phase: C7
+    category: B-identity
+    steward: Dev
+    pii_class: 4
+    checksum: 316256d5aebc0b5c081c487e695ad0e0899b8b83c170c7353d941a8536a5ee58
+  - id: SEED-LANGUAGES
+    phase: S0-1
+    category: A-master
+    steward: Secretariat
+    pii_class: 4
+    checksum: dc1bb4f61b17b02fb808f6ad80309c7ed458fad489bfd2fe98f4eee062073ab9
+  - id: SEED-DISABILITIES
+    phase: S0-2
+    category: A-master
+    steward: G6 Ethics, Equity
+    pii_class: 4
+    checksum: 7201a282c69e04fd4135ee8a64df549b4d631da8255e6e6e8da92e5a4d2cb028
+  - id: SEED-ROLES
+    phase: S0-3
+    category: B-identity
+    steward: Secretariat
+    pii_class: 4
+    checksum: 8b004660fb2a97eab0ffccb92193d716d1a051256ac82fe70e94a1db8d94a6e4
+  - id: SEED-OPA-BUNDLES
+    phase: S0-4
+    category: F-governance
+    steward: G6 Security & Compliance
+    pii_class: 4
+    checksum: 63a85bf2d12573aed1fe73585623d40a6873af94cf6c659a8ea11b496363f1ed
+  - id: SEED-GEOGRAPHY
+    phase: S1-1
+    category: A-master
+    steward: DSE Programme Director + UDISE+ Nodal
+    pii_class: 4
+    checksum: cb91759950a8a2ce22198ce0974ce061ed8d2ef31cb1cdf89d425abc7251bf09
+  - id: SEED-DIRECTORATES
+    phase: S1-2
+    category: A-master
+    steward: Secretariat
+    pii_class: 4
+    checksum: e4237fb7d851a16fb97c4f295881273a5ee22b35a4a1f0ce138425c83e2f91fe
+  - id: SEED-OFFICES
+    phase: S1-3
+    category: B-identity
+    steward: Secretariat
+    pii_class: 4
+    checksum: 93b5aefc29f7321634921997ba394eb43515e7be982d2198f20000612a5188b5
+  - id: SEED-CCA-CAS
+    phase: S1-4
+    category: H-credential
+    steward: G6
+    pii_class: 4
+    checksum: 991545ae9a426d2fa39ee0a259f708e381d44a1831741bfed116dda23d9a075d
+  - id: SEED-CALENDAR
+    phase: S1-5
+    category: A-master
+    steward: DSE
+    pii_class: 4
+    checksum: cf7f431550de6538ec2bf1f0427f3d3161cc121f45ae868549427f28d8f7f466
+  - id: SEED-SCHOOLS
+    phase: S2-1
+    category: A-master
+    steward: DSE + UDISE+ Nodal
+    pii_class: 4
+    checksum: 3e250d9131dde6c8247878a1afbb952822749701fac3f0d9d907570e4174feca
+  - id: SEED-CLASSES
+    phase: S2-2
+    category: A-master
+    steward: DSE
+    pii_class: 4
+    checksum: df81e8429bd1b1ad1306401caa49dc9cde412bc32c8d4e4c7e902df2b6700935
+  - id: SEED-SUBJECTS
+    phase: S2-3
+    category: A-master
+    steward: SCERT Director
+    pii_class: 4
+    checksum: a878e5bac82a7aa8e0d332e0aaf3402f2fbfa9834fbcde166814336bb134b8d0
+  - id: SEED-FINANCIAL
+    phase: S2-4
+    category: A-master
+    steward: PFMS Nodal + Finance Lead
+    pii_class: 4
+    checksum: 21517287be74d53f467e1b2860e153f0afa7913b206bb01764e8db9a5c95f4c7
+  - id: SEED-RELATIONSHIPS
+    phase: S2-5
+    category: B-identity
+    steward: Secretariat
+    pii_class: 4
+    checksum: 67f1a6f0ac4cc38015ac9d08e86807770fa75b148756dd4139c9f2bf68f04806
+  - id: SEED-CURRICULUM
+    phase: S3-1
+    category: E-knowledge
+    steward: SCERT Director
+    pii_class: 4
+    checksum: 5a4c5d630fc9f2a17443070e5025ba42d9416a1054816de1f1cbef7b26516664
+  - id: SEED-SCHEME-CATALOGUE
+    phase: S3-2
+    category: A-master
+    steward: Respective directorate
+    pii_class: 4
+    checksum: 3223e6e37de9ebc34368e17886650e96b654e866928d5b25e00cf035811000c2
+  - id: SEED-G1-G7-WORKFLOWS
+    phase: S3-3
+    category: F-governance
+    steward: G1-G7 bodies
+    pii_class: 4
+    checksum: 0fc1768533356a542f194a7cc556789da2f8adbce69e26567557c36b91aca501
+  - id: SEED-POLICY
+    phase: S3-4
+    category: F-governance
+    steward: G6 Security & Compliance
+    pii_class: 4
+    checksum: d031802a4ac15a1416042be0f414502324908df995bd86b5d5cad84ee5c2b01d
+  - id: SEED-TEXTBOOKS
+    phase: S4-1
+    category: E-knowledge
+    steward: SCERT Director
+    pii_class: 4
+    checksum: c4c80addddd0bb23443f356da493a4782cc1debc20cbdd57a44407db54285ea1
+  - id: SEED-EVAL-SUITES
+    phase: S4-10
+    category: G-ai
+    steward: G5
+    pii_class: 4
+    checksum: 939e91989517ee5ea79180420d9e3e755016d154abefae3a96a385e5667ceb85
+  - id: SEED-PRACTICE-BANK
+    phase: S4-11
+    category: E-knowledge
+    steward: SCERT Director
+    pii_class: 4
+    checksum: b457066a253604bdeba8641c2697ecf5e5a0f92fbb2e2b79ec48cd89d74438ea
+  - id: SEED-SCHEME-WORKFLOWS
+    phase: S4-12
+    category: F-governance
+    steward: PFMS Nodal
+    pii_class: 4
+    checksum: be9a2bd44b38bb9ec7181bf8117a62e1131c13d482e28a15fc55e47886e65311
+  - id: SEED-GRIEVANCE-WORKFLOW
+    phase: S4-13
+    category: F-governance
+    steward: G6
+    pii_class: 4
+    checksum: 94d8fa0ff6bbbd2795d1df3af70ebedeb2b8b1be9062c46b5adcb60f98afbd22
+  - id: SEED-POCSO-WORKFLOW
+    phase: S4-14
+    category: F-governance
+    steward: G6
+    pii_class: 4
+    checksum: 86c87a1867777ed97142f1b854aa470d4b0888e68ed27257643f0d5263ea9a12
+  - id: SEED-KNOWLEDGE-GRAPH
+    phase: S4-2
+    category: E-knowledge
+    steward: Chief AI Architect (G5)
+    pii_class: 4
+    checksum: a34d468632fc9c87591f537875b2d0ec39daa98a4860d44be6cd7ecbc6f08736
+    gated: B-013
+  - id: SEED-EMBEDDINGS
+    phase: S4-3
+    category: E-knowledge
+    steward: G5
+    pii_class: 4
+    checksum: 6e3434c45f0742fca85469db5a27030204e0c32169a0e7756f00fd7fdbc9ac1b
+    gated: B-013
+  - id: SEED-TN-CANON
+    phase: S4-4
+    category: E-knowledge
+    steward: G6 Ethics Chair
+    pii_class: 4
+    checksum: 95647418dc328e23712ac7211680506546835e2bce2c4ad0465a28ab0c46cc5a
+  - id: SEED-LLM-WEIGHTS
+    phase: S4-5
+    category: G-ai
+    steward: Chief AI Architect (G5)
+    pii_class: 4
+    checksum: ccbccc1bb4190d7af529b2240f4aabea22d46f89ac3e9173c5db0c6f9a8084c0
+    gated: B-011
+  - id: SEED-INDIC-MODELS
+    phase: S4-6
+    category: G-ai
+    steward: G5
+    pii_class: 4
+    checksum: 203fe44b025df42e2fed1e3bfc6e02b0dad50750bfce2d7abfbc0f16b2d20c4d
+    gated: B-011
+  - id: SEED-CLASSIFIERS
+    phase: S4-7
+    category: G-ai
+    steward: G6
+    pii_class: 4
+    checksum: 454753aeb4af1d112c1944049a32deabb28fa1f1da085acdf88ef6f557386ed4
+  - id: SEED-PROMPT-LIBRARY
+    phase: S4-8
+    category: G-ai
+    steward: G6
+    pii_class: 4
+    checksum: e64927c8c8889c78359020ae50da39439c51755e88acc8fb61f078b1ed0cdc45
+  - id: SEED-MODEL-CARDS
+    phase: S4-9
+    category: G-ai
+    steward: G6 Ethics Chair
+    pii_class: 4
+    checksum: 2c6f5e3ed59241376c4d435dd8b8bf086acd28d4519f3718984b16d4102afba7

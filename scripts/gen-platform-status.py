@@ -29,6 +29,7 @@ DESC = {
     "off-switch-svc": "Sovereign M-of-N ed25519 kill-switch (replay-safe, audited)",
     "escrow-agent": "Deterministic, verifiable source-code escrow manifest",
     "dataplane": "Classification → store/region routing → retention (policy-parity)",
+    "seed": "DAT-TN-001 seed: signed manifest · idempotent · rollback · lineage · synthetic-isolated",
     "resilience": "Circuit breaker · retry+backoff/jitter · idempotency",
     "reconcile": "Field + numeric (tolerance) federation drift reconciliation",
     "adapters": "APAAR anti-corruption adapter on the resilience core",

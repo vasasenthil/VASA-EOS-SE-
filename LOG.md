@@ -342,3 +342,19 @@ Per the native-AI-engineering diagram (Spec→Loop→Context→Token). Token was
   Retrieve/Remediate; 11 messages, 4 RPCs), alongside the existing OpenAPI 3.1 + AsyncAPI 3.0. CI now runs a
   real `protoc` compile check on every push.
 - Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors; proto compiles. Reference-impl untouched.
+
+## DAT-TN-001 seed data · the State's data at first boot
+Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data inventory + loader.
+- `platform/L3-data-fabric/seed` — the SEED RULE engine: **signed** ed25519 manifest of per-seed SHA-256
+  checksums; **idempotent** load with **rollback** (seed-version tags); **lineage** (source/steward/version/
+  checksum/loadedAt + amendments); **synthetic never in production** (C.7 egress guard); **dependency-ordered**
+  per §C.8 (S0→S4). 8 module tests.
+- Real TN reference data seeded: **38 districts · 7 directorates · 22 scheduled languages (Tamil first) ·
+  21 RPwD-2016 categories · NEP 5+3+3+4 · classes Pre-KG–12 · scheme catalogue · role catalogue · regulatory
+  bundle list · governance/scheme/grievance/POCSO workflows**; large sets (385 blocks/3,800 clusters/69,000
+  schools) as counts; Phase-4 Native-AI seeds carry a `Gated` BLOCKERS id (catalogue seeds; weights/vectors
+  land with B-011/B-013). Committed `seed-manifest.yaml` (37 seeds) via `cmd/genmanifest`.
+- Wired into the platform: it **loads the seed at boot** (productive only when OK), `Platform.SeedStatus/
+  SeedManifestYAML/SeedLineage`, and `platformd GET /seed`. **Verified live: 32 production seeds · 191 records
+  · ok:true** (5 synthetic seeds correctly excluded). 3 integration + 1 platformd test.
+- Status page: **34 modules · 302 tests**. Green bar: 34 Go modules pass, OPA 33/33, tsc 0 errors.
