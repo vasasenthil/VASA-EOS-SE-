@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/vasa-eos-se-tn/platform/serving"
+	"github.com/vasa-eos-se-tn/platform/tokens"
 )
 
 // TutorRequest is a learner's question entering at the surface.
 type TutorRequest struct {
 	Tenant         string
+	UserID         string // the learner (for the per-user token equity budget); defaults to Tenant
 	Question       string
 	Minor          bool
 	AgeAppropriate bool
@@ -34,7 +36,12 @@ type TutorResult struct {
 	NextPath     []string // the topological learning path to Target
 	ContentTitle string   // a cited DIKSHA resource for the target (when a resolver is configured)
 	ContentURL   string
-	AuditSeq     uint64
+	// Token economics (L8 Token Engineering).
+	Tier            string // cached | standard | premium
+	CacheHit        bool   // served from the prompt/semantic cache (no model call)
+	TokensCharged   int    // tokens charged to the learner's equity budget (0 on a cache hit)
+	BudgetRemaining int
+	AuditSeq        uint64
 }
 
 // AskTutor runs the full bottom-to-top tutoring workflow, ascending the layers:
@@ -49,19 +56,45 @@ func (p *Platform) AskTutor(ctx context.Context, req TutorRequest) (TutorResult,
 		return res, nil
 	}
 
-	// L8 — guarded inference: PII is redacted, the prompt is adjudicated, the oracle baseline serves.
-	resp, err := p.Tutor.Generate(ctx, serving.Request{Prompt: req.Question, Minor: req.Minor, AgeAppropriate: req.AgeAppropriate})
-	if err != nil {
-		p.recordOutcome(false)
-		return res, err
+	user := req.UserID
+	if user == "" {
+		user = req.Tenant
 	}
-	if resp.Refused {
-		res.Stage, res.Refused, res.Reasons = "refused", true, resp.Reasons
-		p.appendAudit("learner", "ai.tutor.refused", req.Target, "deny", strings.Join(resp.Reasons, ","))
-		p.recordOutcome(true) // a correct refusal is a successful safety outcome
+
+	// L8 Token Engineering — consult the equity budget + prompt/semantic cache BEFORE any model call.
+	plan := p.Tokens.Plan(user, req.Question)
+	res.Tier, res.BudgetRemaining = string(plan.Tier), plan.Remaining
+	switch {
+	case plan.CacheHit:
+		// Served from cache (a prior gate-approved answer) — no model call, no budget charge. Only safe,
+		// previously-served prompts are ever cached, so a cache hit is safe by construction.
+		res.Answer, res.CacheHit = plan.Cached, true
+		p.Tokens.CommitCacheHit(tokens.Estimate(req.Question))
+	case !plan.Allowed:
+		// The learner's equity budget is exhausted — refuse fairly rather than starve other learners.
+		res.Stage, res.Reasons = "budget-exhausted", []string{"EQUITY-BUDGET"}
+		p.Tokens.CommitDenied()
+		p.appendAudit("learner", "ai.tutor.budget", user, "deny", "equity budget exhausted")
+		p.recordOutcome(true) // a fair equity refusal is a correct outcome
 		return res, nil
+	default:
+		// L8 — guarded inference: PII is redacted, the prompt is adjudicated, the oracle baseline serves.
+		resp, err := p.Tutor.Generate(ctx, serving.Request{Prompt: req.Question, Minor: req.Minor, AgeAppropriate: req.AgeAppropriate})
+		if err != nil {
+			p.recordOutcome(false)
+			return res, err
+		}
+		if resp.Refused {
+			res.Stage, res.Refused, res.Reasons = "refused", true, resp.Reasons
+			p.appendAudit("learner", "ai.tutor.refused", req.Target, "deny", strings.Join(resp.Reasons, ","))
+			p.recordOutcome(true) // a correct refusal is a successful safety outcome (never cached)
+			return res, nil
+		}
+		res.Answer = resp.Text
+		res.TokensCharged = plan.EstTokens
+		p.Tokens.CommitServed(user, req.Question, resp.Text, plan.EstTokens) // charge budget + cache
+		res.BudgetRemaining = p.Tokens.Remaining(user)
 	}
-	res.Answer = resp.Text
 
 	// L7 — knowledge graph: readiness + the topological learning path.
 	if req.Target != "" {

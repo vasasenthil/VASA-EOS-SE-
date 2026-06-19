@@ -29,6 +29,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/ratelimit"
 	"github.com/vasa-eos-se-tn/platform/serving"
 	"github.com/vasa-eos-se-tn/platform/slo"
+	"github.com/vasa-eos-se-tn/platform/tokens"
 )
 
 // Config configures the composition root.
@@ -38,6 +39,7 @@ type Config struct {
 	PerKeyRate  float64            // per-tenant requests/sec (token-bucket refill)
 	BurstSize   float64            // per-tenant burst (bucket capacity)
 	MaxInFlight int                // global admission ceiling (load shedding beyond this)
+	TokenBudget int                // per-user token equity budget per window (default 50000)
 }
 
 // Platform is the wired-together platform: one field per layer it composes.
@@ -61,7 +63,8 @@ type Platform struct {
 	Queue        *hitl.Queue
 	Orchestrator *orchestrator.Orchestrator
 	// L8 engines
-	Tutor *serving.Gateway
+	Tutor  *serving.Gateway
+	Tokens *tokens.Meter // token-economics: per-user equity budget + prompt/semantic cache + tier routing
 	// L6 platform services
 	I18n   *i18n.Catalogue
 	Notify *notify.Dispatcher
@@ -216,8 +219,14 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	p.Orchestrator = orch
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
-	// model swaps in at B-011 with no change here).
+	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a
+	// prompt/semantic cache in front of it.
 	p.Tutor = serving.New(serving.OracleBackend{}, serving.OracleBackend{}, gate)
+	budget := cfg.TokenBudget
+	if budget <= 0 {
+		budget = 50000
+	}
+	p.Tokens = tokens.New(budget)
 
 	return p, nil
 }

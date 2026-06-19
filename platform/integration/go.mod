@@ -34,6 +34,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
+	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
 )
 
@@ -96,3 +97,5 @@ replace github.com/vasa-eos-se-tn/platform/workflow => ../L6-platform-services/w
 replace github.com/vasa-eos-se-tn/platform/i18n => ../L6-platform-services/i18n
 
 replace github.com/vasa-eos-se-tn/platform/notify => ../L6-platform-services/notify
+
+replace github.com/vasa-eos-se-tn/platform/tokens => ../L8-engines/tokens

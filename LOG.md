@@ -290,3 +290,18 @@
   DIKSHA resource (title + URL) for the target — connecting L4 (adapter) → L7 (graph) → L8 (serving). Graceful
   degradation: an upstream failure or no-resolver just omits the citation; the tutor still serves. 3 tests.
 - Status page: **30 modules · 258 tests**. Green bar holds (OPA 33/33, tsc 0). Reference-impl untouched.
+
+## Token Engineering · the missing 4th discipline (per the native-AI-engineering diagram)
+- Honest self-assessment vs the four interlocking disciplines (Spec→Loop→Context→Token): Spec strong;
+  Loop+Context partial; **Token Engineering was the genuine gap**. Closed it.
+- Built `platform/L8-engines/tokens` — the economics layer: **per-user equity budget** (every user gets the
+  same guaranteed budget; a heavy user can't starve others), **prompt + semantic cache** (exact + normalised;
+  cache hits cost ~0), **tier routing** (Cached/Standard/Premium by cache-hit + remaining budget), and an
+  Indic-weighted token `Estimate`. Observable `Stats`. 6 tests.
+- Wired into `AskTutor` (the serving loop): consult the equity budget + cache BEFORE any model call — a cache
+  hit short-circuits the model for free; an exhausted budget refuses fairly (EQUITY-BUDGET, audited); a
+  low-budget learner routes to the cheaper Standard tier. TutorResult now carries Tier/CacheHit/TokensCharged/
+  BudgetRemaining. `platformd` exposes `GET /tokens` (meter stats). 3 integration tests.
+- Remaining discipline gaps (next): the **Loop** iterative controller (ReAct/Plan-Execute-Reflect/Critic/
+  Tool-Use-Verify) and **policy-bound hybrid retrieval** for Context; plus Spec's BPMN/Protobuf/model-cards.
+- Status page: **31 modules · 267 tests**. Green bar: 31 Go modules pass, OPA 33/33, tsc 0 errors.

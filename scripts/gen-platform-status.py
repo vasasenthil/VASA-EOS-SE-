@@ -42,6 +42,7 @@ DESC = {
     "evaluation": "PSI drift + disparate-impact / four-fifths bias",
     "guardrails": "PII redaction · injection detection · safety gate",
     "serving": "Inference gateway: backend seam + oracle + guardrails",
+    "tokens": "Token economics: per-user equity budget · prompt/semantic cache · tier routing",
     "agents": "The 6 native-AI agents composing the engines",
     "agentregistry": "6 agent specs + MCP tool catalogue (risk + scope)",
     "hitl": "Role-gated human-in-the-loop tool-approval queue",

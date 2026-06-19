@@ -81,6 +81,9 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Notifications(to), nil)
 	}))
+	mux.HandleFunc("/tokens", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.Tokens.Stats(), nil)
+	}))
 	mux.HandleFunc("/metrics", s.metrics)
 	return mux
 }
