@@ -154,6 +154,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "Scheme Fund-Flow Ledger (full CRUD: allocated→released→utilised local books; reconciled against PFMS for fund-flow drift / leakage detection)", repoRef: "lib/fundledger/store.ts", status: "built" },
   { tier: "School", name: "Verifiable Credentials / Soulbound Tokens (full lifecycle: mint → content-hash → audit-ledger anchor → verify → revoke; tamper-evident, APAAR-soulbound, portable)", repoRef: "lib/credentials/store.ts", status: "built" },
   { tier: "Platform", name: "Tool-Augmented Retrieval (RAG + MCP-style tool registry: curriculum-grounded, cited, validated tool invocation under human authority)", repoRef: "lib/mcp/index.ts", status: "built" },
+  { tier: "School", name: "Education DAO — SMC governance (RTE 75%-parent composition, attributable one-member-one-vote ballots, distinct-voter quorum, reproducible decision fingerprint, audit-anchored)", repoRef: "lib/smc/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
