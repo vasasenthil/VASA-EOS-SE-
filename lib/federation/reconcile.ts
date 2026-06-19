@@ -8,8 +8,9 @@
 // It is advisory only: a human reconciler decides (HITL). The engine never mutates anything; it just
 // makes the discrepancy visible and reasoned, the way the AI engines do. Deterministic + client-safe.
 
-import type { ApaarRecord } from "@/lib/integrations/types"
+import type { ApaarRecord, EmisSchoolData } from "@/lib/integrations/types"
 import type { StudentRecord } from "@/lib/students"
+import type { EnrolmentRecord } from "@/lib/enrolment/store"
 
 export type FieldState = "match" | "drift" | "missing-upstream" | "missing-local"
 
@@ -113,4 +114,97 @@ export function compareApaarToStudent(upstream: ApaarRecord, local: StudentRecor
     critical: r.critical,
   }))
   return buildReport(fields)
+}
+
+// ── Numeric reconciliation (counts) — tolerance-aware, for EMIS/UDISE+ master-data ──────────────
+//
+// String equality is wrong for counts: a state EMIS snapshot lags the school roll by a few records,
+// so a small percentage delta is "within tolerance", not a discrepancy. This comparator grades a
+// numeric field as match / minor-drift / drift (or missing on either side) against a tolerance.
+
+export type NumericState = "match" | "minor-drift" | "drift" | "missing-upstream" | "missing-local"
+
+export interface NumericComparison {
+  field: string
+  label: string
+  /** null = the side keeps no master for this field (→ missing). */
+  upstream: number | null
+  local: number | null
+  /** local − upstream (0 when a side is missing). */
+  delta: number
+  /** |delta| / upstream as a whole-number percentage (0 when upstream is missing/zero). */
+  pctDelta: number
+  state: NumericState
+  critical: boolean
+}
+
+export interface NumericReport {
+  recommendation: ReconcileRecommendation
+  rationale: string
+  fields: NumericComparison[]
+  comparable: number
+  matches: number
+  driftCount: number
+  criticalDriftCount: number
+  /** Tolerance (%) below which a non-zero delta is graded a minor-drift, not a drift. */
+  tolerancePct: number
+}
+
+/** Default sync tolerance: deltas at or under this percentage are "minor", not a real discrepancy. */
+export const DEFAULT_TOLERANCE_PCT = 2
+
+export function classifyNumeric(upstream: number | null, local: number | null, tolerancePct = DEFAULT_TOLERANCE_PCT): NumericState {
+  if (upstream === null && local === null) return "match"
+  if (upstream === null) return "missing-upstream"
+  if (local === null) return "missing-local"
+  const delta = Math.abs(local - upstream)
+  if (delta === 0) return "match"
+  const pct = upstream === 0 ? 100 : (delta / upstream) * 100
+  return pct <= tolerancePct ? "minor-drift" : "drift"
+}
+
+function numericField(field: string, label: string, upstream: number | null, local: number | null, critical: boolean, tolerancePct: number): NumericComparison {
+  const state = classifyNumeric(upstream, local, tolerancePct)
+  const both = upstream !== null && local !== null
+  const delta = both ? local - upstream : 0
+  const pctDelta = both && upstream !== 0 ? Math.round((Math.abs(delta) / upstream) * 100) : both && upstream === 0 ? 100 : 0
+  return { field, label, upstream, local, delta, pctDelta, state, critical }
+}
+
+/** Build a numeric report (recommendation + totals). A "drift" (beyond tolerance) is a real discrepancy; a "minor-drift" is within tolerance and counts as agreement. Pure. */
+export function buildNumericReport(fields: NumericComparison[], tolerancePct = DEFAULT_TOLERANCE_PCT): NumericReport {
+  const comparable = fields.filter((f) => f.upstream !== null || f.local !== null).length
+  const agree = fields.filter((f) => (f.state === "match" || f.state === "minor-drift") && (f.upstream !== null || f.local !== null))
+  const matches = agree.length
+  const drifts = fields.filter((f) => f.state === "drift" || f.state === "missing-upstream" || f.state === "missing-local")
+  const realDrifts = fields.filter((f) => f.state === "drift")
+  const criticalDriftCount = realDrifts.filter((f) => f.critical).length
+
+  let recommendation: ReconcileRecommendation
+  let rationale: string
+  if (criticalDriftCount > 0) {
+    recommendation = "Flagged"
+    rationale = `Count drift beyond ${tolerancePct}% tolerance on ${realDrifts.filter((f) => f.critical).map((f) => f.label).join(", ")} — investigate the local roll against the state master.`
+  } else if (realDrifts.length > 0) {
+    recommendation = "Review"
+    rationale = `${realDrifts.length} count(s) differ beyond tolerance (${realDrifts.map((f) => f.label).join(", ")}); reconcile with the state master.`
+  } else {
+    recommendation = "Reconciled"
+    rationale = comparable === 0 ? "No overlapping counts to compare." : `Local counts agree with the state master within the ${tolerancePct}% sync tolerance.`
+  }
+  return { recommendation, rationale, fields, comparable, matches, driftCount: drifts.length, criticalDriftCount, tolerancePct }
+}
+
+/**
+ * Reconcile the state EMIS master-data snapshot (counts) against the local school roll. Only the
+ * on-roll student count has a local master (the enrolment snapshot); teachers/classrooms are shown
+ * as upstream-only context (missing-local), honestly, rather than inventing a local figure.
+ */
+export function compareEmisToEnrolment(emis: EmisSchoolData, local: EnrolmentRecord | null, tolerancePct = DEFAULT_TOLERANCE_PCT): NumericReport {
+  const fields: NumericComparison[] = [
+    numericField("students", "Students on roll", emis.students, local ? local.total : null, true, tolerancePct),
+    numericField("teachers", "Teachers", emis.teachers, null, false, tolerancePct),
+    numericField("classrooms", "Classrooms", emis.classrooms, null, false, tolerancePct),
+  ]
+  return buildNumericReport(fields, tolerancePct)
 }

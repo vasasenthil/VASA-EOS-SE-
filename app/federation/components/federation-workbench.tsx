@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Network, Search, FilePlus2, GitCompareArrows } from "lucide-react"
 import { FEDERATION_SOURCES, federationSource, type FederationResult } from "@/lib/federation"
-import type { ReconcileReport, FieldState, ReconcileRecommendation } from "@/lib/federation/reconcile"
-import { lookupAction, logLookupAction, reconcileApaarAction } from "../actions"
+import type { ReconcileReport, NumericReport, FieldState, NumericState, ReconcileRecommendation } from "@/lib/federation/reconcile"
+import { lookupAction, logLookupAction, reconcileApaarAction, reconcileEmisAction } from "../actions"
 
 const REC_STYLE: Record<ReconcileRecommendation, string> = {
   Reconciled: "bg-green-100 text-green-700",
@@ -28,6 +28,20 @@ const STATE_LABEL: Record<FieldState, string> = {
   "missing-upstream": "missing upstream",
   "missing-local": "missing locally",
 }
+const NUM_STATE_STYLE: Record<NumericState, string> = {
+  match: "text-green-700",
+  "minor-drift": "text-green-700",
+  drift: "text-red-700 font-medium",
+  "missing-upstream": "text-amber-700",
+  "missing-local": "text-amber-700",
+}
+const NUM_STATE_LABEL: Record<NumericState, string> = {
+  match: "match",
+  "minor-drift": "within tolerance",
+  drift: "drift",
+  "missing-upstream": "missing upstream",
+  "missing-local": "no local master",
+}
 
 export function FederationWorkbench() {
   const router = useRouter()
@@ -35,20 +49,30 @@ export function FederationWorkbench() {
   const [key, setKey] = useState("")
   const [result, setResult] = useState<FederationResult | null>(null)
   const [report, setReport] = useState<ReconcileReport | null>(null)
+  const [numReport, setNumReport] = useState<NumericReport | null>(null)
   const [reconcileMsg, setReconcileMsg] = useState<string | null>(null)
   const [pending, start] = useTransition()
   const src = federationSource(source)
 
+  function clearReports() { setReport(null); setNumReport(null); setReconcileMsg(null) }
   function run() {
     if (!key.trim()) return
-    setReport(null); setReconcileMsg(null)
+    clearReports()
     start(async () => setResult(await lookupAction(source, key)))
   }
   function detectDrift() {
-    setReport(null); setReconcileMsg(null)
+    clearReports()
     start(async () => {
       const res = await reconcileApaarAction(key)
       if (res.ok) setReport(res.report)
+      else setReconcileMsg(res.reason)
+    })
+  }
+  function reconcileEnrolment() {
+    clearReports()
+    start(async () => {
+      const res = await reconcileEmisAction(key)
+      if (res.ok) setNumReport(res.report)
       else setReconcileMsg(res.reason)
     })
   }
@@ -68,7 +92,7 @@ export function FederationWorkbench() {
       <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Network className="h-4 w-4 text-indigo-600" />Federation workbench — query a system of record</CardTitle></CardHeader>
       <CardContent className="space-y-3">
         <div className="grid gap-2 sm:grid-cols-12">
-          <select value={source} onChange={(e) => { setSource(e.target.value); setResult(null); setReport(null); setReconcileMsg(null) }} className="sm:col-span-4 h-9 rounded-md border bg-background px-3 text-sm">
+          <select value={source} onChange={(e) => { setSource(e.target.value); setResult(null); clearReports() }} className="sm:col-span-4 h-9 rounded-md border bg-background px-3 text-sm">
             {FEDERATION_SOURCES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
           </select>
           <Input className="sm:col-span-6" value={key} onChange={(e) => setKey(e.target.value)} placeholder={src?.placeholder} onKeyDown={(e) => { if (e.key === "Enter") run() }} />
@@ -91,6 +115,7 @@ export function FederationWorkbench() {
             {result.ok ? (
               <div className="flex flex-wrap gap-2">
                 {source === "apaar" ? <Button variant="outline" size="sm" onClick={detectDrift} disabled={pending}><GitCompareArrows className="mr-1 h-4 w-4" />Detect drift vs local record</Button> : null}
+                {source === "udise" ? <Button variant="outline" size="sm" onClick={reconcileEnrolment} disabled={pending}><GitCompareArrows className="mr-1 h-4 w-4" />Reconcile enrolment vs state EMIS</Button> : null}
                 <Button variant="outline" size="sm" onClick={logForReconcile} disabled={pending}><FilePlus2 className="mr-1 h-4 w-4" />Log for reconciliation</Button>
               </div>
             ) : null}
@@ -123,6 +148,34 @@ export function FederationWorkbench() {
               </table>
             </div>
             <p className="text-[11px] text-muted-foreground">Advisory only — a human reconciler decides. Log it to record the decision in the HITL reconciliation trail.</p>
+          </div>
+        ) : null}
+
+        {numReport && !pending ? (
+          <div className="rounded-md border border-indigo-200 bg-indigo-50/40 p-3 space-y-2 dark:bg-indigo-950/20">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold">Enrolment reconciliation</span>
+              <Badge className={`${REC_STYLE[numReport.recommendation]} border-0`}>{numReport.recommendation}</Badge>
+              <span className="text-xs text-muted-foreground">{numReport.tolerancePct}% sync tolerance · {numReport.comparable} count(s) compared</span>
+            </div>
+            <p className="text-xs text-muted-foreground">{numReport.rationale}</p>
+            <div className="overflow-hidden rounded-md border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/60 text-xs"><tr><th className="px-2 py-1 text-left">Count</th><th className="px-2 py-1 text-right">State EMIS</th><th className="px-2 py-1 text-right">Local roll</th><th className="px-2 py-1 text-right">Δ</th><th className="px-2 py-1 text-left">State</th></tr></thead>
+                <tbody>
+                  {numReport.fields.map((f) => (
+                    <tr key={f.field} className="border-t">
+                      <td className="px-2 py-1">{f.label}{f.critical ? <span className="ml-1 text-[10px] text-muted-foreground">(critical)</span> : null}</td>
+                      <td className="px-2 py-1 text-right">{f.upstream ?? <span className="text-muted-foreground">—</span>}</td>
+                      <td className="px-2 py-1 text-right">{f.local ?? <span className="text-muted-foreground">—</span>}</td>
+                      <td className="px-2 py-1 text-right">{f.upstream !== null && f.local !== null ? `${f.delta > 0 ? "+" : ""}${f.delta}${f.pctDelta ? ` (${f.pctDelta}%)` : ""}` : "—"}</td>
+                      <td className={`px-2 py-1 ${NUM_STATE_STYLE[f.state]}`}>{NUM_STATE_LABEL[f.state]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Counts within the sync tolerance are treated as agreement; only deltas beyond it are flagged. Advisory only — a human decides.</p>
           </div>
         ) : null}
       </CardContent>

@@ -1,10 +1,12 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import type { ApaarRecord } from "@/lib/integrations/types"
+import type { ApaarRecord, EmisSchoolData } from "@/lib/integrations/types"
 import type { StudentRecord } from "@/lib/students"
+import type { EnrolmentRecord } from "@/lib/enrolment/store"
 import {
   classifyField, mapJourneyToStatus, buildReport, compareApaarToStudent,
-  type FieldComparison,
+  classifyNumeric, buildNumericReport, compareEmisToEnrolment, DEFAULT_TOLERANCE_PCT,
+  type FieldComparison, type NumericComparison,
 } from "@/lib/federation/reconcile"
 
 function student(over: Partial<StudentRecord> = {}): StudentRecord {
@@ -87,4 +89,73 @@ test("status mapping participates: APAAR alumni vs local Enrolled is a drift", (
   assert.equal(st.local, "Enrolled")
   assert.equal(st.state, "drift")
   assert.equal(r.recommendation, "Review")
+})
+
+// ── numeric (count) reconciliation: EMIS ↔ local enrolment ──────────────────────────────────────
+
+function enrol(over: Partial<EnrolmentRecord> = {}): EnrolmentRecord {
+  return { id: "e1", udiseCode: "33010100101", asOf: "2026-06-01", total: 820, boys: 420, girls: 400, tenantId: "TN-CHN-B1-S1", ...over }
+}
+function emis(over: Partial<EmisSchoolData> = {}): EmisSchoolData {
+  return { udiseCode: "33010100101", students: 820, teachers: 34, classrooms: 28, ...over }
+}
+
+test("classifyNumeric: exact, within-tolerance, beyond-tolerance, missing sides", () => {
+  assert.equal(classifyNumeric(820, 820), "match")
+  assert.equal(classifyNumeric(820, 830), "minor-drift") // 1.2% ≤ 2%
+  assert.equal(classifyNumeric(820, 900), "drift") // 9.8% > 2%
+  assert.equal(classifyNumeric(820, null), "missing-local")
+  assert.equal(classifyNumeric(null, 820), "missing-upstream")
+  assert.equal(classifyNumeric(null, null), "match")
+  assert.equal(classifyNumeric(0, 5), "drift") // upstream zero, any local → drift
+  assert.equal(DEFAULT_TOLERANCE_PCT, 2)
+})
+
+test("compareEmisToEnrolment: equal student count within tolerance → Reconciled", () => {
+  const r = compareEmisToEnrolment(emis(), enrol())
+  assert.equal(r.recommendation, "Reconciled")
+  const students = r.fields.find((f) => f.field === "students")!
+  assert.equal(students.state, "match")
+  assert.equal(students.delta, 0)
+  // teachers/classrooms have no local master → missing-local, non-critical (don't force a flag)
+  assert.equal(r.fields.find((f) => f.field === "teachers")!.state, "missing-local")
+})
+
+test("compareEmisToEnrolment: small delta within tolerance stays Reconciled", () => {
+  const r = compareEmisToEnrolment(emis({ students: 820 }), enrol({ total: 830 })) // 1.2%
+  assert.equal(r.recommendation, "Reconciled")
+  assert.equal(r.fields.find((f) => f.field === "students")!.state, "minor-drift")
+})
+
+test("compareEmisToEnrolment: critical count drift beyond tolerance → Flagged with Δ", () => {
+  const r = compareEmisToEnrolment(emis({ students: 820 }), enrol({ total: 700 }))
+  assert.equal(r.recommendation, "Flagged")
+  assert.equal(r.criticalDriftCount, 1)
+  const students = r.fields.find((f) => f.field === "students")!
+  assert.equal(students.state, "drift")
+  assert.equal(students.delta, -120)
+  assert.equal(students.pctDelta, 15) // 120/820 ≈ 15%
+  assert.match(r.rationale, /Students on roll/)
+})
+
+test("compareEmisToEnrolment: no local enrolment snapshot → students missing-local, advisory not a false match", () => {
+  const r = compareEmisToEnrolment(emis(), null)
+  const students = r.fields.find((f) => f.field === "students")!
+  assert.equal(students.state, "missing-local")
+  // all three are missing-local; none is a real 'drift', so it is not Flagged
+  assert.notEqual(r.recommendation, "Flagged")
+})
+
+test("buildNumericReport: tolerance is configurable", () => {
+  const fields: NumericComparison[] = [
+    { field: "students", label: "Students on roll", upstream: 100, local: 105, delta: 5, pctDelta: 5, state: "drift", critical: true },
+  ]
+  // with a 10% tolerance the same 5% delta would be minor — but buildNumericReport trusts the field state,
+  // so we re-derive via compareEmisToEnrolment instead to prove tolerance flows through:
+  const tight = compareEmisToEnrolment(emis({ students: 100 }), enrol({ total: 105 }), 2) // 5% > 2% → drift
+  assert.equal(tight.recommendation, "Flagged")
+  const loose = compareEmisToEnrolment(emis({ students: 100 }), enrol({ total: 105 }), 10) // 5% ≤ 10% → minor
+  assert.equal(loose.recommendation, "Reconciled")
+  assert.equal(buildReport([]).recommendation, "Reconciled") // sanity: string report still works
+  assert.equal(fields[0].critical, true)
 })

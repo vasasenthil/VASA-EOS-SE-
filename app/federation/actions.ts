@@ -5,8 +5,9 @@ import { listLogs, getLog, createLog, updateLog, deleteLog, seedLogs } from "@/l
 import { queryLogs, validateLog, federationSource, type FederationLog, type LogInput, type FederationResult, type LogFilters, type LogPage } from "@/lib/federation"
 import { integrations } from "@/lib/integrations"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
-import { compareApaarToStudent, type ReconcileReport } from "@/lib/federation/reconcile"
+import { compareApaarToStudent, compareEmisToEnrolment, type ReconcileReport, type NumericReport } from "@/lib/federation/reconcile"
 import { listStudents } from "@/lib/students/store"
+import { latestEnrolment } from "@/lib/enrolment/store"
 import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
@@ -89,6 +90,29 @@ export async function reconcileApaarAction(apaarId: string): Promise<
     return { ok: true, report: compareApaarToStudent(r.data, local), localName: local.name, mode: r.mode }
   } catch (e) {
     logger.error("federation.reconcileApaar failed", { error: String(e) })
+    return { ok: false, reason: "The federation gateway is unavailable." }
+  }
+}
+
+/**
+ * Drift detection (L4, AI-native, advisory): pull the state EMIS master-data counts for a school
+ * (by UDISE code) and reconcile them against the local enrolment snapshot (on-roll students),
+ * tolerance-aware. Returns an explainable recommendation for a human — never mutates.
+ */
+export async function reconcileEmisAction(udiseCode: string): Promise<
+  | { ok: true; report: NumericReport; mode: string; asOf: string | null }
+  | { ok: false; reason: string }
+> {
+  noStore()
+  const code = udiseCode.trim()
+  if (!code) return { ok: false, reason: "Enter a UDISE code to reconcile." }
+  try {
+    const r = await integrations.emis.getSchoolData(code)
+    if (!r.ok || !r.data) return { ok: false, reason: r.error ?? "No EMIS master-data snapshot for this UDISE code." }
+    const local = (await latestEnrolment(code)) ?? null
+    return { ok: true, report: compareEmisToEnrolment(r.data, local), mode: r.mode, asOf: local ? local.asOf : null }
+  } catch (e) {
+    logger.error("federation.reconcileEmis failed", { error: String(e) })
     return { ok: false, reason: "The federation gateway is unavailable." }
   }
 }
