@@ -147,8 +147,8 @@ export const ARCHITECTURE_LAYERS: ArchitectureLayer[] = [
     status: "built",
     note:
       "Six tested engines compute explainable, side-effect-free recommendations under human authority. They never act on their own — their output feeds the agent layer and human reviewers above.",
-    components: ["Reasoning", "Personalisation", "Assessment", "Policy", "Analytics", "Conversational"],
-    repoRefs: ["lib/ai/engines/index.ts"],
+    components: ["Reasoning", "Personalisation", "Assessment", "Policy", "Analytics", "Conversational (grounded RAG)", "MCP-style tool registry"],
+    repoRefs: ["lib/ai/engines/index.ts", "lib/mcp/index.ts"],
     pendingAspects: [],
   },
   {
