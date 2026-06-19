@@ -119,3 +119,20 @@
   gateway once the GPU fleet exists (B-011); durable queue persistence lands in the Citus `agent_tool_requests`
   table on the cluster (B-013). Reference-impl untouched; green bar holds (15 Go modules pass, OPA 28/28,
   tsc 0 errors).
+
+## Phase 6 · Knowledge, Notary & Verifiable Credentials (L7), authorable deliverables (§7.2, §16, §20)
+- Built + tested the L7 **verifiability spine** (Go, stdlib-only):
+  - `platform/L7-knowledge/graph` — curriculum knowledge graph (PORT): transitive prerequisites, deterministic
+    topological learning path, readiness check; rejects unlearnable prerequisite cycles + unknown edges at
+    construction. Neo4j is the production store (B-013). (ADR-0013)
+  - `platform/L7-knowledge/notary` — Merkle-anchoring hash-chain ledger (the Besu seam, §7.2): each block
+    commits to a Merkle root + the prev block hash; anchored roots get inclusion proofs a verifier checks
+    against the root without trusting the ledger; `Verify` detects tamper/broken-link; forged proofs fail. (ADR-0013)
+  - `platform/L7-knowledge/credentials` — ed25519 verifiable credentials anchored via the notary; end-to-end
+    `Verify` confirms issuer signature + that the proof leaf is exactly the credential hash (binds proof to
+    credential) + inclusion. Catches tampered claims, wrong issuer key, and substituted/unanchored creds.
+    Composes notary via monorepo `replace`. (ADR-0013)
+- ADR-0013; PHASE-6-PLAN; L7 README + LOG updated to honest Phase-6 status.
+- **Build stops at the Phase-6 review gate**: live anchoring needs the Besu validator network (B-020); the
+  graph persists in Neo4j + Milvus RAG (B-013); credentials push to DigiLocker (B-022). Reference-impl
+  untouched; green bar holds (18 Go modules pass, OPA 28/28, tsc 0 errors).
