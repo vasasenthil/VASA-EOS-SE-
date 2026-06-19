@@ -25,6 +25,15 @@ cannot create:
 
 That is the entire flip from "demo" to "live by default". Everything below is the fuller runbook.
 
+### Run it live locally with no Docker and no cloud (dev verification)
+`scripts/dev-supabase-shim.mjs` lets you run the **unmodified app against a real local Postgres**
+without Docker or a Supabase account — it serves the PostgREST subset `@supabase/supabase-js` uses, via
+`psql`. Verified end-to-end: a row inserted directly in Postgres renders in the running app (and the
+in-memory seed does not). Steps: (1) start a local PG16 and run `scripts/bootstrap.sql` against it;
+(2) `node scripts/dev-supabase-shim.mjs` (listens on `127.0.0.1:55321`); (3) start the app with
+`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321 SUPABASE_SERVICE_ROLE_KEY=dev NEXT_PUBLIC_SUPABASE_ANON_KEY=dev`
+and `NEXT_PUBLIC_DEMO_MODE` unset. This is a **dev/verification** tool — production uses a real Supabase/Postgres.
+
 ## What's in the repo (buildable, here now)
 - **`Dockerfile`** — multi-stage, non-root, Next.js **standalone** output (`next.config.mjs` `output: "standalone"`).
 - **`docker-compose.yml`** — app + Postgres for local/on-prem durable runs.
