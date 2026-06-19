@@ -2,12 +2,27 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { LOCALES } from "@/lib/i18n"
 import { resources } from "@/lib/i18n/resources"
-import { CORE_KEYS, translate, localeCoverage, coverageReport } from "@/lib/i18n/translate"
+import { CORE_KEYS, MESSAGE_KEYS, translate, t, localeCoverage, coverageReport, type MessageKey } from "@/lib/i18n/translate"
 
 test("every advertised locale has a resource catalogue (no empty locale in the switcher)", () => {
   for (const l of LOCALES) {
     assert.ok(resources[l.code], `locale ${l.code} is advertised but has no catalogue`)
     assert.ok(Object.keys(resources[l.code].translation).length >= 1, `locale ${l.code} catalogue is empty`)
+  }
+})
+
+test("type-safe code-first integrity: keys are the English reference, no orphan keys, no duplicates", () => {
+  // CORE_KEYS === MESSAGE_KEYS, and they exactly mirror the English reference catalogue.
+  assert.deepEqual([...CORE_KEYS], [...MESSAGE_KEYS])
+  assert.deepEqual([...MESSAGE_KEYS].sort(), Object.keys(resources.en.translation).sort())
+  // no duplicate keys in the committed set
+  assert.equal(new Set(MESSAGE_KEYS).size, MESSAGE_KEYS.length)
+  // runtime mirror of the compile-time guarantee: no locale carries an orphan key (one ∉ MESSAGE_KEYS)
+  const allowed = new Set<string>(MESSAGE_KEYS)
+  for (const l of LOCALES) {
+    for (const k of Object.keys(resources[l.code].translation)) {
+      assert.ok(allowed.has(k), `locale ${l.code} has orphan key '${k}' not in MESSAGE_KEYS`)
+    }
   }
 })
 
@@ -34,11 +49,19 @@ test("translate: native string when present, English fallback otherwise, key as 
   assert.equal(translate("ur", "welcome"), "خوش آمدید")
   // a key only English has → te falls back to English, not the raw key
   assert.equal(translate("te", "signOut"), "Sign out")
-  assert.equal(translate("ta", "nonexistent.key"), "nonexistent.key")
+  // an unknown key (cast past the type guard) returns the key itself — the runtime last resort
+  assert.equal(translate("ta", "nonexistent.key" as MessageKey), "nonexistent.key")
+})
+
+test("t(): code-first translator defaults to the Tamil-first locale, overridable", () => {
+  assert.equal(t("nav.fees"), "கட்டணம்") // default locale = ta
+  assert.equal(t("nav.fees", "en"), "Fees")
+  assert.equal(t("welcome", "hi"), "स्वागत है")
 })
 
 test("the demo keys the multilingual page renders stay localised in Tamil", () => {
-  for (const k of ["language", "welcome", "demo.heading", "nav.dashboard", "nav.attendance", "nav.fees", "nav.schemes"]) {
+  const keys: MessageKey[] = ["language", "welcome", "demo.heading", "nav.dashboard", "nav.attendance", "nav.fees", "nav.schemes"]
+  for (const k of keys) {
     assert.notEqual(translate("ta", k), k, `Tamil missing demo key ${k}`)
     assert.notEqual(translate("ta", k), translate("en", k), `Tamil ${k} should differ from English`)
   }

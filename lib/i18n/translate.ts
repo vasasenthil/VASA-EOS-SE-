@@ -6,23 +6,34 @@
 // every other locale is scored against it. This keeps the "22-language" commitment honest — a locale
 // in the switcher is reported at its true percentage, never assumed complete.
 
-import { resources, I18N_STORAGE_KEY } from "./resources"
+import { resources, MESSAGE_KEYS, I18N_STORAGE_KEY, type MessageKey } from "./resources"
 import { LOCALES, DEFAULT_LOCALE, type Locale } from "./index"
 
-export { I18N_STORAGE_KEY }
+export { I18N_STORAGE_KEY, MESSAGE_KEYS }
+export type { MessageKey }
 
-/** The committed UI string set — exactly the keys of the English reference catalogue. */
-export const CORE_KEYS: string[] = Object.keys(resources.en.translation)
+/** The committed UI string set — exactly the keys of the English reference catalogue (typed). */
+export const CORE_KEYS: readonly MessageKey[] = MESSAGE_KEYS
 
 /**
- * Translate a key for a locale, falling back to English, then to the key itself. Pure — the same
- * lookup react-i18next performs (flat dotted keys), usable on the server.
+ * Translate a typed key for a locale, falling back to English, then to the key itself. Pure — the
+ * same lookup react-i18next performs (flat dotted keys), usable on the server. The `key: MessageKey`
+ * parameter makes a typo a COMPILE error, not a silent English fallback at runtime.
  */
-export function translate(locale: Locale, key: string): string {
+export function translate(locale: Locale, key: MessageKey): string {
   const cat = resources[locale]?.translation
-  if (cat && key in cat) return cat[key]
-  const en = resources.en.translation
-  return key in en ? en[key] : key
+  const hit = cat?.[key]
+  if (hit !== undefined) return hit
+  return resources.en.translation[key] ?? key
+}
+
+/**
+ * Code-first ergonomic translator: key first (type-checked, autocompleted), locale optional
+ * (defaults to the Tamil-first DEFAULT_LOCALE). `t("nav.dashboard")` is typo-proof; `t("nav.foo")`
+ * does not compile.
+ */
+export function t(key: MessageKey, locale: Locale = DEFAULT_LOCALE): string {
+  return translate(locale, key)
 }
 
 export interface LocaleCoverage {

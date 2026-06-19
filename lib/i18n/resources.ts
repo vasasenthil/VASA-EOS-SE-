@@ -10,9 +10,29 @@
 
 import type { Locale } from "./index"
 
-type Catalogue = { translation: Record<string, string> }
+// ── Type-safe code-first keys ──────────────────────────────────────────────────────────────────
+// MESSAGE_KEYS is the committed UI string set; MessageKey is its literal union. English is typed as
+// COMPLETE (Record<MessageKey,string>) so a missing key is a COMPILE error; every other locale is
+// Partial<Record<MessageKey,string>> so a typo or orphan key (one not in MESSAGE_KEYS) is rejected by
+// the compiler, while honestly-missing keys are allowed and reported by lib/i18n/translate.ts.
+export const MESSAGE_KEYS = [
+  "app.title", "app.tagline",
+  "nav.dashboard", "nav.attendance", "nav.fees", "nav.schemes", "nav.students", "nav.staff",
+  "nav.timetable", "nav.governance", "nav.accessibility", "nav.federation",
+  "action.save", "action.cancel", "action.search", "action.edit", "action.delete", "action.view",
+  "action.new", "action.back", "action.export",
+  "welcome", "language", "status", "loading", "noData", "signIn", "signOut",
+  "demo.heading",
+] as const
 
-export const resources: Record<Locale, Catalogue> = {
+export type MessageKey = (typeof MESSAGE_KEYS)[number]
+
+/** A locale catalogue may localise any subset of the committed keys; missing keys fall back to English. */
+type Catalogue = { translation: Partial<Record<MessageKey, string>> }
+/** The English reference MUST localise every committed key (enforced at compile time). */
+type ReferenceCatalogue = { translation: Record<MessageKey, string> }
+
+export const resources: Record<Locale, Catalogue> & { en: ReferenceCatalogue } = {
   // ── English — the reference key set (every other locale is measured against these keys) ──
   en: {
     translation: {
