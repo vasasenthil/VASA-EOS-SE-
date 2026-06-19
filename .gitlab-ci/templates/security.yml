@@ -1,0 +1,6 @@
+# CC-SPEC-001 §22 §17 — security stage (SAST · deps · secrets · image scan · no-demo-mode guard)
+.sec-sast:   { stage: security, script: ["semgrep --config auto --error"] }
+.sec-secrets:{ stage: security, script: ["gitleaks detect --no-banner"] }
+.sec-image:  { stage: security, script: ["trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE", "grype $IMAGE --fail-on high"] }
+# ADR-0005 enforcement: production surfaces must not ship demo mode / in-memory store / auth bypass.
+.sec-no-demo:{ stage: security, script: ["! grep -rIl --exclude-dir=node_modules -e 'NEXT_PUBLIC_DEMO_MODE' -e 'demo_role' surfaces/ platform/ || (echo 'demo-mode symbol in production surface'; exit 1)"] }

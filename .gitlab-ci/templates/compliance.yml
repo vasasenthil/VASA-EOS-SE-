@@ -1,0 +1,5 @@
+# CC-SPEC-001 §22 §3 §20 — compliance stage (OPA policy tests · Conftest · module declaration linter)
+.cmp-opa:    { stage: compliance, script: ["opa fmt --list policies/", "opa test policies/ -v"] }
+.cmp-conftest:{ stage: compliance, script: ["conftest verify -p policies/"] }
+# Every modules/*/module.yaml must declare ≥1 compliance clause (or 'none' w/ sign-off).
+.cmp-modules:{ stage: compliance, script: ["python tools/lint_modules.py --require-compliance"] }
