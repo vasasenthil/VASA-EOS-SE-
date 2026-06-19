@@ -8,8 +8,28 @@ import (
 	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/credentials"
 	"github.com/vasa-eos-se-tn/platform/dataplane"
+	"github.com/vasa-eos-se-tn/platform/notify"
 	"github.com/vasa-eos-se-tn/platform/pep"
 )
+
+// notifyAdmission dispatches a localised inbox notification for an admission outcome (L6 notify + i18n).
+// Idempotent per (stage, applicant) so a retried workflow does not double-notify.
+func (p *Platform) notifyAdmission(ctx context.Context, req AdmissionRequest, stage string) {
+	key := map[string]string{
+		"admitted":         "admission.admitted",
+		"pending-approval": "admission.review",
+		"denied":           "admission.denied",
+		"residency":        "admission.residency",
+	}[stage]
+	if key == "" {
+		return
+	}
+	_, _, _ = p.Notify.Dispatch(ctx, notify.Request{
+		To: "role:" + req.ActorRole, Channel: notify.Inbox, Key: key, Locale: p.Locale,
+		Vars:    map[string]string{"id": req.ApplicantID, "category": req.Category},
+		IdemKey: stage + ":" + req.ApplicantID,
+	})
+}
 
 // AdmissionRequest is an RTE admission application entering at the surface.
 type AdmissionRequest struct {
@@ -68,6 +88,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 	if !place.Allowed {
 		res.Stage, res.Reasons = "residency", place.Reasons
 		p.appendAudit("role:"+req.ActorRole, "data.residency.deny", req.ApplicantID, "deny", strings.Join(place.Reasons, ","))
+		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true) // correctly refused — a policy outcome, not an availability fault
 		return res, nil
 	}
@@ -99,6 +120,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 	switch dec.Effect {
 	case pep.Deny:
 		res.Stage, res.Allowed = "denied", false
+		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil
 
@@ -113,6 +135,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 			return res, err
 		}
 		res.Stage, res.RequestID, res.Allowed = "pending-approval", r.ID, false
+		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil
 
@@ -126,6 +149,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 			}
 			res.Credential = &ac
 		}
+		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil
 	}

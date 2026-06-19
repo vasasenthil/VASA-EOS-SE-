@@ -81,6 +81,21 @@ func TestPostRequiresPost(t *testing.T) {
 	}
 }
 
+func TestNotificationsEndpoint(t *testing.T) {
+	h := handler(t)
+	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/admission", strings.NewReader(`{"actorRole":"HEAD_TEACHER","decision":"admit","applicantId":"N1","applicantName":"A","applicantAge":7,"category":"GEN","region":"TN-SDC"}`)))
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest("GET", "/notifications?to=role:HEAD_TEACHER", nil))
+	if rr.Code != 200 {
+		t.Fatalf("notifications code %d", rr.Code)
+	}
+	var ns []map[string]any
+	json.Unmarshal(rr.Body.Bytes(), &ns)
+	if len(ns) != 1 {
+		t.Fatalf("expected 1 notification after an admit, got %d: %s", len(ns), rr.Body.String())
+	}
+}
+
 func TestMetricsReflectActivity(t *testing.T) {
 	h := handler(t)
 	// run one admit (issues a credential → a notary block + audit records) and one refused injection

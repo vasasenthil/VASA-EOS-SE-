@@ -74,6 +74,13 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/admission", s.count(s.handleAdmission))
 	mux.HandleFunc("/tutor", s.count(s.handleTutor))
+	mux.HandleFunc("/notifications", s.count(func(w http.ResponseWriter, r *http.Request) {
+		to := r.URL.Query().Get("to")
+		if to == "" {
+			to = "role:HEAD_TEACHER"
+		}
+		s.writeJSON(w, s.p.Notifications(to), nil)
+	}))
 	mux.HandleFunc("/metrics", s.metrics)
 	return mux
 }
@@ -200,6 +207,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button onclick="g('/healthz')">GET /healthz</button>
 <button class="alt" onclick="g('/readiness')">GET /readiness</button>
 <button class="alt" onclick="g('/scenarios')">GET /scenarios</button>
+<button class="alt" onclick="g('/notifications')">GET /notifications (Tamil inbox)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Admission (top-to-bottom: L10→L1→L3→L5→L9→L7)</h3>

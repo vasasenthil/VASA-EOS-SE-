@@ -242,3 +242,20 @@
   container I couldn't build locally (B-012) is a real published artifact, built on a clean external runner.
 - Added CI badges + a "Run the merged platform" section (docker pull / go run / console / metrics) to the
   root README so the published image and platform are discoverable.
+
+## L6 Platform Services (workflow · i18n/TMS · notifications), wired in
+- Built three Go modules under `platform/L6-platform-services/`:
+  - `workflow` — multi-tier approval engine (G1–G7), role + scope gated, reject-terminates, progress; a PORT
+    of the reference governance workflow. 5 tests.
+  - `i18n` — code-first localisation + TMS: `{var}` interpolation, fallback-to-default-locale, `Missing` +
+    `Coverage` (translation gap). **Tamil first-class**, English fallback. 6 tests.
+  - `notify` — notification dispatch: i18n-rendered body, channel-routed (inbox/sms/email seams), idempotent
+    on an idem key, failed-send-stays-retryable; in-memory `InboxSender`. 6 tests.
+- Wired into `platform/integration`: every admission outcome dispatches a **localised Tamil inbox
+  notification** (idempotent per applicant/stage); the **G3→G5→G7 scheme-sanction** flow runs on the workflow
+  engine (`StartSanction`/`ActSanction`, role+scope gated, audited). `platformd` exposes `GET /notifications`
+  (Tamil inbox) + a console button. 7 new integration tests + 1 platformd test.
+- CI: added QEMU + `platforms: linux/amd64,linux/arm64` to the image build so `docker pull` is native on
+  Apple Silicon too.
+- Green bar: **30 Go modules pass** (was 27 + workflow/i18n/notify), OPA 28/28, tsc 0 errors. Reference-impl
+  untouched.

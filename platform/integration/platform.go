@@ -18,9 +18,11 @@ import (
 	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/dr"
 	"github.com/vasa-eos-se-tn/platform/hitl"
+	"github.com/vasa-eos-se-tn/platform/i18n"
 	"github.com/vasa-eos-se-tn/platform/kms"
 	"github.com/vasa-eos-se-tn/platform/knowledgegraph"
 	"github.com/vasa-eos-se-tn/platform/notary"
+	"github.com/vasa-eos-se-tn/platform/notify"
 	"github.com/vasa-eos-se-tn/platform/offswitch"
 	"github.com/vasa-eos-se-tn/platform/orchestrator"
 	"github.com/vasa-eos-se-tn/platform/pep"
@@ -60,6 +62,11 @@ type Platform struct {
 	Orchestrator *orchestrator.Orchestrator
 	// L8 engines
 	Tutor *serving.Gateway
+	// L6 platform services
+	I18n   *i18n.Catalogue
+	Notify *notify.Dispatcher
+	Inbox  *notify.InboxSender
+	Locale i18n.Locale // default outbound locale (Tamil for TN, English fallback)
 	// operations
 	SLO slo.SLO
 	DR  *dr.Controller
@@ -150,6 +157,27 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 		return nil, err
 	}
 
+	// L6: code-first i18n (Tamil first-class, English fallback) + notification dispatch over an inbox.
+	cat := i18n.New(i18n.En)
+	cat.Load(i18n.En, map[string]string{
+		"admission.admitted":  "Application {id} admitted; credential issued.",
+		"admission.review":    "Application {id} ({category}) needs your review.",
+		"admission.denied":    "Application {id} was denied.",
+		"admission.residency": "Application {id} blocked: data residency.",
+	})
+	cat.Load(i18n.Ta, map[string]string{
+		"admission.admitted":  "விண்ணப்பம் {id} சேர்க்கப்பட்டது; சான்றிதழ் வழங்கப்பட்டது.",
+		"admission.review":    "விண்ணப்பம் {id} ({category}) உங்கள் பரிசீலனை தேவை.",
+		"admission.denied":    "விண்ணப்பம் {id} நிராகரிக்கப்பட்டது.",
+		"admission.residency": "விண்ணப்பம் {id} தடுக்கப்பட்டது: தரவு குடியிருப்பு.",
+	})
+	inbox := notify.NewInboxSender()
+	disp, err := notify.New(cat)
+	if err != nil {
+		return nil, err
+	}
+	disp.Register(notify.Inbox, inbox)
+
 	p := &Platform{
 		cfg:          cfg,
 		Switch:       sw,
@@ -161,6 +189,10 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 		Notary:       notary.New(),
 		Graph:        graph,
 		Reg:          reg,
+		I18n:         cat,
+		Notify:       disp,
+		Inbox:        inbox,
+		Locale:       i18n.Ta,
 		SLO:          slo.Availability(),
 		DR:           drc,
 		now:          now,
