@@ -18,6 +18,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/capacity"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
+	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 )
 
@@ -108,6 +109,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/seed", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.SeedStatus(), nil)
 	}))
+	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/retrieve", s.count(s.handleRetrieve))
 	mux.HandleFunc("/remediation", s.count(s.handleRemediation))
 	mux.HandleFunc("/metrics", s.metrics)
@@ -161,6 +163,34 @@ func (s *server) handleTutor(w http.ResponseWriter, r *http.Request) {
 		s.refused.Add(1)
 	}
 	s.writeJSON(w, res, err)
+}
+
+// handleOnboard runs a record through the §B.6 twelve-step onboarding gate.
+func (s *server) handleOnboard(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		ID      string         `json:"id"`
+		Source  string         `json:"source"`
+		Channel string         `json:"channel"`
+		Region  string         `json:"region"`
+		Signed  bool           `json:"signed"`
+		Steward string         `json:"steward"`
+		Payload map[string]any `json:"payload"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	rec := onboarding.Record{ID: req.ID, Source: req.Source, Channel: req.Channel, Region: req.Region, Payload: req.Payload}
+	if req.Signed || req.Source == "internal" {
+		rec.Signature = []byte("sig")
+	}
+	if req.Steward == "" {
+		req.Steward = "Source Steward"
+	}
+	res := s.p.Onboard(r.Context(), rec, req.Steward)
+	s.writeJSON(w, map[string]any{
+		"accepted": res.Accepted, "quarantined": res.Quarantined, "failed_step": res.FailedStep,
+		"reason": res.Reason, "steps_passed": len(res.Passed), "store": res.Store, "alerted": res.Alerted,
+	}, nil)
 }
 
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
@@ -286,7 +316,12 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/readiness')">GET /readiness</button>
 <button class="alt" onclick="g('/scenarios')">GET /scenarios</button>
 <button class="alt" onclick="g('/notifications')">GET /notifications (Tamil inbox)</button>
+<button class="alt" onclick="g('/seed')">GET /seed</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
+
+<div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
+<button onclick="p('/onboard',{id:'REC-1',source:'internal',channel:'web',region:'TN-SDC',payload:{category:'name',tenant:'TN/Chennai',datatype:'row',consent:true}})">Onboard clean record (→ accepted)</button>
+<button class="alt" onclick="p('/onboard',{id:'REC-2',source:'internal',channel:'web',region:'AWS-Mumbai',payload:{category:'aadhaar',tenant:'TN/Chennai',consent:true}})">Class-1 PII offshore (→ quarantined + alert)</button></div>
 
 <div class="card"><h3>Admission (top-to-bottom: L10→L1→L3→L5→L9→L7)</h3>
 <button onclick="p('/admission',{actorRole:'HEAD_TEACHER',decision:'admit',applicantId:'STU-1',applicantName:'Anbu',applicantAge:7,category:'GEN',region:'TN-SDC'})">Admit (→ issues a verifiable credential)</button>

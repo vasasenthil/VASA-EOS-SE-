@@ -34,6 +34,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
+	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
@@ -108,3 +109,5 @@ replace github.com/vasa-eos-se-tn/platform/loop => ../L9-agents/loop
 replace github.com/vasa-eos-se-tn/platform/retrieval => ../L7-knowledge/retrieval
 
 replace github.com/vasa-eos-se-tn/platform/seed => ../L3-data-fabric/seed
+
+replace github.com/vasa-eos-se-tn/platform/onboarding => ../L3-data-fabric/onboarding

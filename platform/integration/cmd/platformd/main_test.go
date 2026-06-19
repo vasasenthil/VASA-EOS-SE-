@@ -96,6 +96,37 @@ func TestNotificationsEndpoint(t *testing.T) {
 	}
 }
 
+func TestOnboardEndpoint(t *testing.T) {
+	// clean record → accepted
+	body := `{"id":"R1","source":"internal","channel":"web","region":"TN-SDC","payload":{"category":"name","tenant":"TN/Chennai","datatype":"row","consent":true}}`
+	rr := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr, httptest.NewRequest("POST", "/onboard", strings.NewReader(body)))
+	if rr.Code != 200 {
+		t.Fatalf("onboard code %d: %s", rr.Code, rr.Body.String())
+	}
+	var out struct {
+		Accepted bool `json:"accepted"`
+		Steps    int  `json:"steps_passed"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &out)
+	if !out.Accepted || out.Steps != 12 {
+		t.Fatalf("a clean record should pass all 12 steps: %+v", out)
+	}
+
+	// class-1 PII offshore → quarantined
+	bad := `{"id":"R2","source":"internal","channel":"web","region":"AWS-Mumbai","payload":{"category":"aadhaar","tenant":"TN/Chennai","consent":true}}`
+	rr2 := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr2, httptest.NewRequest("POST", "/onboard", strings.NewReader(bad)))
+	var out2 struct {
+		Quarantined bool   `json:"quarantined"`
+		FailedStep  string `json:"failed_step"`
+	}
+	json.Unmarshal(rr2.Body.Bytes(), &out2)
+	if !out2.Quarantined || out2.FailedStep != "residency-enforce" {
+		t.Fatalf("offshore class-1 PII must quarantine at residency: %+v", out2)
+	}
+}
+
 func TestSeedEndpoint(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler(t).ServeHTTP(rr, httptest.NewRequest("GET", "/seed", nil))

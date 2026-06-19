@@ -358,3 +358,16 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   SeedManifestYAML/SeedLineage`, and `platformd GET /seed`. **Verified live: 32 production seeds · 191 records
   · ok:true** (5 synthetic seeds correctly excluded). 3 integration + 1 platformd test.
 - Status page: **34 modules · 302 tests**. Green bar: 34 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §B.6 onboarding pipeline · the single chokepoint
+- `platform/L3-data-fabric/onboarding` — the **12-step L4→L5 gate** every record passes before entering the
+  data fabric (no side doors): schema → authenticity → rate/shape → classification (POCSO-aware) → consent
+  (DPDP) → residency (egress-denied) → tenant resolution → policy gate → encrypt-at-rest → persist → audit-log
+  → emit. **Any failure quarantines the record (not lost) and alerts the source steward + Compliance Lead.**
+  Each step is a seam; 9 module tests.
+- Wired into the platform with the **real layers** — dataplane (classify+residency), PEP (policy), KMS
+  (encrypt), audit, notify (alert): `Platform.Onboard` + `platformd POST /onboard`. Verified: clean Class-3
+  record passes all 12 steps; **Class-1 PII offshore → quarantined at residency + steward alert**; Class-2 PII
+  without lawful basis → quarantined at consent; unsigned external record → quarantined at authenticity.
+  4 integration + 1 platformd test.
+- Status page: **35 modules · 315 tests**. Green bar: 35 Go modules pass, OPA 33/33, tsc 0 errors.
