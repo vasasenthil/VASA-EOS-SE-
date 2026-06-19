@@ -191,3 +191,18 @@
   high-risk action always needs a scoped human, PII never leaves TN, a disabled platform serves nothing.
 - Green bar holds: **25 Go modules pass** (24 layers + integration), OPA 28/28, tsc 0 errors. Reference-impl
   untouched.
+
+## Deepening · the 6 AI engines + 6 agents + closing omissions
+- Built `platform/L8-engines/engines` — the **6 deterministic AI engine baselines** (RE-AUTHOR of
+  `lib/ai/engines`): Reasoning (forward-chaining), Assessment (rubric scoring + mastery + bands),
+  Personalisation (next-best objective), Policy (lever projection: coverage/cost/equity), Analytics (z-score
+  anomalies), Conversational (grounded answer with citation; refuses ungrounded). 10 tests.
+- Built `platform/L9-agents/agents` — the **6 agents** (Teacher·Student·Governance·Grievance·Policy·
+  Compliance) composing the engines into advisory recommendations; Policy + Compliance are high-stakes and
+  always require approval; low-confidence (e.g. ungrounded grievance) routes to a human. 5 tests.
+- Wired both into the integration platform: `Advise` runs an agent recommendation through the orchestrator
+  (engines → agent → orchestrator → auto-execute | HITL), the platform executor now runs any registered tool.
+  Closed the two omissions: `EscrowManifest` (L1 source-escrow, verifiable) and `LoadScenarios` (§10.8 suite).
+- Green bar holds: **27 Go modules pass** (24 layers + engines + agents + integration), OPA 28/28, tsc 0
+  errors. Every brochure AI pillar — 6 engines + 6 agents — is now built, tested, and wired under human
+  authority. Reference-impl untouched.

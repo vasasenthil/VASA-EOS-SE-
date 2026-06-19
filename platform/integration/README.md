@@ -28,10 +28,13 @@ plane** (CI / production) or deterministic fakes (unit tests) — the same wirin
 - **`AskTutor` (bottom-to-top)** — a learner's question rises:
   L10 rate-limit → L8 serving (PII-redact · safety-gate · oracle) → L7 knowledge graph (readiness + learning
   path) → L5 audit.
+- **`Advise`** — L8→L9 cognition→authority: an agent (composing the 6 engines) proposes a tool call; the
+  orchestrator routes it auto-execute vs HITL by stakes/risk/confidence.
 - **`ReconcileStudent`** — L4 federation: fetch APAAR through the resilient adapter, reconcile drift, audit.
 - **`EvaluateModel`** — L8: PSI drift + disparate-impact gate deciding continued serving.
 - **`GoLive`** — operations: an ordered, reversible cutover audited through the L5 chain.
 - **`Readiness`** — merges L10 capacity + load model + operations DR + SLO + L1 into one go-live verdict.
+- **`EscrowManifest` / `LoadScenarios`** — L1 source-escrow manifest; the §10.8 load suite.
 - **`Disable` / `Enable`** — the sovereign off-switch as a platform API.
 
 ## Tests

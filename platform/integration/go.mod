@@ -27,7 +27,10 @@ require (
 )
 
 require (
-	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0 // indirect
+	github.com/vasa-eos-se-tn/platform/agents v0.0.0
+	github.com/vasa-eos-se-tn/platform/engines v0.0.0 // indirect
+	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
+	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 )
 
@@ -78,3 +81,9 @@ replace github.com/vasa-eos-se-tn/platform/loadmodel => ../L10-surfaces/loadmode
 replace github.com/vasa-eos-se-tn/platform/dr => ../operations/dr
 
 replace github.com/vasa-eos-se-tn/platform/slo => ../operations/slo
+
+replace github.com/vasa-eos-se-tn/platform/agents => ../L9-agents/agents
+
+replace github.com/vasa-eos-se-tn/platform/engines => ../L8-engines/engines
+
+replace github.com/vasa-eos-se-tn/platform/escrow-agent => ../L1-foundation/escrow-agent

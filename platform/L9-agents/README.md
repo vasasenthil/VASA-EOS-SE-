@@ -7,6 +7,7 @@ authority (HITL). LangGraph/MCP orchestration; role-gated tool-approval queues.
 
 | Component | Status | Verification |
 |---|---|---|
+| `agents` — the **6 agents** (Teacher·Student·Governance·Grievance·Policy·Compliance) composing the L8 engines into advisory recommendations | ✅ built + tested | `go test` |
 | `registry` — 6 agent specs + MCP tool catalogue (risk tier + required scope) (ADR-0012) | ✅ built + tested | `go test` |
 | `hitl` — role-gated tool-approval queue; approve→execute, reject, audited; scope-gated (ADR-0012) | ✅ built + tested | `go test` |
 | `orchestrator` — agent run state machine: auto-execute vs route-to-human (high-risk/high-stakes/low-confidence) | ✅ built + tested | `go test` |

@@ -156,11 +156,11 @@ func (p *Platform) issueAdmissionCredential(tenant, applicantID, name, category 
 	return anchored[0], nil
 }
 
-// Execute makes the platform the HITL executor: when an officer approves an admission review, this issues the
-// verifiable credential (on admit) or records the upheld rejection. It satisfies hitl.Executor.
+// Execute makes the platform the HITL executor (it satisfies hitl.Executor), run when a tool is approved —
+// auto-approved (low-risk) or human-approved (high-risk). admission.finalise issues the verifiable credential
+// on admit; any other registered agent tool records an advisory execution; an unregistered tool is rejected.
 func (p *Platform) Execute(_ context.Context, tool string, args map[string]any) (string, error) {
-	switch tool {
-	case "admission.finalise":
+	if tool == "admission.finalise" {
 		decision, _ := args["decision"].(string)
 		if decision == "admit" {
 			applicantID, _ := args["applicantId"].(string)
@@ -174,7 +174,10 @@ func (p *Platform) Execute(_ context.Context, tool string, args map[string]any) 
 			return "admitted; credential " + ac.Signed.Credential.ID + " anchored", nil
 		}
 		return "rejection upheld and recorded", nil
-	default:
-		return "", fmt.Errorf("integration: unknown tool %q", tool)
 	}
+	// Any tool in the agent registry is a valid (advisory or human-approved) action.
+	if _, err := p.Reg.Lookup(tool); err == nil {
+		return "executed: " + tool, nil
+	}
+	return "", fmt.Errorf("integration: unknown tool %q", tool)
 }
