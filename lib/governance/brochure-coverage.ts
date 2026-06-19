@@ -56,7 +56,7 @@ export const BROCHURE_CLAIMS: BrochureClaim[] = [
   // --- Architecture & tenancy ---
   { id: "portals", area: "Experience & access", claim: "Thirteen role-tailored stakeholder portals", status: "built", note: "13 portal roles + ~271 page routes wired", repoRef: "config/portals.ts" },
   { id: "tenancy", area: "Architecture & tenancy", claim: "Seven-tier multi-tenancy (Sovereign Root → School)", status: "built", note: "national→state→directorate→district→block→cluster→school, TN-rooted; tested", repoRef: "lib/tenancy/index.ts" },
-  { id: "layers", area: "Architecture & tenancy", claim: "Twelve-layer architecture (L1 Sovereign → L12 Civic)", status: "partial", note: "L3–L12 represented in code (data, integration, security, platform, knowledge, agents, experience, governance, civic); L1/L2 sovereign-compute substrate is deployment, not app code", repoRef: "lib/tenancy/catalogue.ts" },
+  { id: "layers", area: "Architecture & tenancy", claim: "Twelve-layer architecture (L1 Sovereign → L12 Civic)", status: "partial", note: "self-verifying L1–L12 register (/governance/architecture-layers): 8 layers built, 4 partial (~83% weighted); L1/L2 keep the sovereign-compute substrate — HSM/key custody, escrow, off-switch, multi-cloud — disclosed as out-of-scope pending aspects, not silently claimed", repoRef: "lib/governance/architecture-layers.ts" },
 
   // --- Security & sovereignty ---
   { id: "access", area: "Security & sovereignty", claim: "RBAC + ABAC + ReBAC least-privilege, deny-wins", status: "built", note: "unified access PDP, fail-closed; tested", repoRef: "lib/access/policy.ts" },
