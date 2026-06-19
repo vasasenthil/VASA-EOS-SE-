@@ -283,3 +283,10 @@
   and `RTIDisclosure` (adjudicates rti.disclose through the PEP), all audited. 5 deterministic + 2 live-OPA
   integration tests (exempt→deny, third-party→PIO review against the real policy).
 - Status page regenerated: **30 modules · 255 tests**. Green bar: 30 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DIKSHA-backed tutor · the learning path cites real content
+- Added a decoupled `ContentResolver` seam to the tutor + a `DikshaContentResolver` (concept→DIKSHA-id map
+  over the resilient DIKSHA adapter). `AskTutor` now, after the knowledge-graph learning path, cites a real
+  DIKSHA resource (title + URL) for the target — connecting L4 (adapter) → L7 (graph) → L8 (serving). Graceful
+  degradation: an upstream failure or no-resolver just omits the citation; the tutor still serves. 3 tests.
+- Status page: **30 modules · 258 tests**. Green bar holds (OPA 33/33, tsc 0). Reference-impl untouched.

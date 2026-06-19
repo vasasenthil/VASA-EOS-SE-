@@ -17,16 +17,24 @@ type TutorRequest struct {
 	Target         string          // the concept they want to learn next
 }
 
+// ContentResolver maps a curriculum concept to a real learning resource (DIKSHA-backed). It is a seam so the
+// tutor can cite live content without the integration layer depending on a specific adapter type.
+type ContentResolver interface {
+	Resolve(ctx context.Context, conceptID string) (title, url string, ok bool)
+}
+
 // TutorResult is the outcome of the end-to-end tutoring workflow.
 type TutorResult struct {
-	Stage    string
-	Refused  bool
-	Reasons  []string
-	Answer   string
-	Ready    bool     // is the learner ready for Target?
-	Missing  []string // prerequisites not yet mastered
-	NextPath []string // the topological learning path to Target
-	AuditSeq uint64
+	Stage        string
+	Refused      bool
+	Reasons      []string
+	Answer       string
+	Ready        bool     // is the learner ready for Target?
+	Missing      []string // prerequisites not yet mastered
+	NextPath     []string // the topological learning path to Target
+	ContentTitle string   // a cited DIKSHA resource for the target (when a resolver is configured)
+	ContentURL   string
+	AuditSeq     uint64
 }
 
 // AskTutor runs the full bottom-to-top tutoring workflow, ascending the layers:
@@ -68,10 +76,21 @@ func (p *Platform) AskTutor(ctx context.Context, req TutorRequest) (TutorResult,
 				res.NextPath = append(res.NextPath, c.ID)
 			}
 		}
+		// L4 — cite a real DIKSHA resource for the target, if a content resolver is wired (graceful: a fetch
+		// failure just omits the citation; the tutor still serves).
+		if p.Content != nil {
+			if title, url, ok := p.Content.Resolve(ctx, req.Target); ok {
+				res.ContentTitle, res.ContentURL = title, url
+			}
+		}
 	}
 
 	// L5 — audit.
-	rec := p.appendAudit("learner", "ai.tutor.served", req.Target, "permit", "")
+	detail := ""
+	if res.ContentTitle != "" {
+		detail = "content=" + res.ContentTitle
+	}
+	rec := p.appendAudit("learner", "ai.tutor.served", req.Target, "permit", detail)
 	res.Stage, res.AuditSeq = "served", rec.Seq
 	p.recordOutcome(true)
 	return res, nil

@@ -67,6 +67,8 @@ type Platform struct {
 	Notify *notify.Dispatcher
 	Inbox  *notify.InboxSender
 	Locale i18n.Locale // default outbound locale (Tamil for TN, English fallback)
+	// optional L4 content resolver (DIKSHA-backed) — the tutor cites real content when this is wired.
+	Content ContentResolver
 	// operations
 	SLO slo.SLO
 	DR  *dr.Controller
