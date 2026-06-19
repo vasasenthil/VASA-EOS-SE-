@@ -98,3 +98,24 @@
 - **Build stops at the Phase-4 review gate**: real LLM serving needs the GPU fleet (B-011); RAG/grounding
   needs Milvus (B-013). The `Backend`/`Scorer` seams drop in served models with no gateway change.
   Reference-impl untouched; green bar holds (12 Go modules pass, OPA 28/28, tsc 0 errors).
+
+## Phase 5 · Agents & Orchestration (L9), authorable deliverables (§5, §6, §10.9)
+- Built + tested the **agent layer under human authority** (Go, stdlib-only), a production RE-AUTHOR of the
+  reference agent/tool-approval pattern:
+  - `platform/L9-agents/registry` — the 6 native-AI agent specs (five-part anatomy, high-stakes flag) + an
+    MCP-style tool catalogue where each tool declares a risk tier + the governance scope a human must hold;
+    high-risk tools cannot register without a scope. (ADR-0012)
+  - `platform/L9-agents/hitl` — the role-gated tool-approval queue: a proposed side-effecting call is queued
+    pending; a human approves only if they hold the required scope (`*` superscope for apex authorities) →
+    the tool executes; reject closes it; a failed execution stays pending for retry; every transition audited.
+  - `platform/L9-agents/orchestrator` — the deterministic run state machine: auto-execute only low-risk,
+    high-confidence, non-high-stakes proposals; route everything high-risk/high-stakes/low-confidence to HITL.
+    Composes registry + hitl via monorepo `replace`. (ADR-0012)
+- **Safety invariant proven**: the delegated system approver never holds the high-risk scopes (fund.release /
+  compliance.sign / policy.sanction), so those tools — and the policy & compliance agents — ALWAYS require a
+  scoped human, regardless of stated confidence.
+- ADR-0012; PHASE-5-PLAN; L9 README + LOG updated to honest Phase-5 status.
+- **Build stops at the Phase-5 review gate**: LLM-backed planning (LangGraph + MCP) runs on the L8 serving
+  gateway once the GPU fleet exists (B-011); durable queue persistence lands in the Citus `agent_tool_requests`
+  table on the cluster (B-013). Reference-impl untouched; green bar holds (15 Go modules pass, OPA 28/28,
+  tsc 0 errors).
