@@ -235,3 +235,10 @@
 - Verified every step locally as a runner proxy: gofmt clean · vet+test 27/27 · `opa check` ok · `opa test`
   28/28 · the image build command compiles. YAML + embedded shell validated. (GitHub Actions itself can't run
   in this sandbox; the image is built on the runner, which has Docker.)
+- **CI confirmed green on GitHub's real infra** at 3b2bf2a (queried via the Actions API): `main` push run —
+  job "Go modules + OPA policy plane" success (gofmt · vet+test ×27 · opa test · opa check) AND job "Build
+  platformd image" success (built + **pushed `ghcr.io/vasasenthil/vasa-platformd:{latest,sha}` to GHCR**).
+  `claude/happy-dirac-l37y0g` (push) and `claude/platform-foundation` (PR #5) runs also green. So the
+  container I couldn't build locally (B-012) is a real published artifact, built on a clean external runner.
+- Added CI badges + a "Run the merged platform" section (docker pull / go run / console / metrics) to the
+  root README so the published image and platform are discoverable.
