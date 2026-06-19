@@ -41,6 +41,16 @@ func (fakeDecider) Evaluate(_ context.Context, in map[string]any) (pep.Effect, [
 			return pep.Permit, nil, nil
 		}
 		return pep.Deny, []map[string]any{{"rule": "RBAC-DENY"}}, nil
+	case "rti.disclose":
+		ex, _ := res["exempt_category"].(string)
+		switch ex {
+		case "national-security", "cabinet-papers", "personal-info", "fiduciary":
+			return pep.Deny, []map[string]any{{"rule": "RTI-S8-EXEMPT"}}, nil
+		}
+		if tp, _ := res["third_party"].(bool); tp {
+			return pep.RequireApproval, []map[string]any{{"rule": "RTI-S11-THIRD-PARTY"}}, nil
+		}
+		return pep.Permit, nil, nil
 	default:
 		return pep.Permit, nil, nil
 	}

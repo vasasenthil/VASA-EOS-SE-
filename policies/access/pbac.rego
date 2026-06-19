@@ -7,6 +7,7 @@ import data.vasa.regulatory.dpdp
 import data.vasa.regulatory.rpwd
 import data.vasa.regulatory.pocso
 import data.vasa.regulatory.pfms_gfr
+import data.vasa.regulatory.rti
 
 # All regulatory denials, unioned (any one denies the request).
 deny contains d if some d in rte.deny
@@ -14,7 +15,9 @@ deny contains d if some d in dpdp.deny
 deny contains d if some d in rpwd.deny
 deny contains d if some d in pocso.deny
 deny contains d if some d in pfms_gfr.deny
+deny contains d if some d in rti.deny
 
 # All regulatory approval-gates, unioned.
 require_approval contains d if some d in rte.require_approval
 require_approval contains d if some d in pfms_gfr.require_approval
+require_approval contains d if some d in rti.require_approval

@@ -83,6 +83,22 @@ func TestLive_EWSRejectRequiresApprovalByRealPolicy(t *testing.T) {
 	}
 }
 
+func TestLive_RTIExemptDeniedByRealPolicy(t *testing.T) {
+	p := livePlatform(t)
+	dec := p.RTIDisclosure(context.Background(), "PIO", "FILE-1", "personal-info", false)
+	if dec.Effect != pep.Deny || !containsStr(dec.Reasons, "RTI-S8-EXEMPT") {
+		t.Fatalf("the real RTI policy must deny exempt info: %+v", dec)
+	}
+}
+
+func TestLive_RTIThirdPartyRequiresReviewByRealPolicy(t *testing.T) {
+	p := livePlatform(t)
+	dec := p.RTIDisclosure(context.Background(), "PIO", "FILE-2", "", true)
+	if dec.Effect != pep.RequireApproval || !containsStr(dec.Reasons, "RTI-S11-THIRD-PARTY") {
+		t.Fatalf("the real RTI policy must require PIO review for third-party info: %+v", dec)
+	}
+}
+
 func TestLive_TutorRefusesInjectionByRealPolicy(t *testing.T) {
 	p := livePlatform(t)
 	res, err := p.AskTutor(context.Background(), TutorRequest{

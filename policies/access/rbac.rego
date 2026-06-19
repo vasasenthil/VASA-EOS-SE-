@@ -14,6 +14,7 @@ grants := {
 	"SECRETARY_SE": {"policy.read", "audit.read"},
 	"AUDITOR": {"audit.read", "extract.sign"},
 	"CITIZEN": {"dashboard.read", "rti.file", "grievance.track"},
+	"PIO": {"rti.disclose", "audit.read"},
 }
 
 # allow if the subject's role grants the action. (RBAC is the first gate; ABAC/ReBAC/PBAC narrow further.)

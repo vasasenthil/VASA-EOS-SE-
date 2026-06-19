@@ -271,3 +271,15 @@
   2 integration tests (fund-flow leakage Flagged + audited; 30% roll gap Flagged).
 - Green bar holds: 30 Go modules pass (adapters now apaar+pfms+udise), OPA 28/28, tsc 0 errors. The
   "remaining adapters follow the same core" claim is now demonstrated, not just asserted.
+
+## More breadth · DigiLocker + DIKSHA adapters + RTI civic Rego bundle
+- Two more L4 adapters on the shared `core` (fetch-shaped, not reconciliation): `digilocker` (lists a
+  learner's credential vault; DTO list → domain) and `diksha` (fetches a learning resource). DTO→domain
+  transforms, tested vs simulated upstreams (transform, no-retry-on-404). 3 tests → adapters now 14.
+- New **RTI Act 2005** Rego bundle (`policies/regulatory/rti.rego`, L12 civic): §8(1) exempt categories
+  denied; §11 third-party info → PIO review; wired into the composed `pbac.rego`. Added a `PIO` RBAC grant.
+  Fixed the `not … in …` undefined-field gotcha with an `exempt` helper. OPA suite **28→33** (5 RTI tests).
+- Wired into `platform/integration`: `FetchLearnerCredentials` (DigiLocker), `FetchLearningResource` (DIKSHA),
+  and `RTIDisclosure` (adjudicates rti.disclose through the PEP), all audited. 5 deterministic + 2 live-OPA
+  integration tests (exempt→deny, third-party→PIO review against the real policy).
+- Status page regenerated: **30 modules · 255 tests**. Green bar: 30 Go modules pass, OPA 33/33, tsc 0 errors.
