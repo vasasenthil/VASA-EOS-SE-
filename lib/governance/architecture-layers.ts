@@ -186,8 +186,8 @@ export const ARCHITECTURE_LAYERS: ArchitectureLayer[] = [
     status: "built",
     note:
       "The oversight registers are built and test-guarded: built/partial rows must cite files that exist on disk, coverage scores are candid mid-ranges, and out-of-scope sovereign items stay disclosed as pending. This layer is what makes the rest auditable.",
-    components: ["Module catalogue register", "Brochure-coverage map", "Launch-readiness scorecard", "Twelve-layer architecture register"],
-    repoRefs: ["lib/governance/module-catalogue.ts", "lib/governance/brochure-coverage.ts", "lib/governance/launch-readiness.ts"],
+    components: ["Module catalogue register", "Brochure-coverage map", "Launch-readiness scorecard", "Twelve-layer architecture register", "AI Control Tower + G1–G7 authority spine"],
+    repoRefs: ["lib/governance/module-catalogue.ts", "lib/governance/brochure-coverage.ts", "lib/governance/launch-readiness.ts", "lib/governance/control-tower.ts"],
     pendingAspects: [],
   },
   {
