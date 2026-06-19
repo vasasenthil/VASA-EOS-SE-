@@ -80,3 +80,21 @@
 - **Build stops at the Phase-3 review gate**: live upstreams/credentials/MoUs (B-022) and the GPU serving
   fleet for Phase 4 (B-011) remain gated. The remaining ~20 adapters follow the APAAR pattern on the same
   core. Reference-impl untouched; green bar holds (tsc 0 errors).
+
+## Phase 4 · AI Engines & Serving (L8), authorable deliverables (§5, §10.7, §17.6)
+- Built + tested the model-agnostic **AI serving + safety stack** (Go, stdlib-only), operationalising the
+  Phase-0 `ai/*.rego` gates (which adjudicate signals this layer now produces):
+  - `platform/L8-engines/guardrails` — PII detection+redaction (a model never sees raw Aadhaar/phone/email/
+    APAAR), prompt-injection detection, safety scoring (Scorer seam). `SafetyGate` enforces
+    `data.vasa.ai.safety.deny` via real OPA (fail-closed); 4 live-OPA integration cases pass. (ADR-0011)
+  - `platform/L8-engines/evaluation` — PSI distribution drift (rollback > 0.2, matches `ai/drift.rego`) +
+    disparate-impact / four-fifths (80%) bias + demographic-parity (feeds `ai/bias.rego`). Deterministic. (§5.1)
+  - `platform/L8-engines/serving` — inference gateway: `Backend` seam (vLLM/Triton gated; deterministic
+    `OracleBackend` baseline) + resilience (breaker/retry, reused from L4) + guardrails pre/post. Proven:
+    PII redacted before serving, injection/age-inappropriate/unsafe refused at the input gate, fail-closed on
+    gate error, retry on transient failure, **fallback to the oracle baseline** on sustained failure.
+    Composes guardrails + resilience via monorepo `replace`. (ADR-0011)
+- ADR-0011; PHASE-4-PLAN; L8 README + LOG updated to honest Phase-4 status.
+- **Build stops at the Phase-4 review gate**: real LLM serving needs the GPU fleet (B-011); RAG/grounding
+  needs Milvus (B-013). The `Backend`/`Scorer` seams drop in served models with no gateway change.
+  Reference-impl untouched; green bar holds (12 Go modules pass, OPA 28/28, tsc 0 errors).
