@@ -97,6 +97,18 @@ export default function LanguagesPage() {
               </div>
             ))}
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+            <Button asChild variant="outline" size="sm">
+              <a href="/api/i18n/messages" download>
+                <Download className="mr-2 h-4 w-4" />
+                Translator export (TMS-ready JSON)
+              </a>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Git-native bridge: the committed catalogue as deterministic JSON for a self-hostable TMS (Weblate / Inlang) to
+              round-trip through Git. Sovereign by construction — no string leaves the repo to a cloud service.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
