@@ -17,6 +17,16 @@ const NAV_KEYS: Record<string, MessageKey> = {
   "Fee Management": "nav.fees",
   "Staff Management": "nav.staff",
   "Students (SIS)": "nav.students",
+  Announcements: "nav.announcements",
+  Communications: "nav.communications",
+  "Audit Log": "nav.auditLog",
+  Compliance: "nav.compliance",
+  Certificates: "nav.certificates",
+  Library: "nav.library",
+  "AI Agents": "nav.aiAgents",
+  "Assessment & Exams": "nav.assessments",
+  "Admissions & Enrolment": "nav.admissions",
+  "Academic Calendar": "nav.academicCalendar",
 }
 
 /** The typed message key for a nav title, or undefined if it is not (yet) localised. */

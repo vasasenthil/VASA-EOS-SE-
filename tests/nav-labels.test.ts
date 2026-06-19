@@ -5,7 +5,7 @@ import { MESSAGE_KEYS, resources } from "@/lib/i18n/resources"
 
 test("every mapped nav title resolves to a committed, Tamil-localised key", () => {
   const known = new Set<string>(MESSAGE_KEYS)
-  for (const title of ["Dashboard", "Attendance", "Schemes", "Governance", "Accessibility", "Fee Management", "Staff Management", "Students (SIS)"]) {
+  for (const title of ["Dashboard", "Attendance", "Schemes", "Governance", "Accessibility", "Fee Management", "Staff Management", "Students (SIS)", "Announcements", "Audit Log", "Compliance", "Certificates", "Library", "AI Agents", "Assessment & Exams", "Admissions & Enrolment", "Academic Calendar"]) {
     const key = navMessageKey(title)
     assert.ok(key, `nav title '${title}' should map to a key`)
     assert.ok(known.has(key), `nav key '${key}' must be a committed MESSAGE_KEY`)
