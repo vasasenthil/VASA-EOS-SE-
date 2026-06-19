@@ -96,6 +96,38 @@ func TestNotificationsEndpoint(t *testing.T) {
 	}
 }
 
+func TestRetrieveEndpoint(t *testing.T) {
+	rr := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr, httptest.NewRequest("POST", "/retrieve", strings.NewReader(`{"query":"explain fractions","concept":"frac"}`)))
+	if rr.Code != 200 {
+		t.Fatalf("retrieve code %d", rr.Code)
+	}
+	var out struct {
+		Sources []string `json:"sources"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &out)
+	if len(out.Sources) == 0 || out.Sources[0] != "FRAC-1" {
+		t.Fatalf("retrieve should ground in the fractions doc first: %v", out.Sources)
+	}
+}
+
+func TestRemediationEndpoint(t *testing.T) {
+	body := `{"rubric":[{"id":"q1","marks":10,"objective":"fractions"},{"id":"q2","marks":10,"objective":"decimals"}],"responses":[{"itemId":"q1","awarded":9},{"itemId":"q2","awarded":2}],"candidates":["fractions","decimals"]}`
+	rr := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr, httptest.NewRequest("POST", "/remediation", strings.NewReader(body)))
+	if rr.Code != 200 {
+		t.Fatalf("remediation code %d: %s", rr.Code, rr.Body.String())
+	}
+	var out struct {
+		Done bool   `json:"done"`
+		Next string `json:"next"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &out)
+	if !out.Done || out.Next != "decimals" {
+		t.Fatalf("remediation loop should diagnose decimals and complete: %+v", out)
+	}
+}
+
 func TestMetricsReflectActivity(t *testing.T) {
 	h := handler(t)
 	// run one admit (issues a credential → a notary block + audit records) and one refused injection

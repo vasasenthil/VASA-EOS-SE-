@@ -331,3 +331,14 @@ Per the native-AI-engineering diagram (Spec→Loop→Context→Token). Token was
   controller: assess → diagnose the weakest objective → plan remediation, audited end-to-end. Proven to
   diagnose `decimals` as the weak objective and complete. 1 integration test.
 - Status page: **33 modules · 292 tests**. Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Exercisable disciplines · platformd endpoints + Protobuf (Spec triad complete)
+- `platformd` now exposes the new disciplines over HTTP: **`POST /retrieve`** (policy-bound hybrid retrieval)
+  and **`POST /remediation`** (the agent-driven Plan→Execute→Verify→Reflect loop) + console buttons; seeded
+  with a small public demo corpus. Verified **live** against real OPA: `/retrieve` → `[FRAC-1, DEC-1, DIV-1]`
+  (cleared docs, fractions first); `/remediation` → `{done:true, next:"decimals", iterations:4}`. 2 httptest
+  cases. Added `Platform.RetrieveSources`.
+- **Spec triad complete** — added `contracts/protobuf/platform.proto` (gRPC contracts for Admit/AskTutor/
+  Retrieve/Remediate; 11 messages, 4 RPCs), alongside the existing OpenAPI 3.1 + AsyncAPI 3.0. CI now runs a
+  real `protoc` compile check on every push.
+- Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors; proto compiles. Reference-impl untouched.

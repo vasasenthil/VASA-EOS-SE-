@@ -55,6 +55,11 @@ jobs:
       - name: OPA policy check (compile)
         run: opa check policies/
 
+      - name: Validate Protobuf contracts (protoc compile)
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends protobuf-compiler
+          protoc --proto_path=contracts/protobuf --descriptor_set_out=/dev/null contracts/protobuf/*.proto
+
   platformd-image:
     name: Build platformd image
     runs-on: ubuntu-latest

@@ -1,0 +1,120 @@
+// VASA-EOS(SE) TN — platform gRPC contracts (CC-SPEC-001 §11; the "Spec Engineering · Protobuf" leg of the
+// declarative ground truth, alongside the OpenAPI 3.1 + AsyncAPI 3.0 contracts). These mirror the end-to-end
+// workflows exposed by the integration composition root (admission, tutor, retrieval, remediation).
+syntax = "proto3";
+
+package vasa.eos.tn.v1;
+
+option go_package = "github.com/vasa-eos-se-tn/contracts/genproto/platformv1;platformv1";
+
+// ── Admission (top-to-bottom: rate-limit → off-switch → residency → KMS → PEP → audit → HITL → credential) ──
+
+message AdmissionRequest {
+  string tenant = 1;
+  string actor_role = 2;     // e.g. HEAD_TEACHER
+  string decision = 3;       // "admit" | "reject"
+  string applicant_id = 4;
+  string applicant_name = 5;
+  int32 applicant_age = 6;
+  string category = 7;       // GEN | OBC | SC | ST | EWS | DG
+  string region = 8;         // PII residency region, e.g. TN-SDC
+  bool quota_full = 9;
+}
+
+message AdmissionResult {
+  string stage = 1;                 // admitted | pending-approval | denied | residency | offswitch | …
+  bool allowed = 2;
+  string effect = 3;                // permit | deny | require-approval
+  repeated string reasons = 4;      // governing rule ids
+  bool pii_envelope = 5;            // PII sealed under the tenant KEK
+  uint64 audit_seq = 6;
+  string request_id = 7;            // HITL request id when pending approval
+  AnchoredCredential credential = 8; // issued + notarised on admission
+}
+
+message AnchoredCredential {
+  string id = 1;
+  string subject = 2;       // APAAR id
+  string type = 3;          // e.g. AdmissionRecord
+  string issuer = 4;
+  string issued_at = 5;
+  bytes signature = 6;      // ed25519 signature over the canonical bytes
+  bytes public_key = 7;     // issuer public key
+  string merkle_root = 8;   // notary block root the credential is anchored under
+}
+
+// ── Tutor (bottom-to-top: serving guardrails+oracle → knowledge graph → audit; token + context economics) ──
+
+message TutorRequest {
+  string tenant = 1;
+  string user_id = 2;
+  string question = 3;
+  bool minor = 4;
+  bool age_appropriate = 5;
+  map<string, bool> mastered = 6;   // concept id → mastered
+  string target = 7;                // next concept
+}
+
+message TutorResult {
+  string stage = 1;                 // served | refused | rate-limited | budget-exhausted
+  bool refused = 2;
+  repeated string reasons = 3;
+  string answer = 4;
+  bool ready = 5;
+  repeated string missing = 6;      // unmet prerequisites
+  repeated string next_path = 7;    // topological learning path
+  string content_title = 8;         // cited DIKSHA resource
+  string content_url = 9;
+  string tier = 10;                 // cached | standard | premium
+  bool cache_hit = 11;
+  int32 tokens_charged = 12;
+  int32 budget_remaining = 13;
+  repeated string sources = 14;     // policy-bound retrieved doc ids
+  uint64 audit_seq = 15;
+}
+
+// ── Context · policy-bound hybrid retrieval (BM25 + graph + vector) ──
+
+message RetrieveRequest {
+  string query = 1;
+  string concept = 2;
+  string tenant = 3;
+}
+
+message RetrieveResult {
+  repeated string sources = 1;      // ids of the cleared, ranked documents
+}
+
+// ── Loop · agent-driven remediation (Plan → Execute → Verify → Reflect) ──
+
+message RubricItem {
+  string id = 1;
+  double marks = 2;
+  string objective = 3;
+}
+
+message ItemResponse {
+  string item_id = 1;
+  double awarded = 2;
+}
+
+message RemediationRequest {
+  repeated RubricItem rubric = 1;
+  repeated ItemResponse responses = 2;
+  repeated string candidates = 3;
+}
+
+message RemediationResult {
+  bool done = 1;
+  string next = 2;                  // diagnosed weakest objective
+  int32 iterations = 3;
+}
+
+// ── Service ──
+
+service Platform {
+  rpc Admit(AdmissionRequest) returns (AdmissionResult);
+  rpc AskTutor(TutorRequest) returns (TutorResult);
+  rpc Retrieve(RetrieveRequest) returns (RetrieveResult);
+  rpc Remediate(RemediationRequest) returns (RemediationResult);
+}
