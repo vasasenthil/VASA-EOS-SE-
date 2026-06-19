@@ -91,6 +91,28 @@ func TestPfmsMoneyDriftIsTighter(t *testing.T) {
 	}
 }
 
+func TestEmisStudentsWithinTolerance(t *testing.T) {
+	// EMIS 1000 vs local 1015 → 1.5% delta, under the 2% count tolerance → Reconciled
+	roll := 1015
+	r := CompareEmisToEnrolment(EmisSchoolData{Students: 1000, Teachers: 40, Classrooms: 30}, &roll, DefaultTolerancePct)
+	if r.Recommendation != Reconciled {
+		t.Fatalf("a 1.5%% roll delta is within tolerance → Reconciled, got %q (%s)", r.Recommendation, r.Rationale)
+	}
+}
+
+func TestEmisStudentsBeyondToleranceFlagged(t *testing.T) {
+	// EMIS 1000 vs local 1300 → 30% on a critical count → Flagged
+	roll := 1300
+	r := CompareEmisToEnrolment(EmisSchoolData{Students: 1000, Teachers: 40, Classrooms: 30}, &roll, DefaultTolerancePct)
+	if r.Recommendation != Flagged {
+		t.Fatalf("a 30%% roll delta must be Flagged, got %q", r.Recommendation)
+	}
+	// teachers + classrooms have no local master → missing-local discrepancies (context only)
+	if r.DriftCount < 2 {
+		t.Fatalf("teachers+classrooms should be missing-local context, got drift=%d", r.DriftCount)
+	}
+}
+
 func TestPfmsMissingLocalLedger(t *testing.T) {
 	p := PfmsExpenditure{Allocated: 500, Released: 400, Utilised: 300}
 	r := CompareFundFlowToPfms(p, nil)

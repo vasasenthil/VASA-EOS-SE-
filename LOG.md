@@ -259,3 +259,15 @@
   Apple Silicon too.
 - Green bar: **30 Go modules pass** (was 27 + workflow/i18n/notify), OPA 28/28, tsc 0 errors. Reference-impl
   untouched.
+
+## L4 federation breadth · PFMS + UDISE+ adapters on the proven core
+- Extracted a shared resilient `core` (breaker + retry + JSON GET) and added two adapters following the APAAR
+  pattern: `pfms` (fund-flow: allocation/release/utilisation; tight money tolerance → leakage signal) and
+  `udise` (EMIS school counts; roll-vs-EMIS gap → ghost-enrolment signal). DTO→domain transforms; exercised
+  against simulated upstreams (transform, reconcile-within-tolerance, drift→Flagged, retry-on-5xx). 5 tests.
+- `reconcile` gained `CompareEmisToEnrolment` (+ `EmisSchoolData`) — students critical, teachers/classrooms
+  upstream-only context. 2 tests.
+- Wired into `platform/integration`: `ReconcileFunds` (PFMS) and `ReconcileSchoolCounts` (UDISE+), audited.
+  2 integration tests (fund-flow leakage Flagged + audited; 30% roll gap Flagged).
+- Green bar holds: 30 Go modules pass (adapters now apaar+pfms+udise), OPA 28/28, tsc 0 errors. The
+  "remaining adapters follow the same core" claim is now demonstrated, not just asserted.

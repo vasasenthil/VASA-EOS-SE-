@@ -21,3 +21,31 @@ func (p *Platform) ReconcileStudent(ctx context.Context, client *adapters.APAARC
 	p.recordOutcome(true)
 	return rep, nil
 }
+
+// ReconcileFunds runs L4 fund-flow reconciliation: it fetches PFMS figures through the resilient adapter,
+// compares them to the local scheme ledger (tight money tolerance), and audits the advisory verdict.
+func (p *Platform) ReconcileFunds(ctx context.Context, client *adapters.PFMSClient, scheme string, local *reconcile.FundLedger) (reconcile.NumericReport, error) {
+	rep, err := client.Reconcile(ctx, scheme, local)
+	if err != nil {
+		p.appendAudit("federation:pfms", "federation.reconcile.error", scheme, "error", err.Error())
+		p.recordOutcome(false)
+		return reconcile.NumericReport{}, err
+	}
+	p.appendAudit("federation:pfms", "federation.reconcile", scheme, string(rep.Recommendation), rep.Rationale)
+	p.recordOutcome(true)
+	return rep, nil
+}
+
+// ReconcileSchoolCounts runs L4 UDISE+/EMIS reconciliation: it fetches the EMIS school master through the
+// resilient adapter, compares its student count to the local on-roll figure, and audits the verdict.
+func (p *Platform) ReconcileSchoolCounts(ctx context.Context, client *adapters.UDISEClient, udise string, localOnRoll *int) (reconcile.NumericReport, error) {
+	rep, err := client.Reconcile(ctx, udise, localOnRoll)
+	if err != nil {
+		p.appendAudit("federation:udise", "federation.reconcile.error", udise, "error", err.Error())
+		p.recordOutcome(false)
+		return reconcile.NumericReport{}, err
+	}
+	p.appendAudit("federation:udise", "federation.reconcile", udise, string(rep.Recommendation), rep.Rationale)
+	p.recordOutcome(true)
+	return rep, nil
+}

@@ -366,3 +366,26 @@ func CompareFundFlowToPfms(p PfmsExpenditure, l *FundLedger) NumericReport {
 		{Field: "utilised", Label: "Utilised", Upstream: F(p.Utilised), Local: ut, Critical: true},
 	}, DefaultMoneyTolerancePct)
 }
+
+// EmisSchoolData is the UDISE+/EMIS master snapshot for a school (counts).
+type EmisSchoolData struct {
+	Students, Teachers, Classrooms int
+}
+
+// CompareEmisToEnrolment reconciles the UDISE+/EMIS master counts against the local on-roll figure. Only the
+// student count has a local master (the live enrolment); teachers/classrooms are shown as upstream-only
+// context (missing-local) honestly, rather than inventing a local number. Count tolerance (looser than money).
+func CompareEmisToEnrolment(emis EmisSchoolData, localOnRoll *int, tolerancePct float64) NumericReport {
+	if tolerancePct <= 0 {
+		tolerancePct = DefaultTolerancePct
+	}
+	var local *float64
+	if localOnRoll != nil {
+		local = F(float64(*localOnRoll))
+	}
+	return CompareNumeric([]NumField{
+		{Field: "students", Label: "Students on roll", Upstream: F(float64(emis.Students)), Local: local, Critical: true},
+		{Field: "teachers", Label: "Teachers", Upstream: F(float64(emis.Teachers)), Local: nil},
+		{Field: "classrooms", Label: "Classrooms", Upstream: F(float64(emis.Classrooms)), Local: nil},
+	}, tolerancePct)
+}
