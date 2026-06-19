@@ -158,6 +158,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "IoT Telemetry Mesh (ingest device readings → threshold classification Normal/Warning/Critical → alerts; environment · nutrition · infrastructure · biometric attendance; audit-anchored)", repoRef: "lib/iot/store.ts", status: "built" },
   { tier: "State", name: "Outcome Instrumentation (TN School Education Quality Index + Opportunity-Gap Index; cohort-weighted composite of FLN/attendance/transition/pass, disaggregated by district/category/area/gender/social-category/disability)", repoRef: "lib/outcomes/store.ts", status: "built" },
   { tier: "State", name: "Equity-Weighted Resource Allocation (evidence-fed: need derived from the MEASURED per-district Quality Index → priority-ordered allocation + progressivity ratio; not a hand-set need index)", repoRef: "lib/outcomes/allocation.ts", status: "built" },
+  { tier: "National", name: "Policy-as-Code Engine (Education Acts as executable runtime rules — RTE/RPwD/DPDP/POCSO/GFR → permit/deny/require-approval, deny-wins, cited, audit-anchored via the server gate)", repoRef: "lib/policy-engine/index.ts", status: "partial" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
