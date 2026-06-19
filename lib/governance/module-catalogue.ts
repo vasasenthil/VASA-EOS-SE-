@@ -147,6 +147,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Block", name: "Eligibility & Compliance Checker (Native-AI: Reasoning Engine policy-as-code derivations for schemes/RTE/scholarships/compliance; HITL decision)", repoRef: "lib/eligibility/index.ts", status: "built" },
   { tier: "State", name: "Grounded Assistant & Knowledge Base (Native-AI: Conversational Engine answers only from the curated TN canon with citations; humans author the canon)", repoRef: "lib/knowledgebase/index.ts", status: "built" },
   { tier: "State", name: "AI Agent Console (Native-AI: the 8 agents surfaced as a HITL task inbox; high-stakes agents route their action through human approval)", repoRef: "lib/agentconsole/index.ts", status: "built" },
+  { tier: "State", name: "Governance Roll-up (multi-tier: per-school KPIs aggregate enrolment-weighted up School→Block→District→State; drill-down evidence dashboard)", repoRef: "lib/rollup/index.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
