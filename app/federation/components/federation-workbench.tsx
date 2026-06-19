@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Network, Search, FilePlus2, GitCompareArrows } from "lucide-react"
 import { FEDERATION_SOURCES, federationSource, type FederationResult } from "@/lib/federation"
 import type { ReconcileReport, NumericReport, FieldState, NumericState, ReconcileRecommendation } from "@/lib/federation/reconcile"
-import { lookupAction, logLookupAction, reconcileApaarAction, reconcileEmisAction } from "../actions"
+import { lookupAction, logLookupAction, reconcileApaarAction, reconcileEmisAction, reconcileFundAction } from "../actions"
 
 const REC_STYLE: Record<ReconcileRecommendation, string> = {
   Reconciled: "bg-green-100 text-green-700",
@@ -42,6 +42,12 @@ const NUM_STATE_LABEL: Record<NumericState, string> = {
   "missing-upstream": "missing upstream",
   "missing-local": "no local master",
 }
+function inrCr(n: number): string {
+  const abs = Math.abs(n)
+  const s = abs >= 1e7 ? `₹${(abs / 1e7).toFixed(2)} Cr` : abs >= 1e5 ? `₹${(abs / 1e5).toFixed(2)} L` : `₹${Math.round(abs).toLocaleString("en-IN")}`
+  return n < 0 ? `−${s}` : s
+}
+function fmtNum(n: number, money: boolean): string { return money ? inrCr(n) : String(n) }
 
 export function FederationWorkbench() {
   const router = useRouter()
@@ -50,6 +56,7 @@ export function FederationWorkbench() {
   const [result, setResult] = useState<FederationResult | null>(null)
   const [report, setReport] = useState<ReconcileReport | null>(null)
   const [numReport, setNumReport] = useState<NumericReport | null>(null)
+  const [numKind, setNumKind] = useState<"count" | "money">("count")
   const [reconcileMsg, setReconcileMsg] = useState<string | null>(null)
   const [pending, start] = useTransition()
   const src = federationSource(source)
@@ -72,7 +79,15 @@ export function FederationWorkbench() {
     clearReports()
     start(async () => {
       const res = await reconcileEmisAction(key)
-      if (res.ok) setNumReport(res.report)
+      if (res.ok) { setNumReport(res.report); setNumKind("count") }
+      else setReconcileMsg(res.reason)
+    })
+  }
+  function reconcileFund() {
+    clearReports()
+    start(async () => {
+      const res = await reconcileFundAction(key)
+      if (res.ok) { setNumReport(res.report); setNumKind("money") }
       else setReconcileMsg(res.reason)
     })
   }
@@ -116,6 +131,7 @@ export function FederationWorkbench() {
               <div className="flex flex-wrap gap-2">
                 {source === "apaar" ? <Button variant="outline" size="sm" onClick={detectDrift} disabled={pending}><GitCompareArrows className="mr-1 h-4 w-4" />Detect drift vs local record</Button> : null}
                 {source === "udise" ? <Button variant="outline" size="sm" onClick={reconcileEnrolment} disabled={pending}><GitCompareArrows className="mr-1 h-4 w-4" />Reconcile enrolment vs state EMIS</Button> : null}
+                {source === "pfms" ? <Button variant="outline" size="sm" onClick={reconcileFund} disabled={pending}><GitCompareArrows className="mr-1 h-4 w-4" />Reconcile fund-flow vs local ledger</Button> : null}
                 <Button variant="outline" size="sm" onClick={logForReconcile} disabled={pending}><FilePlus2 className="mr-1 h-4 w-4" />Log for reconciliation</Button>
               </div>
             ) : null}
@@ -154,28 +170,28 @@ export function FederationWorkbench() {
         {numReport && !pending ? (
           <div className="rounded-md border border-indigo-200 bg-indigo-50/40 p-3 space-y-2 dark:bg-indigo-950/20">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold">Enrolment reconciliation</span>
+              <span className="text-sm font-semibold">{numKind === "money" ? "Fund-flow reconciliation" : "Enrolment reconciliation"}</span>
               <Badge className={`${REC_STYLE[numReport.recommendation]} border-0`}>{numReport.recommendation}</Badge>
-              <span className="text-xs text-muted-foreground">{numReport.tolerancePct}% sync tolerance · {numReport.comparable} count(s) compared</span>
+              <span className="text-xs text-muted-foreground">{numReport.tolerancePct}% tolerance · {numReport.comparable} {numKind === "money" ? "figure" : "count"}(s) compared</span>
             </div>
             <p className="text-xs text-muted-foreground">{numReport.rationale}</p>
             <div className="overflow-hidden rounded-md border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/60 text-xs"><tr><th className="px-2 py-1 text-left">Count</th><th className="px-2 py-1 text-right">State EMIS</th><th className="px-2 py-1 text-right">Local roll</th><th className="px-2 py-1 text-right">Δ</th><th className="px-2 py-1 text-left">State</th></tr></thead>
+                <thead className="bg-muted/60 text-xs"><tr><th className="px-2 py-1 text-left">{numKind === "money" ? "Figure" : "Count"}</th><th className="px-2 py-1 text-right">{numKind === "money" ? "PFMS (source of truth)" : "State EMIS"}</th><th className="px-2 py-1 text-right">{numKind === "money" ? "Local ledger" : "Local roll"}</th><th className="px-2 py-1 text-right">Δ</th><th className="px-2 py-1 text-left">State</th></tr></thead>
                 <tbody>
                   {numReport.fields.map((f) => (
                     <tr key={f.field} className="border-t">
                       <td className="px-2 py-1">{f.label}{f.critical ? <span className="ml-1 text-[10px] text-muted-foreground">(critical)</span> : null}</td>
-                      <td className="px-2 py-1 text-right">{f.upstream ?? <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-2 py-1 text-right">{f.local ?? <span className="text-muted-foreground">—</span>}</td>
-                      <td className="px-2 py-1 text-right">{f.upstream !== null && f.local !== null ? `${f.delta > 0 ? "+" : ""}${f.delta}${f.pctDelta ? ` (${f.pctDelta}%)` : ""}` : "—"}</td>
+                      <td className="px-2 py-1 text-right">{f.upstream !== null ? fmtNum(f.upstream, numKind === "money") : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="px-2 py-1 text-right">{f.local !== null ? fmtNum(f.local, numKind === "money") : <span className="text-muted-foreground">—</span>}</td>
+                      <td className="px-2 py-1 text-right">{f.upstream !== null && f.local !== null ? `${f.delta > 0 ? "+" : f.delta < 0 ? "−" : ""}${fmtNum(Math.abs(f.delta), numKind === "money")}${f.pctDelta ? ` (${f.pctDelta}%)` : ""}` : "—"}</td>
                       <td className={`px-2 py-1 ${NUM_STATE_STYLE[f.state]}`}>{NUM_STATE_LABEL[f.state]}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-[11px] text-muted-foreground">Counts within the sync tolerance are treated as agreement; only deltas beyond it are flagged. Advisory only — a human decides.</p>
+            <p className="text-[11px] text-muted-foreground">{numKind === "money" ? "Figures within the money tolerance are treated as agreement; a drift beyond it is a potential leakage/mis-posting to investigate." : "Counts within the sync tolerance are treated as agreement; only deltas beyond it are flagged."} Advisory only — a human decides.</p>
           </div>
         ) : null}
       </CardContent>

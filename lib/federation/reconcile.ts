@@ -8,9 +8,10 @@
 // It is advisory only: a human reconciler decides (HITL). The engine never mutates anything; it just
 // makes the discrepancy visible and reasoned, the way the AI engines do. Deterministic + client-safe.
 
-import type { ApaarRecord, EmisSchoolData } from "@/lib/integrations/types"
+import type { ApaarRecord, EmisSchoolData, PfmsExpenditure } from "@/lib/integrations/types"
 import type { StudentRecord } from "@/lib/students"
 import type { EnrolmentRecord } from "@/lib/enrolment/store"
+import type { FundLedgerRecord } from "@/lib/fundledger"
 
 export type FieldState = "match" | "drift" | "missing-upstream" | "missing-local"
 
@@ -205,6 +206,23 @@ export function compareEmisToEnrolment(emis: EmisSchoolData, local: EnrolmentRec
     numericField("students", "Students on roll", emis.students, local ? local.total : null, true, tolerancePct),
     numericField("teachers", "Teachers", emis.teachers, null, false, tolerancePct),
     numericField("classrooms", "Classrooms", emis.classrooms, null, false, tolerancePct),
+  ]
+  return buildNumericReport(fields, tolerancePct)
+}
+
+/** Money reconciliation tolerance: scheme funds reconcile tighter than head-counts (default 1%). */
+export const DEFAULT_MONEY_TOLERANCE_PCT = 1
+
+/**
+ * Reconcile the PFMS fund-flow figures (national source of truth) against the LOCAL scheme ledger:
+ * allocated / released / utilised. Every money field is identity-critical — a drift beyond the
+ * (tight) tolerance is a potential leakage or mis-posting to investigate. Advisory only.
+ */
+export function compareFundFlowToPfms(pfms: PfmsExpenditure, local: FundLedgerRecord | null, tolerancePct = DEFAULT_MONEY_TOLERANCE_PCT): NumericReport {
+  const fields: NumericComparison[] = [
+    numericField("allocated", "Allocated", pfms.allocated, local ? local.allocated : null, true, tolerancePct),
+    numericField("released", "Released", pfms.released, local ? local.released : null, true, tolerancePct),
+    numericField("utilised", "Utilised", pfms.utilised, local ? local.utilised : null, true, tolerancePct),
   ]
   return buildNumericReport(fields, tolerancePct)
 }

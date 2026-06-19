@@ -5,9 +5,10 @@ import { listLogs, getLog, createLog, updateLog, deleteLog, seedLogs } from "@/l
 import { queryLogs, validateLog, federationSource, type FederationLog, type LogInput, type FederationResult, type LogFilters, type LogPage } from "@/lib/federation"
 import { integrations } from "@/lib/integrations"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
-import { compareApaarToStudent, compareEmisToEnrolment, type ReconcileReport, type NumericReport } from "@/lib/federation/reconcile"
+import { compareApaarToStudent, compareEmisToEnrolment, compareFundFlowToPfms, type ReconcileReport, type NumericReport } from "@/lib/federation/reconcile"
 import { listStudents } from "@/lib/students/store"
 import { latestEnrolment } from "@/lib/enrolment/store"
+import { latestFundForScheme } from "@/lib/fundledger/store"
 import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
@@ -113,6 +114,29 @@ export async function reconcileEmisAction(udiseCode: string): Promise<
     return { ok: true, report: compareEmisToEnrolment(r.data, local), mode: r.mode, asOf: local ? local.asOf : null }
   } catch (e) {
     logger.error("federation.reconcileEmis failed", { error: String(e) })
+    return { ok: false, reason: "The federation gateway is unavailable." }
+  }
+}
+
+/**
+ * Drift detection (L4, AI-native, advisory): pull the PFMS fund-flow figures for a scheme (national
+ * source of truth) and reconcile them against the LOCAL scheme fund-flow ledger — allocated /
+ * released / utilised, tight money tolerance. Surfaces potential leakage/mis-posting. Never mutates.
+ */
+export async function reconcileFundAction(schemeCode: string): Promise<
+  | { ok: true; report: NumericReport; mode: string; asOf: string | null; schemeName: string | null }
+  | { ok: false; reason: string }
+> {
+  noStore()
+  const code = schemeCode.trim()
+  if (!code) return { ok: false, reason: "Enter a scheme code to reconcile." }
+  try {
+    const r = await integrations.pfms.schemeExpenditure(code)
+    if (!r.ok || !r.data) return { ok: false, reason: r.error ?? "No PFMS fund-flow figures for this scheme code." }
+    const local = (await latestFundForScheme(code)) ?? null
+    return { ok: true, report: compareFundFlowToPfms(r.data, local), mode: r.mode, asOf: local ? local.asOf : null, schemeName: local ? local.schemeName : null }
+  } catch (e) {
+    logger.error("federation.reconcileFund failed", { error: String(e) })
     return { ok: false, reason: "The federation gateway is unavailable." }
   }
 }

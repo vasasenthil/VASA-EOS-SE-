@@ -1,11 +1,13 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import type { ApaarRecord, EmisSchoolData } from "@/lib/integrations/types"
+import type { ApaarRecord, EmisSchoolData, PfmsExpenditure } from "@/lib/integrations/types"
 import type { StudentRecord } from "@/lib/students"
 import type { EnrolmentRecord } from "@/lib/enrolment/store"
+import type { FundLedgerRecord } from "@/lib/fundledger"
 import {
   classifyField, mapJourneyToStatus, buildReport, compareApaarToStudent,
-  classifyNumeric, buildNumericReport, compareEmisToEnrolment, DEFAULT_TOLERANCE_PCT,
+  classifyNumeric, buildNumericReport, compareEmisToEnrolment, compareFundFlowToPfms,
+  DEFAULT_TOLERANCE_PCT, DEFAULT_MONEY_TOLERANCE_PCT,
   type FieldComparison, type NumericComparison,
 } from "@/lib/federation/reconcile"
 
@@ -144,6 +146,48 @@ test("compareEmisToEnrolment: no local enrolment snapshot → students missing-l
   assert.equal(students.state, "missing-local")
   // all three are missing-local; none is a real 'drift', so it is not Flagged
   assert.notEqual(r.recommendation, "Flagged")
+})
+
+// ── money reconciliation: PFMS ↔ local scheme fund-flow ledger ──────────────────────────────────
+
+function fund(over: Partial<FundLedgerRecord> = {}): FundLedgerRecord {
+  return { id: "f1", schemeCode: "PUDHUMAI-PENN", schemeName: "Pudhumai Penn", financialYear: "2025-26", tier: "State", allocated: 6980000000, released: 4100000000, utilised: 2600000000, asOf: "2026-06-10", notes: "", tenantId: "TN-CHN-B1-S1", createdAt: "", updatedAt: "", ...over }
+}
+function pfms(over: Partial<PfmsExpenditure> = {}): PfmsExpenditure {
+  return { scheme: "PUDHUMAI-PENN", allocated: 6980000000, released: 4100000000, utilised: 2600000000, ...over }
+}
+
+test("money tolerance is tighter than counts (1% vs 2%)", () => {
+  assert.equal(DEFAULT_MONEY_TOLERANCE_PCT, 1)
+})
+
+test("compareFundFlowToPfms: figures agree within money tolerance → Reconciled, every field critical", () => {
+  const r = compareFundFlowToPfms(pfms(), fund())
+  assert.equal(r.recommendation, "Reconciled")
+  assert.ok(r.fields.every((f) => f.critical))
+  assert.equal(r.fields.find((f) => f.field === "released")!.state, "match")
+})
+
+test("compareFundFlowToPfms: released-fund drift beyond tolerance → Flagged (leakage signal)", () => {
+  // local books show ₹50 Cr less released than PFMS → ~1.2% drift > 1% tolerance
+  const r = compareFundFlowToPfms(pfms({ released: 4100000000 }), fund({ released: 4050000000 }))
+  assert.equal(r.recommendation, "Flagged")
+  const rel = r.fields.find((f) => f.field === "released")!
+  assert.equal(rel.state, "drift")
+  assert.equal(rel.delta, -50000000)
+  assert.match(r.rationale, /Released/)
+})
+
+test("compareFundFlowToPfms: no local ledger → all figures missing-local, not a false match", () => {
+  const r = compareFundFlowToPfms(pfms(), null)
+  assert.ok(r.fields.every((f) => f.state === "missing-local"))
+  assert.notEqual(r.recommendation, "Flagged")
+})
+
+test("compareFundFlowToPfms: tiny rounding delta under tolerance stays Reconciled", () => {
+  const r = compareFundFlowToPfms(pfms({ utilised: 2600000000 }), fund({ utilised: 2590000000 })) // ~0.38%
+  assert.equal(r.recommendation, "Reconciled")
+  assert.equal(r.fields.find((f) => f.field === "utilised")!.state, "minor-drift")
 })
 
 test("buildNumericReport: tolerance is configurable", () => {
