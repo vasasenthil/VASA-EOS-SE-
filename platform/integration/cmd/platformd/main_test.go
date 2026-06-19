@@ -127,6 +127,23 @@ func TestOnboardEndpoint(t *testing.T) {
 	}
 }
 
+func TestQualityEndpoint(t *testing.T) {
+	rr := httptest.NewRecorder()
+	handler(t).ServeHTTP(rr, httptest.NewRequest("GET", "/quality", nil))
+	if rr.Code != 200 {
+		t.Fatalf("quality code %d", rr.Code)
+	}
+	var qr struct {
+		Passed  bool   `json:"passed"`
+		Steward string `json:"steward"`
+		Alerted bool   `json:"alerted"`
+	}
+	json.Unmarshal(rr.Body.Bytes(), &qr)
+	if qr.Passed || !qr.Alerted || qr.Steward == "" {
+		t.Fatalf("the demo dirty dataset should fail and alert the steward: %+v", qr)
+	}
+}
+
 func TestSeedEndpoint(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler(t).ServeHTTP(rr, httptest.NewRequest("GET", "/seed", nil))

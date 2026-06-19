@@ -19,6 +19,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
+	"github.com/vasa-eos-se-tn/platform/quality"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 )
 
@@ -110,6 +111,21 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, s.p.SeedStatus(), nil)
 	}))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
+	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
+		ds := quality.Dataset{Name: "schools-sample", Rows: []map[string]any{
+			{"udise": "33010100101", "district": "Chennai", "category": "Government"},
+			{"udise": "33010100101", "district": "Chennai", "category": "Government"}, // duplicate
+			{"udise": "", "district": "Salem", "category": "Government"},              // incomplete
+			{"udise": "33010100104", "district": "Atlantis", "category": "Casino"},    // bad ref + value
+		}}
+		valid := map[string]bool{"Chennai": true, "Madurai": true, "Salem": true, "Erode": true}
+		qr := s.p.CheckQuality(r.Context(), "master", ds,
+			quality.Completeness("udise", "district"), quality.Unique("udise"),
+			quality.ReferentialIntegrity("district", valid),
+			quality.ValueIn("category", "Government", "Aided", "Matriculation", "Private-CBSE"))
+		s.writeJSON(w, qr, nil)
+	}))
 	mux.HandleFunc("/retrieve", s.count(s.handleRetrieve))
 	mux.HandleFunc("/remediation", s.count(s.handleRemediation))
 	mux.HandleFunc("/metrics", s.metrics)

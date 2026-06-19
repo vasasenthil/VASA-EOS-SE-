@@ -371,3 +371,15 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   without lawful basis → quarantined at consent; unsigned external record → quarantined at authenticity.
   4 integration + 1 platformd test.
 - Status page: **35 modules · 315 tests**. Green bar: 35 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §F data-governance framework
+- `platform/L3-data-fabric/quality` — **§F.1** named-steward register (per domain), **§F.2** data-quality SLAs
+  (master completeness ≥99.9%, identity duplicate <0.01% / APAAR ≥99%, attendance ≥95%, marks ≥99%, audit
+  integrity =100%, model-card =100%) with `EvaluateSLA`, and **§F.4** Great-Expectations-style checks
+  (completeness · uniqueness · referential-integrity · value-distribution · freshness) whose failing rows go
+  to a **quarantine bucket**. 6 module tests.
+- Wired: `Platform.CheckQuality` runs the checks, grades completeness vs the domain SLA, audits, and on failure
+  **quarantines bad rows + alerts the named steward + Compliance Lead** (notify). `platformd GET /quality`
+  runs a demo over a dirty school sample → fails, breaches the master SLA, alerts the steward. 2 integration +
+  1 platformd test.
+- Status page: **36 modules · 322 tests**. Green bar: 36 Go modules pass, OPA 33/33, tsc 0 errors.
