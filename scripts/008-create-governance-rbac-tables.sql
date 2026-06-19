@@ -106,14 +106,10 @@ BEGIN
 END;
 $$;
 
--- Seed initial governance tiers
-INSERT INTO governance_tiers (name, level_order, description) VALUES
-    ('National', 1, 'Central/National level governance body'),
-    ('State', 2, 'State/Union Territory level governance body'),
-    ('District', 3, 'District level administrative unit'),
-    ('Block', 4, 'Block/Sub-District level administrative unit'),
-    ('School', 5, 'Individual school/educational institution')
-ON CONFLICT (name) DO NOTHING;
+-- Governance tiers are seeded authoritatively (the 7-tier TN model) in
+-- scripts/010-define-education-governance-tiers.sql. The legacy 5-tier seed that lived here collided
+-- with 010 on the level_order unique key when provisioning the full schema, so it has been removed —
+-- 010 is the single source of truth for the tier rows.
 
 -- Seed some basic permissions (examples)
 INSERT INTO permissions (action, resource, description) VALUES
@@ -159,6 +155,8 @@ DECLARE
     manage_users_perm_id UUID;
     manage_roles_perm_id UUID;
     manage_ous_perm_id UUID;
+
+    perm_record RECORD; -- loop variable for the grant-all-permissions cursor (was undeclared)
 BEGIN
     -- Get Role IDs
     SELECT id INTO super_admin_role_id FROM roles WHERE name = 'SYSTEM_SUPER_ADMIN';

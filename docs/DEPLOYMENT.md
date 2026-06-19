@@ -5,6 +5,26 @@ against a sovereign Postgres, and exposes health/readiness probes. What it does 
 ship is anything that only the Government can provide — credentials, MoUs, sovereign
 hosting, and security sign-off. This runbook makes go-live a wiring exercise.
 
+## One-shot go-live (the fast path) ⚡
+The platform runs **in-memory by default** (a credential-free demo). To turn it into a **live,
+durable, authenticated** system, two steps — both yours, because they need infrastructure the repo
+cannot create:
+
+1. **Provision the schema in one paste.** Create a Supabase (or sovereign Postgres) project and run
+   **`scripts/bootstrap.sql`** in the SQL editor. It is the consolidated, idempotent concatenation of
+   all 79 migrations — it creates **131 tables with deny-by-default RLS on every one**, in a single
+   transaction. (Verified end-to-end on PostgreSQL 16; regenerate with `node scripts/build-bootstrap.mjs`.)
+2. **Set two secrets** (see `.env.example`):
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=...
+   SUPABASE_SERVICE_ROLE_KEY=...
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...   # for browser sign-in
+   ```
+   Leave `NEXT_PUBLIC_DEMO_MODE` unset/`false`. On the next boot, `getDb()` returns a live client
+   (durable persistence) and real Supabase auth becomes the default — the demo role-switch self-disables.
+
+That is the entire flip from "demo" to "live by default". Everything below is the fuller runbook.
+
 ## What's in the repo (buildable, here now)
 - **`Dockerfile`** — multi-stage, non-root, Next.js **standalone** output (`next.config.mjs` `output: "standalone"`).
 - **`docker-compose.yml`** — app + Postgres for local/on-prem durable runs.

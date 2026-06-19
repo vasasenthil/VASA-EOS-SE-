@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS organizational_unit_subtypes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE, -- e.g., "Central Government School (KVS)", "State Government School", "Private Unaided School", "Private Aided School", "Navodaya Vidyalaya (NVS)"
     description TEXT,
-    governance_tier_id UUID REFERENCES governance_tiers(id) ON DELETE SET NULL, -- Optional: typical tier this subtype belongs to
+    governance_tier_id INTEGER REFERENCES governance_tiers(id) ON DELETE SET NULL, -- Optional: typical tier this subtype belongs to (governance_tiers.id is SERIAL/int)
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS scheme_applicability_ou_subtypes (
 -- Specifies which governance levels are primarily involved in implementing or benefiting from the scheme.
 CREATE TABLE IF NOT EXISTS scheme_target_governance_tiers (
     scheme_id UUID NOT NULL REFERENCES schemes(id) ON DELETE CASCADE,
-    tier_id UUID NOT NULL REFERENCES governance_tiers(id) ON DELETE CASCADE,
+    tier_id INTEGER NOT NULL REFERENCES governance_tiers(id) ON DELETE CASCADE, -- governance_tiers.id is SERIAL/int
     role_description TEXT, -- e.g., "Implementing Agency", "Monitoring Body", "Beneficiary Level"
     PRIMARY KEY (scheme_id, tier_id)
 );

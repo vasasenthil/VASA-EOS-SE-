@@ -1,11 +1,8 @@
--- VASA-EOS(SE) — per-role tenant scoping (ReBAC jurisdiction): add tenant_id + index to the scopable
--- operational tables so listing queries are filtered to the signed-in subject's jurisdiction subtree.
+-- VASA-EOS(SE) — backfill the ReBAC tenant scoping AFTER every operational table exists.
 --
--- Production correction: the original migration ran bare `alter table` / `create index` against tables
--- that are CREATED IN A LATER migration (023/024), so it could never have applied against a real
--- database. It is now a single EXISTENCE-GUARDED, idempotent loop: it scopes only the tables that
--- already exist at this point, and the backfill migration (078) re-runs the same loop after every
--- table is created so each scoped table reliably gets its tenant_id column + index regardless of order.
+-- Migration 018 scopes tables in numeric order, but several of the scopable tables are created later
+-- (023/024). This re-runs the same existence-guarded loop once all tables are present, so every scoped
+-- table reliably has its tenant_id column + index. Idempotent (column/index use IF NOT EXISTS).
 
 do $$
 declare

@@ -36,16 +36,16 @@ ADD COLUMN IF NOT EXISTS implementation_role_id UUID REFERENCES stakeholder_impl
 COMMENT ON COLUMN implementation_stakeholders.stakeholder_category_id IS 'Foreign key to the stakeholder_categories table.';
 COMMENT ON COLUMN implementation_stakeholders.implementation_role_id IS 'Foreign key to the stakeholder_implementation_roles table.';
 
--- Add triggers to update 'updated_at' timestamp
--- Ensure the function trigger_set_updated_at() exists from a previous script (e.g., 001-create-policies-table.sql)
--- If not, you would need to define it:
--- CREATE OR REPLACE FUNCTION trigger_set_updated_at()
--- RETURNS TRIGGER AS $$
--- BEGIN
---   NEW.updated_at = NOW();
---   RETURN NEW;
--- END;
--- $$ LANGUAGE plpgsql;
+-- Add triggers to update 'updated_at' timestamp.
+-- Define the function here (idempotent). It was previously ASSUMED to exist from an earlier script but
+-- was never actually created, so these triggers failed to provision against a real database.
+CREATE OR REPLACE FUNCTION trigger_set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE TRIGGER set_stakeholder_categories_updated_at
 BEFORE UPDATE ON stakeholder_categories
