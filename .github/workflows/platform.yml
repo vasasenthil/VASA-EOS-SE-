@@ -1,0 +1,93 @@
+name: platform
+
+# Gates the CC-SPEC-001 polyglot platform (the Go layer modules + the Rego policy plane) and builds the
+# runnable platformd image. Complements ci.yml (which gates the Next.js reference app). Runs on main and the
+# stacked claude/* feature branches.
+
+on:
+  push:
+    branches: ["main", "claude/**"]
+  pull_request:
+    branches: ["main", "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  go-and-policy:
+    name: Go modules + OPA policy plane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Set up OPA
+        uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: gofmt (all platform modules must be formatted)
+        run: |
+          unformatted="$(gofmt -l platform/)"
+          if [ -n "$unformatted" ]; then echo "gofmt needed:"; echo "$unformatted"; exit 1; fi
+
+      - name: go vet + test every module
+        # Each layer is its own Go module (composed via local `replace`); test them all. The integration
+        # module's live tests evaluate the real Rego corpus via the opa binary on PATH.
+        run: |
+          set -euo pipefail
+          fail=0
+          for m in $(find platform -name go.mod -printf '%h\n' | sort); do
+            echo "::group::$m"
+            ( cd "$m" && go vet ./... && go test ./... -count=1 ) || fail=1
+            echo "::endgroup::"
+          done
+          exit $fail
+
+      - name: OPA policy unit tests
+        run: opa test policies/ -v
+
+      - name: OPA policy check (compile)
+        run: opa check policies/
+
+  platformd-image:
+    name: Build platformd image
+    runs-on: ubuntu-latest
+    needs: go-and-policy
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image name (lowercase for GHCR)
+        id: img
+        run: echo "name=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/vasa-platformd" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (and push on non-PR) the platformd image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.platformd
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ steps.img.outputs.name }}:latest
+            ${{ steps.img.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

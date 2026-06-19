@@ -226,3 +226,12 @@
   here (B-012), so the image isn't built locally; the build step compiles clean. Honest caveat documented:
   the demo host (Mumbai) is not the sovereign TN-SDC; no HSM/real datastores — in-process only.
 - Green bar: 27 Go modules pass, OPA 28/28, tsc 0 errors. Reference-impl untouched.
+
+## CI · gate the Go platform + policy plane + build the image
+- Added `.github/workflows/platform.yml` (complements the existing Next.js `ci.yml`): on push/PR to main +
+  `claude/**` it (1) checks `gofmt`, (2) `go vet` + `go test` every layer module (OPA on PATH for the live
+  integration tests), (3) runs `opa test` + `opa check` on `policies/`, then (4) builds `Dockerfile.platformd`
+  (pushing `ghcr.io/<owner>/vasa-platformd:{latest,sha}` on non-PR pushes).
+- Verified every step locally as a runner proxy: gofmt clean · vet+test 27/27 · `opa check` ok · `opa test`
+  28/28 · the image build command compiles. YAML + embedded shell validated. (GitHub Actions itself can't run
+  in this sandbox; the image is built on the runner, which has Docker.)
