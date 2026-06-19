@@ -42,5 +42,25 @@ curl -sX POST localhost:8080/tutor \
   -d '{"question":"Explain fractions for Class 4.","ageAppropriate":true,"mastered":{"div":true,"place":true},"target":"frac"}'
 ```
 
+## Metrics
+`GET /metrics` exposes Prometheus text: `vasa_requests_total`, `vasa_admission_total`, `vasa_tutor_total`,
+`vasa_refused_total`, `vasa_errors_total`, `vasa_audit_records`, `vasa_notary_blocks`,
+`vasa_slo_success_rate`, `vasa_platform_disabled`.
+
+## Container & deploy (give it a public URL)
+A static, distroless image (stdlib-only, ~6 MB binary) is built by `Dockerfile.platformd` at the repo root:
+```bash
+docker build -f Dockerfile.platformd -t platformd .
+docker run -p 8080:8080 platformd            # http://localhost:8080/
+```
+For a quick public URL, `fly.platformd.toml` is provided (set your `app` name):
+```bash
+fly launch --copy-config --config fly.platformd.toml --dockerfile Dockerfile.platformd
+fly deploy --config fly.platformd.toml
+```
+> Demo host only. The Mumbai (`bom`) region is **not** the sovereign TN State Data Centre — production runs in
+> TN-SDC behind the cluster gateway (BLOCKERS B-001/B-010). This image has no HSM and no real datastores; the
+> platform runs in-process with its in-memory stores and in-process policy mirror.
+
 This is a reference/demo harness. In production these workflows run inside the cluster behind the gateway;
 the binary makes the authorable build runnable so the end-to-end behaviour can be seen and tested.

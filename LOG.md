@@ -217,3 +217,12 @@
   offshore PII → residency block; tutor injection → refused. 6 httptest cases. Self-verifying status page also
   added at `public/platform-status.html` (27 modules · 213 tests, generated from the tree).
 - Reference Next.js app `next build` verified green (exit 0). Reference-impl business logic untouched.
+
+## Deployable · platformd metrics + container
+- Added Prometheus `/metrics` to platformd (requests/admission/tutor/refused/errors counters + live
+  audit-records, notary-blocks, SLO success-rate, off-switch gauges); 7 httptest cases incl. metrics.
+- Authored `Dockerfile.platformd` (multi-stage, stdlib-only, distroless ~6 MB static binary — exact build
+  command verified) + `fly.platformd.toml` to give the demo a public URL. Docker daemon itself is unavailable
+  here (B-012), so the image isn't built locally; the build step compiles clean. Honest caveat documented:
+  the demo host (Mumbai) is not the sovereign TN-SDC; no HSM/real datastores — in-process only.
+- Green bar: 27 Go modules pass, OPA 28/28, tsc 0 errors. Reference-impl untouched.

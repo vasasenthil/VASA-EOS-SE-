@@ -1,0 +1,28 @@
+# platformd — the merged VASA-EOS(SE) TN platform as a runnable HTTP service.
+# Separate from the root Dockerfile (which builds the Next.js reference app). Multi-stage, stdlib-only
+# (no external Go deps), distroless runtime. Build context = repo root:
+#
+#   docker build -f Dockerfile.platformd -t platformd .
+#   docker run -p 8080:8080 platformd          # then open http://localhost:8080/
+#
+# NOTE: a DEMO/reference harness, NOT the sovereign production deployment (which runs inside the commissioned
+# TN cluster — BLOCKERS B-001/B-010). No HSM, no real datastores; the platform runs in-process.
+
+FROM golang:1.22-alpine AS build
+WORKDIR /src
+# the integration module composes the layers via relative `replace` directives, so the whole platform tree
+# (and the policy corpus) must be present at build time.
+COPY platform/ ./platform/
+COPY policies/ ./policies/
+WORKDIR /src/platform/integration
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /platformd ./cmd/platformd
+
+FROM gcr.io/distroless/static-debian12:nonroot
+COPY --from=build /platformd /platformd
+# policies are copied so the live OPA plane can be enabled later (mount an opa binary + set VASA_OPA_BIN);
+# without opa the server uses its in-process policy mirror, so it runs as-is.
+COPY --from=build /src/policies /policies
+ENV PORT=8080
+EXPOSE 8080
+USER nonroot:nonroot
+ENTRYPOINT ["/platformd"]
