@@ -10,4 +10,5 @@ test_aggregate_is_class4 if { classification.class == "class4" with input as {"f
 test_default_class3 if { classification.class == "class3" with input as {"field": {"category": "name"}} }
 test_class1_offshore_denied if { count(residency.deny) > 0 with input as {"field": {"category": "financial"}, "resource": {"region": "OFFSHORE"}} }
 test_class1_tnsdc_ok if { count(residency.deny) == 0 with input as {"field": {"category": "financial"}, "resource": {"region": "TN-SDC"}} }
+test_class1_tnsdc_dr_ok if { count(residency.deny) == 0 with input as {"field": {"category": "financial"}, "resource": {"region": "TN-SDC-DR"}} }
 test_retain_past_purpose_denied if { count(retention.deny) > 0 with input as {"action": "pii.retain", "resource": {"statutory_hold": false, "days_since_purpose_end": 30}} }

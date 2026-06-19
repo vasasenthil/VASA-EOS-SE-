@@ -1,0 +1,18 @@
+# CC-SPEC-001 §22 — Go services stage (build · vet · gofmt · test · policy-parity).
+# Runs the L1/L3/L5 sovereign-foundation, data-fabric and security services. The PEP and data-plane tests
+# additionally evaluate the real OPA/Rego corpus (OPA_BIN), proving the Go enforcement and the policy plane
+# agree (no drift). The DB schema job applies the Citus core DDL to a vanilla PostgreSQL to validate it.
+.go-fmt:  { stage: build, script: ["test -z \"$(gofmt -l platform/)\" || (gofmt -l platform/; exit 1)"] }
+.go-vet:  { stage: build, script: ["for m in $(find platform -name go.mod -printf '%h\\n'); do (cd $m && go vet ./...); done"] }
+.go-test:
+  stage: test
+  variables: { OPA_BIN: /usr/local/bin/opa }
+  script:
+    - for m in $(find platform -name go.mod -printf '%h\n'); do (cd $m && go test ./... -count=1) || exit 1; done
+# Citus core OLTP DDL must apply to PostgreSQL 16 (the vanilla-valid subset); 002_distribution.sql runs on Citus.
+.db-schema:
+  stage: test
+  services: ["postgres:16"]
+  variables: { POSTGRES_PASSWORD: ci }
+  script:
+    - psql "postgresql://postgres:ci@postgres/postgres" -v ON_ERROR_STOP=1 -f platform/L3-data-fabric/schema/citus/001_core_oltp.sql

@@ -7,7 +7,7 @@ import rego.v1
 grants := {
 	"STUDENT": {"content.read", "practice.attempt", "grievance.file", "credential.view"},
 	"TEACHER": {"roster.read", "marks.write", "lesson.read", "grievance.file"},
-	"HEAD_TEACHER": {"school.read", "staff.read", "scheme.deliver", "audit.read"},
+	"HEAD_TEACHER": {"school.read", "staff.read", "scheme.deliver", "audit.read", "admission.admit", "admission.reject"},
 	"BEO": {"block.read", "mentor.visit"},
 	"DEO": {"district.read", "scheme.rollout", "fund.release"},
 	"DIRECTOR_DSE": {"circular.draft", "report.read"},

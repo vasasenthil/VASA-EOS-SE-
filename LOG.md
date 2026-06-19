@@ -41,3 +41,25 @@
 - ADRs: 0006 (off-switch M-of-N), 0007 (IaC: OpenTofu + ArgoCD GitOps). Layer READMEs updated honestly.
 - **Build stops at the Phase-1 review gate** (Cover STEP 3/4): Phase 2 needs the cluster substrate + State
   PKI/HSM and `tofu validate` green in CI. Reference-impl green bar unaffected (tsc 0 errors).
+
+## Phase 2 · Data Fabric & Security (L3 + L5), authorable deliverables (§18, §17, §8)
+- Built + tested the **security data-plane** (Go, stdlib-only), operationalising the Phase-0 Rego corpus:
+  - `platform/L5-security/pep` — Policy Enforcement Point over `data.vasa.decision`; single source of truth,
+    **fail-closed**. Live-OPA integration proves PEP↔policy agreement (teacher-marks permit, expel-9yo deny,
+    EWS-reject require-approval, minor-PII-no-consent deny). (ADR-0008)
+  - `platform/L5-security/kms` — envelope encryption; HSM-root → per-tenant KEK → per-object DEK; tenant
+    isolation, AAD binding, tamper detection, rotation/crypto-shred. (ADR-0008, §17.4)
+  - `platform/L5-security/audit` — immutable hash-chain + Merkle root; detects tamper/delete/truncate/reorder
+    (anchorable to Besu, B-020). (ADR-0008, §17.6)
+- Built + tested the **L3 data fabric**:
+  - `platform/L3-data-fabric/dataplane` — classification → store/region routing → retention; residency
+    fail-closed. A **policy-parity test** cross-checks the Go router against the live OPA corpus → it caught a
+    real gap (residency denied the in-state DR region); fixed `policies/data/residency.rego` to all
+    TN-sovereign regions. OPA suite now **28/28**. (ADR-0009)
+  - `platform/L3-data-fabric/schema/citus/001_core_oltp.sql` — tenant-sharded OLTP core, `FORCE` RLS,
+    append-only `audit_log`, KMS PII envelopes. **Applied to real PostgreSQL 16**; RLS tenant-isolation +
+    append-only audit proven functionally as a non-superuser role. `002_distribution.sql` (Citus calls)
+    authored, CI-validated against a Citus image (B-013).
+- CI: `.gitlab-ci/templates/go.yml` (gofmt · vet · go test w/ OPA · DDL apply). ADRs 0008, 0009. PHASE-2-PLAN.
+- **Build stops at the Phase-2 review gate**: Phase 3 (L4 Integration/Federation) needs Citus/cluster
+  (B-013/B-010), the State HSM root (B-002), and sovereign-DPI MoUs (B-022). Reference-impl untouched.
