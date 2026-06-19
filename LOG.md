@@ -171,3 +171,23 @@
   error-budget release gate. The **authorable build is complete**; what remains is commissioning + the
   empirical proofs on real infrastructure. Reference-impl untouched; green bar holds (24 Go modules pass,
   OPA 28/28, tsc 0 errors).
+
+## Platform merge · the composition root (every layer wired into one platform)
+- Built `platform/integration` — the composition root that MERGES all 24 layer modules into one `Platform`
+  and runs deep, tested, end-to-end workflows top-to-bottom and bottom-to-top (no layer left an island):
+  - `New(cfg, decider, gate)` wires L1 off-switch · L10 rate-limit/admission · L5 KMS/audit/PEP · L7
+    notary/graph · L9 registry/HITL/orchestrator · L8 serving · ops SLO/DR. The PEP decider + safety gate are
+    injected, so the merged platform runs against the **real Rego plane** (CI) or fakes (unit tests).
+  - **Admission (top-to-bottom)**: L10 → L1 → L3 residency → L5 KMS(seal PII) → L5 PEP → L5 audit → L9 HITL
+    (EWS-quota review to a scoped human) → L7 (issue + anchor a verifiable credential). The platform is itself
+    the HITL executor (approval → credential issuance).
+  - **AskTutor (bottom-to-top)**: L10 → L8 serving(guardrails+oracle) → L7 knowledge graph (readiness + path)
+    → L5 audit.
+  - **ReconcileStudent** (L4), **EvaluateModel** (L8 drift/bias gate), **GoLive** (ops cutover audited via L5),
+    **Readiness** (merges L10 capacity+loadmodel + ops DR+SLO + L1), **Disable/Enable** (sovereign off-switch).
+- Tests: 12 deterministic end-to-end cases + 3 live-OPA composition cases (admit→credential, EWS→HITL→finalise,
+  residency block, off-switch, rate-limit, tutor serve/refuse, federation drift, model gate, cutover,
+  readiness). Cross-layer invariants proven on the whole: audit chain stays intact across a workflow, a
+  high-risk action always needs a scoped human, PII never leaves TN, a disabled platform serves nothing.
+- Green bar holds: **25 Go modules pass** (24 layers + integration), OPA 28/28, tsc 0 errors. Reference-impl
+  untouched.
