@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Scale, TrendingUp, AlertTriangle } from "lucide-react"
+import Link from "next/link"
+import { Scale, TrendingUp, AlertTriangle, ArrowRight } from "lucide-react"
 import { listOutcomes } from "@/lib/outcomes/store"
 import { outcomeReport, indexByDimension, DIMENSIONS, type Dimension, type OpportunityGap } from "@/lib/outcomes"
 import { SeedOutcomesButton } from "./seed-button"
@@ -45,6 +46,7 @@ export default async function OutcomesPage() {
         <PageHeaderHeading>TN School Education Quality Index &amp; Opportunity-Gap</PageHeaderHeading>
         <PageHeaderDescription>One composite Quality Index (FLN · attendance · transition · pass), disaggregated by district, school category, rural/urban, gender, social category and disability — and an Opportunity-Gap Index that measures the spread between the best- and worst-served groups. The platform is judged on these outcomes, in public; the gap is the inequity to shrink under scrutiny.</PageHeaderDescription>
         <PageHeaderActions>
+          <Button asChild variant="outline"><Link href="/outcomes/allocation"><Scale className="mr-2 h-4 w-4" />Equity allocation<ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
           <SeedOutcomesButton />
         </PageHeaderActions>
       </PageHeader>
