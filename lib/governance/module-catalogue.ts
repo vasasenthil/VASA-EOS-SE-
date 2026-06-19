@@ -156,6 +156,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Platform", name: "Tool-Augmented Retrieval (RAG + MCP-style tool registry: curriculum-grounded, cited, validated tool invocation under human authority)", repoRef: "lib/mcp/index.ts", status: "built" },
   { tier: "School", name: "Education DAO — SMC governance (RTE 75%-parent composition, attributable one-member-one-vote ballots, distinct-voter quorum, reproducible decision fingerprint, audit-anchored)", repoRef: "lib/smc/store.ts", status: "built" },
   { tier: "School", name: "IoT Telemetry Mesh (ingest device readings → threshold classification Normal/Warning/Critical → alerts; environment · nutrition · infrastructure · biometric attendance; audit-anchored)", repoRef: "lib/iot/store.ts", status: "built" },
+  { tier: "State", name: "Outcome Instrumentation (TN School Education Quality Index + Opportunity-Gap Index; cohort-weighted composite of FLN/attendance/transition/pass, disaggregated by district/category/area/gender/social-category/disability)", repoRef: "lib/outcomes/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
