@@ -32,8 +32,10 @@ require (
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
+	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
+	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
 )
@@ -99,3 +101,7 @@ replace github.com/vasa-eos-se-tn/platform/i18n => ../L6-platform-services/i18n
 replace github.com/vasa-eos-se-tn/platform/notify => ../L6-platform-services/notify
 
 replace github.com/vasa-eos-se-tn/platform/tokens => ../L8-engines/tokens
+
+replace github.com/vasa-eos-se-tn/platform/loop => ../L9-agents/loop
+
+replace github.com/vasa-eos-se-tn/platform/retrieval => ../L7-knowledge/retrieval

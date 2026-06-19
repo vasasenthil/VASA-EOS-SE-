@@ -305,3 +305,18 @@
 - Remaining discipline gaps (next): the **Loop** iterative controller (ReAct/Plan-Execute-Reflect/Critic/
   Tool-Use-Verify) and **policy-bound hybrid retrieval** for Context; plus Spec's BPMN/Protobuf/model-cards.
 - Status page: **31 modules · 267 tests**. Green bar: 31 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## All four native-AI disciplines closed (Loop · Context · Token · Spec)
+Per the native-AI-engineering diagram (Spec→Loop→Context→Token). Token was done last turn; now the rest:
+- **LOOP** — `platform/L9-agents/loop`: bounded **Plan→Execute→Verify→Reflect** controller — planner proposes,
+  tool executes, a critic verifies, reflect-on-failure, **HITL checkpoints** pause consequential actions, all
+  audited. Wired as `Platform.RunLoop` (audited via the chain; HITL checkpoint tested). 6 tests.
+- **CONTEXT** — `platform/L7-knowledge/retrieval`: **policy-bound hybrid retrieval** — keyword (BM25-style) +
+  graph expansion, then **tenant-isolation + classification filtering BEFORE grounding** (Milvus leg gated).
+  Wired into `AskTutor` (`Sources`); proven the tutor grounds in a public doc and **drops** a class-1 PII doc
+  and a cross-tenant doc. 6 tests.
+- **SPEC** — `workflow.ToBPMN` (approval flow → BPMN 2.0 XML, well-formed) + `evaluation.ModelCard`
+  (fairness + drift + attestation → deploy gate, Markdown). 2 + 5 tests.
+- Added `docs/NATIVE-AI-DISCIPLINES.md` mapping each discipline to its modules.
+- Status page: **33 modules · 288 tests**. Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors.
+  Reference-impl untouched.

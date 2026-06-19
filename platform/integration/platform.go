@@ -27,6 +27,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/orchestrator"
 	"github.com/vasa-eos-se-tn/platform/pep"
 	"github.com/vasa-eos-se-tn/platform/ratelimit"
+	"github.com/vasa-eos-se-tn/platform/retrieval"
 	"github.com/vasa-eos-se-tn/platform/serving"
 	"github.com/vasa-eos-se-tn/platform/slo"
 	"github.com/vasa-eos-se-tn/platform/tokens"
@@ -72,6 +73,8 @@ type Platform struct {
 	Locale i18n.Locale // default outbound locale (Tamil for TN, English fallback)
 	// optional L4 content resolver (DIKSHA-backed) — the tutor cites real content when this is wired.
 	Content ContentResolver
+	// optional L7 policy-bound hybrid retriever — the tutor grounds answers in cleared content when wired.
+	Retriever *retrieval.Retriever
 	// operations
 	SLO slo.SLO
 	DR  *dr.Controller

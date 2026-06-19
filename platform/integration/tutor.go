@@ -41,7 +41,9 @@ type TutorResult struct {
 	CacheHit        bool   // served from the prompt/semantic cache (no model call)
 	TokensCharged   int    // tokens charged to the learner's equity budget (0 on a cache hit)
 	BudgetRemaining int
-	AuditSeq        uint64
+	// Context engineering (L7 policy-bound hybrid retrieval).
+	Sources  []string // ids of the policy-bound documents that ground the answer
+	AuditSeq uint64
 }
 
 // AskTutor runs the full bottom-to-top tutoring workflow, ascending the layers:
@@ -115,6 +117,11 @@ func (p *Platform) AskTutor(ctx context.Context, req TutorRequest) (TutorResult,
 			if title, url, ok := p.Content.Resolve(ctx, req.Target); ok {
 				res.ContentTitle, res.ContentURL = title, url
 			}
+		}
+		// L7 — policy-bound hybrid retrieval: ground the answer in documents the learner is cleared to see
+		// (tenant-isolated, classification-filtered), if a retriever is wired.
+		if p.Retriever != nil {
+			res.Sources = p.retrieve(req.Question, req.Target, req.Tenant)
 		}
 	}
 
