@@ -63,3 +63,20 @@
 - CI: `.gitlab-ci/templates/go.yml` (gofmt · vet · go test w/ OPA · DDL apply). ADRs 0008, 0009. PHASE-2-PLAN.
 - **Build stops at the Phase-2 review gate**: Phase 3 (L4 Integration/Federation) needs Citus/cluster
   (B-013/B-010), the State HSM root (B-002), and sovereign-DPI MoUs (B-022). Reference-impl untouched.
+
+## Phase 3 · Integration & Federation (L4), authorable deliverables (§10.6, §20)
+- Built + tested the **resilient federation adapter core** (Go, stdlib-only):
+  - `platform/L4-integration/resilience` — circuit breaker (closed→open→half-open), bounded retry w/
+    exponential backoff + jitter (context-aware, retryable classifier), idempotency dedup. Deterministic
+    tests via injected clock/sleep. (ADR-0010)
+  - `platform/L4-integration/reconcile` — faithful **PORT** of the reference drift engine: field-level
+    (match/drift/missing, identity-critical escalation) + numeric tolerance (counts vs tighter money)
+    reconciliation → Reconciled/Review/Flagged, advisory/HITL. (ADR-0010)
+  - `platform/L4-integration/adapters` — APAAR anti-corruption adapter on the resilience core; DTO→domain
+    transform. Exercised end-to-end against a **simulated upstream** (httptest): transform, retry-on-5xx,
+    no-retry-on-4xx, breaker-trips-then-fails-fast, idempotent provision (no double-issue), drift flagged.
+    Composes the two modules via monorepo `replace`.
+- ADR-0010; PHASE-3-PLAN; L4 README + LOG updated to honest Phase-3 status.
+- **Build stops at the Phase-3 review gate**: live upstreams/credentials/MoUs (B-022) and the GPU serving
+  fleet for Phase 4 (B-011) remain gated. The remaining ~20 adapters follow the APAAR pattern on the same
+  core. Reference-impl untouched; green bar holds (tsc 0 errors).
