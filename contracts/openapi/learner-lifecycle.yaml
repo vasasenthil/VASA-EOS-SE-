@@ -1,0 +1,355 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — learner-lifecycle API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the learner-lifecycle domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0071
+    description: "Admission Application"
+  - name: M0072
+    description: "Admission — RTE 25% EWS/DG Lottery"
+  - name: M0073
+    description: "Admission Screening Guard (RTE §13)"
+  - name: M0074
+    description: "Enrolment"
+  - name: M0075
+    description: "Student Information System (SIS)"
+  - name: M0076
+    description: "Class & Section Allocation"
+  - name: M0077
+    description: "Roll-Number Issuance"
+  - name: M0078
+    description: "Attendance — Daily"
+  - name: M0079
+    description: "Attendance — Biometric"
+  - name: M0080
+    description: "Attendance — Period-wise"
+  - name: M0081
+    description: "Promotion (no-detention)"
+  - name: M0082
+    description: "Transfer Certificate (TC)"
+  - name: M0083
+    description: "Inter-School Transfer (APAAR portability)"
+  - name: M0084
+    description: "Migration Tracking"
+  - name: M0085
+    description: "Retention & Dropout Risk (early-warning)"
+  - name: M0086
+    description: "Dropout Intervention"
+  - name: M0087
+    description: "Out-of-School Children (OOSC) Register"
+  - name: M0088
+    description: "Re-Enrolment"
+  - name: M0089
+    description: "Age-Grade Mapping"
+  - name: M0090
+    description: "Cohort Tracking"
+  - name: M0091
+    description: "Pre-KG / Foundational Stage (ICDS link)"
+  - name: M0092
+    description: "Health Screening (RBSK)"
+  - name: M0093
+    description: "Health Register"
+  - name: M0094
+    description: "Immunisation Tracking"
+  - name: M0095
+    description: "Nutrition (MDM) Linkage"
+  - name: M0096
+    description: "CWSN / Special-Needs IEP"
+  - name: M0097
+    description: "Girl-Child Equity Tracker"
+  - name: M0098
+    description: "First-Generation Learner Tracker"
+  - name: M0099
+    description: "Scholarship Eligibility (learner)"
+  - name: M0100
+    description: "Credential Wallet"
+  - name: M0101
+    description: "Marksheet Issuance"
+  - name: M0102
+    description: "School-Leaving Certificate"
+  - name: M0103
+    description: "Student Council Elections"
+  - name: M0104
+    description: "Co-curricular Registration"
+  - name: M0105
+    description: "Alumni Registry"
+  - name: M0106
+    description: "Career Guidance"
+  - name: M0107
+    description: "Parent-Linkage (ReBAC)"
+  - name: M0108
+    description: "Guardian Consent (minor)"
+paths:
+  /admission-application:
+    get: { tags: [M0071], summary: "List Admission Application", responses: { '200': { description: ok } } }
+    post: { tags: [M0071], summary: "Create Admission Application", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /admission-application/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0071], summary: "Get Admission Application", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0071], summary: "Update Admission Application", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /admission-rte-25-ews-dg-lottery:
+    get: { tags: [M0072], summary: "List Admission — RTE 25% EWS/DG Lottery", responses: { '200': { description: ok } } }
+    post: { tags: [M0072], summary: "Create Admission — RTE 25% EWS/DG Lottery", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /admission-rte-25-ews-dg-lottery/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0072], summary: "Get Admission — RTE 25% EWS/DG Lottery", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0072], summary: "Update Admission — RTE 25% EWS/DG Lottery", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /admission-screening-guard-rte-13:
+    get: { tags: [M0073], summary: "List Admission Screening Guard (RTE §13)", responses: { '200': { description: ok } } }
+    post: { tags: [M0073], summary: "Create Admission Screening Guard (RTE §13)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /admission-screening-guard-rte-13/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0073], summary: "Get Admission Screening Guard (RTE §13)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0073], summary: "Update Admission Screening Guard (RTE §13)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /enrolment:
+    get: { tags: [M0074], summary: "List Enrolment", responses: { '200': { description: ok } } }
+    post: { tags: [M0074], summary: "Create Enrolment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /enrolment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0074], summary: "Get Enrolment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0074], summary: "Update Enrolment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /student-information-system-sis:
+    get: { tags: [M0075], summary: "List Student Information System (SIS)", responses: { '200': { description: ok } } }
+    post: { tags: [M0075], summary: "Create Student Information System (SIS)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /student-information-system-sis/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0075], summary: "Get Student Information System (SIS)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0075], summary: "Update Student Information System (SIS)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /class-section-allocation:
+    get: { tags: [M0076], summary: "List Class & Section Allocation", responses: { '200': { description: ok } } }
+    post: { tags: [M0076], summary: "Create Class & Section Allocation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /class-section-allocation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0076], summary: "Get Class & Section Allocation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0076], summary: "Update Class & Section Allocation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /roll-number-issuance:
+    get: { tags: [M0077], summary: "List Roll-Number Issuance", responses: { '200': { description: ok } } }
+    post: { tags: [M0077], summary: "Create Roll-Number Issuance", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /roll-number-issuance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0077], summary: "Get Roll-Number Issuance", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0077], summary: "Update Roll-Number Issuance", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /attendance-daily:
+    get: { tags: [M0078], summary: "List Attendance — Daily", responses: { '200': { description: ok } } }
+    post: { tags: [M0078], summary: "Create Attendance — Daily", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /attendance-daily/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0078], summary: "Get Attendance — Daily", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0078], summary: "Update Attendance — Daily", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /attendance-biometric:
+    get: { tags: [M0079], summary: "List Attendance — Biometric", responses: { '200': { description: ok } } }
+    post: { tags: [M0079], summary: "Create Attendance — Biometric", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /attendance-biometric/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0079], summary: "Get Attendance — Biometric", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0079], summary: "Update Attendance — Biometric", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /attendance-period-wise:
+    get: { tags: [M0080], summary: "List Attendance — Period-wise", responses: { '200': { description: ok } } }
+    post: { tags: [M0080], summary: "Create Attendance — Period-wise", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /attendance-period-wise/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0080], summary: "Get Attendance — Period-wise", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0080], summary: "Update Attendance — Period-wise", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /promotion-no-detention:
+    get: { tags: [M0081], summary: "List Promotion (no-detention)", responses: { '200': { description: ok } } }
+    post: { tags: [M0081], summary: "Create Promotion (no-detention)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /promotion-no-detention/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0081], summary: "Get Promotion (no-detention)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0081], summary: "Update Promotion (no-detention)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /transfer-certificate-tc:
+    get: { tags: [M0082], summary: "List Transfer Certificate (TC)", responses: { '200': { description: ok } } }
+    post: { tags: [M0082], summary: "Create Transfer Certificate (TC)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /transfer-certificate-tc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0082], summary: "Get Transfer Certificate (TC)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0082], summary: "Update Transfer Certificate (TC)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /inter-school-transfer-apaar-portability:
+    get: { tags: [M0083], summary: "List Inter-School Transfer (APAAR portability)", responses: { '200': { description: ok } } }
+    post: { tags: [M0083], summary: "Create Inter-School Transfer (APAAR portability)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /inter-school-transfer-apaar-portability/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0083], summary: "Get Inter-School Transfer (APAAR portability)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0083], summary: "Update Inter-School Transfer (APAAR portability)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /migration-tracking:
+    get: { tags: [M0084], summary: "List Migration Tracking", responses: { '200': { description: ok } } }
+    post: { tags: [M0084], summary: "Create Migration Tracking", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /migration-tracking/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0084], summary: "Get Migration Tracking", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0084], summary: "Update Migration Tracking", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /retention-dropout-risk-early-warning:
+    get: { tags: [M0085], summary: "List Retention & Dropout Risk (early-warning)", responses: { '200': { description: ok } } }
+    post: { tags: [M0085], summary: "Create Retention & Dropout Risk (early-warning)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /retention-dropout-risk-early-warning/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0085], summary: "Get Retention & Dropout Risk (early-warning)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0085], summary: "Update Retention & Dropout Risk (early-warning)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dropout-intervention:
+    get: { tags: [M0086], summary: "List Dropout Intervention", responses: { '200': { description: ok } } }
+    post: { tags: [M0086], summary: "Create Dropout Intervention", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dropout-intervention/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0086], summary: "Get Dropout Intervention", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0086], summary: "Update Dropout Intervention", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /out-of-school-children-oosc-register:
+    get: { tags: [M0087], summary: "List Out-of-School Children (OOSC) Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0087], summary: "Create Out-of-School Children (OOSC) Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /out-of-school-children-oosc-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0087], summary: "Get Out-of-School Children (OOSC) Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0087], summary: "Update Out-of-School Children (OOSC) Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /re-enrolment:
+    get: { tags: [M0088], summary: "List Re-Enrolment", responses: { '200': { description: ok } } }
+    post: { tags: [M0088], summary: "Create Re-Enrolment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /re-enrolment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0088], summary: "Get Re-Enrolment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0088], summary: "Update Re-Enrolment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /age-grade-mapping:
+    get: { tags: [M0089], summary: "List Age-Grade Mapping", responses: { '200': { description: ok } } }
+    post: { tags: [M0089], summary: "Create Age-Grade Mapping", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /age-grade-mapping/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0089], summary: "Get Age-Grade Mapping", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0089], summary: "Update Age-Grade Mapping", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cohort-tracking:
+    get: { tags: [M0090], summary: "List Cohort Tracking", responses: { '200': { description: ok } } }
+    post: { tags: [M0090], summary: "Create Cohort Tracking", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cohort-tracking/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0090], summary: "Get Cohort Tracking", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0090], summary: "Update Cohort Tracking", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pre-kg-foundational-stage-icds-link:
+    get: { tags: [M0091], summary: "List Pre-KG / Foundational Stage (ICDS link)", responses: { '200': { description: ok } } }
+    post: { tags: [M0091], summary: "Create Pre-KG / Foundational Stage (ICDS link)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pre-kg-foundational-stage-icds-link/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0091], summary: "Get Pre-KG / Foundational Stage (ICDS link)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0091], summary: "Update Pre-KG / Foundational Stage (ICDS link)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /health-screening-rbsk:
+    get: { tags: [M0092], summary: "List Health Screening (RBSK)", responses: { '200': { description: ok } } }
+    post: { tags: [M0092], summary: "Create Health Screening (RBSK)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /health-screening-rbsk/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0092], summary: "Get Health Screening (RBSK)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0092], summary: "Update Health Screening (RBSK)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /health-register:
+    get: { tags: [M0093], summary: "List Health Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0093], summary: "Create Health Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /health-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0093], summary: "Get Health Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0093], summary: "Update Health Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /immunisation-tracking:
+    get: { tags: [M0094], summary: "List Immunisation Tracking", responses: { '200': { description: ok } } }
+    post: { tags: [M0094], summary: "Create Immunisation Tracking", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /immunisation-tracking/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0094], summary: "Get Immunisation Tracking", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0094], summary: "Update Immunisation Tracking", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /nutrition-mdm-linkage:
+    get: { tags: [M0095], summary: "List Nutrition (MDM) Linkage", responses: { '200': { description: ok } } }
+    post: { tags: [M0095], summary: "Create Nutrition (MDM) Linkage", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /nutrition-mdm-linkage/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0095], summary: "Get Nutrition (MDM) Linkage", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0095], summary: "Update Nutrition (MDM) Linkage", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cwsn-special-needs-iep:
+    get: { tags: [M0096], summary: "List CWSN / Special-Needs IEP", responses: { '200': { description: ok } } }
+    post: { tags: [M0096], summary: "Create CWSN / Special-Needs IEP", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cwsn-special-needs-iep/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0096], summary: "Get CWSN / Special-Needs IEP", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0096], summary: "Update CWSN / Special-Needs IEP", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /girl-child-equity-tracker:
+    get: { tags: [M0097], summary: "List Girl-Child Equity Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0097], summary: "Create Girl-Child Equity Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /girl-child-equity-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0097], summary: "Get Girl-Child Equity Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0097], summary: "Update Girl-Child Equity Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /first-generation-learner-tracker:
+    get: { tags: [M0098], summary: "List First-Generation Learner Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0098], summary: "Create First-Generation Learner Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /first-generation-learner-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0098], summary: "Get First-Generation Learner Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0098], summary: "Update First-Generation Learner Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-eligibility-learner:
+    get: { tags: [M0099], summary: "List Scholarship Eligibility (learner)", responses: { '200': { description: ok } } }
+    post: { tags: [M0099], summary: "Create Scholarship Eligibility (learner)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-eligibility-learner/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0099], summary: "Get Scholarship Eligibility (learner)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0099], summary: "Update Scholarship Eligibility (learner)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /credential-wallet:
+    get: { tags: [M0100], summary: "List Credential Wallet", responses: { '200': { description: ok } } }
+    post: { tags: [M0100], summary: "Create Credential Wallet", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /credential-wallet/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0100], summary: "Get Credential Wallet", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0100], summary: "Update Credential Wallet", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /marksheet-issuance:
+    get: { tags: [M0101], summary: "List Marksheet Issuance", responses: { '200': { description: ok } } }
+    post: { tags: [M0101], summary: "Create Marksheet Issuance", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /marksheet-issuance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0101], summary: "Get Marksheet Issuance", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0101], summary: "Update Marksheet Issuance", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /school-leaving-certificate:
+    get: { tags: [M0102], summary: "List School-Leaving Certificate", responses: { '200': { description: ok } } }
+    post: { tags: [M0102], summary: "Create School-Leaving Certificate", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /school-leaving-certificate/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0102], summary: "Get School-Leaving Certificate", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0102], summary: "Update School-Leaving Certificate", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /student-council-elections:
+    get: { tags: [M0103], summary: "List Student Council Elections", responses: { '200': { description: ok } } }
+    post: { tags: [M0103], summary: "Create Student Council Elections", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /student-council-elections/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0103], summary: "Get Student Council Elections", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0103], summary: "Update Student Council Elections", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /co-curricular-registration:
+    get: { tags: [M0104], summary: "List Co-curricular Registration", responses: { '200': { description: ok } } }
+    post: { tags: [M0104], summary: "Create Co-curricular Registration", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /co-curricular-registration/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0104], summary: "Get Co-curricular Registration", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0104], summary: "Update Co-curricular Registration", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /alumni-registry:
+    get: { tags: [M0105], summary: "List Alumni Registry", responses: { '200': { description: ok } } }
+    post: { tags: [M0105], summary: "Create Alumni Registry", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /alumni-registry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0105], summary: "Get Alumni Registry", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0105], summary: "Update Alumni Registry", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /career-guidance:
+    get: { tags: [M0106], summary: "List Career Guidance", responses: { '200': { description: ok } } }
+    post: { tags: [M0106], summary: "Create Career Guidance", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /career-guidance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0106], summary: "Get Career Guidance", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0106], summary: "Update Career Guidance", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /parent-linkage-rebac:
+    get: { tags: [M0107], summary: "List Parent-Linkage (ReBAC)", responses: { '200': { description: ok } } }
+    post: { tags: [M0107], summary: "Create Parent-Linkage (ReBAC)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /parent-linkage-rebac/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0107], summary: "Get Parent-Linkage (ReBAC)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0107], summary: "Update Parent-Linkage (ReBAC)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /guardian-consent-minor:
+    get: { tags: [M0108], summary: "List Guardian Consent (minor)", responses: { '200': { description: ok } } }
+    post: { tags: [M0108], summary: "Create Guardian Consent (minor)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /guardian-consent-minor/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0108], summary: "Get Guardian Consent (minor)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0108], summary: "Update Guardian Consent (minor)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

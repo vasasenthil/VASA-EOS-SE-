@@ -1,0 +1,247 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — ai-operations events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for ai-operations. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  model-registry-mlflow.events:
+    address: "vasa.ai-operations.model-registry-mlflow"
+    description: "Domain events for Model Registry (MLflow)"
+    messages:
+      changed: { name: M0300Changed, contentType: application/json }
+  feature-store-feast.events:
+    address: "vasa.ai-operations.feature-store-feast"
+    description: "Domain events for Feature Store (Feast)"
+    messages:
+      changed: { name: M0301Changed, contentType: application/json }
+  model-card-service.events:
+    address: "vasa.ai-operations.model-card-service"
+    description: "Domain events for Model-Card Service"
+    messages:
+      changed: { name: M0302Changed, contentType: application/json }
+  bias-audit-aif360-fairlearn.events:
+    address: "vasa.ai-operations.bias-audit-aif360-fairlearn"
+    description: "Domain events for Bias Audit (AIF360/FairLearn)"
+    messages:
+      changed: { name: M0303Changed, contentType: application/json }
+  drift-detector-psi-kl.events:
+    address: "vasa.ai-operations.drift-detector-psi-kl"
+    description: "Domain events for Drift Detector (PSI/KL)"
+    messages:
+      changed: { name: M0304Changed, contentType: application/json }
+  canary-rollback.events:
+    address: "vasa.ai-operations.canary-rollback"
+    description: "Domain events for Canary & Rollback"
+    messages:
+      changed: { name: M0305Changed, contentType: application/json }
+  red-team-gate.events:
+    address: "vasa.ai-operations.red-team-gate"
+    description: "Domain events for Red-Team Gate"
+    messages:
+      changed: { name: M0306Changed, contentType: application/json }
+  prompt-injection-defence.events:
+    address: "vasa.ai-operations.prompt-injection-defence"
+    description: "Domain events for Prompt-Injection Defence"
+    messages:
+      changed: { name: M0307Changed, contentType: application/json }
+  jailbreak-classifier.events:
+    address: "vasa.ai-operations.jailbreak-classifier"
+    description: "Domain events for Jailbreak Classifier"
+    messages:
+      changed: { name: M0308Changed, contentType: application/json }
+  refusal-taxonomy.events:
+    address: "vasa.ai-operations.refusal-taxonomy"
+    description: "Domain events for Refusal Taxonomy"
+    messages:
+      changed: { name: M0309Changed, contentType: application/json }
+  hallucination-control-citation-enforcement.events:
+    address: "vasa.ai-operations.hallucination-control-citation-enforcement"
+    description: "Domain events for Hallucination Control (citation enforcement)"
+    messages:
+      changed: { name: M0310Changed, contentType: application/json }
+  rag-orchestrator-langgraph.events:
+    address: "vasa.ai-operations.rag-orchestrator-langgraph"
+    description: "Domain events for RAG Orchestrator (LangGraph)"
+    messages:
+      changed: { name: M0311Changed, contentType: application/json }
+  mcp-tool-catalogue.events:
+    address: "vasa.ai-operations.mcp-tool-catalogue"
+    description: "Domain events for MCP Tool Catalogue"
+    messages:
+      changed: { name: M0312Changed, contentType: application/json }
+  retrieval-milvus-vector.events:
+    address: "vasa.ai-operations.retrieval-milvus-vector"
+    description: "Domain events for Retrieval — Milvus (vector)"
+    messages:
+      changed: { name: M0313Changed, contentType: application/json }
+  retrieval-opensearch-bm25.events:
+    address: "vasa.ai-operations.retrieval-opensearch-bm25"
+    description: "Domain events for Retrieval — OpenSearch (BM25)"
+    messages:
+      changed: { name: M0314Changed, contentType: application/json }
+  reranker.events:
+    address: "vasa.ai-operations.reranker"
+    description: "Domain events for Reranker"
+    messages:
+      changed: { name: M0315Changed, contentType: application/json }
+  reasoning-engine.events:
+    address: "vasa.ai-operations.reasoning-engine"
+    description: "Domain events for Reasoning Engine"
+    messages:
+      changed: { name: M0316Changed, contentType: application/json }
+  personalisation-engine.events:
+    address: "vasa.ai-operations.personalisation-engine"
+    description: "Domain events for Personalisation Engine"
+    messages:
+      changed: { name: M0317Changed, contentType: application/json }
+  assessment-engine.events:
+    address: "vasa.ai-operations.assessment-engine"
+    description: "Domain events for Assessment Engine"
+    messages:
+      changed: { name: M0318Changed, contentType: application/json }
+  policy-engine-interpretation.events:
+    address: "vasa.ai-operations.policy-engine-interpretation"
+    description: "Domain events for Policy Engine (interpretation)"
+    messages:
+      changed: { name: M0319Changed, contentType: application/json }
+  analytics-engine.events:
+    address: "vasa.ai-operations.analytics-engine"
+    description: "Domain events for Analytics Engine"
+    messages:
+      changed: { name: M0320Changed, contentType: application/json }
+  conversational-engine.events:
+    address: "vasa.ai-operations.conversational-engine"
+    description: "Domain events for Conversational Engine"
+    messages:
+      changed: { name: M0321Changed, contentType: application/json }
+  policy-agent.events:
+    address: "vasa.ai-operations.policy-agent"
+    description: "Domain events for Policy Agent"
+    messages:
+      changed: { name: M0322Changed, contentType: application/json }
+  teacher-agent.events:
+    address: "vasa.ai-operations.teacher-agent"
+    description: "Domain events for Teacher Agent"
+    messages:
+      changed: { name: M0323Changed, contentType: application/json }
+  student-agent.events:
+    address: "vasa.ai-operations.student-agent"
+    description: "Domain events for Student Agent"
+    messages:
+      changed: { name: M0324Changed, contentType: application/json }
+  governance-agent.events:
+    address: "vasa.ai-operations.governance-agent"
+    description: "Domain events for Governance Agent"
+    messages:
+      changed: { name: M0325Changed, contentType: application/json }
+  grievance-agent.events:
+    address: "vasa.ai-operations.grievance-agent"
+    description: "Domain events for Grievance Agent"
+    messages:
+      changed: { name: M0326Changed, contentType: application/json }
+  compliance-agent.events:
+    address: "vasa.ai-operations.compliance-agent"
+    description: "Domain events for Compliance Agent"
+    messages:
+      changed: { name: M0327Changed, contentType: application/json }
+  eval-harness-held-out-benchmarks.events:
+    address: "vasa.ai-operations.eval-harness-held-out-benchmarks"
+    description: "Domain events for Eval Harness (held-out benchmarks)"
+    messages:
+      changed: { name: M0328Changed, contentType: application/json }
+  inference-observability-openllmetry.events:
+    address: "vasa.ai-operations.inference-observability-openllmetry"
+    description: "Domain events for Inference Observability (OpenLLMetry)"
+    messages:
+      changed: { name: M0329Changed, contentType: application/json }
+operations:
+  onM0300Changed:
+    action: receive
+    channel: { $ref: '#/channels/model-registry-mlflow.events' }
+  onM0301Changed:
+    action: receive
+    channel: { $ref: '#/channels/feature-store-feast.events' }
+  onM0302Changed:
+    action: receive
+    channel: { $ref: '#/channels/model-card-service.events' }
+  onM0303Changed:
+    action: receive
+    channel: { $ref: '#/channels/bias-audit-aif360-fairlearn.events' }
+  onM0304Changed:
+    action: receive
+    channel: { $ref: '#/channels/drift-detector-psi-kl.events' }
+  onM0305Changed:
+    action: receive
+    channel: { $ref: '#/channels/canary-rollback.events' }
+  onM0306Changed:
+    action: receive
+    channel: { $ref: '#/channels/red-team-gate.events' }
+  onM0307Changed:
+    action: receive
+    channel: { $ref: '#/channels/prompt-injection-defence.events' }
+  onM0308Changed:
+    action: receive
+    channel: { $ref: '#/channels/jailbreak-classifier.events' }
+  onM0309Changed:
+    action: receive
+    channel: { $ref: '#/channels/refusal-taxonomy.events' }
+  onM0310Changed:
+    action: receive
+    channel: { $ref: '#/channels/hallucination-control-citation-enforcement.events' }
+  onM0311Changed:
+    action: receive
+    channel: { $ref: '#/channels/rag-orchestrator-langgraph.events' }
+  onM0312Changed:
+    action: receive
+    channel: { $ref: '#/channels/mcp-tool-catalogue.events' }
+  onM0313Changed:
+    action: receive
+    channel: { $ref: '#/channels/retrieval-milvus-vector.events' }
+  onM0314Changed:
+    action: receive
+    channel: { $ref: '#/channels/retrieval-opensearch-bm25.events' }
+  onM0315Changed:
+    action: receive
+    channel: { $ref: '#/channels/reranker.events' }
+  onM0316Changed:
+    action: receive
+    channel: { $ref: '#/channels/reasoning-engine.events' }
+  onM0317Changed:
+    action: receive
+    channel: { $ref: '#/channels/personalisation-engine.events' }
+  onM0318Changed:
+    action: receive
+    channel: { $ref: '#/channels/assessment-engine.events' }
+  onM0319Changed:
+    action: receive
+    channel: { $ref: '#/channels/policy-engine-interpretation.events' }
+  onM0320Changed:
+    action: receive
+    channel: { $ref: '#/channels/analytics-engine.events' }
+  onM0321Changed:
+    action: receive
+    channel: { $ref: '#/channels/conversational-engine.events' }
+  onM0322Changed:
+    action: receive
+    channel: { $ref: '#/channels/policy-agent.events' }
+  onM0323Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-agent.events' }
+  onM0324Changed:
+    action: receive
+    channel: { $ref: '#/channels/student-agent.events' }
+  onM0325Changed:
+    action: receive
+    channel: { $ref: '#/channels/governance-agent.events' }
+  onM0326Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-agent.events' }
+  onM0327Changed:
+    action: receive
+    channel: { $ref: '#/channels/compliance-agent.events' }
+  onM0328Changed:
+    action: receive
+    channel: { $ref: '#/channels/eval-harness-held-out-benchmarks.events' }
+  onM0329Changed:
+    action: receive
+    channel: { $ref: '#/channels/inference-observability-openllmetry.events' }

@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — governance-workflow API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the governance-workflow domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0210
+    description: "Governance Workflow Engine (G1-G7 BPMN)"
+  - name: M0211
+    description: "Approval Chain — G1 Cabinet"
+  - name: M0212
+    description: "Approval Chain — G2 Empowered Committee"
+  - name: M0213
+    description: "Approval Chain — G3 Inter-Directorate"
+  - name: M0214
+    description: "Approval Chain — G4 PMU"
+  - name: M0215
+    description: "Approval Chain — G5 Tech Architecture Board"
+  - name: M0216
+    description: "Approval Chain — G6 Ethics/Equity/RPwD"
+  - name: M0217
+    description: "Approval Chain — G7 External Audit"
+  - name: M0218
+    description: "Circular Drafting (Policy Agent)"
+  - name: M0219
+    description: "GO Publication"
+  - name: M0220
+    description: "Cabinet Note Generation"
+  - name: M0221
+    description: "Assembly Briefing"
+  - name: M0222
+    description: "Change-Advisory-Board (CAB)"
+  - name: M0223
+    description: "Delegation-of-Powers Registry"
+  - name: M0224
+    description: "Tenancy Management (T0-T6)"
+  - name: M0225
+    description: "Org-Unit Registry"
+  - name: M0226
+    description: "Recognition & Affiliation"
+  - name: M0227
+    description: "Inspection Workflow"
+  - name: M0228
+    description: "Sanction Workflow (block/district)"
+  - name: M0229
+    description: "Model-Card Registry"
+  - name: M0230
+    description: "Ethics-Review Case Mgmt"
+  - name: M0231
+    description: "AI Leadership Council Portal"
+  - name: M0232
+    description: "Sovereignty Console"
+  - name: M0233
+    description: "Off-Switch Control (M-of-N)"
+  - name: M0234
+    description: "Source-Code Escrow Tracker"
+  - name: M0235
+    description: "CAG / Auditor Export"
+  - name: M0236
+    description: "Audit-Log Immutability"
+  - name: M0237
+    description: "Board-Prep & Coordination"
+  - name: M0238
+    description: "Launch-Readiness Register"
+  - name: M0239
+    description: "Architecture-Conformance Register"
+paths:
+  /governance-workflow-engine-g1-g7-bpmn:
+    get: { tags: [M0210], summary: "List Governance Workflow Engine (G1-G7 BPMN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0210], summary: "Create Governance Workflow Engine (G1-G7 BPMN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /governance-workflow-engine-g1-g7-bpmn/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0210], summary: "Get Governance Workflow Engine (G1-G7 BPMN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0210], summary: "Update Governance Workflow Engine (G1-G7 BPMN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g1-cabinet:
+    get: { tags: [M0211], summary: "List Approval Chain — G1 Cabinet", responses: { '200': { description: ok } } }
+    post: { tags: [M0211], summary: "Create Approval Chain — G1 Cabinet", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g1-cabinet/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0211], summary: "Get Approval Chain — G1 Cabinet", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0211], summary: "Update Approval Chain — G1 Cabinet", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g2-empowered-committee:
+    get: { tags: [M0212], summary: "List Approval Chain — G2 Empowered Committee", responses: { '200': { description: ok } } }
+    post: { tags: [M0212], summary: "Create Approval Chain — G2 Empowered Committee", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g2-empowered-committee/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0212], summary: "Get Approval Chain — G2 Empowered Committee", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0212], summary: "Update Approval Chain — G2 Empowered Committee", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g3-inter-directorate:
+    get: { tags: [M0213], summary: "List Approval Chain — G3 Inter-Directorate", responses: { '200': { description: ok } } }
+    post: { tags: [M0213], summary: "Create Approval Chain — G3 Inter-Directorate", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g3-inter-directorate/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0213], summary: "Get Approval Chain — G3 Inter-Directorate", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0213], summary: "Update Approval Chain — G3 Inter-Directorate", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g4-pmu:
+    get: { tags: [M0214], summary: "List Approval Chain — G4 PMU", responses: { '200': { description: ok } } }
+    post: { tags: [M0214], summary: "Create Approval Chain — G4 PMU", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g4-pmu/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0214], summary: "Get Approval Chain — G4 PMU", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0214], summary: "Update Approval Chain — G4 PMU", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g5-tech-architecture-board:
+    get: { tags: [M0215], summary: "List Approval Chain — G5 Tech Architecture Board", responses: { '200': { description: ok } } }
+    post: { tags: [M0215], summary: "Create Approval Chain — G5 Tech Architecture Board", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g5-tech-architecture-board/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0215], summary: "Get Approval Chain — G5 Tech Architecture Board", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0215], summary: "Update Approval Chain — G5 Tech Architecture Board", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g6-ethics-equity-rpwd:
+    get: { tags: [M0216], summary: "List Approval Chain — G6 Ethics/Equity/RPwD", responses: { '200': { description: ok } } }
+    post: { tags: [M0216], summary: "Create Approval Chain — G6 Ethics/Equity/RPwD", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g6-ethics-equity-rpwd/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0216], summary: "Get Approval Chain — G6 Ethics/Equity/RPwD", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0216], summary: "Update Approval Chain — G6 Ethics/Equity/RPwD", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /approval-chain-g7-external-audit:
+    get: { tags: [M0217], summary: "List Approval Chain — G7 External Audit", responses: { '200': { description: ok } } }
+    post: { tags: [M0217], summary: "Create Approval Chain — G7 External Audit", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /approval-chain-g7-external-audit/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0217], summary: "Get Approval Chain — G7 External Audit", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0217], summary: "Update Approval Chain — G7 External Audit", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /circular-drafting-policy-agent:
+    get: { tags: [M0218], summary: "List Circular Drafting (Policy Agent)", responses: { '200': { description: ok } } }
+    post: { tags: [M0218], summary: "Create Circular Drafting (Policy Agent)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /circular-drafting-policy-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0218], summary: "Get Circular Drafting (Policy Agent)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0218], summary: "Update Circular Drafting (Policy Agent)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /go-publication:
+    get: { tags: [M0219], summary: "List GO Publication", responses: { '200': { description: ok } } }
+    post: { tags: [M0219], summary: "Create GO Publication", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /go-publication/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0219], summary: "Get GO Publication", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0219], summary: "Update GO Publication", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cabinet-note-generation:
+    get: { tags: [M0220], summary: "List Cabinet Note Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0220], summary: "Create Cabinet Note Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cabinet-note-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0220], summary: "Get Cabinet Note Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0220], summary: "Update Cabinet Note Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /assembly-briefing:
+    get: { tags: [M0221], summary: "List Assembly Briefing", responses: { '200': { description: ok } } }
+    post: { tags: [M0221], summary: "Create Assembly Briefing", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /assembly-briefing/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0221], summary: "Get Assembly Briefing", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0221], summary: "Update Assembly Briefing", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /change-advisory-board-cab:
+    get: { tags: [M0222], summary: "List Change-Advisory-Board (CAB)", responses: { '200': { description: ok } } }
+    post: { tags: [M0222], summary: "Create Change-Advisory-Board (CAB)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /change-advisory-board-cab/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0222], summary: "Get Change-Advisory-Board (CAB)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0222], summary: "Update Change-Advisory-Board (CAB)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /delegation-of-powers-registry:
+    get: { tags: [M0223], summary: "List Delegation-of-Powers Registry", responses: { '200': { description: ok } } }
+    post: { tags: [M0223], summary: "Create Delegation-of-Powers Registry", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /delegation-of-powers-registry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0223], summary: "Get Delegation-of-Powers Registry", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0223], summary: "Update Delegation-of-Powers Registry", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /tenancy-management-t0-t6:
+    get: { tags: [M0224], summary: "List Tenancy Management (T0-T6)", responses: { '200': { description: ok } } }
+    post: { tags: [M0224], summary: "Create Tenancy Management (T0-T6)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /tenancy-management-t0-t6/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0224], summary: "Get Tenancy Management (T0-T6)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0224], summary: "Update Tenancy Management (T0-T6)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /org-unit-registry:
+    get: { tags: [M0225], summary: "List Org-Unit Registry", responses: { '200': { description: ok } } }
+    post: { tags: [M0225], summary: "Create Org-Unit Registry", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /org-unit-registry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0225], summary: "Get Org-Unit Registry", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0225], summary: "Update Org-Unit Registry", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /recognition-affiliation:
+    get: { tags: [M0226], summary: "List Recognition & Affiliation", responses: { '200': { description: ok } } }
+    post: { tags: [M0226], summary: "Create Recognition & Affiliation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /recognition-affiliation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0226], summary: "Get Recognition & Affiliation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0226], summary: "Update Recognition & Affiliation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /inspection-workflow:
+    get: { tags: [M0227], summary: "List Inspection Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0227], summary: "Create Inspection Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /inspection-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0227], summary: "Get Inspection Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0227], summary: "Update Inspection Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /sanction-workflow-block-district:
+    get: { tags: [M0228], summary: "List Sanction Workflow (block/district)", responses: { '200': { description: ok } } }
+    post: { tags: [M0228], summary: "Create Sanction Workflow (block/district)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /sanction-workflow-block-district/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0228], summary: "Get Sanction Workflow (block/district)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0228], summary: "Update Sanction Workflow (block/district)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /model-card-registry:
+    get: { tags: [M0229], summary: "List Model-Card Registry", responses: { '200': { description: ok } } }
+    post: { tags: [M0229], summary: "Create Model-Card Registry", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /model-card-registry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0229], summary: "Get Model-Card Registry", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0229], summary: "Update Model-Card Registry", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /ethics-review-case-mgmt:
+    get: { tags: [M0230], summary: "List Ethics-Review Case Mgmt", responses: { '200': { description: ok } } }
+    post: { tags: [M0230], summary: "Create Ethics-Review Case Mgmt", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ethics-review-case-mgmt/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0230], summary: "Get Ethics-Review Case Mgmt", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0230], summary: "Update Ethics-Review Case Mgmt", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /ai-leadership-council-portal:
+    get: { tags: [M0231], summary: "List AI Leadership Council Portal", responses: { '200': { description: ok } } }
+    post: { tags: [M0231], summary: "Create AI Leadership Council Portal", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ai-leadership-council-portal/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0231], summary: "Get AI Leadership Council Portal", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0231], summary: "Update AI Leadership Council Portal", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /sovereignty-console:
+    get: { tags: [M0232], summary: "List Sovereignty Console", responses: { '200': { description: ok } } }
+    post: { tags: [M0232], summary: "Create Sovereignty Console", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /sovereignty-console/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0232], summary: "Get Sovereignty Console", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0232], summary: "Update Sovereignty Console", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /off-switch-control-m-of-n:
+    get: { tags: [M0233], summary: "List Off-Switch Control (M-of-N)", responses: { '200': { description: ok } } }
+    post: { tags: [M0233], summary: "Create Off-Switch Control (M-of-N)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /off-switch-control-m-of-n/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0233], summary: "Get Off-Switch Control (M-of-N)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0233], summary: "Update Off-Switch Control (M-of-N)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /source-code-escrow-tracker:
+    get: { tags: [M0234], summary: "List Source-Code Escrow Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0234], summary: "Create Source-Code Escrow Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /source-code-escrow-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0234], summary: "Get Source-Code Escrow Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0234], summary: "Update Source-Code Escrow Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cag-auditor-export:
+    get: { tags: [M0235], summary: "List CAG / Auditor Export", responses: { '200': { description: ok } } }
+    post: { tags: [M0235], summary: "Create CAG / Auditor Export", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cag-auditor-export/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0235], summary: "Get CAG / Auditor Export", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0235], summary: "Update CAG / Auditor Export", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /audit-log-immutability:
+    get: { tags: [M0236], summary: "List Audit-Log Immutability", responses: { '200': { description: ok } } }
+    post: { tags: [M0236], summary: "Create Audit-Log Immutability", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /audit-log-immutability/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0236], summary: "Get Audit-Log Immutability", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0236], summary: "Update Audit-Log Immutability", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /board-prep-coordination:
+    get: { tags: [M0237], summary: "List Board-Prep & Coordination", responses: { '200': { description: ok } } }
+    post: { tags: [M0237], summary: "Create Board-Prep & Coordination", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /board-prep-coordination/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0237], summary: "Get Board-Prep & Coordination", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0237], summary: "Update Board-Prep & Coordination", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /launch-readiness-register:
+    get: { tags: [M0238], summary: "List Launch-Readiness Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0238], summary: "Create Launch-Readiness Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /launch-readiness-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0238], summary: "Get Launch-Readiness Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0238], summary: "Update Launch-Readiness Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /architecture-conformance-register:
+    get: { tags: [M0239], summary: "List Architecture-Conformance Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0239], summary: "Create Architecture-Conformance Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /architecture-conformance-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0239], summary: "Get Architecture-Conformance Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0239], summary: "Update Architecture-Conformance Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

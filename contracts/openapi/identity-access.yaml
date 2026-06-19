@@ -1,0 +1,328 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — identity-access API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the identity-access domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0001
+    description: "APAAR Learner Identity"
+  - name: M0002
+    description: "Citizen Identity (official ID)"
+  - name: M0003
+    description: "Teacher Institutional Identity"
+  - name: M0004
+    description: "Keycloak Realm — T0 Sovereign"
+  - name: M0005
+    description: "Keycloak Realm — Secretariat"
+  - name: M0006
+    description: "Keycloak Realm — Directorate"
+  - name: M0007
+    description: "Keycloak Realm — District"
+  - name: M0008
+    description: "Keycloak Realm — Block"
+  - name: M0009
+    description: "Keycloak Realm — Cluster"
+  - name: M0010
+    description: "Keycloak Realm — School"
+  - name: M0011
+    description: "MFA — TOTP"
+  - name: M0012
+    description: "MFA — WebAuthn/FIDO2"
+  - name: M0013
+    description: "MFA — SMS-OTP Fallback"
+  - name: M0014
+    description: "AAL3 Step-Up (governance/finance)"
+  - name: M0015
+    description: "OIDC Federation"
+  - name: M0016
+    description: "SAML 2.0 Federation"
+  - name: M0017
+    description: "LDAP Federation"
+  - name: M0018
+    description: "DigiLocker SSO"
+  - name: M0019
+    description: "Consent Manager (DPDP)"
+  - name: M0020
+    description: "Data-Principal Portal"
+  - name: M0021
+    description: "DPO Endpoint"
+  - name: M0022
+    description: "Consent Receipt (VC)"
+  - name: M0023
+    description: "Session Management"
+  - name: M0024
+    description: "Refresh-Token Rotation"
+  - name: M0025
+    description: "Profile Service"
+  - name: M0026
+    description: "Profile Photo (PII-redacted)"
+  - name: M0027
+    description: "Role Assignment"
+  - name: M0028
+    description: "ReBAC Relationship Store (SpiceDB)"
+  - name: M0029
+    description: "Workload Identity (SPIRE)"
+  - name: M0030
+    description: "Service-Account Registry"
+  - name: M0031
+    description: "Aadhaar e-KYC Wrapper (consent-bound)"
+  - name: M0032
+    description: "Account Lockout & Anomaly"
+  - name: M0033
+    description: "Device Binding"
+  - name: M0034
+    description: "Impersonation Audit"
+  - name: M0035
+    description: "Identity Reconciliation (UDISE+/APAAR)"
+paths:
+  /apaar-learner-identity:
+    get: { tags: [M0001], summary: "List APAAR Learner Identity", responses: { '200': { description: ok } } }
+    post: { tags: [M0001], summary: "Create APAAR Learner Identity", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /apaar-learner-identity/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0001], summary: "Get APAAR Learner Identity", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0001], summary: "Update APAAR Learner Identity", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /citizen-identity-official-id:
+    get: { tags: [M0002], summary: "List Citizen Identity (official ID)", responses: { '200': { description: ok } } }
+    post: { tags: [M0002], summary: "Create Citizen Identity (official ID)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /citizen-identity-official-id/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0002], summary: "Get Citizen Identity (official ID)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0002], summary: "Update Citizen Identity (official ID)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-institutional-identity:
+    get: { tags: [M0003], summary: "List Teacher Institutional Identity", responses: { '200': { description: ok } } }
+    post: { tags: [M0003], summary: "Create Teacher Institutional Identity", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-institutional-identity/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0003], summary: "Get Teacher Institutional Identity", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0003], summary: "Update Teacher Institutional Identity", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-t0-sovereign:
+    get: { tags: [M0004], summary: "List Keycloak Realm — T0 Sovereign", responses: { '200': { description: ok } } }
+    post: { tags: [M0004], summary: "Create Keycloak Realm — T0 Sovereign", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-t0-sovereign/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0004], summary: "Get Keycloak Realm — T0 Sovereign", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0004], summary: "Update Keycloak Realm — T0 Sovereign", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-secretariat:
+    get: { tags: [M0005], summary: "List Keycloak Realm — Secretariat", responses: { '200': { description: ok } } }
+    post: { tags: [M0005], summary: "Create Keycloak Realm — Secretariat", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-secretariat/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0005], summary: "Get Keycloak Realm — Secretariat", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0005], summary: "Update Keycloak Realm — Secretariat", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-directorate:
+    get: { tags: [M0006], summary: "List Keycloak Realm — Directorate", responses: { '200': { description: ok } } }
+    post: { tags: [M0006], summary: "Create Keycloak Realm — Directorate", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-directorate/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0006], summary: "Get Keycloak Realm — Directorate", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0006], summary: "Update Keycloak Realm — Directorate", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-district:
+    get: { tags: [M0007], summary: "List Keycloak Realm — District", responses: { '200': { description: ok } } }
+    post: { tags: [M0007], summary: "Create Keycloak Realm — District", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-district/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0007], summary: "Get Keycloak Realm — District", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0007], summary: "Update Keycloak Realm — District", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-block:
+    get: { tags: [M0008], summary: "List Keycloak Realm — Block", responses: { '200': { description: ok } } }
+    post: { tags: [M0008], summary: "Create Keycloak Realm — Block", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-block/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0008], summary: "Get Keycloak Realm — Block", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0008], summary: "Update Keycloak Realm — Block", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-cluster:
+    get: { tags: [M0009], summary: "List Keycloak Realm — Cluster", responses: { '200': { description: ok } } }
+    post: { tags: [M0009], summary: "Create Keycloak Realm — Cluster", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-cluster/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0009], summary: "Get Keycloak Realm — Cluster", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0009], summary: "Update Keycloak Realm — Cluster", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-school:
+    get: { tags: [M0010], summary: "List Keycloak Realm — School", responses: { '200': { description: ok } } }
+    post: { tags: [M0010], summary: "Create Keycloak Realm — School", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /keycloak-realm-school/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0010], summary: "Get Keycloak Realm — School", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0010], summary: "Update Keycloak Realm — School", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mfa-totp:
+    get: { tags: [M0011], summary: "List MFA — TOTP", responses: { '200': { description: ok } } }
+    post: { tags: [M0011], summary: "Create MFA — TOTP", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mfa-totp/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0011], summary: "Get MFA — TOTP", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0011], summary: "Update MFA — TOTP", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mfa-webauthn-fido2:
+    get: { tags: [M0012], summary: "List MFA — WebAuthn/FIDO2", responses: { '200': { description: ok } } }
+    post: { tags: [M0012], summary: "Create MFA — WebAuthn/FIDO2", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mfa-webauthn-fido2/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0012], summary: "Get MFA — WebAuthn/FIDO2", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0012], summary: "Update MFA — WebAuthn/FIDO2", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mfa-sms-otp-fallback:
+    get: { tags: [M0013], summary: "List MFA — SMS-OTP Fallback", responses: { '200': { description: ok } } }
+    post: { tags: [M0013], summary: "Create MFA — SMS-OTP Fallback", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mfa-sms-otp-fallback/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0013], summary: "Get MFA — SMS-OTP Fallback", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0013], summary: "Update MFA — SMS-OTP Fallback", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /aal3-step-up-governance-finance:
+    get: { tags: [M0014], summary: "List AAL3 Step-Up (governance/finance)", responses: { '200': { description: ok } } }
+    post: { tags: [M0014], summary: "Create AAL3 Step-Up (governance/finance)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /aal3-step-up-governance-finance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0014], summary: "Get AAL3 Step-Up (governance/finance)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0014], summary: "Update AAL3 Step-Up (governance/finance)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /oidc-federation:
+    get: { tags: [M0015], summary: "List OIDC Federation", responses: { '200': { description: ok } } }
+    post: { tags: [M0015], summary: "Create OIDC Federation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /oidc-federation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0015], summary: "Get OIDC Federation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0015], summary: "Update OIDC Federation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /saml-2-0-federation:
+    get: { tags: [M0016], summary: "List SAML 2.0 Federation", responses: { '200': { description: ok } } }
+    post: { tags: [M0016], summary: "Create SAML 2.0 Federation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /saml-2-0-federation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0016], summary: "Get SAML 2.0 Federation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0016], summary: "Update SAML 2.0 Federation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /ldap-federation:
+    get: { tags: [M0017], summary: "List LDAP Federation", responses: { '200': { description: ok } } }
+    post: { tags: [M0017], summary: "Create LDAP Federation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ldap-federation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0017], summary: "Get LDAP Federation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0017], summary: "Update LDAP Federation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /digilocker-sso:
+    get: { tags: [M0018], summary: "List DigiLocker SSO", responses: { '200': { description: ok } } }
+    post: { tags: [M0018], summary: "Create DigiLocker SSO", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /digilocker-sso/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0018], summary: "Get DigiLocker SSO", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0018], summary: "Update DigiLocker SSO", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /consent-manager-dpdp:
+    get: { tags: [M0019], summary: "List Consent Manager (DPDP)", responses: { '200': { description: ok } } }
+    post: { tags: [M0019], summary: "Create Consent Manager (DPDP)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /consent-manager-dpdp/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0019], summary: "Get Consent Manager (DPDP)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0019], summary: "Update Consent Manager (DPDP)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /data-principal-portal:
+    get: { tags: [M0020], summary: "List Data-Principal Portal", responses: { '200': { description: ok } } }
+    post: { tags: [M0020], summary: "Create Data-Principal Portal", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /data-principal-portal/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0020], summary: "Get Data-Principal Portal", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0020], summary: "Update Data-Principal Portal", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dpo-endpoint:
+    get: { tags: [M0021], summary: "List DPO Endpoint", responses: { '200': { description: ok } } }
+    post: { tags: [M0021], summary: "Create DPO Endpoint", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dpo-endpoint/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0021], summary: "Get DPO Endpoint", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0021], summary: "Update DPO Endpoint", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /consent-receipt-vc:
+    get: { tags: [M0022], summary: "List Consent Receipt (VC)", responses: { '200': { description: ok } } }
+    post: { tags: [M0022], summary: "Create Consent Receipt (VC)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /consent-receipt-vc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0022], summary: "Get Consent Receipt (VC)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0022], summary: "Update Consent Receipt (VC)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /session-management:
+    get: { tags: [M0023], summary: "List Session Management", responses: { '200': { description: ok } } }
+    post: { tags: [M0023], summary: "Create Session Management", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /session-management/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0023], summary: "Get Session Management", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0023], summary: "Update Session Management", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /refresh-token-rotation:
+    get: { tags: [M0024], summary: "List Refresh-Token Rotation", responses: { '200': { description: ok } } }
+    post: { tags: [M0024], summary: "Create Refresh-Token Rotation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /refresh-token-rotation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0024], summary: "Get Refresh-Token Rotation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0024], summary: "Update Refresh-Token Rotation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /profile-service:
+    get: { tags: [M0025], summary: "List Profile Service", responses: { '200': { description: ok } } }
+    post: { tags: [M0025], summary: "Create Profile Service", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /profile-service/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0025], summary: "Get Profile Service", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0025], summary: "Update Profile Service", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /profile-photo-pii-redacted:
+    get: { tags: [M0026], summary: "List Profile Photo (PII-redacted)", responses: { '200': { description: ok } } }
+    post: { tags: [M0026], summary: "Create Profile Photo (PII-redacted)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /profile-photo-pii-redacted/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0026], summary: "Get Profile Photo (PII-redacted)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0026], summary: "Update Profile Photo (PII-redacted)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /role-assignment:
+    get: { tags: [M0027], summary: "List Role Assignment", responses: { '200': { description: ok } } }
+    post: { tags: [M0027], summary: "Create Role Assignment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /role-assignment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0027], summary: "Get Role Assignment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0027], summary: "Update Role Assignment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rebac-relationship-store-spicedb:
+    get: { tags: [M0028], summary: "List ReBAC Relationship Store (SpiceDB)", responses: { '200': { description: ok } } }
+    post: { tags: [M0028], summary: "Create ReBAC Relationship Store (SpiceDB)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rebac-relationship-store-spicedb/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0028], summary: "Get ReBAC Relationship Store (SpiceDB)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0028], summary: "Update ReBAC Relationship Store (SpiceDB)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /workload-identity-spire:
+    get: { tags: [M0029], summary: "List Workload Identity (SPIRE)", responses: { '200': { description: ok } } }
+    post: { tags: [M0029], summary: "Create Workload Identity (SPIRE)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /workload-identity-spire/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0029], summary: "Get Workload Identity (SPIRE)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0029], summary: "Update Workload Identity (SPIRE)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /service-account-registry:
+    get: { tags: [M0030], summary: "List Service-Account Registry", responses: { '200': { description: ok } } }
+    post: { tags: [M0030], summary: "Create Service-Account Registry", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /service-account-registry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0030], summary: "Get Service-Account Registry", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0030], summary: "Update Service-Account Registry", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /aadhaar-e-kyc-wrapper-consent-bound:
+    get: { tags: [M0031], summary: "List Aadhaar e-KYC Wrapper (consent-bound)", responses: { '200': { description: ok } } }
+    post: { tags: [M0031], summary: "Create Aadhaar e-KYC Wrapper (consent-bound)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /aadhaar-e-kyc-wrapper-consent-bound/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0031], summary: "Get Aadhaar e-KYC Wrapper (consent-bound)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0031], summary: "Update Aadhaar e-KYC Wrapper (consent-bound)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /account-lockout-anomaly:
+    get: { tags: [M0032], summary: "List Account Lockout & Anomaly", responses: { '200': { description: ok } } }
+    post: { tags: [M0032], summary: "Create Account Lockout & Anomaly", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /account-lockout-anomaly/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0032], summary: "Get Account Lockout & Anomaly", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0032], summary: "Update Account Lockout & Anomaly", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /device-binding:
+    get: { tags: [M0033], summary: "List Device Binding", responses: { '200': { description: ok } } }
+    post: { tags: [M0033], summary: "Create Device Binding", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /device-binding/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0033], summary: "Get Device Binding", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0033], summary: "Update Device Binding", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /impersonation-audit:
+    get: { tags: [M0034], summary: "List Impersonation Audit", responses: { '200': { description: ok } } }
+    post: { tags: [M0034], summary: "Create Impersonation Audit", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /impersonation-audit/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0034], summary: "Get Impersonation Audit", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0034], summary: "Update Impersonation Audit", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /identity-reconciliation-udise-apaar:
+    get: { tags: [M0035], summary: "List Identity Reconciliation (UDISE+/APAAR)", responses: { '200': { description: ok } } }
+    post: { tags: [M0035], summary: "Create Identity Reconciliation (UDISE+/APAAR)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /identity-reconciliation-udise-apaar/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0035], summary: "Get Identity Reconciliation (UDISE+/APAAR)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0035], summary: "Update Identity Reconciliation (UDISE+/APAAR)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

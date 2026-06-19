@@ -9,7 +9,7 @@ grants := {
 	"TEACHER": {"roster.read", "marks.write", "lesson.read", "grievance.file"},
 	"HEAD_TEACHER": {"school.read", "staff.read", "scheme.deliver", "audit.read"},
 	"BEO": {"block.read", "mentor.visit"},
-	"DEO": {"district.read", "scheme.rollout"},
+	"DEO": {"district.read", "scheme.rollout", "fund.release"},
 	"DIRECTOR_DSE": {"circular.draft", "report.read"},
 	"SECRETARY_SE": {"policy.read", "audit.read"},
 	"AUDITOR": {"audit.read", "extract.sign"},

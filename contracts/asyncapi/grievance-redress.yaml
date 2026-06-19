@@ -1,0 +1,247 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — grievance-redress events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for grievance-redress. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  grievance-intake-multi-channel.events:
+    address: "vasa.grievance-redress.grievance-intake-multi-channel"
+    description: "Domain events for Grievance Intake (multi-channel)"
+    messages:
+      changed: { name: M0240Changed, contentType: application/json }
+  grievance-classification-grievance-agent.events:
+    address: "vasa.grievance-redress.grievance-classification-grievance-agent"
+    description: "Domain events for Grievance Classification (Grievance Agent)"
+    messages:
+      changed: { name: M0241Changed, contentType: application/json }
+  grievance-triage.events:
+    address: "vasa.grievance-redress.grievance-triage"
+    description: "Domain events for Grievance Triage"
+    messages:
+      changed: { name: M0242Changed, contentType: application/json }
+  jurisdiction-routing.events:
+    address: "vasa.grievance-redress.jurisdiction-routing"
+    description: "Domain events for Jurisdiction Routing"
+    messages:
+      changed: { name: M0243Changed, contentType: application/json }
+  sla-tracker.events:
+    address: "vasa.grievance-redress.sla-tracker"
+    description: "Domain events for SLA Tracker"
+    messages:
+      changed: { name: M0244Changed, contentType: application/json }
+  escalation-engine.events:
+    address: "vasa.grievance-redress.escalation-engine"
+    description: "Domain events for Escalation Engine"
+    messages:
+      changed: { name: M0245Changed, contentType: application/json }
+  redress-recommendation.events:
+    address: "vasa.grievance-redress.redress-recommendation"
+    description: "Domain events for Redress Recommendation"
+    messages:
+      changed: { name: M0246Changed, contentType: application/json }
+  resolution-workflow.events:
+    address: "vasa.grievance-redress.resolution-workflow"
+    description: "Domain events for Resolution Workflow"
+    messages:
+      changed: { name: M0247Changed, contentType: application/json }
+  satisfaction-survey.events:
+    address: "vasa.grievance-redress.satisfaction-survey"
+    description: "Domain events for Satisfaction Survey"
+    messages:
+      changed: { name: M0248Changed, contentType: application/json }
+  anonymous-reporting.events:
+    address: "vasa.grievance-redress.anonymous-reporting"
+    description: "Domain events for Anonymous Reporting"
+    messages:
+      changed: { name: M0249Changed, contentType: application/json }
+  pocso-safety-pipeline.events:
+    address: "vasa.grievance-redress.pocso-safety-pipeline"
+    description: "Domain events for POCSO Safety Pipeline"
+    messages:
+      changed: { name: M0250Changed, contentType: application/json }
+  csam-detector-human-in-loop.events:
+    address: "vasa.grievance-redress.csam-detector-human-in-loop"
+    description: "Domain events for CSAM Detector (human-in-loop)"
+    messages:
+      changed: { name: M0251Changed, contentType: application/json }
+  mandatory-reporting-workflow.events:
+    address: "vasa.grievance-redress.mandatory-reporting-workflow"
+    description: "Domain events for Mandatory-Reporting Workflow"
+    messages:
+      changed: { name: M0252Changed, contentType: application/json }
+  evidence-chain-of-custody.events:
+    address: "vasa.grievance-redress.evidence-chain-of-custody"
+    description: "Domain events for Evidence Chain-of-Custody"
+    messages:
+      changed: { name: M0253Changed, contentType: application/json }
+  child-welfare-committee-jj-link.events:
+    address: "vasa.grievance-redress.child-welfare-committee-jj-link"
+    description: "Domain events for Child-Welfare-Committee (JJ) Link"
+    messages:
+      changed: { name: M0254Changed, contentType: application/json }
+  anti-ragging-safety.events:
+    address: "vasa.grievance-redress.anti-ragging-safety"
+    description: "Domain events for Anti-Ragging / Safety"
+    messages:
+      changed: { name: M0255Changed, contentType: application/json }
+  adult-minor-channel-guardrail.events:
+    address: "vasa.grievance-redress.adult-minor-channel-guardrail"
+    description: "Domain events for Adult-Minor Channel Guardrail"
+    messages:
+      changed: { name: M0256Changed, contentType: application/json }
+  content-safety-scan-upload.events:
+    address: "vasa.grievance-redress.content-safety-scan-upload"
+    description: "Domain events for Content Safety Scan (upload)"
+    messages:
+      changed: { name: M0257Changed, contentType: application/json }
+  pii-redaction-faces-contacts.events:
+    address: "vasa.grievance-redress.pii-redaction-faces-contacts"
+    description: "Domain events for PII Redaction (faces/contacts)"
+    messages:
+      changed: { name: M0258Changed, contentType: application/json }
+  age-appropriate-filter.events:
+    address: "vasa.grievance-redress.age-appropriate-filter"
+    description: "Domain events for Age-Appropriate Filter"
+    messages:
+      changed: { name: M0259Changed, contentType: application/json }
+  whistle-blower-protection.events:
+    address: "vasa.grievance-redress.whistle-blower-protection"
+    description: "Domain events for Whistle-blower Protection"
+    messages:
+      changed: { name: M0260Changed, contentType: application/json }
+  grievance-analytics.events:
+    address: "vasa.grievance-redress.grievance-analytics"
+    description: "Domain events for Grievance Analytics"
+    messages:
+      changed: { name: M0261Changed, contentType: application/json }
+  rti-request-intake.events:
+    address: "vasa.grievance-redress.rti-request-intake"
+    description: "Domain events for RTI Request Intake"
+    messages:
+      changed: { name: M0262Changed, contentType: application/json }
+  rti-workflow.events:
+    address: "vasa.grievance-redress.rti-workflow"
+    description: "Domain events for RTI Workflow"
+    messages:
+      changed: { name: M0263Changed, contentType: application/json }
+  cpgrams-bridge.events:
+    address: "vasa.grievance-redress.cpgrams-bridge"
+    description: "Domain events for CPGRAMS Bridge"
+    messages:
+      changed: { name: M0264Changed, contentType: application/json }
+  constituency-grievance.events:
+    address: "vasa.grievance-redress.constituency-grievance"
+    description: "Domain events for Constituency Grievance"
+    messages:
+      changed: { name: M0265Changed, contentType: application/json }
+  public-grievance-tracker.events:
+    address: "vasa.grievance-redress.public-grievance-tracker"
+    description: "Domain events for Public Grievance Tracker"
+    messages:
+      changed: { name: M0266Changed, contentType: application/json }
+  disposal-monitoring.events:
+    address: "vasa.grievance-redress.disposal-monitoring"
+    description: "Domain events for Disposal Monitoring"
+    messages:
+      changed: { name: M0267Changed, contentType: application/json }
+  legal-case-tracker.events:
+    address: "vasa.grievance-redress.legal-case-tracker"
+    description: "Domain events for Legal-Case Tracker"
+    messages:
+      changed: { name: M0268Changed, contentType: application/json }
+  compliance-reporting-grievance.events:
+    address: "vasa.grievance-redress.compliance-reporting-grievance"
+    description: "Domain events for Compliance Reporting (grievance)"
+    messages:
+      changed: { name: M0269Changed, contentType: application/json }
+operations:
+  onM0240Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-intake-multi-channel.events' }
+  onM0241Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-classification-grievance-agent.events' }
+  onM0242Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-triage.events' }
+  onM0243Changed:
+    action: receive
+    channel: { $ref: '#/channels/jurisdiction-routing.events' }
+  onM0244Changed:
+    action: receive
+    channel: { $ref: '#/channels/sla-tracker.events' }
+  onM0245Changed:
+    action: receive
+    channel: { $ref: '#/channels/escalation-engine.events' }
+  onM0246Changed:
+    action: receive
+    channel: { $ref: '#/channels/redress-recommendation.events' }
+  onM0247Changed:
+    action: receive
+    channel: { $ref: '#/channels/resolution-workflow.events' }
+  onM0248Changed:
+    action: receive
+    channel: { $ref: '#/channels/satisfaction-survey.events' }
+  onM0249Changed:
+    action: receive
+    channel: { $ref: '#/channels/anonymous-reporting.events' }
+  onM0250Changed:
+    action: receive
+    channel: { $ref: '#/channels/pocso-safety-pipeline.events' }
+  onM0251Changed:
+    action: receive
+    channel: { $ref: '#/channels/csam-detector-human-in-loop.events' }
+  onM0252Changed:
+    action: receive
+    channel: { $ref: '#/channels/mandatory-reporting-workflow.events' }
+  onM0253Changed:
+    action: receive
+    channel: { $ref: '#/channels/evidence-chain-of-custody.events' }
+  onM0254Changed:
+    action: receive
+    channel: { $ref: '#/channels/child-welfare-committee-jj-link.events' }
+  onM0255Changed:
+    action: receive
+    channel: { $ref: '#/channels/anti-ragging-safety.events' }
+  onM0256Changed:
+    action: receive
+    channel: { $ref: '#/channels/adult-minor-channel-guardrail.events' }
+  onM0257Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-safety-scan-upload.events' }
+  onM0258Changed:
+    action: receive
+    channel: { $ref: '#/channels/pii-redaction-faces-contacts.events' }
+  onM0259Changed:
+    action: receive
+    channel: { $ref: '#/channels/age-appropriate-filter.events' }
+  onM0260Changed:
+    action: receive
+    channel: { $ref: '#/channels/whistle-blower-protection.events' }
+  onM0261Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-analytics.events' }
+  onM0262Changed:
+    action: receive
+    channel: { $ref: '#/channels/rti-request-intake.events' }
+  onM0263Changed:
+    action: receive
+    channel: { $ref: '#/channels/rti-workflow.events' }
+  onM0264Changed:
+    action: receive
+    channel: { $ref: '#/channels/cpgrams-bridge.events' }
+  onM0265Changed:
+    action: receive
+    channel: { $ref: '#/channels/constituency-grievance.events' }
+  onM0266Changed:
+    action: receive
+    channel: { $ref: '#/channels/public-grievance-tracker.events' }
+  onM0267Changed:
+    action: receive
+    channel: { $ref: '#/channels/disposal-monitoring.events' }
+  onM0268Changed:
+    action: receive
+    channel: { $ref: '#/channels/legal-case-tracker.events' }
+  onM0269Changed:
+    action: receive
+    channel: { $ref: '#/channels/compliance-reporting-grievance.events' }

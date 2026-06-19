@@ -27,7 +27,7 @@ team must satisfy. Honesty posture: *we do not claim a phase done until its real
 | B-020 | **Hyperledger Besu validator network** (4–7 nodes incl. CAG/IITM/Anna Univ) | 7.2, Phase 6 | inter-institutional MoUs |
 | B-021 | **EMQX/MQTT + physical IoT devices + edge K3s** | 7.1, Phase 6 | hardware deployment |
 | B-022 | **Sovereign DPI live credentials/MoUs** — NDEAR-S, APAAR, UDISE+, DIKSHA, PFMS, DigiLocker, DGE | L4, Phase 3 | Govt API access |
-| B-023 | **Network egress is policy-restricted** here (supabase.com 403; GitHub release-asset CDN blocked) → cannot fetch the OPA/conftest binary, PostgREST, or run cloud signups | policy execution, live cloud | environment policy |
+| B-023 | **Network egress is policy-restricted** (supabase.com 403; GitHub release-asset CDN blocked) → cannot run cloud signups / fetch release binaries directly. **RESOLVED for OPA:** built from source via the Go module proxy (`GOTOOLCHAIN=auto go install github.com/open-policy-agent/opa@latest`); the policy plane now executes (27/27 `opa test`). PostgREST/cloud remain blocked. | live cloud | environment policy |
 
 ## Class D — Organisation / governance (human gates the spec mandates)
 | ID | Blocker | Blocks | Needed from |

@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — grievance-redress API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the grievance-redress domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0240
+    description: "Grievance Intake (multi-channel)"
+  - name: M0241
+    description: "Grievance Classification (Grievance Agent)"
+  - name: M0242
+    description: "Grievance Triage"
+  - name: M0243
+    description: "Jurisdiction Routing"
+  - name: M0244
+    description: "SLA Tracker"
+  - name: M0245
+    description: "Escalation Engine"
+  - name: M0246
+    description: "Redress Recommendation"
+  - name: M0247
+    description: "Resolution Workflow"
+  - name: M0248
+    description: "Satisfaction Survey"
+  - name: M0249
+    description: "Anonymous Reporting"
+  - name: M0250
+    description: "POCSO Safety Pipeline"
+  - name: M0251
+    description: "CSAM Detector (human-in-loop)"
+  - name: M0252
+    description: "Mandatory-Reporting Workflow"
+  - name: M0253
+    description: "Evidence Chain-of-Custody"
+  - name: M0254
+    description: "Child-Welfare-Committee (JJ) Link"
+  - name: M0255
+    description: "Anti-Ragging / Safety"
+  - name: M0256
+    description: "Adult-Minor Channel Guardrail"
+  - name: M0257
+    description: "Content Safety Scan (upload)"
+  - name: M0258
+    description: "PII Redaction (faces/contacts)"
+  - name: M0259
+    description: "Age-Appropriate Filter"
+  - name: M0260
+    description: "Whistle-blower Protection"
+  - name: M0261
+    description: "Grievance Analytics"
+  - name: M0262
+    description: "RTI Request Intake"
+  - name: M0263
+    description: "RTI Workflow"
+  - name: M0264
+    description: "CPGRAMS Bridge"
+  - name: M0265
+    description: "Constituency Grievance"
+  - name: M0266
+    description: "Public Grievance Tracker"
+  - name: M0267
+    description: "Disposal Monitoring"
+  - name: M0268
+    description: "Legal-Case Tracker"
+  - name: M0269
+    description: "Compliance Reporting (grievance)"
+paths:
+  /grievance-intake-multi-channel:
+    get: { tags: [M0240], summary: "List Grievance Intake (multi-channel)", responses: { '200': { description: ok } } }
+    post: { tags: [M0240], summary: "Create Grievance Intake (multi-channel)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-intake-multi-channel/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0240], summary: "Get Grievance Intake (multi-channel)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0240], summary: "Update Grievance Intake (multi-channel)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grievance-classification-grievance-agent:
+    get: { tags: [M0241], summary: "List Grievance Classification (Grievance Agent)", responses: { '200': { description: ok } } }
+    post: { tags: [M0241], summary: "Create Grievance Classification (Grievance Agent)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-classification-grievance-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0241], summary: "Get Grievance Classification (Grievance Agent)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0241], summary: "Update Grievance Classification (Grievance Agent)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grievance-triage:
+    get: { tags: [M0242], summary: "List Grievance Triage", responses: { '200': { description: ok } } }
+    post: { tags: [M0242], summary: "Create Grievance Triage", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-triage/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0242], summary: "Get Grievance Triage", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0242], summary: "Update Grievance Triage", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /jurisdiction-routing:
+    get: { tags: [M0243], summary: "List Jurisdiction Routing", responses: { '200': { description: ok } } }
+    post: { tags: [M0243], summary: "Create Jurisdiction Routing", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /jurisdiction-routing/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0243], summary: "Get Jurisdiction Routing", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0243], summary: "Update Jurisdiction Routing", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /sla-tracker:
+    get: { tags: [M0244], summary: "List SLA Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0244], summary: "Create SLA Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /sla-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0244], summary: "Get SLA Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0244], summary: "Update SLA Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /escalation-engine:
+    get: { tags: [M0245], summary: "List Escalation Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0245], summary: "Create Escalation Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /escalation-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0245], summary: "Get Escalation Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0245], summary: "Update Escalation Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /redress-recommendation:
+    get: { tags: [M0246], summary: "List Redress Recommendation", responses: { '200': { description: ok } } }
+    post: { tags: [M0246], summary: "Create Redress Recommendation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /redress-recommendation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0246], summary: "Get Redress Recommendation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0246], summary: "Update Redress Recommendation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /resolution-workflow:
+    get: { tags: [M0247], summary: "List Resolution Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0247], summary: "Create Resolution Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /resolution-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0247], summary: "Get Resolution Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0247], summary: "Update Resolution Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /satisfaction-survey:
+    get: { tags: [M0248], summary: "List Satisfaction Survey", responses: { '200': { description: ok } } }
+    post: { tags: [M0248], summary: "Create Satisfaction Survey", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /satisfaction-survey/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0248], summary: "Get Satisfaction Survey", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0248], summary: "Update Satisfaction Survey", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /anonymous-reporting:
+    get: { tags: [M0249], summary: "List Anonymous Reporting", responses: { '200': { description: ok } } }
+    post: { tags: [M0249], summary: "Create Anonymous Reporting", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /anonymous-reporting/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0249], summary: "Get Anonymous Reporting", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0249], summary: "Update Anonymous Reporting", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pocso-safety-pipeline:
+    get: { tags: [M0250], summary: "List POCSO Safety Pipeline", responses: { '200': { description: ok } } }
+    post: { tags: [M0250], summary: "Create POCSO Safety Pipeline", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pocso-safety-pipeline/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0250], summary: "Get POCSO Safety Pipeline", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0250], summary: "Update POCSO Safety Pipeline", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /csam-detector-human-in-loop:
+    get: { tags: [M0251], summary: "List CSAM Detector (human-in-loop)", responses: { '200': { description: ok } } }
+    post: { tags: [M0251], summary: "Create CSAM Detector (human-in-loop)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /csam-detector-human-in-loop/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0251], summary: "Get CSAM Detector (human-in-loop)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0251], summary: "Update CSAM Detector (human-in-loop)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mandatory-reporting-workflow:
+    get: { tags: [M0252], summary: "List Mandatory-Reporting Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0252], summary: "Create Mandatory-Reporting Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mandatory-reporting-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0252], summary: "Get Mandatory-Reporting Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0252], summary: "Update Mandatory-Reporting Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /evidence-chain-of-custody:
+    get: { tags: [M0253], summary: "List Evidence Chain-of-Custody", responses: { '200': { description: ok } } }
+    post: { tags: [M0253], summary: "Create Evidence Chain-of-Custody", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /evidence-chain-of-custody/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0253], summary: "Get Evidence Chain-of-Custody", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0253], summary: "Update Evidence Chain-of-Custody", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /child-welfare-committee-jj-link:
+    get: { tags: [M0254], summary: "List Child-Welfare-Committee (JJ) Link", responses: { '200': { description: ok } } }
+    post: { tags: [M0254], summary: "Create Child-Welfare-Committee (JJ) Link", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /child-welfare-committee-jj-link/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0254], summary: "Get Child-Welfare-Committee (JJ) Link", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0254], summary: "Update Child-Welfare-Committee (JJ) Link", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /anti-ragging-safety:
+    get: { tags: [M0255], summary: "List Anti-Ragging / Safety", responses: { '200': { description: ok } } }
+    post: { tags: [M0255], summary: "Create Anti-Ragging / Safety", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /anti-ragging-safety/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0255], summary: "Get Anti-Ragging / Safety", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0255], summary: "Update Anti-Ragging / Safety", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /adult-minor-channel-guardrail:
+    get: { tags: [M0256], summary: "List Adult-Minor Channel Guardrail", responses: { '200': { description: ok } } }
+    post: { tags: [M0256], summary: "Create Adult-Minor Channel Guardrail", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /adult-minor-channel-guardrail/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0256], summary: "Get Adult-Minor Channel Guardrail", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0256], summary: "Update Adult-Minor Channel Guardrail", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-safety-scan-upload:
+    get: { tags: [M0257], summary: "List Content Safety Scan (upload)", responses: { '200': { description: ok } } }
+    post: { tags: [M0257], summary: "Create Content Safety Scan (upload)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-safety-scan-upload/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0257], summary: "Get Content Safety Scan (upload)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0257], summary: "Update Content Safety Scan (upload)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pii-redaction-faces-contacts:
+    get: { tags: [M0258], summary: "List PII Redaction (faces/contacts)", responses: { '200': { description: ok } } }
+    post: { tags: [M0258], summary: "Create PII Redaction (faces/contacts)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pii-redaction-faces-contacts/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0258], summary: "Get PII Redaction (faces/contacts)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0258], summary: "Update PII Redaction (faces/contacts)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /age-appropriate-filter:
+    get: { tags: [M0259], summary: "List Age-Appropriate Filter", responses: { '200': { description: ok } } }
+    post: { tags: [M0259], summary: "Create Age-Appropriate Filter", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /age-appropriate-filter/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0259], summary: "Get Age-Appropriate Filter", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0259], summary: "Update Age-Appropriate Filter", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /whistle-blower-protection:
+    get: { tags: [M0260], summary: "List Whistle-blower Protection", responses: { '200': { description: ok } } }
+    post: { tags: [M0260], summary: "Create Whistle-blower Protection", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /whistle-blower-protection/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0260], summary: "Get Whistle-blower Protection", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0260], summary: "Update Whistle-blower Protection", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grievance-analytics:
+    get: { tags: [M0261], summary: "List Grievance Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0261], summary: "Create Grievance Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0261], summary: "Get Grievance Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0261], summary: "Update Grievance Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rti-request-intake:
+    get: { tags: [M0262], summary: "List RTI Request Intake", responses: { '200': { description: ok } } }
+    post: { tags: [M0262], summary: "Create RTI Request Intake", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rti-request-intake/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0262], summary: "Get RTI Request Intake", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0262], summary: "Update RTI Request Intake", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rti-workflow:
+    get: { tags: [M0263], summary: "List RTI Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0263], summary: "Create RTI Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rti-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0263], summary: "Get RTI Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0263], summary: "Update RTI Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cpgrams-bridge:
+    get: { tags: [M0264], summary: "List CPGRAMS Bridge", responses: { '200': { description: ok } } }
+    post: { tags: [M0264], summary: "Create CPGRAMS Bridge", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cpgrams-bridge/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0264], summary: "Get CPGRAMS Bridge", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0264], summary: "Update CPGRAMS Bridge", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /constituency-grievance:
+    get: { tags: [M0265], summary: "List Constituency Grievance", responses: { '200': { description: ok } } }
+    post: { tags: [M0265], summary: "Create Constituency Grievance", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /constituency-grievance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0265], summary: "Get Constituency Grievance", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0265], summary: "Update Constituency Grievance", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /public-grievance-tracker:
+    get: { tags: [M0266], summary: "List Public Grievance Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0266], summary: "Create Public Grievance Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /public-grievance-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0266], summary: "Get Public Grievance Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0266], summary: "Update Public Grievance Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /disposal-monitoring:
+    get: { tags: [M0267], summary: "List Disposal Monitoring", responses: { '200': { description: ok } } }
+    post: { tags: [M0267], summary: "Create Disposal Monitoring", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /disposal-monitoring/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0267], summary: "Get Disposal Monitoring", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0267], summary: "Update Disposal Monitoring", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /legal-case-tracker:
+    get: { tags: [M0268], summary: "List Legal-Case Tracker", responses: { '200': { description: ok } } }
+    post: { tags: [M0268], summary: "Create Legal-Case Tracker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /legal-case-tracker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0268], summary: "Get Legal-Case Tracker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0268], summary: "Update Legal-Case Tracker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /compliance-reporting-grievance:
+    get: { tags: [M0269], summary: "List Compliance Reporting (grievance)", responses: { '200': { description: ok } } }
+    post: { tags: [M0269], summary: "Create Compliance Reporting (grievance)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /compliance-reporting-grievance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0269], summary: "Get Compliance Reporting (grievance)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0269], summary: "Update Compliance Reporting (grievance)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

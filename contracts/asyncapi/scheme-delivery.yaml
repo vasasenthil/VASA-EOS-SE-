@@ -1,0 +1,271 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — scheme-delivery events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for scheme-delivery. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  scheme-catalogue-per-go.events:
+    address: "vasa.scheme-delivery.scheme-catalogue-per-go"
+    description: "Domain events for Scheme Catalogue (per GO)"
+    messages:
+      changed: { name: M0177Changed, contentType: application/json }
+  eligibility-engine.events:
+    address: "vasa.scheme-delivery.eligibility-engine"
+    description: "Domain events for Eligibility Engine"
+    messages:
+      changed: { name: M0178Changed, contentType: application/json }
+  entitlement-computation.events:
+    address: "vasa.scheme-delivery.entitlement-computation"
+    description: "Domain events for Entitlement Computation"
+    messages:
+      changed: { name: M0179Changed, contentType: application/json }
+  reservation-engine-bc-mbc-sc-st-dnt.events:
+    address: "vasa.scheme-delivery.reservation-engine-bc-mbc-sc-st-dnt"
+    description: "Domain events for Reservation Engine (BC/MBC/SC/ST/DNT)"
+    messages:
+      changed: { name: M0180Changed, contentType: application/json }
+  scholarship-sc-st.events:
+    address: "vasa.scheme-delivery.scholarship-sc-st"
+    description: "Domain events for Scholarship — SC/ST"
+    messages:
+      changed: { name: M0181Changed, contentType: application/json }
+  scholarship-obc-mbc.events:
+    address: "vasa.scheme-delivery.scholarship-obc-mbc"
+    description: "Domain events for Scholarship — OBC/MBC"
+    messages:
+      changed: { name: M0182Changed, contentType: application/json }
+  scholarship-ebc.events:
+    address: "vasa.scheme-delivery.scholarship-ebc"
+    description: "Domain events for Scholarship — EBC"
+    messages:
+      changed: { name: M0183Changed, contentType: application/json }
+  scholarship-pwd.events:
+    address: "vasa.scheme-delivery.scholarship-pwd"
+    description: "Domain events for Scholarship — PwD"
+    messages:
+      changed: { name: M0184Changed, contentType: application/json }
+  scholarship-girl-child.events:
+    address: "vasa.scheme-delivery.scholarship-girl-child"
+    description: "Domain events for Scholarship — Girl-Child"
+    messages:
+      changed: { name: M0185Changed, contentType: application/json }
+  scholarship-migrant.events:
+    address: "vasa.scheme-delivery.scholarship-migrant"
+    description: "Domain events for Scholarship — Migrant"
+    messages:
+      changed: { name: M0186Changed, contentType: application/json }
+  pfms-disbursement.events:
+    address: "vasa.scheme-delivery.pfms-disbursement"
+    description: "Domain events for PFMS Disbursement"
+    messages:
+      changed: { name: M0187Changed, contentType: application/json }
+  dbt-apbs.events:
+    address: "vasa.scheme-delivery.dbt-apbs"
+    description: "Domain events for DBT / APBS"
+    messages:
+      changed: { name: M0188Changed, contentType: application/json }
+  bank-account-verification.events:
+    address: "vasa.scheme-delivery.bank-account-verification"
+    description: "Domain events for Bank-Account Verification"
+    messages:
+      changed: { name: M0189Changed, contentType: application/json }
+  beneficiary-register.events:
+    address: "vasa.scheme-delivery.beneficiary-register"
+    description: "Domain events for Beneficiary Register"
+    messages:
+      changed: { name: M0190Changed, contentType: application/json }
+  scheme-fund-flow-ledger.events:
+    address: "vasa.scheme-delivery.scheme-fund-flow-ledger"
+    description: "Domain events for Scheme Fund-Flow Ledger"
+    messages:
+      changed: { name: M0191Changed, contentType: application/json }
+  fund-sanction-workflow.events:
+    address: "vasa.scheme-delivery.fund-sanction-workflow"
+    description: "Domain events for Fund Sanction Workflow"
+    messages:
+      changed: { name: M0192Changed, contentType: application/json }
+  fund-reconciliation-pfms.events:
+    address: "vasa.scheme-delivery.fund-reconciliation-pfms"
+    description: "Domain events for Fund Reconciliation (PFMS)"
+    messages:
+      changed: { name: M0193Changed, contentType: application/json }
+  leakage-detection.events:
+    address: "vasa.scheme-delivery.leakage-detection"
+    description: "Domain events for Leakage Detection"
+    messages:
+      changed: { name: M0194Changed, contentType: application/json }
+  free-textbook-distribution.events:
+    address: "vasa.scheme-delivery.free-textbook-distribution"
+    description: "Domain events for Free Textbook Distribution"
+    messages:
+      changed: { name: M0195Changed, contentType: application/json }
+  free-uniform-distribution.events:
+    address: "vasa.scheme-delivery.free-uniform-distribution"
+    description: "Domain events for Free Uniform Distribution"
+    messages:
+      changed: { name: M0196Changed, contentType: application/json }
+  bicycle-scheme.events:
+    address: "vasa.scheme-delivery.bicycle-scheme"
+    description: "Domain events for Bicycle Scheme"
+    messages:
+      changed: { name: M0197Changed, contentType: application/json }
+  laptop-scheme.events:
+    address: "vasa.scheme-delivery.laptop-scheme"
+    description: "Domain events for Laptop Scheme"
+    messages:
+      changed: { name: M0198Changed, contentType: application/json }
+  mid-day-meal-pm-poshan.events:
+    address: "vasa.scheme-delivery.mid-day-meal-pm-poshan"
+    description: "Domain events for Mid-Day-Meal (PM-POSHAN)"
+    messages:
+      changed: { name: M0199Changed, contentType: application/json }
+  mdm-nutrition-tracking.events:
+    address: "vasa.scheme-delivery.mdm-nutrition-tracking"
+    description: "Domain events for MDM Nutrition Tracking"
+    messages:
+      changed: { name: M0200Changed, contentType: application/json }
+  mdm-stock-indent.events:
+    address: "vasa.scheme-delivery.mdm-stock-indent"
+    description: "Domain events for MDM Stock & Indent"
+    messages:
+      changed: { name: M0201Changed, contentType: application/json }
+  breakfast-scheme-tn.events:
+    address: "vasa.scheme-delivery.breakfast-scheme-tn"
+    description: "Domain events for Breakfast Scheme (TN)"
+    messages:
+      changed: { name: M0202Changed, contentType: application/json }
+  transport-bus-pass.events:
+    address: "vasa.scheme-delivery.transport-bus-pass"
+    description: "Domain events for Transport / Bus Pass"
+    messages:
+      changed: { name: M0203Changed, contentType: application/json }
+  hostel-allocation.events:
+    address: "vasa.scheme-delivery.hostel-allocation"
+    description: "Domain events for Hostel Allocation"
+    messages:
+      changed: { name: M0204Changed, contentType: application/json }
+  pudhumai-penn-scheme.events:
+    address: "vasa.scheme-delivery.pudhumai-penn-scheme"
+    description: "Domain events for Pudhumai Penn Scheme"
+    messages:
+      changed: { name: M0205Changed, contentType: application/json }
+  illam-thedi-kalvi.events:
+    address: "vasa.scheme-delivery.illam-thedi-kalvi"
+    description: "Domain events for Illam Thedi Kalvi"
+    messages:
+      changed: { name: M0206Changed, contentType: application/json }
+  welfare-grievance-scheme.events:
+    address: "vasa.scheme-delivery.welfare-grievance-scheme"
+    description: "Domain events for Welfare Grievance (scheme)"
+    messages:
+      changed: { name: M0207Changed, contentType: application/json }
+  scheme-audit-trail-gfr.events:
+    address: "vasa.scheme-delivery.scheme-audit-trail-gfr"
+    description: "Domain events for Scheme Audit Trail (GFR)"
+    messages:
+      changed: { name: M0208Changed, contentType: application/json }
+  account-aggregator-eligibility-consent.events:
+    address: "vasa.scheme-delivery.account-aggregator-eligibility-consent"
+    description: "Domain events for Account-Aggregator Eligibility (consent)"
+    messages:
+      changed: { name: M0209Changed, contentType: application/json }
+operations:
+  onM0177Changed:
+    action: receive
+    channel: { $ref: '#/channels/scheme-catalogue-per-go.events' }
+  onM0178Changed:
+    action: receive
+    channel: { $ref: '#/channels/eligibility-engine.events' }
+  onM0179Changed:
+    action: receive
+    channel: { $ref: '#/channels/entitlement-computation.events' }
+  onM0180Changed:
+    action: receive
+    channel: { $ref: '#/channels/reservation-engine-bc-mbc-sc-st-dnt.events' }
+  onM0181Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-sc-st.events' }
+  onM0182Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-obc-mbc.events' }
+  onM0183Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-ebc.events' }
+  onM0184Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-pwd.events' }
+  onM0185Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-girl-child.events' }
+  onM0186Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-migrant.events' }
+  onM0187Changed:
+    action: receive
+    channel: { $ref: '#/channels/pfms-disbursement.events' }
+  onM0188Changed:
+    action: receive
+    channel: { $ref: '#/channels/dbt-apbs.events' }
+  onM0189Changed:
+    action: receive
+    channel: { $ref: '#/channels/bank-account-verification.events' }
+  onM0190Changed:
+    action: receive
+    channel: { $ref: '#/channels/beneficiary-register.events' }
+  onM0191Changed:
+    action: receive
+    channel: { $ref: '#/channels/scheme-fund-flow-ledger.events' }
+  onM0192Changed:
+    action: receive
+    channel: { $ref: '#/channels/fund-sanction-workflow.events' }
+  onM0193Changed:
+    action: receive
+    channel: { $ref: '#/channels/fund-reconciliation-pfms.events' }
+  onM0194Changed:
+    action: receive
+    channel: { $ref: '#/channels/leakage-detection.events' }
+  onM0195Changed:
+    action: receive
+    channel: { $ref: '#/channels/free-textbook-distribution.events' }
+  onM0196Changed:
+    action: receive
+    channel: { $ref: '#/channels/free-uniform-distribution.events' }
+  onM0197Changed:
+    action: receive
+    channel: { $ref: '#/channels/bicycle-scheme.events' }
+  onM0198Changed:
+    action: receive
+    channel: { $ref: '#/channels/laptop-scheme.events' }
+  onM0199Changed:
+    action: receive
+    channel: { $ref: '#/channels/mid-day-meal-pm-poshan.events' }
+  onM0200Changed:
+    action: receive
+    channel: { $ref: '#/channels/mdm-nutrition-tracking.events' }
+  onM0201Changed:
+    action: receive
+    channel: { $ref: '#/channels/mdm-stock-indent.events' }
+  onM0202Changed:
+    action: receive
+    channel: { $ref: '#/channels/breakfast-scheme-tn.events' }
+  onM0203Changed:
+    action: receive
+    channel: { $ref: '#/channels/transport-bus-pass.events' }
+  onM0204Changed:
+    action: receive
+    channel: { $ref: '#/channels/hostel-allocation.events' }
+  onM0205Changed:
+    action: receive
+    channel: { $ref: '#/channels/pudhumai-penn-scheme.events' }
+  onM0206Changed:
+    action: receive
+    channel: { $ref: '#/channels/illam-thedi-kalvi.events' }
+  onM0207Changed:
+    action: receive
+    channel: { $ref: '#/channels/welfare-grievance-scheme.events' }
+  onM0208Changed:
+    action: receive
+    channel: { $ref: '#/channels/scheme-audit-trail-gfr.events' }
+  onM0209Changed:
+    action: receive
+    channel: { $ref: '#/channels/account-aggregator-eligibility-consent.events' }

@@ -1,0 +1,310 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — teacher-lifecycle API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the teacher-lifecycle domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0109
+    description: "Teacher Recruitment"
+  - name: M0110
+    description: "Teacher Placement"
+  - name: M0111
+    description: "Teacher Transfer (counselling)"
+  - name: M0112
+    description: "Cadre Rationalisation"
+  - name: M0113
+    description: "PTR Compliance (RTE)"
+  - name: M0114
+    description: "Vacancy Register"
+  - name: M0115
+    description: "HRMS Integration (HRMS-TN)"
+  - name: M0116
+    description: "Payroll Linkage (IFMS/Treasury)"
+  - name: M0117
+    description: "Service Book (digital)"
+  - name: M0118
+    description: "Leave Management"
+  - name: M0119
+    description: "Substitute / Cover Arrangement"
+  - name: M0120
+    description: "Staff Attendance"
+  - name: M0121
+    description: "CPD Catalogue"
+  - name: M0122
+    description: "CPD Recommendation (Teacher Agent)"
+  - name: M0123
+    description: "Training Calendar"
+  - name: M0124
+    description: "DIKSHA Teacher CPD"
+  - name: M0125
+    description: "Performance SUPPORT (not evaluation)"
+  - name: M0126
+    description: "Mentoring (BRC/CRC)"
+  - name: M0127
+    description: "Lesson-Plan Assist"
+  - name: M0128
+    description: "Marking Assist"
+  - name: M0129
+    description: "Grievance (teacher)"
+  - name: M0130
+    description: "Background Verification (POCSO)"
+  - name: M0131
+    description: "Non-Teaching Staff Register"
+  - name: M0132
+    description: "Cook-cum-Helper (MDM)"
+  - name: M0133
+    description: "Guest Lecture Management"
+  - name: M0134
+    description: "Teacher Workload Analytics"
+  - name: M0135
+    description: "Subject-Allocation"
+  - name: M0136
+    description: "Timetable Manager"
+  - name: M0137
+    description: "Transfer Counselling Audit"
+  - name: M0138
+    description: "Award & Recognition"
+  - name: M0139
+    description: "Naan Mudhalvan Mentor Pool"
+  - name: M0140
+    description: "Internship Mentor (MMSN)"
+  - name: M0141
+    description: "Teacher Wellbeing"
+paths:
+  /teacher-recruitment:
+    get: { tags: [M0109], summary: "List Teacher Recruitment", responses: { '200': { description: ok } } }
+    post: { tags: [M0109], summary: "Create Teacher Recruitment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-recruitment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0109], summary: "Get Teacher Recruitment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0109], summary: "Update Teacher Recruitment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-placement:
+    get: { tags: [M0110], summary: "List Teacher Placement", responses: { '200': { description: ok } } }
+    post: { tags: [M0110], summary: "Create Teacher Placement", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-placement/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0110], summary: "Get Teacher Placement", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0110], summary: "Update Teacher Placement", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-transfer-counselling:
+    get: { tags: [M0111], summary: "List Teacher Transfer (counselling)", responses: { '200': { description: ok } } }
+    post: { tags: [M0111], summary: "Create Teacher Transfer (counselling)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-transfer-counselling/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0111], summary: "Get Teacher Transfer (counselling)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0111], summary: "Update Teacher Transfer (counselling)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cadre-rationalisation:
+    get: { tags: [M0112], summary: "List Cadre Rationalisation", responses: { '200': { description: ok } } }
+    post: { tags: [M0112], summary: "Create Cadre Rationalisation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cadre-rationalisation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0112], summary: "Get Cadre Rationalisation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0112], summary: "Update Cadre Rationalisation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /ptr-compliance-rte:
+    get: { tags: [M0113], summary: "List PTR Compliance (RTE)", responses: { '200': { description: ok } } }
+    post: { tags: [M0113], summary: "Create PTR Compliance (RTE)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ptr-compliance-rte/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0113], summary: "Get PTR Compliance (RTE)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0113], summary: "Update PTR Compliance (RTE)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /vacancy-register:
+    get: { tags: [M0114], summary: "List Vacancy Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0114], summary: "Create Vacancy Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /vacancy-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0114], summary: "Get Vacancy Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0114], summary: "Update Vacancy Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /hrms-integration-hrms-tn:
+    get: { tags: [M0115], summary: "List HRMS Integration (HRMS-TN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0115], summary: "Create HRMS Integration (HRMS-TN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /hrms-integration-hrms-tn/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0115], summary: "Get HRMS Integration (HRMS-TN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0115], summary: "Update HRMS Integration (HRMS-TN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /payroll-linkage-ifms-treasury:
+    get: { tags: [M0116], summary: "List Payroll Linkage (IFMS/Treasury)", responses: { '200': { description: ok } } }
+    post: { tags: [M0116], summary: "Create Payroll Linkage (IFMS/Treasury)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /payroll-linkage-ifms-treasury/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0116], summary: "Get Payroll Linkage (IFMS/Treasury)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0116], summary: "Update Payroll Linkage (IFMS/Treasury)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /service-book-digital:
+    get: { tags: [M0117], summary: "List Service Book (digital)", responses: { '200': { description: ok } } }
+    post: { tags: [M0117], summary: "Create Service Book (digital)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /service-book-digital/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0117], summary: "Get Service Book (digital)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0117], summary: "Update Service Book (digital)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /leave-management:
+    get: { tags: [M0118], summary: "List Leave Management", responses: { '200': { description: ok } } }
+    post: { tags: [M0118], summary: "Create Leave Management", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /leave-management/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0118], summary: "Get Leave Management", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0118], summary: "Update Leave Management", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /substitute-cover-arrangement:
+    get: { tags: [M0119], summary: "List Substitute / Cover Arrangement", responses: { '200': { description: ok } } }
+    post: { tags: [M0119], summary: "Create Substitute / Cover Arrangement", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /substitute-cover-arrangement/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0119], summary: "Get Substitute / Cover Arrangement", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0119], summary: "Update Substitute / Cover Arrangement", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /staff-attendance:
+    get: { tags: [M0120], summary: "List Staff Attendance", responses: { '200': { description: ok } } }
+    post: { tags: [M0120], summary: "Create Staff Attendance", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /staff-attendance/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0120], summary: "Get Staff Attendance", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0120], summary: "Update Staff Attendance", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cpd-catalogue:
+    get: { tags: [M0121], summary: "List CPD Catalogue", responses: { '200': { description: ok } } }
+    post: { tags: [M0121], summary: "Create CPD Catalogue", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cpd-catalogue/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0121], summary: "Get CPD Catalogue", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0121], summary: "Update CPD Catalogue", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cpd-recommendation-teacher-agent:
+    get: { tags: [M0122], summary: "List CPD Recommendation (Teacher Agent)", responses: { '200': { description: ok } } }
+    post: { tags: [M0122], summary: "Create CPD Recommendation (Teacher Agent)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cpd-recommendation-teacher-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0122], summary: "Get CPD Recommendation (Teacher Agent)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0122], summary: "Update CPD Recommendation (Teacher Agent)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /training-calendar:
+    get: { tags: [M0123], summary: "List Training Calendar", responses: { '200': { description: ok } } }
+    post: { tags: [M0123], summary: "Create Training Calendar", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /training-calendar/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0123], summary: "Get Training Calendar", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0123], summary: "Update Training Calendar", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /diksha-teacher-cpd:
+    get: { tags: [M0124], summary: "List DIKSHA Teacher CPD", responses: { '200': { description: ok } } }
+    post: { tags: [M0124], summary: "Create DIKSHA Teacher CPD", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /diksha-teacher-cpd/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0124], summary: "Get DIKSHA Teacher CPD", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0124], summary: "Update DIKSHA Teacher CPD", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /performance-support-not-evaluation:
+    get: { tags: [M0125], summary: "List Performance SUPPORT (not evaluation)", responses: { '200': { description: ok } } }
+    post: { tags: [M0125], summary: "Create Performance SUPPORT (not evaluation)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /performance-support-not-evaluation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0125], summary: "Get Performance SUPPORT (not evaluation)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0125], summary: "Update Performance SUPPORT (not evaluation)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mentoring-brc-crc:
+    get: { tags: [M0126], summary: "List Mentoring (BRC/CRC)", responses: { '200': { description: ok } } }
+    post: { tags: [M0126], summary: "Create Mentoring (BRC/CRC)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mentoring-brc-crc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0126], summary: "Get Mentoring (BRC/CRC)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0126], summary: "Update Mentoring (BRC/CRC)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /lesson-plan-assist:
+    get: { tags: [M0127], summary: "List Lesson-Plan Assist", responses: { '200': { description: ok } } }
+    post: { tags: [M0127], summary: "Create Lesson-Plan Assist", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /lesson-plan-assist/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0127], summary: "Get Lesson-Plan Assist", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0127], summary: "Update Lesson-Plan Assist", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /marking-assist:
+    get: { tags: [M0128], summary: "List Marking Assist", responses: { '200': { description: ok } } }
+    post: { tags: [M0128], summary: "Create Marking Assist", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /marking-assist/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0128], summary: "Get Marking Assist", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0128], summary: "Update Marking Assist", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grievance-teacher:
+    get: { tags: [M0129], summary: "List Grievance (teacher)", responses: { '200': { description: ok } } }
+    post: { tags: [M0129], summary: "Create Grievance (teacher)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-teacher/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0129], summary: "Get Grievance (teacher)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0129], summary: "Update Grievance (teacher)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /background-verification-pocso:
+    get: { tags: [M0130], summary: "List Background Verification (POCSO)", responses: { '200': { description: ok } } }
+    post: { tags: [M0130], summary: "Create Background Verification (POCSO)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /background-verification-pocso/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0130], summary: "Get Background Verification (POCSO)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0130], summary: "Update Background Verification (POCSO)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /non-teaching-staff-register:
+    get: { tags: [M0131], summary: "List Non-Teaching Staff Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0131], summary: "Create Non-Teaching Staff Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /non-teaching-staff-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0131], summary: "Get Non-Teaching Staff Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0131], summary: "Update Non-Teaching Staff Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /cook-cum-helper-mdm:
+    get: { tags: [M0132], summary: "List Cook-cum-Helper (MDM)", responses: { '200': { description: ok } } }
+    post: { tags: [M0132], summary: "Create Cook-cum-Helper (MDM)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /cook-cum-helper-mdm/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0132], summary: "Get Cook-cum-Helper (MDM)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0132], summary: "Update Cook-cum-Helper (MDM)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /guest-lecture-management:
+    get: { tags: [M0133], summary: "List Guest Lecture Management", responses: { '200': { description: ok } } }
+    post: { tags: [M0133], summary: "Create Guest Lecture Management", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /guest-lecture-management/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0133], summary: "Get Guest Lecture Management", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0133], summary: "Update Guest Lecture Management", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-workload-analytics:
+    get: { tags: [M0134], summary: "List Teacher Workload Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0134], summary: "Create Teacher Workload Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-workload-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0134], summary: "Get Teacher Workload Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0134], summary: "Update Teacher Workload Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /subject-allocation:
+    get: { tags: [M0135], summary: "List Subject-Allocation", responses: { '200': { description: ok } } }
+    post: { tags: [M0135], summary: "Create Subject-Allocation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /subject-allocation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0135], summary: "Get Subject-Allocation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0135], summary: "Update Subject-Allocation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /timetable-manager:
+    get: { tags: [M0136], summary: "List Timetable Manager", responses: { '200': { description: ok } } }
+    post: { tags: [M0136], summary: "Create Timetable Manager", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /timetable-manager/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0136], summary: "Get Timetable Manager", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0136], summary: "Update Timetable Manager", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /transfer-counselling-audit:
+    get: { tags: [M0137], summary: "List Transfer Counselling Audit", responses: { '200': { description: ok } } }
+    post: { tags: [M0137], summary: "Create Transfer Counselling Audit", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /transfer-counselling-audit/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0137], summary: "Get Transfer Counselling Audit", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0137], summary: "Update Transfer Counselling Audit", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /award-recognition:
+    get: { tags: [M0138], summary: "List Award & Recognition", responses: { '200': { description: ok } } }
+    post: { tags: [M0138], summary: "Create Award & Recognition", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /award-recognition/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0138], summary: "Get Award & Recognition", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0138], summary: "Update Award & Recognition", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /naan-mudhalvan-mentor-pool:
+    get: { tags: [M0139], summary: "List Naan Mudhalvan Mentor Pool", responses: { '200': { description: ok } } }
+    post: { tags: [M0139], summary: "Create Naan Mudhalvan Mentor Pool", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /naan-mudhalvan-mentor-pool/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0139], summary: "Get Naan Mudhalvan Mentor Pool", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0139], summary: "Update Naan Mudhalvan Mentor Pool", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /internship-mentor-mmsn:
+    get: { tags: [M0140], summary: "List Internship Mentor (MMSN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0140], summary: "Create Internship Mentor (MMSN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /internship-mentor-mmsn/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0140], summary: "Get Internship Mentor (MMSN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0140], summary: "Update Internship Mentor (MMSN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-wellbeing:
+    get: { tags: [M0141], summary: "List Teacher Wellbeing", responses: { '200': { description: ok } } }
+    post: { tags: [M0141], summary: "Create Teacher Wellbeing", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-wellbeing/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0141], summary: "Get Teacher Wellbeing", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0141], summary: "Update Teacher Wellbeing", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

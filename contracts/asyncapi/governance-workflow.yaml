@@ -1,0 +1,247 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — governance-workflow events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for governance-workflow. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  governance-workflow-engine-g1-g7-bpmn.events:
+    address: "vasa.governance-workflow.governance-workflow-engine-g1-g7-bpmn"
+    description: "Domain events for Governance Workflow Engine (G1-G7 BPMN)"
+    messages:
+      changed: { name: M0210Changed, contentType: application/json }
+  approval-chain-g1-cabinet.events:
+    address: "vasa.governance-workflow.approval-chain-g1-cabinet"
+    description: "Domain events for Approval Chain — G1 Cabinet"
+    messages:
+      changed: { name: M0211Changed, contentType: application/json }
+  approval-chain-g2-empowered-committee.events:
+    address: "vasa.governance-workflow.approval-chain-g2-empowered-committee"
+    description: "Domain events for Approval Chain — G2 Empowered Committee"
+    messages:
+      changed: { name: M0212Changed, contentType: application/json }
+  approval-chain-g3-inter-directorate.events:
+    address: "vasa.governance-workflow.approval-chain-g3-inter-directorate"
+    description: "Domain events for Approval Chain — G3 Inter-Directorate"
+    messages:
+      changed: { name: M0213Changed, contentType: application/json }
+  approval-chain-g4-pmu.events:
+    address: "vasa.governance-workflow.approval-chain-g4-pmu"
+    description: "Domain events for Approval Chain — G4 PMU"
+    messages:
+      changed: { name: M0214Changed, contentType: application/json }
+  approval-chain-g5-tech-architecture-board.events:
+    address: "vasa.governance-workflow.approval-chain-g5-tech-architecture-board"
+    description: "Domain events for Approval Chain — G5 Tech Architecture Board"
+    messages:
+      changed: { name: M0215Changed, contentType: application/json }
+  approval-chain-g6-ethics-equity-rpwd.events:
+    address: "vasa.governance-workflow.approval-chain-g6-ethics-equity-rpwd"
+    description: "Domain events for Approval Chain — G6 Ethics/Equity/RPwD"
+    messages:
+      changed: { name: M0216Changed, contentType: application/json }
+  approval-chain-g7-external-audit.events:
+    address: "vasa.governance-workflow.approval-chain-g7-external-audit"
+    description: "Domain events for Approval Chain — G7 External Audit"
+    messages:
+      changed: { name: M0217Changed, contentType: application/json }
+  circular-drafting-policy-agent.events:
+    address: "vasa.governance-workflow.circular-drafting-policy-agent"
+    description: "Domain events for Circular Drafting (Policy Agent)"
+    messages:
+      changed: { name: M0218Changed, contentType: application/json }
+  go-publication.events:
+    address: "vasa.governance-workflow.go-publication"
+    description: "Domain events for GO Publication"
+    messages:
+      changed: { name: M0219Changed, contentType: application/json }
+  cabinet-note-generation.events:
+    address: "vasa.governance-workflow.cabinet-note-generation"
+    description: "Domain events for Cabinet Note Generation"
+    messages:
+      changed: { name: M0220Changed, contentType: application/json }
+  assembly-briefing.events:
+    address: "vasa.governance-workflow.assembly-briefing"
+    description: "Domain events for Assembly Briefing"
+    messages:
+      changed: { name: M0221Changed, contentType: application/json }
+  change-advisory-board-cab.events:
+    address: "vasa.governance-workflow.change-advisory-board-cab"
+    description: "Domain events for Change-Advisory-Board (CAB)"
+    messages:
+      changed: { name: M0222Changed, contentType: application/json }
+  delegation-of-powers-registry.events:
+    address: "vasa.governance-workflow.delegation-of-powers-registry"
+    description: "Domain events for Delegation-of-Powers Registry"
+    messages:
+      changed: { name: M0223Changed, contentType: application/json }
+  tenancy-management-t0-t6.events:
+    address: "vasa.governance-workflow.tenancy-management-t0-t6"
+    description: "Domain events for Tenancy Management (T0-T6)"
+    messages:
+      changed: { name: M0224Changed, contentType: application/json }
+  org-unit-registry.events:
+    address: "vasa.governance-workflow.org-unit-registry"
+    description: "Domain events for Org-Unit Registry"
+    messages:
+      changed: { name: M0225Changed, contentType: application/json }
+  recognition-affiliation.events:
+    address: "vasa.governance-workflow.recognition-affiliation"
+    description: "Domain events for Recognition & Affiliation"
+    messages:
+      changed: { name: M0226Changed, contentType: application/json }
+  inspection-workflow.events:
+    address: "vasa.governance-workflow.inspection-workflow"
+    description: "Domain events for Inspection Workflow"
+    messages:
+      changed: { name: M0227Changed, contentType: application/json }
+  sanction-workflow-block-district.events:
+    address: "vasa.governance-workflow.sanction-workflow-block-district"
+    description: "Domain events for Sanction Workflow (block/district)"
+    messages:
+      changed: { name: M0228Changed, contentType: application/json }
+  model-card-registry.events:
+    address: "vasa.governance-workflow.model-card-registry"
+    description: "Domain events for Model-Card Registry"
+    messages:
+      changed: { name: M0229Changed, contentType: application/json }
+  ethics-review-case-mgmt.events:
+    address: "vasa.governance-workflow.ethics-review-case-mgmt"
+    description: "Domain events for Ethics-Review Case Mgmt"
+    messages:
+      changed: { name: M0230Changed, contentType: application/json }
+  ai-leadership-council-portal.events:
+    address: "vasa.governance-workflow.ai-leadership-council-portal"
+    description: "Domain events for AI Leadership Council Portal"
+    messages:
+      changed: { name: M0231Changed, contentType: application/json }
+  sovereignty-console.events:
+    address: "vasa.governance-workflow.sovereignty-console"
+    description: "Domain events for Sovereignty Console"
+    messages:
+      changed: { name: M0232Changed, contentType: application/json }
+  off-switch-control-m-of-n.events:
+    address: "vasa.governance-workflow.off-switch-control-m-of-n"
+    description: "Domain events for Off-Switch Control (M-of-N)"
+    messages:
+      changed: { name: M0233Changed, contentType: application/json }
+  source-code-escrow-tracker.events:
+    address: "vasa.governance-workflow.source-code-escrow-tracker"
+    description: "Domain events for Source-Code Escrow Tracker"
+    messages:
+      changed: { name: M0234Changed, contentType: application/json }
+  cag-auditor-export.events:
+    address: "vasa.governance-workflow.cag-auditor-export"
+    description: "Domain events for CAG / Auditor Export"
+    messages:
+      changed: { name: M0235Changed, contentType: application/json }
+  audit-log-immutability.events:
+    address: "vasa.governance-workflow.audit-log-immutability"
+    description: "Domain events for Audit-Log Immutability"
+    messages:
+      changed: { name: M0236Changed, contentType: application/json }
+  board-prep-coordination.events:
+    address: "vasa.governance-workflow.board-prep-coordination"
+    description: "Domain events for Board-Prep & Coordination"
+    messages:
+      changed: { name: M0237Changed, contentType: application/json }
+  launch-readiness-register.events:
+    address: "vasa.governance-workflow.launch-readiness-register"
+    description: "Domain events for Launch-Readiness Register"
+    messages:
+      changed: { name: M0238Changed, contentType: application/json }
+  architecture-conformance-register.events:
+    address: "vasa.governance-workflow.architecture-conformance-register"
+    description: "Domain events for Architecture-Conformance Register"
+    messages:
+      changed: { name: M0239Changed, contentType: application/json }
+operations:
+  onM0210Changed:
+    action: receive
+    channel: { $ref: '#/channels/governance-workflow-engine-g1-g7-bpmn.events' }
+  onM0211Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g1-cabinet.events' }
+  onM0212Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g2-empowered-committee.events' }
+  onM0213Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g3-inter-directorate.events' }
+  onM0214Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g4-pmu.events' }
+  onM0215Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g5-tech-architecture-board.events' }
+  onM0216Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g6-ethics-equity-rpwd.events' }
+  onM0217Changed:
+    action: receive
+    channel: { $ref: '#/channels/approval-chain-g7-external-audit.events' }
+  onM0218Changed:
+    action: receive
+    channel: { $ref: '#/channels/circular-drafting-policy-agent.events' }
+  onM0219Changed:
+    action: receive
+    channel: { $ref: '#/channels/go-publication.events' }
+  onM0220Changed:
+    action: receive
+    channel: { $ref: '#/channels/cabinet-note-generation.events' }
+  onM0221Changed:
+    action: receive
+    channel: { $ref: '#/channels/assembly-briefing.events' }
+  onM0222Changed:
+    action: receive
+    channel: { $ref: '#/channels/change-advisory-board-cab.events' }
+  onM0223Changed:
+    action: receive
+    channel: { $ref: '#/channels/delegation-of-powers-registry.events' }
+  onM0224Changed:
+    action: receive
+    channel: { $ref: '#/channels/tenancy-management-t0-t6.events' }
+  onM0225Changed:
+    action: receive
+    channel: { $ref: '#/channels/org-unit-registry.events' }
+  onM0226Changed:
+    action: receive
+    channel: { $ref: '#/channels/recognition-affiliation.events' }
+  onM0227Changed:
+    action: receive
+    channel: { $ref: '#/channels/inspection-workflow.events' }
+  onM0228Changed:
+    action: receive
+    channel: { $ref: '#/channels/sanction-workflow-block-district.events' }
+  onM0229Changed:
+    action: receive
+    channel: { $ref: '#/channels/model-card-registry.events' }
+  onM0230Changed:
+    action: receive
+    channel: { $ref: '#/channels/ethics-review-case-mgmt.events' }
+  onM0231Changed:
+    action: receive
+    channel: { $ref: '#/channels/ai-leadership-council-portal.events' }
+  onM0232Changed:
+    action: receive
+    channel: { $ref: '#/channels/sovereignty-console.events' }
+  onM0233Changed:
+    action: receive
+    channel: { $ref: '#/channels/off-switch-control-m-of-n.events' }
+  onM0234Changed:
+    action: receive
+    channel: { $ref: '#/channels/source-code-escrow-tracker.events' }
+  onM0235Changed:
+    action: receive
+    channel: { $ref: '#/channels/cag-auditor-export.events' }
+  onM0236Changed:
+    action: receive
+    channel: { $ref: '#/channels/audit-log-immutability.events' }
+  onM0237Changed:
+    action: receive
+    channel: { $ref: '#/channels/board-prep-coordination.events' }
+  onM0238Changed:
+    action: receive
+    channel: { $ref: '#/channels/launch-readiness-register.events' }
+  onM0239Changed:
+    action: receive
+    channel: { $ref: '#/channels/architecture-conformance-register.events' }
