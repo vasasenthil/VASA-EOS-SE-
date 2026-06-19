@@ -90,6 +90,49 @@ func TestClearanceAllowsOwnTenantRestricted(t *testing.T) {
 	}
 }
 
+// fakeVector gives high similarity to a doc that keyword search would rank low.
+type fakeVector struct{ scores map[string]float64 }
+
+func (v fakeVector) Similarity(string) map[string]float64 { return v.scores }
+
+func TestVectorLegBoostsSemanticMatch(t *testing.T) {
+	clr := Clearance{Tenant: "TN/Chennai", MaxClass: General}
+	// the query has no keyword overlap with D2's text, but the vector leg says D2 is highly similar.
+	docs := corpus()
+	r := NewHybrid(docs, fakeGraph{}, fakeVector{scores: map[string]float64{"D2": 0.95}})
+	hits := Retrieve(r, "splitting quantities into equal groups", "", clr, 5)
+	found := false
+	for _, h := range hits {
+		if h.Doc.ID == "D2" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("the vector leg should surface a semantically-similar doc: %+v", hits)
+	}
+}
+
+func TestVectorLegStillPolicyBound(t *testing.T) {
+	// even a strong vector hit on a restricted doc must be filtered out by classification.
+	clr := Clearance{Tenant: "TN/Chennai", MaxClass: General}
+	r := NewHybrid(corpus(), fakeGraph{}, fakeVector{scores: map[string]float64{"D4": 0.99}})
+	hits := Retrieve(r, "anything", "", clr, 5)
+	for _, h := range hits {
+		if h.Doc.ID == "D4" {
+			t.Fatal("the policy bound must apply to the vector leg too — restricted doc filtered")
+		}
+	}
+}
+
+func TestNilVectorDegradesCleanly(t *testing.T) {
+	// New (no vector) behaves exactly as keyword+graph — the vector leg is optional/gated.
+	clr := Clearance{Tenant: "TN/Chennai", MaxClass: General}
+	hits := Retrieve(New(corpus(), fakeGraph{}), "fractions", "frac", clr, 5)
+	if len(hits) == 0 {
+		t.Fatal("keyword+graph retrieval should still work without a vector leg")
+	}
+}
+
 func TestTopK(t *testing.T) {
 	clr := Clearance{Tenant: "TN/Chennai", MaxClass: Public}
 	if hits := Retrieve(ret(), "fractions division", "frac", clr, 1); len(hits) != 1 {

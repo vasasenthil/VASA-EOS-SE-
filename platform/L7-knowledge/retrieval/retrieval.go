@@ -42,21 +42,37 @@ type GraphSource interface {
 	Related(concept string) []string
 }
 
+// VectorSource is the dense-retrieval leg (Milvus in production, gated on B-013). Similarity returns
+// docID→score in [0,1] for a query embedding match; nil when no vector index is available, so retrieval
+// degrades cleanly to keyword + graph. This is the third leg of "Milvus + BM25 + Neo4j" hybrid retrieval.
+type VectorSource interface {
+	Similarity(query string) map[string]float64
+}
+
+// VectorWeight scales the dense-retrieval contribution in the fused score.
+const VectorWeight = 1.5
+
 // Hit is a retrieved document with its fused score.
 type Hit struct {
 	Doc   Doc
 	Score float64
 }
 
-// Retriever holds the corpus + the graph source.
+// Retriever holds the corpus + the graph source + an optional vector source.
 type Retriever struct {
-	docs  []Doc
-	graph GraphSource
+	docs   []Doc
+	graph  GraphSource
+	vector VectorSource
 }
 
-// New builds a retriever over a corpus and an optional graph source.
+// New builds a retriever over a corpus and an optional graph source (keyword + graph legs).
 func New(docs []Doc, graph GraphSource) *Retriever {
 	return &Retriever{docs: docs, graph: graph}
+}
+
+// NewHybrid builds the full three-leg retriever (keyword + graph + vector). The vector leg may be nil.
+func NewHybrid(docs []Doc, graph GraphSource, vector VectorSource) *Retriever {
+	return &Retriever{docs: docs, graph: graph, vector: vector}
 }
 
 // allowed enforces the policy bound: tenant isolation + classification clearance.
@@ -109,19 +125,26 @@ func Retrieve(r *Retriever, query, concept string, clr Clearance, k int) []Hit {
 		}
 	}
 
+	// dense-retrieval leg (Milvus): docID→similarity, or nil when no vector index is available.
+	var sims map[string]float64
+	if r.vector != nil {
+		sims = r.vector.Similarity(query)
+	}
+
 	var hits []Hit
 	for _, d := range r.docs {
-		if !allowed(d, clr) { // POLICY BOUND AT RETRIEVAL
+		if !allowed(d, clr) { // POLICY BOUND AT RETRIEVAL — applied to every leg
 			continue
 		}
-		score := keywordScore(q, d.Text)
-		boost := 0.0
-		for _, c := range d.Concepts {
+		score := keywordScore(q, d.Text) // BM25 leg
+		for _, c := range d.Concepts {   // graph leg
 			if related[c] {
-				boost += 1.0 // covers a relevant concept
+				score += 1.0
 			}
 		}
-		score += boost
+		if sims != nil { // vector leg
+			score += VectorWeight * sims[d.ID]
+		}
 		if score > 0 {
 			hits = append(hits, Hit{Doc: d, Score: round3(score)})
 		}

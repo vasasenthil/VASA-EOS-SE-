@@ -320,3 +320,14 @@ Per the native-AI-engineering diagram (Spec→Loop→Context→Token). Token was
 - Added `docs/NATIVE-AI-DISCIPLINES.md` mapping each discipline to its modules.
 - Status page: **33 modules · 288 tests**. Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors.
   Reference-impl untouched.
+
+## Deepening the disciplines · 3-leg hybrid retrieval + agent-driven loop
+- **Context**: completed the hybrid-retrieval triad — added the **vector leg** (`retrieval.VectorSource`,
+  Milvus seam gated on B-013) fused with keyword (BM25) + graph; `NewHybrid(docs, graph, vector)`. The
+  policy bound (tenant + classification) applies to the vector leg too — a strong vector hit on a class-1 doc
+  is still filtered. Degrades cleanly to keyword+graph when no vector index. 3 new tests (retrieval now 9).
+- **Loop**: a concrete **agent-driven remediation loop** — `Platform.TeacherRemediationLoop` wires the L8
+  engines (Assessment + Personalisation) as the tool inside the bounded Plan→Execute→Verify→Reflect
+  controller: assess → diagnose the weakest objective → plan remediation, audited end-to-end. Proven to
+  diagnose `decimals` as the weak objective and complete. 1 integration test.
+- Status page: **33 modules · 292 tests**. Green bar: 33 Go modules pass, OPA 33/33, tsc 0 errors.
