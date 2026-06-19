@@ -5,6 +5,8 @@ import { listLogs, getLog, createLog, updateLog, deleteLog, seedLogs } from "@/l
 import { queryLogs, validateLog, federationSource, type FederationLog, type LogInput, type FederationResult, type LogFilters, type LogPage } from "@/lib/federation"
 import { integrations } from "@/lib/integrations"
 import { integrationStatuses, integrationSummary } from "@/lib/integrations/status"
+import { compareApaarToStudent, type ReconcileReport } from "@/lib/federation/reconcile"
+import { listStudents } from "@/lib/students/store"
 import { canDo } from "@/lib/access/guard"
 import { logger } from "@/lib/logger"
 
@@ -64,6 +66,30 @@ export async function lookupAction(source: string, key: string): Promise<Federat
   } catch (e) {
     logger.error("federation.lookup failed", { error: String(e) })
     return { ...base, ok: false, title: "Lookup failed", fields: [], error: "The federation gateway is unavailable." }
+  }
+}
+
+/**
+ * Drift detection (L4, AI-native, advisory): pull the upstream APAAR record (source of truth) and the
+ * local student master record for the same APAAR id, then compare them field by field. Returns an
+ * explainable recommendation (Reconciled / Review / Flagged) for a human to act on — never mutates.
+ */
+export async function reconcileApaarAction(apaarId: string): Promise<
+  | { ok: true; report: ReconcileReport; localName: string; mode: string }
+  | { ok: false; reason: string }
+> {
+  noStore()
+  const id = apaarId.trim()
+  if (!id) return { ok: false, reason: "Enter an APAAR id to reconcile." }
+  try {
+    const r = await integrations.identity.getApaar(id)
+    if (!r.ok || !r.data) return { ok: false, reason: r.error ?? "No upstream APAAR record found for this id." }
+    const local = (await listStudents()).find((s) => s.apaarId.trim() === id)
+    if (!local) return { ok: false, reason: "No local student record carries this APAAR id — nothing to reconcile against." }
+    return { ok: true, report: compareApaarToStudent(r.data, local), localName: local.name, mode: r.mode }
+  } catch (e) {
+    logger.error("federation.reconcileApaar failed", { error: String(e) })
+    return { ok: false, reason: "The federation gateway is unavailable." }
   }
 }
 

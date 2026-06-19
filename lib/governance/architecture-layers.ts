@@ -94,9 +94,9 @@ export const ARCHITECTURE_LAYERS: ArchitectureLayer[] = [
       "Connects to the national digital-public-infrastructure registries through one typed adapter interface, the NDEAR-S building-block alignment and a human-in-the-loop federation reconciliation console.",
     status: "partial",
     note:
-      "13 typed adapter ports (incl. dedicated PFMS fund-flow) sit behind one interface with the federation console and NDEAR-S 29/29 alignment built. Adapters are mock by default and live only when env-configured; the platform is not live-federated with the national registries at runtime.",
-    components: ["Typed integration gateway (DIKSHA/UDISE+/APAAR/PFMS/DBT)", "NDEAR-S 29/29 alignment", "Federation reconciliation console (HITL)"],
-    repoRefs: ["lib/integrations/index.ts", "lib/integrations/ndear-s.ts", "lib/federation/index.ts"],
+      "13 typed adapter ports (incl. dedicated PFMS fund-flow) sit behind one interface, with the federation console, NDEAR-S 29/29 alignment and a field-level drift detector that compares the upstream APAAR record against the local student master (advisory Reconciled/Review/Flagged, human decides). Adapters are mock by default and live only when env-configured; the platform is not live-federated with the national registries at runtime.",
+    components: ["Typed integration gateway (DIKSHA/UDISE+/APAAR/PFMS/DBT)", "NDEAR-S 29/29 alignment", "Reconciliation drift detector (APAAR↔local)", "Federation reconciliation console (HITL)"],
+    repoRefs: ["lib/integrations/index.ts", "lib/integrations/ndear-s.ts", "lib/federation/index.ts", "lib/federation/reconcile.ts"],
     pendingAspects: ["Live runtime federation with the national registries (currently mock-default seams)"],
   },
   {
