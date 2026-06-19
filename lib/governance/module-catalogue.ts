@@ -150,6 +150,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "Governance Roll-up (multi-tier: per-school KPIs aggregate enrolment-weighted up School→Block→District→State; drill-down evidence dashboard)", repoRef: "lib/rollup/index.ts", status: "built" },
   { tier: "National", name: "Federation Console (federate-not-duplicate: reads APAAR/UDISE+/DIKSHA/PFMS via the live integration gateways; HITL reconciliation log)", repoRef: "lib/federation/index.ts", status: "built" },
   { tier: "School", name: "School Health Register (full CRUD: anthropometry → computed BMI/nutrition band, vision/hearing/dental, anaemia, referral flags)", repoRef: "lib/healthregister/store.ts", status: "built" },
+  { tier: "School", name: "Substitute / Cover Arrangements (full CRUD: uncovered period → assigned substitute → completion; free-teacher suggestions read live from the timetable, no double-booking)", repoRef: "lib/coverflow/store.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
