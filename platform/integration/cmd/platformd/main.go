@@ -110,6 +110,9 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/seed", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.SeedStatus(), nil)
 	}))
+	mux.HandleFunc("/volumes", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.VolumeModel(), nil)
+	}))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -333,6 +336,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/scenarios')">GET /scenarios</button>
 <button class="alt" onclick="g('/notifications')">GET /notifications (Tamil inbox)</button>
 <button class="alt" onclick="g('/seed')">GET /seed</button>
+<button class="alt" onclick="g('/volumes')">GET /volumes (§D scale model)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>

@@ -383,3 +383,17 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   runs a demo over a dirty school sample → fails, breaches the master SLA, alerts the steward. 2 integration +
   1 platformd test.
 - Status page: **36 modules · 322 tests**. Green bar: 36 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §D volume + scale model
+- `platform/L10-surfaces/volumes` — **§D.1** per-entity record counts (~1.27 Cr students, 4.5L teaching +
+  1.5L non-teaching teachers, 2.75 Cr parents, 69,000 schools, 6L sections, 6 Cr addressable citizens),
+  **§D.2** nine annual transactional streams (attendance ~25–34B · assessment 10–20B · submission 2–5B ·
+  communication 10–20B · grievance 1–10L · scheme-delivery 50–100 Cr · ai-agent-interaction 5–50B ·
+  iot-event 1–3 trillion · audit-log 100–500B), and **§D.3** the six-tier storage plan (oltp · olap ·
+  timeseries · object · vector · graph) with per-node sizing, `ValidateStorage` and a 2× backup/DR total of
+  **16,450 TB**. 5 module tests.
+- Wired: `Platform.VolumeModel()` surfaces the §D model validated at 500 TB/node; `Readiness` now folds in a
+  **StorageOK** check (+ failing tiers + total TB) so go-live readiness reflects the brief's sizing.
+  `platformd GET /volumes` returns the live model. 2 integration tests. Verified live: /volumes → 1.27 Cr
+  students + 9 streams + 6 tiers; /readiness → StorageOK:true, TotalStorageTB:16450, GoLiveReady:true.
+- Status page: **37 modules · 329 tests**. Green bar: 37 Go modules pass, OPA 33/33, tsc 0 errors.

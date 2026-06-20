@@ -40,6 +40,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
+	github.com/vasa-eos-se-tn/platform/volumes v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
 )
 
@@ -114,3 +115,5 @@ replace github.com/vasa-eos-se-tn/platform/seed => ../L3-data-fabric/seed
 replace github.com/vasa-eos-se-tn/platform/onboarding => ../L3-data-fabric/onboarding
 
 replace github.com/vasa-eos-se-tn/platform/quality => ../L3-data-fabric/quality
+
+replace github.com/vasa-eos-se-tn/platform/volumes => ../L10-surfaces/volumes
