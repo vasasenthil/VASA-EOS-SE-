@@ -17,6 +17,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/agentregistry"
 	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/catalogue"
+	"github.com/vasa-eos-se-tn/platform/consent"
 	"github.com/vasa-eos-se-tn/platform/dr"
 	"github.com/vasa-eos-se-tn/platform/hitl"
 	"github.com/vasa-eos-se-tn/platform/i18n"
@@ -89,6 +90,8 @@ type Platform struct {
 	Catalogue *catalogue.Catalogue
 	// L8 §G AI-operational governance — the authoritative model-card registry + deploy gate.
 	Models *modelregistry.Registry
+	// L3 §E consent, lawful-basis & retention register (DPDP).
+	Consent *consent.Register
 
 	now func() string
 
@@ -249,6 +252,10 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	// the full gate (red-team → deploy-request → human approval → deployed); the GPU-served models are
 	// registered but remain un-deployed, awaiting their B-011 substrate + bias/red-team evidence (honest).
 	p.Models = bootstrapModels(now)
+
+	// §E: the DPDP consent / lawful-basis / retention register, seeded with the platform's standing processing
+	// purposes (enrolment, attendance, assessment, scheme DBT, AI tutoring) and their retention rules.
+	p.Consent = bootstrapConsent()
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

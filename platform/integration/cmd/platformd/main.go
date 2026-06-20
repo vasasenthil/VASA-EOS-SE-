@@ -115,6 +115,7 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/catalogue", s.count(s.handleCatalogue))
 	mux.HandleFunc("/models", s.count(s.handleModels))
+	mux.HandleFunc("/consent", s.count(s.handleConsent))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -262,6 +263,44 @@ func (s *server) handleModels(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, s.p.ModelRegistry(), nil)
 }
 
+// handleConsent serves the §E DPDP consent / lawful-basis / retention register: ?purposes=1 for the purpose
+// catalogue, ?access=PRINCIPAL for a right-to-access report, else the governance summary. A POST runs a demo
+// lifecycle (minor enrolment under guardian consent → withdraw → access) so the rights flow is exercisable.
+func (s *server) handleConsent(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		s.consentDemo(w, r)
+		return
+	}
+	if r.URL.Query().Get("purposes") != "" {
+		s.writeJSON(w, s.p.ConsentPurposes(), nil)
+		return
+	}
+	if pr := r.URL.Query().Get("access"); pr != "" {
+		s.writeJSON(w, s.p.AccessReport(pr), nil)
+		return
+	}
+	s.writeJSON(w, s.p.ConsentSummary(), nil)
+}
+
+// consentDemo exercises the DPDP rights flow end-to-end on a demo principal.
+func (s *server) consentDemo(w http.ResponseWriter, r *http.Request) {
+	const stu, parent = "DEMO-STU-1", "DEMO-PARENT-1"
+	g, err := s.p.RecordConsent("DEMO-G1", stu, "ai-tutoring", "consent", true, parent)
+	if err != nil {
+		s.writeJSON(w, nil, err)
+		return
+	}
+	lawful, _ := s.p.LawfulToProcess(g.ID)
+	wd, _ := s.p.WithdrawConsent(g.ID, stu)
+	lawfulAfter, reason := s.p.LawfulToProcess(g.ID)
+	s.writeJSON(w, map[string]any{
+		"granted": g.ID, "minor": g.Minor, "guardian": g.Guardian,
+		"lawful_while_active": lawful, "withdrawn_status": wd.Status,
+		"lawful_after_withdrawal": lawfulAfter, "reason": reason,
+		"access_report": s.p.AccessReport(stu),
+	}, nil)
+}
+
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
 func (s *server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -391,6 +430,8 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/catalogue?trace=SEED-GEOGRAPHY')">GET /catalogue?trace=… (lineage)</button>
 <button class="alt" onclick="g('/models')">GET /models (§G registry)</button>
 <button class="alt" onclick="g('/models?list=1')">GET /models?list=1 (cards + state)</button>
+<button class="alt" onclick="g('/consent')">GET /consent (§E DPDP register)</button>
+<button class="alt" onclick="p('/consent',{})">POST /consent (rights flow demo)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>

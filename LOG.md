@@ -428,3 +428,21 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   `platformd GET /models` (summary · `?list=1` · `?model=…`). 2 integration tests. Verified live: /models →
   4 models, 1 deployed, coverage 1.0; the classifier entry shows its full lifecycle history + human approver.
 - Status page: **39 modules · 342 tests**. Green bar: 39 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §E consent, lawful-basis & retention register (DPDP)
+- `platform/L3-data-fabric/consent` — the stateful **DPDP-Act-2023 ledger** complementing the dataplane's
+  stateless classification. Per data principal + purpose it records a **lawful basis** (consent §6, or a §7
+  legitimate use — legal-obligation / court-order / employment / subsidy / emergency) and enforces: **child
+  protection (§9)** — a minor's consent needs a named guardian, and a `ChildProhibited` purpose (behavioural
+  advertising) is refused for a minor; **withdrawal (§6(4))** — consent is withdrawable, a §7 basis is not;
+  the **retention clock (§8(7))** — ending a purpose starts the per-purpose window, `RunRetention` sweeps +
+  erases; and **rights** — right-to-access (§11) and right-to-erasure (§12, forced) with a **statutory hold**
+  that blocks erasure either way. Immutable per-grant history; `LawfulToProcess` is the enforcement seam.
+  6 module tests.
+- Wired: `Platform.Consent` is seeded at boot with the standing purposes (enrolment 7y · attendance 5y ·
+  assessment 10y · scheme-DBT 7y · AI-tutoring 1y consent-based · + a child-prohibited advertising purpose).
+  Accessors `ConsentSummary/Purposes`, `RecordConsent/WithdrawConsent/LawfulToProcess/AccessReport/RunRetention`;
+  `platformd GET /consent` (summary · `?purposes=1` · `?access=…`) + `POST /consent` runs the rights flow.
+  3 integration tests. Verified live: minor consent under guardian → lawful → withdraw → not lawful (reason
+  "consent withdrawn"), with full history + a §11 access report.
+- Status page: **40 modules · 351 tests**. Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.

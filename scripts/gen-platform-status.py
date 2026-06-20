@@ -35,6 +35,7 @@ DESC = {
     "volumes": "§D scale model: per-entity counts · annual transaction volumes · storage-capacity plan (validated)",
     "catalogue": "§F.3 data-lineage/catalogue: data dictionary · steward+SLA cross-ref · classification · lineage trace",
     "modelregistry": "§G AI-operational governance: model-card registry · deploy gate (bias+drift+red-team+human) · drift rollback",
+    "consent": "§E DPDP register: lawful-basis ledger · child protections (§9) · retention clock · access/erasure/withdrawal rights",
     "resilience": "Circuit breaker · retry+backoff/jitter · idempotency",
     "reconcile": "Field + numeric (tolerance) federation drift reconciliation",
     "adapters": "APAAR anti-corruption adapter on the resilience core",
