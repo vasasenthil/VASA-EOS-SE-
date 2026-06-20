@@ -401,6 +401,10 @@ func (s *server) handleTenancy(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"subject": a, "target": b, "governs": s.p.Governs(a, b)}, nil)
 		return
 	}
+	if sub := r.URL.Query().Get("scope"); sub != "" {
+		s.writeJSON(w, s.p.SchoolsGovernedBy(sub), nil)
+		return
+	}
 	s.writeJSON(w, s.p.TenancySummary(), nil)
 }
 

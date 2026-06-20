@@ -77,3 +77,31 @@ func (p *Platform) TenantNode(id string) (tenancy.Node, bool) {
 	}
 	return h.Get(id)
 }
+
+// JurisdictionScope is the result of a downward-governance scope query: the schools a subject tenant governs.
+type JurisdictionScope struct {
+	Subject string   `json:"subject"`
+	Exists  bool     `json:"exists"`
+	Schools int      `json:"schools_governed"` // T6 leaves under the subject
+	Sample  []string `json:"sample,omitempty"` // a few governed school UDISE codes
+}
+
+// SchoolsGovernedBy applies the fail-closed downward-governance rule to the real estate: it returns the count
+// (and a sample) of T6 schools within the subject tenant's subtree. A district officer sees only their
+// district's schools; the sovereign sees all 69,000; an unknown subject governs nothing. This is the
+// jurisdiction-enforcement seam over live data (the ReBAC scope the platform applies to every listing).
+func (p *Platform) SchoolsGovernedBy(subjectID string) JurisdictionScope {
+	h, err := tenancyHierarchy()
+	if err != nil || h == nil {
+		return JurisdictionScope{Subject: subjectID}
+	}
+	if _, ok := h.Get(subjectID); !ok {
+		return JurisdictionScope{Subject: subjectID, Exists: false}
+	}
+	leaves := h.LeavesUnder(subjectID, 6)
+	sample := leaves
+	if len(sample) > 5 {
+		sample = sample[:5]
+	}
+	return JurisdictionScope{Subject: subjectID, Exists: true, Schools: len(leaves), Sample: sample}
+}

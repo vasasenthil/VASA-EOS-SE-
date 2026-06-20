@@ -107,6 +107,31 @@ func TestBuildTNAnchoredToRealEstate(t *testing.T) {
 	}
 }
 
+func TestScopeQueriesOverEstate(t *testing.T) {
+	h, err := BuildTN(population.BuildTree())
+	if err != nil {
+		t.Fatal(err)
+	}
+	// every T6 school under the sovereign is the whole estate.
+	if got := len(h.LeavesUnder("TN", 6)); got != 69000 {
+		t.Fatalf("the sovereign must govern all 69,000 schools, got %d", got)
+	}
+	// a district governs a proper, non-empty subset of the schools — never all of them.
+	chn := h.LeavesUnder("TN-DIST-Chennai", 6)
+	if len(chn) == 0 || len(chn) >= 69000 {
+		t.Fatalf("Chennai must govern a proper subset of schools, got %d", len(chn))
+	}
+	// and every school it governs is genuinely in its subtree (fail-closed).
+	for _, s := range chn[:5] {
+		if !h.Governs("TN-DIST-Chennai", s) {
+			t.Fatalf("scoped school %s must be governed by Chennai", s)
+		}
+		if h.Governs("TN-DIST-Madurai", s) {
+			t.Fatalf("a Chennai school %s must NOT be governed by Madurai", s)
+		}
+	}
+}
+
 func TestGovernsUnknownNodes(t *testing.T) {
 	h := New()
 	_ = h.Add(Node{ID: "TN", Level: 0, Name: "TN"})

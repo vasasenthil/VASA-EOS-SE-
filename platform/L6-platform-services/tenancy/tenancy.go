@@ -199,6 +199,35 @@ func (h *Hierarchy) DescendantCount(id string) int {
 	return n
 }
 
+// Descendants returns every descendant id of a node (transitive, sorted) — the subtree a node governs.
+func (h *Hierarchy) Descendants(id string) []string {
+	if _, ok := h.nodes[id]; !ok {
+		return nil
+	}
+	var out []string
+	stack := append([]string(nil), h.children[id]...)
+	for len(stack) > 0 {
+		cur := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		out = append(out, cur)
+		stack = append(stack, h.children[cur]...)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// LeavesUnder returns the ids of the nodes at exactly the given level within a subject's subtree — e.g. the T6
+// schools a T3 district governs. This is the downward-governance scope query for jurisdiction enforcement.
+func (h *Hierarchy) LeavesUnder(id string, level int) []string {
+	var out []string
+	for _, d := range h.Descendants(id) {
+		if n, ok := h.nodes[d]; ok && n.Level == level {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
 // TierCounts returns the number of nodes at each level 0..6.
 func (h *Hierarchy) TierCounts() map[int]int {
 	out := map[int]int{}

@@ -562,3 +562,12 @@ wired into the composition root and surfaced on platformd:
   dashboard + 6 open datasets + live RTI/grievance. Conformance diff updated: L11/L12 and all six gaps marked
   closed (per-module Next.js UIs remain in the TS app, by design).
 - Status page: **48 modules · 388 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Tenancy made enforcing — jurisdiction-scoped queries over the live estate
+- Added `tenancy.Hierarchy.Descendants` + `LeavesUnder(id, level)` (the downward-governance subtree query) and
+  `Platform.SchoolsGovernedBy(subjectID)` — the fail-closed ReBAC scope seam over the real estate: a subject
+  tenant sees only the T6 schools in its subtree. `platformd GET /tenancy?scope=ID`. 1 module + 1 integration
+  test. Verified live: scope=TN → 69,000 schools (sovereign); scope=TN-DIST-Chennai → 2,090 schools (proper
+  subset, with a UDISE sample); scope=GHOST → 0 (fail-closed). The T0–T6 module now *enforces* jurisdiction
+  over live data, not just describes the hierarchy.
+- Status page: **48 modules**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

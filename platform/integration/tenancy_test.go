@@ -38,3 +38,23 @@ func TestPlatformTenancyDownwardGovernance(t *testing.T) {
 		t.Fatal("the sovereign governs every district")
 	}
 }
+
+func TestPlatformJurisdictionScope(t *testing.T) {
+	p := newPlatform(t)
+	// the sovereign governs the whole estate.
+	if got := p.SchoolsGovernedBy("TN"); !got.Exists || got.Schools != 69000 {
+		t.Fatalf("TN must govern all 69,000 schools, got %+v", got)
+	}
+	// a district governs only a proper subset.
+	chn := p.SchoolsGovernedBy("TN-DIST-Chennai")
+	if !chn.Exists || chn.Schools == 0 || chn.Schools >= 69000 {
+		t.Fatalf("Chennai must govern a proper subset of schools: %+v", chn)
+	}
+	if len(chn.Sample) == 0 {
+		t.Fatal("a governed scope should surface a sample of schools")
+	}
+	// an unknown subject governs nothing (fail-closed).
+	if got := p.SchoolsGovernedBy("GHOST"); got.Exists || got.Schools != 0 {
+		t.Fatalf("an unknown subject must govern nothing, got %+v", got)
+	}
+}
