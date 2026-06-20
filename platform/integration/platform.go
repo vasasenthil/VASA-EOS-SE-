@@ -17,6 +17,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/agentregistry"
 	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/catalogue"
+	"github.com/vasa-eos-se-tn/platform/civic"
 	"github.com/vasa-eos-se-tn/platform/consent"
 	"github.com/vasa-eos-se-tn/platform/dr"
 	"github.com/vasa-eos-se-tn/platform/hitl"
@@ -92,6 +93,8 @@ type Platform struct {
 	Models *modelregistry.Registry
 	// L3 §E consent, lawful-basis & retention register (DPDP).
 	Consent *consent.Register
+	// L12 citizen & civic register (RTI + grievance state).
+	Civic *civic.Registry
 
 	now func() string
 
@@ -256,6 +259,8 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	// §E: the DPDP consent / lawful-basis / retention register, seeded with the platform's standing processing
 	// purposes (enrolment, attendance, assessment, scheme DBT, AI tutoring) and their retention rules.
 	p.Consent = bootstrapConsent()
+	// §L12: a per-platform civic register holds this instance's RTI + grievance state.
+	p.Civic = civic.New(nil)
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

@@ -148,6 +148,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/civic", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
 	}))
+	mux.HandleFunc("/grievance", s.count(s.handleGrievance))
 	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 200
 		if q := r.URL.Query().Get("n"); q != "" {
@@ -382,6 +383,25 @@ func firstStudent(c integration.SyntheticCohort) any {
 	return c.Students[0]
 }
 
+// handleGrievance routes a citizen grievance end-to-end: the L9 grievance agent recommends a policy-grounded
+// routing, the grievance is filed into the L12 civic tracker at the resolved tier, and the routing is audited.
+func (s *server) handleGrievance(w http.ResponseWriter, r *http.Request) {
+	var req integration.GrievanceInput
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.ID == "" {
+		req.ID = "GRV-DEMO"
+	}
+	if req.Citizen == "" {
+		req.Citizen = "citizen"
+	}
+	if req.Subject == "" {
+		req.Subject = "mid-day meal quality complaint at our school"
+	}
+	s.writeJSON(w, s.p.RouteGrievance(r.Context(), req), nil)
+}
+
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
 // path (T0 → … → node); ?governs=A&over=B answers a downward-governance jurisdiction check; else the summary
 // (the seven tiers + the materialised estate counts validated against §D).
@@ -551,6 +571,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/ndears')">GET /ndears (NDEAR-S 29/29)</button>
 <button class="alt" onclick="g('/alignments')">GET /alignments (SDG·PISA·GPAI…)</button>
 <button class="alt" onclick="g('/civic')">GET /civic (L12 public + RTI + open-data)</button>
+<button onclick="p('/grievance',{id:'GRV-1',citizen:'Anbu',subject:'a child safety pocso concern at our school'})">POST /grievance (L9 agent → L12 tracker → audit)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>

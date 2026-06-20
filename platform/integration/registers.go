@@ -1,9 +1,6 @@
 package integration
 
 import (
-	"sync"
-	"time"
-
 	"github.com/vasa-eos-se-tn/platform/alignments"
 	"github.com/vasa-eos-se-tn/platform/civic"
 	"github.com/vasa-eos-se-tn/platform/govtiers"
@@ -58,17 +55,6 @@ func (p *Platform) ModuleFamilies() []modulecatalogue.Family { return modulecata
 
 // ── L12 Citizen & Civic ──
 
-// the civic register holds live RTI + grievance state for the running platform.
-var (
-	civicOnce sync.Once
-	civicReg  *civic.Registry
-)
-
-func civicRegistry() *civic.Registry {
-	civicOnce.Do(func() { civicReg = civic.New(func() time.Time { return time.Now().UTC() }) })
-	return civicReg
-}
-
 // PublicDashboard returns the PII-suppressed public institutional dashboard built from the real estate.
 func (p *Platform) PublicDashboard() civic.PublicDashboard { return civic.Dashboard(tree()) }
 
@@ -77,13 +63,13 @@ func (p *Platform) OpenDatasets() []civic.Dataset { return civic.OpenDatasets() 
 
 // FileRTI files a citizen RTI request.
 func (p *Platform) FileRTI(id, subject, by string) civic.RTIRequest {
-	return civicRegistry().FileRTI(id, subject, by)
+	return p.Civic.FileRTI(id, subject, by)
 }
 
 // FileGrievance files a citizen grievance at a governance tier.
 func (p *Platform) FileGrievance(id, subject, by, tier string) civic.Grievance {
-	return civicRegistry().FileGrievance(id, subject, by, tier)
+	return p.Civic.FileGrievance(id, subject, by, tier)
 }
 
 // CivicSummary returns the L12 civic roll-up (RTI + grievance state + open datasets).
-func (p *Platform) CivicSummary() civic.Summary { return civicRegistry().Summarise() }
+func (p *Platform) CivicSummary() civic.Summary { return p.Civic.Summarise() }

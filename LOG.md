@@ -571,3 +571,15 @@ wired into the composition root and surfaced on platformd:
   subset, with a UDISE sample); scope=GHOST → 0 (fail-closed). The T0–T6 module now *enforces* jurisdiction
   over live data, not just describes the hierarchy.
 - Status page: **48 modules**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Wired L9 grievance agent → L12 civic tracker → L5 audit (end-to-end grievance routing)
+- `Platform.RouteGrievance(ctx, GrievanceInput)` — runs a citizen grievance end-to-end: the **L9 grievance
+  agent** recommends a policy-grounded routing (L8 conversational engine over a governing-policy corpus), the
+  grievance is **filed into the L12 civic tracker** at the resolved governance tier, and the routing is written
+  to the **L5 audit chain**. Tier resolution: child-protection/POCSO → district; scholarship/DBT → directorate;
+  field issues (meals/infra/RTE) → block; ungrounded → directorate + flagged for human confirmation (HITL).
+  `platformd POST /grievance`. 3 integration tests.
+- Made the L12 civic register a **per-Platform field** (`p.Civic`) instead of a package singleton, so RTI +
+  grievance state is instance-scoped (fixed cross-test leakage). Verified live: meal-quality → block (cites
+  MDM-QUAL); POCSO → district (cites POCSO-MR); both filed in the tracker + audited.
+- Status page: **48 modules · 393 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
