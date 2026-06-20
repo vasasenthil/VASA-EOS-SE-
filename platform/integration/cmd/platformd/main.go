@@ -527,6 +527,40 @@ func (s *server) metrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# HELP vasa_notary_blocks Blocks in the notary ledger.\n# TYPE vasa_notary_blocks gauge\nvasa_notary_blocks %d\n", s.p.Notary.Len())
 	fmt.Fprintf(w, "# HELP vasa_slo_success_rate Rolling SLO success rate.\n# TYPE vasa_slo_success_rate gauge\nvasa_slo_success_rate %g\n", h.SLO.SuccessRate)
 	fmt.Fprintf(w, "# HELP vasa_platform_disabled Off-switch engaged (1=disabled).\n# TYPE vasa_platform_disabled gauge\nvasa_platform_disabled %d\n", disabled)
+
+	// ── Governance / conformance / civic gauges, sourced live from the registers ──
+	conf := s.p.Conformance()
+	confOK := 0
+	if conf.HeadlinesMatch {
+		confOK = 1
+	}
+	fmt.Fprintf(w, "# HELP vasa_conformance_headlines_match Every headline figure matches the briefs (1=conformant).\n# TYPE vasa_conformance_headlines_match gauge\nvasa_conformance_headlines_match %d\n", confOK)
+	for _, it := range conf.Items {
+		match := 0
+		if it.Match {
+			match = 1
+		}
+		fmt.Fprintf(w, "vasa_conformance_item{area=%q} %d\n", it.Area, match)
+	}
+
+	mods := s.p.ModuleCatalogue()
+	fmt.Fprintf(w, "# HELP vasa_functional_modules Functional modules in the catalogue (329 core + 62 TN).\n# TYPE vasa_functional_modules gauge\nvasa_functional_modules %d\n", mods.Total)
+	fmt.Fprintf(w, "# HELP vasa_model_card_coverage §F.2 model-card coverage SLA (1.0=every production model signed).\n# TYPE vasa_model_card_coverage gauge\nvasa_model_card_coverage %g\n", s.p.ModelCardCoverage())
+
+	ten := s.p.TenancySummary()
+	tenOK := 0
+	if ten.Valid {
+		tenOK = 1
+	}
+	fmt.Fprintf(w, "# HELP vasa_tenancy_nodes Nodes in the T0–T6 sovereign hierarchy.\n# TYPE vasa_tenancy_nodes gauge\nvasa_tenancy_nodes %d\n", ten.Nodes)
+	fmt.Fprintf(w, "# HELP vasa_tenancy_valid Tenancy tier counts match the §D estate (1=valid).\n# TYPE vasa_tenancy_valid gauge\nvasa_tenancy_valid %d\n", tenOK)
+
+	cv := s.p.CivicSummary()
+	fmt.Fprintf(w, "# HELP vasa_grievances_open Open grievances in the L12 civic tracker.\n# TYPE vasa_grievances_open gauge\nvasa_grievances_open %d\n", cv.GrievOpen)
+	fmt.Fprintf(w, "# HELP vasa_grievances_resolved Resolved grievances in the L12 civic tracker.\n# TYPE vasa_grievances_resolved gauge\nvasa_grievances_resolved %d\n", cv.GrievResolved)
+	fmt.Fprintf(w, "# HELP vasa_rti_open Open RTI requests.\n# TYPE vasa_rti_open gauge\nvasa_rti_open %d\n", cv.RTIOpen)
+	fmt.Fprintf(w, "# HELP vasa_rti_overdue RTI requests past the 30-day statutory window.\n# TYPE vasa_rti_overdue gauge\nvasa_rti_overdue %d\n", cv.RTIOverdue)
+	fmt.Fprintf(w, "# HELP vasa_grievance_queue_pending Grievance routings awaiting a human officer (HITL).\n# TYPE vasa_grievance_queue_pending gauge\nvasa_grievance_queue_pending %d\n", len(s.p.PendingGrievances()))
 }
 
 func decode(w http.ResponseWriter, r *http.Request, v any) bool {

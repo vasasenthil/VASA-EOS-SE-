@@ -621,3 +621,14 @@ wired into the composition root and surfaced on platformd:
   live: /sanction?stakes=high → [(G4,DEO,scheme.recommend),(G3,DIRECTOR,scheme.approve),(G2,SECRETARY,
   fund.release),(G1,MINISTER,policy.sanction)]; routine → [G4,G5,G6].
 - Status page: **48 modules · 396 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## /metrics extended — governance · conformance · civic gauges from the live registers
+- Extended `platformd /metrics` with Prometheus gauges sourced live from the registers: per-item +
+  aggregate **conformance** (`vasa_conformance_headlines_match`, `vasa_conformance_item{area=…}`),
+  **functional modules** (391), **model-card coverage** SLA, **tenancy** (`vasa_tenancy_nodes`,
+  `vasa_tenancy_valid`), and **civic** (`vasa_grievances_open/resolved`, `vasa_rti_open/overdue`,
+  `vasa_grievance_queue_pending`). Extended the metrics test to assert the new gauges. Verified live:
+  headlines_match 1 · functional_modules 391 · model_card_coverage 1 · tenancy_nodes 73232 · tenancy_valid 1;
+  after filing a grounded + an ungrounded grievance → grievances_open 1, grievance_queue_pending 1 (the
+  ungrounded one held in HITL).
+- Status page: **48 modules · 396 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
