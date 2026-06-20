@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/vasa-eos-se-tn/platform/consent"
 	"github.com/vasa-eos-se-tn/platform/dataplane"
 	"github.com/vasa-eos-se-tn/platform/i18n"
 	"github.com/vasa-eos-se-tn/platform/notify"
@@ -46,16 +47,26 @@ func (obClass) Classify(r onboarding.Record) (int, bool, string) {
 	return pii, true, ""
 }
 
-type obConsent struct{}
+// obConsent enforces the DPDP lawful-basis step against the LIVE §E register. Class-3/4 data needs no consent
+// (statutory/public reporting); Class-1/2 personal data requires either a §7 legitimate use asserted by the
+// source steward (statutory bulk ingestion — UDISE+/APAAR), or a per-principal consent grant that is currently
+// active in the register (looked up by principal + purpose). A bare payload flag is no longer sufficient.
+type obConsent struct{ reg *consent.Register }
 
-func (obConsent) LawfulBasis(r onboarding.Record) (bool, string) {
-	// Class-3/4 needs no consent (statutory/public); Class-1/2 PII requires a present, valid lawful basis.
-	if r.PIIClass <= 2 && r.PIIClass != 0 {
-		if ok, _ := r.Payload["consent"].(bool); !ok {
-			if lawful, _ := r.Payload["statutory"].(bool); !lawful {
-				return false, "no DPDP lawful basis (consent absent and not statutory)"
-			}
-		}
+func (c obConsent) LawfulBasis(r onboarding.Record) (bool, string) {
+	if r.PIIClass > 2 || r.PIIClass == 0 {
+		return true, ""
+	}
+	if statutory, _ := r.Payload["statutory"].(bool); statutory {
+		return true, "" // §7 legitimate use (legal obligation) asserted at source
+	}
+	principal, _ := r.Payload["principal"].(string)
+	purpose, _ := r.Payload["purpose"].(string)
+	if principal == "" || purpose == "" {
+		return false, "no DPDP lawful basis (neither a statutory basis nor a principal+purpose consent reference)"
+	}
+	if ok, why := c.reg.HasLawfulBasis(principal, purpose); !ok {
+		return false, why
 	}
 	return true, ""
 }
@@ -132,7 +143,7 @@ func (a obAlert) Alert(steward, complianceLead, recordID, reason string) {
 // failure the record is quarantined (not lost) and the source steward + Compliance Lead are alerted.
 func (p *Platform) Onboard(ctx context.Context, r onboarding.Record, sourceSteward string) onboarding.Result {
 	pipe := &onboarding.Pipeline{
-		Schema: obSchema{}, Sig: obSig{}, Rate: obRate{p}, Class: obClass{}, Consent: obConsent{},
+		Schema: obSchema{}, Sig: obSig{}, Rate: obRate{p}, Class: obClass{}, Consent: obConsent{p.Consent},
 		Tenant: obTenant{}, Policy: obPolicy{p}, Crypto: obCrypto{p}, Store: obStore{},
 		Audit: obAudit{p}, Alert: obAlert{p},
 		Sovereign: map[string]bool{"TN-SDC": true, "TN-SDC-DR": true},

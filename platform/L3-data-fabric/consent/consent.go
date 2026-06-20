@@ -216,6 +216,20 @@ func (r *Register) LawfulToProcess(id string) (bool, string) {
 	return true, ""
 }
 
+// HasLawfulBasis reports whether a principal currently holds an active lawful basis for a purpose — the live
+// query the ingestion path uses to authorise per-principal personal data (DPDP §4: process only on a basis).
+func (r *Register) HasLawfulBasis(principal, purposeID string) (bool, string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, id := range r.sortedGrantIDs() {
+		g := r.grants[id]
+		if g.Principal == principal && g.PurposeID == purposeID && g.Status == Active {
+			return true, ""
+		}
+	}
+	return false, "no active lawful basis on file for this principal + purpose"
+}
+
 // erasureDue reports whether a grant is due for erasure now (caller holds the lock).
 func (r *Register) erasureDue(g *Grant) bool {
 	if g.Status == Erased || g.StatutoryHold || g.PurposeEnded.IsZero() {

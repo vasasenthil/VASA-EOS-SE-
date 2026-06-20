@@ -114,7 +114,7 @@ func TestOnboardEndpoint(t *testing.T) {
 	}
 
 	// class-1 PII offshore → quarantined
-	bad := `{"id":"R2","source":"internal","channel":"web","region":"AWS-Mumbai","payload":{"category":"aadhaar","tenant":"TN/Chennai","consent":true}}`
+	bad := `{"id":"R2","source":"internal","channel":"web","region":"AWS-Mumbai","payload":{"category":"aadhaar","tenant":"TN/Chennai","statutory":true}}`
 	rr2 := httptest.NewRecorder()
 	handler(t).ServeHTTP(rr2, httptest.NewRequest("POST", "/onboard", strings.NewReader(bad)))
 	var out2 struct {

@@ -26,7 +26,7 @@ func TestOnboardClass1PiiOffshoreQuarantined(t *testing.T) {
 	p := newPlatform(t)
 	r := onboarding.Record{
 		ID: "REC-2", Source: "internal", Channel: "web", Region: "AWS-Mumbai",
-		Payload: map[string]any{"category": "aadhaar", "tenant": "TN/Chennai", "consent": true}, // class-1 PII
+		Payload: map[string]any{"category": "aadhaar", "tenant": "TN/Chennai", "statutory": true}, // class-1 PII, §7 basis
 	}
 	res := p.Onboard(context.Background(), r, "APAAR Nodal")
 	if res.Accepted || res.FailedStep != onboarding.Residency {
@@ -47,6 +47,30 @@ func TestOnboardMinorPiiWithoutConsentQuarantined(t *testing.T) {
 	res := p.Onboard(context.Background(), r, "DGE")
 	if res.FailedStep != onboarding.Consent {
 		t.Fatalf("class-2 PII without a lawful basis must quarantine at consent: %+v", res)
+	}
+}
+
+func TestOnboardConsultsLiveConsentRegister(t *testing.T) {
+	p := newPlatform(t)
+	// a Class-2 record referencing a principal + purpose with NO grant on file → quarantined at consent.
+	noGrant := onboarding.Record{
+		ID: "REC-5", Source: "internal", Channel: "web", Region: "TN-SDC",
+		Payload: map[string]any{"category": "marks", "tenant": "TN/Chennai", "principal": "STU-77", "purpose": "ai-tutoring"},
+	}
+	if res := p.Onboard(context.Background(), noGrant, "DGE"); res.FailedStep != onboarding.Consent {
+		t.Fatalf("class-2 PII without a live grant must quarantine at consent: %+v", res)
+	}
+	// record a live consent grant, then the same record passes the consent step (and all 12).
+	if _, err := p.RecordConsent("REC-5-G", "STU-77", "ai-tutoring", "consent", true, "PARENT-77"); err != nil {
+		t.Fatal(err)
+	}
+	withGrant := onboarding.Record{
+		ID: "REC-6", Source: "internal", Channel: "web", Region: "TN-SDC",
+		Payload: map[string]any{"category": "marks", "tenant": "TN/Chennai", "principal": "STU-77", "purpose": "ai-tutoring"},
+	}
+	res := p.Onboard(context.Background(), withGrant, "DGE")
+	if !res.Accepted || len(res.Passed) != 12 {
+		t.Fatalf("a class-2 record with a live consent grant should pass all 12 steps: %+v", res)
 	}
 }
 

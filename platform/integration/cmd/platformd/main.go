@@ -436,7 +436,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
 <button onclick="p('/onboard',{id:'REC-1',source:'internal',channel:'web',region:'TN-SDC',payload:{category:'name',tenant:'TN/Chennai',datatype:'row',consent:true}})">Onboard clean record (→ accepted)</button>
-<button class="alt" onclick="p('/onboard',{id:'REC-2',source:'internal',channel:'web',region:'AWS-Mumbai',payload:{category:'aadhaar',tenant:'TN/Chennai',consent:true}})">Class-1 PII offshore (→ quarantined + alert)</button></div>
+<button class="alt" onclick="p('/onboard',{id:'REC-2',source:'internal',channel:'web',region:'AWS-Mumbai',payload:{category:'aadhaar',tenant:'TN/Chennai',statutory:true}})">Class-1 PII offshore (→ quarantined + alert)</button></div>
 
 <div class="card"><h3>Admission (top-to-bottom: L10→L1→L3→L5→L9→L7)</h3>
 <button onclick="p('/admission',{actorRole:'HEAD_TEACHER',decision:'admit',applicantId:'STU-1',applicantName:'Anbu',applicantAge:7,category:'GEN',region:'TN-SDC'})">Admit (→ issues a verifiable credential)</button>

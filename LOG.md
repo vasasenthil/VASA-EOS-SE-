@@ -446,3 +446,17 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   3 integration tests. Verified live: minor consent under guardian → lawful → withdraw → not lawful (reason
   "consent withdrawn"), with full history + a §11 access report.
 - Status page: **40 modules · 351 tests**. Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## §E consent register threaded into the §B.6 onboarding gate (live lawful-basis enforcement)
+- Added `consent.Register.HasLawfulBasis(principal, purpose)` — the live query the ingestion path uses to
+  authorise per-principal personal data (DPDP §4). 1 module test.
+- Rewired the onboarding `ConsentChecker` (`obConsent`) to consult the **live §E register** instead of a bare
+  payload flag: Class-1/2 personal data now passes the consent step only with either a **§7 legitimate use**
+  asserted by the source steward (`statutory:true` — UDISE+/APAAR bulk ingestion under legal obligation) or an
+  **active per-principal consent grant** in the register (looked up by `principal`+`purpose`). A bare
+  `consent:true` flag is no longer sufficient. Updated the existing onboarding tests + platformd demo
+  accordingly and added an integration test proving the live path (no grant → quarantine at consent; record a
+  grant → all 12 steps pass). Verified live: marks without a grant → quarantine at consent-check with reason
+  "no active lawful basis on file for this principal + purpose"; Class-1 with §7 statutory → passes consent,
+  blocked at residency.
+- Status page: **40 modules · 353 tests**. Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.

@@ -122,6 +122,25 @@ func TestAccessReportAndSummary(t *testing.T) {
 	}
 }
 
+func TestHasLawfulBasis(t *testing.T) {
+	r, _ := seedRegister(t)
+	r.Grant("g1", "STU-1", "enrolment", Consent, false, "")
+	if ok, _ := r.HasLawfulBasis("STU-1", "enrolment"); !ok {
+		t.Fatal("an active grant should yield a lawful basis")
+	}
+	// wrong purpose, unknown principal, and a withdrawn grant all yield no basis.
+	if ok, why := r.HasLawfulBasis("STU-1", "dbt"); ok || why == "" {
+		t.Fatalf("no grant for this purpose should yield no basis, got ok=%v", ok)
+	}
+	if ok, _ := r.HasLawfulBasis("STU-2", "enrolment"); ok {
+		t.Fatal("an unknown principal must have no basis")
+	}
+	r.Withdraw("g1", "STU-1")
+	if ok, _ := r.HasLawfulBasis("STU-1", "enrolment"); ok {
+		t.Fatal("a withdrawn grant must no longer yield a lawful basis")
+	}
+}
+
 func TestUnknownPurposeAndGrant(t *testing.T) {
 	r, _ := seedRegister(t)
 	if _, err := r.Grant("g1", "STU-1", "nope", Consent, false, ""); err != ErrUnknownPurpose {
