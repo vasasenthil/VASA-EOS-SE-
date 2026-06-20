@@ -488,3 +488,17 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   fabricated** — it requires the live federated substrate (APAAR/UDISE+/PFMS) and data-sharing agreements,
   which remain gated/out-of-scope by design.
 - Status page: **41 modules · 361 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Drive the populated estate through the live workflows (end-to-end estate exercise)
+- `Platform.ExerciseOnboarding(ctx, n)` + `platformd GET /exercise?n=…` — materialises a synthetic cohort
+  spread evenly across the **whole real estate** (all 38 districts) and drives every member through the **live**
+  §B.6 twelve-step onboarding gate against the real layers: records a real DPDP **consent grant** per principal
+  in the §E register, then classify → consent → residency → policy → encrypt → persist → audit → emit.
+  Ingestion is per-source (per originating block, signed by the L4 adapter) so the rate-shape step buckets
+  realistically. 1-in-20 records are routed offshore to exercise the fail-closed quarantine path. The counts
+  are **observed, not asserted**. 2 integration tests.
+- Verified live (n=1000): 1000 grants recorded · **950 onboarded (95%)** · **50 quarantined at residency**
+  (the offshore tranche) · **38 districts touched** · 1000 immutable audit-chain records. This is the platform
+  actually processing a populated estate end-to-end — real classification, lawful-basis, residency, audit —
+  on clearly-synthetic, real-anchored data.
+- Status page: **41 modules · 363 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.

@@ -121,6 +121,16 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, s.p.SLABoard(), nil)
 	}))
 	mux.HandleFunc("/population", s.count(s.handlePopulation))
+	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
+		n := 200
+		if q := r.URL.Query().Get("n"); q != "" {
+			fmt.Sscanf(q, "%d", &n)
+		}
+		if n > 5000 {
+			n = 5000
+		}
+		s.writeJSON(w, s.p.ExerciseOnboarding(r.Context(), n), nil)
+	}))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -480,6 +490,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/population')">GET /population (real estate · §D scale)</button>
 <button class="alt" onclick="g('/population?district=Chennai')">GET /population?district=Chennai</button>
 <button class="alt" onclick="g('/population?cohort=1000')">GET /population?cohort=1000 (synthetic)</button>
+<button onclick="g('/exercise?n=200')">GET /exercise?n=200 (drive cohort through the live gate)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
