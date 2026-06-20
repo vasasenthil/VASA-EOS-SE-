@@ -513,3 +513,15 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   The populated estate now flows through onboarding + admission + tutoring end-to-end on clearly-synthetic,
   real-anchored data. Strengthened the integration test to assert the admission/credential/tutoring paths.
 - Status page: **41 modules · 363 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Conformance diff — CC-SPEC-001 Cover Brief + SYN-TN-001 Synthesis Brief → the Go build
+- Read both briefs in full (Cover Brief CC-SPEC-001, 6pp; Synthesis Brief SYN-TN-001, 10pp) and produced a
+  line-by-line conformance diff against the Go service mesh: `docs/CONFORMANCE-CC-SPEC-001.md`. Verdicts are
+  evidence-backed (module path or BLOCKERS gate), in the briefs' own "ask for scrutiny" spirit.
+- Headline (Go build only): L1–L10 application **logic** = high conformance (every layer has tested Go
+  modules; physical substrate gated by design); **6 engines + 6 agents = full**; **8 pillars = 6 built / 2
+  partial**; **access-control policy models = 4 of 5** (IAM gated); **Indian statutory = 6 fully tested / 3
+  partial**; scale analysis + populated estate = full (physical load proof gated). Honest gaps called out:
+  **T0–T6 tenancy hierarchy is partial in Go** (tenant-ids yes, hierarchy in TS); **L11/L12, 13 portals, 391
+  functional modules, NDEAR-S 29/29 and the international registers are TS-app, not the Go mesh**; HSM/K8s/8
+  datastores/GPU/Besu/IoT/Edge/DAO are gated by design.
