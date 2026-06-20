@@ -19,9 +19,18 @@ type EstateExercise struct {
 	Onboarded      int            `json:"onboarded"`       // records that cleared all 12 steps
 	Quarantined    int            `json:"quarantined"`     // records the gate held back (not lost)
 	ByFailedStep   map[string]int `json:"by_failed_step"`  // quarantine reasons, by the step that caught them
-	Districts      int            `json:"districts"`       // distinct real districts touched
-	AuditRecords   int            `json:"audit_records"`   // immutable audit-chain length after the run
+	// downstream workflows driven on the onboarded students (bounded sub-sample)
+	Admitted          int `json:"admitted"`           // admission workflows that admitted the applicant
+	CredentialsIssued int `json:"credentials_issued"` // verifiable credentials minted + notarised on admit
+	TutoringServed    int `json:"tutoring_served"`    // tutor questions answered (grounded + safe)
+	TutoringRefused   int `json:"tutoring_refused"`   // tutor questions refused by the safety gate
+	Districts         int `json:"districts"`          // distinct real districts touched
+	AuditRecords      int `json:"audit_records"`      // immutable audit-chain length after the run
 }
+
+// downstreamCap bounds how many onboarded students are also driven through the heavier admission + tutoring
+// workflows, so the exercise endpoint stays responsive regardless of cohort size.
+const downstreamCap = 500
 
 // ExerciseOnboarding materialises a synthetic cohort across the real institutional estate and drives every
 // member through the live onboarding gate. To exercise both the happy path and the fail-closed quarantine
@@ -65,14 +74,48 @@ func (p *Platform) ExerciseOnboarding(ctx context.Context, cohort int) EstateExe
 			},
 		}
 		out := p.Onboard(ctx, rec, "DGE")
-		if out.Accepted {
-			res.Onboarded++
-		} else if out.Quarantined {
-			res.Quarantined++
-			res.ByFailedStep[string(out.FailedStep)]++
+		if !out.Accepted {
+			if out.Quarantined {
+				res.Quarantined++
+				res.ByFailedStep[string(out.FailedStep)]++
+			}
+			continue
+		}
+		res.Onboarded++
+
+		// drive the onboarded student through the rest of the platform (bounded): admission → credential, and
+		// an age-appropriate tutoring turn. Rate limiting is keyed per district so the burst is shed realistically.
+		if res.Onboarded > downstreamCap {
+			continue
+		}
+		tenant := "TN/" + sc.District
+		adm, err := p.Admission(ctx, AdmissionRequest{
+			Tenant: tenant, ActorRole: "HEAD_TEACHER", Decision: "admit", ApplicantID: apaar,
+			ApplicantName: "Synthetic Learner", ApplicantAge: 6 + i%6, Category: admissionCats[i%len(admissionCats)],
+			Region: "TN-SDC",
+		})
+		if err == nil && adm.Allowed {
+			res.Admitted++
+			if adm.Credential != nil {
+				res.CredentialsIssued++
+			}
+		}
+		tut, err := p.AskTutor(ctx, TutorRequest{
+			Tenant: tenant, UserID: apaar, Question: "Explain fractions for Class 4.", AgeAppropriate: true,
+			Mastered: map[string]bool{"div": true, "place": true}, Target: "frac",
+		})
+		if err == nil {
+			if tut.Refused {
+				res.TutoringRefused++
+			} else if tut.Answer != "" {
+				res.TutoringServed++
+			}
 		}
 	}
 	res.Districts = len(districts)
 	res.AuditRecords = p.Audit.Len()
 	return res
 }
+
+// admissionCats cycles the RTE social categories across the exercised cohort.
+var admissionCats = []string{"GEN", "OBC", "SC", "ST", "EWS", "DG"}

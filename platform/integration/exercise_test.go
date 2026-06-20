@@ -31,6 +31,16 @@ func TestExerciseDrivesCohortThroughLiveGate(t *testing.T) {
 	if res.AuditRecords <= auditBefore {
 		t.Fatalf("the live run must extend the audit chain: before=%d after=%d", auditBefore, res.AuditRecords)
 	}
+	// onboarded students are driven onward: admitted with a verifiable credential, and tutored.
+	if res.Admitted == 0 || res.CredentialsIssued == 0 {
+		t.Fatalf("onboarded students must be admitted + issued credentials: %+v", res)
+	}
+	if res.CredentialsIssued > res.Admitted {
+		t.Fatalf("credentials cannot exceed admissions: %+v", res)
+	}
+	if res.TutoringServed == 0 {
+		t.Fatalf("onboarded students must receive grounded tutoring: %+v", res)
+	}
 }
 
 func TestExerciseConsentMakesOnboardingLawful(t *testing.T) {

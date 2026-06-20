@@ -502,3 +502,14 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   actually processing a populated estate end-to-end — real classification, lawful-basis, residency, audit —
   on clearly-synthetic, real-anchored data.
 - Status page: **41 modules · 363 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Estate exercise extended to the full pipeline (onboard → admit → tutor)
+- `Platform.ExerciseOnboarding` now drives each onboarded student onward through the **admission** workflow
+  (issuing a notarised verifiable credential) and an age-appropriate **AI-tutoring** turn (grounded + safety-
+  gated), bounded to a 500-student downstream sub-sample for responsiveness; rate limiting is keyed per
+  district. `EstateExercise` gained `Admitted / CredentialsIssued / TutoringServed / TutoringRefused`.
+- Verified live (n=600): 600 grants · 570 onboarded · 30 quarantined at residency · **500 admitted · 500
+  verifiable credentials issued · 500 grounded tutoring turns served** · 38 districts · 1,600 audit records.
+  The populated estate now flows through onboarding + admission + tutoring end-to-end on clearly-synthetic,
+  real-anchored data. Strengthened the integration test to assert the admission/credential/tutoring paths.
+- Status page: **41 modules · 363 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.
