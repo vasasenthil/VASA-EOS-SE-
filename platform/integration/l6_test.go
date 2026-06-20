@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vasa-eos-se-tn/platform/govtiers"
 	"github.com/vasa-eos-se-tn/platform/i18n"
 	"github.com/vasa-eos-se-tn/platform/workflow"
 )
@@ -58,39 +59,62 @@ func TestI18nCoverageSurfaced(t *testing.T) {
 	}
 }
 
-func TestSanctionWorkflowG3toG7(t *testing.T) {
+func TestHighStakesSanctionEscalatesToCabinet(t *testing.T) {
 	p := newPlatform(t)
-	in, err := p.StartSanction("WF-NMMS-1")
+	// the escalation chain is sourced from the govtiers register: G4 → G3 → G2 → G1.
+	chain := p.SanctionEscalation(true)
+	if len(chain) != 4 || chain[0].Code != "G4" || chain[3].Code != "G1" {
+		t.Fatalf("a high-stakes sanction must escalate G4→G3→G2→G1, got %v", codes(chain))
+	}
+	in, err := p.StartSanction("WF-NMMS-1", true)
 	if err != nil {
 		t.Fatal(err)
 	}
-	tiers := []struct{ role, scope string }{
-		{"DEO", "scheme.recommend"},
-		{"DIRECTOR", "scheme.approve"},
-		{"SECRETARY", "fund.release"},
-	}
-	for _, tr := range tiers {
-		if err := p.ActSanction(in, workflow.Approve, tr.role+"-1", tr.role, []string{tr.scope}, ""); err != nil {
-			t.Fatalf("%s approve: %v", tr.role, err)
+	// each tier acts with its register-defined role + scope.
+	for _, tr := range chain {
+		if err := p.ActSanction(in, true, workflow.Approve, tr.ApproverRole+"-1", tr.ApproverRole, []string{tr.RequiredScope}, ""); err != nil {
+			t.Fatalf("%s (%s) approve: %v", tr.Code, tr.ApproverRole, err)
 		}
 	}
 	if in.Status != workflow.Approved {
-		t.Fatalf("after G3→G5→G7 approve, the sanction should be approved, got %s", in.Status)
+		t.Fatalf("after escalating to the Cabinet (G1), the sanction should be approved, got %s", in.Status)
 	}
-	// a wrong-tier actor cannot act on a completed instance
-	if err := p.ActSanction(in, workflow.Approve, "x", "DEO", []string{"*"}, ""); err == nil {
+	// a wrong-tier actor cannot act on a completed instance.
+	if err := p.ActSanction(in, true, workflow.Approve, "x", "DEO", []string{"*"}, ""); err == nil {
 		t.Fatal("acting on a completed sanction must error")
+	}
+}
+
+func TestRoutineSanctionDoesNotReachCabinet(t *testing.T) {
+	p := newPlatform(t)
+	// a routine sanction runs G4 → G5 → G6 and never reaches the Cabinet.
+	chain := p.SanctionEscalation(false)
+	if len(chain) != 3 || chain[0].Code != "G4" || chain[2].Code != "G6" {
+		t.Fatalf("a routine sanction must run G4→G5→G6, got %v", codes(chain))
+	}
+	for _, c := range chain {
+		if c.Code == "G1" {
+			t.Fatal("a routine sanction must not escalate to the Cabinet")
+		}
 	}
 }
 
 func TestSanctionRejectStops(t *testing.T) {
 	p := newPlatform(t)
-	in, _ := p.StartSanction("WF-2")
-	p.ActSanction(in, workflow.Approve, "deo", "DEO", []string{"scheme.recommend"}, "")
-	if err := p.ActSanction(in, workflow.Reject, "dir", "DIRECTOR", []string{"scheme.approve"}, "docs missing"); err != nil {
+	in, _ := p.StartSanction("WF-2", true)
+	p.ActSanction(in, true, workflow.Approve, "deo", "DEO", []string{"scheme.recommend"}, "")
+	if err := p.ActSanction(in, true, workflow.Reject, "dir", "DIRECTOR", []string{"scheme.approve"}, "docs missing"); err != nil {
 		t.Fatal(err)
 	}
 	if in.Status != workflow.Rejected {
 		t.Fatalf("a tier rejection must stop the sanction, got %s", in.Status)
 	}
+}
+
+func codes(ts []govtiers.Tier) []string {
+	out := make([]string, len(ts))
+	for i, t := range ts {
+		out[i] = t.Code
+	}
+	return out
 }

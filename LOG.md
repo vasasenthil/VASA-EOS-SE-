@@ -606,3 +606,18 @@ wired into the composition root and surfaced on platformd:
   pending; officer DEO-Chennai approves → "grievance GRV-9 confirmed + filed at directorate"; civic tracker then
   holds it. AI assists; humans decide.
 - Status page: **48 modules · 395 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Resolved roles fetch error + wired govtiers escalation into the scheme-sanction workflow
+- **Fix (TS):** `app/governance/roles/actions.ts` — a configured-but-unreachable Supabase (offline preview /
+  restricted network / paused project) threw "Failed to fetch roles: TypeError: fetch failed". Added
+  `isDbUnreachable()` to detect network/connection failures and degrade to the demo role set in both the
+  query-error branch and the catch, so the page renders. tsc 0 / eslint clean.
+- **Govtiers → workflow (Go):** the scheme-sanction flow is now **register-driven** — its steps ARE the
+  `govtiers.EscalationPath` for the decision's stakes. Added `approver_role` + `required_scope` to each G-tier
+  so the register defines who signs; `SanctionDefinitionFor(highStakes)`, `StartSanction(id, highStakes)`,
+  `ActSanction(in, highStakes, …)`, `SanctionEscalation(highStakes)`; `platformd GET /sanction?stakes=`.
+  High-stakes → **G4→G3→G2→G1** (PMU→Director→Secretary→Cabinet); routine → **G4→G5→G6** (PMU→Architecture→
+  Ethics), never the Cabinet. Updated l6 tests (4-step escalation to G1 + routine-path assertion). Verified
+  live: /sanction?stakes=high → [(G4,DEO,scheme.recommend),(G3,DIRECTOR,scheme.approve),(G2,SECRETARY,
+  fund.release),(G1,MINISTER,policy.sanction)]; routine → [G4,G5,G6].
+- Status page: **48 modules · 396 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

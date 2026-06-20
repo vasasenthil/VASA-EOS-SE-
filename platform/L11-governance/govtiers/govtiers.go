@@ -9,23 +9,25 @@ import "sort"
 
 // Tier is one of the seven governance bodies G1–G7.
 type Tier struct {
-	Code        string `json:"code"` // G1..G7
-	Name        string `json:"name"`
-	Mandate     string `json:"mandate"`
-	Composition string `json:"composition"`
-	Authority   string `json:"authority"` // what this tier can finally decide
+	Code          string `json:"code"` // G1..G7
+	Name          string `json:"name"`
+	Mandate       string `json:"mandate"`
+	Composition   string `json:"composition"`
+	Authority     string `json:"authority"`      // what this tier can finally decide
+	ApproverRole  string `json:"approver_role"`  // the role that acts for this tier in a workflow
+	RequiredScope string `json:"required_scope"` // the governance scope an approver must hold
 }
 
 // Tiers returns the seven governance tiers, top (G1) to independent audit (G7).
 func Tiers() []Tier {
 	return []Tier{
-		{"G1", "State Cabinet", "Ultimate political authority; policy + budget sanction", "Hon'ble CM + Cabinet", "Approves State education policy, the budget and the off-switch custody"},
-		{"G2", "Empowered Committee", "Cross-government execution authority", "Chief Secretary (chair) + Secretaries", "Sanctions schemes, inter-departmental funds and major change"},
-		{"G3", "Inter-Directorate Council", "Operational coordination across the 7 directorates", "Directorate heads (DSE/DEE/DGE/DMS/DTERT/DPSE/DNFE)", "Resolves cross-directorate operations and standards"},
-		{"G4", "Programme Management Unit (PMU)", "Delivery management + monitoring", "PMU Director + programme leads", "Runs delivery, tracks indicators, escalates risk"},
-		{"G5", "Technology Architecture Board", "Technical + AI architecture authority", "Chief AI Architect + platform leads", "Owns architecture, model governance and tech standards"},
-		{"G6", "Ethics, Equity & RPwD-21 Review", "AI ethics, fairness, accessibility and child safety", "Ethics Chair + equity + RPwD + child-safety experts", "Reviews bias, fairness, accessibility; can block a model/feature"},
-		{"G7", "External Audit (CAG & independent)", "Independent assurance over everything", "CAG liaison + independent auditors", "Audits the evidence chain; findings are public and binding"},
+		{"G1", "State Cabinet", "Ultimate political authority; policy + budget sanction", "Hon'ble CM + Cabinet", "Approves State education policy, the budget and the off-switch custody", "MINISTER", "policy.sanction"},
+		{"G2", "Empowered Committee", "Cross-government execution authority", "Chief Secretary (chair) + Secretaries", "Sanctions schemes, inter-departmental funds and major change", "SECRETARY", "fund.release"},
+		{"G3", "Inter-Directorate Council", "Operational coordination across the 7 directorates", "Directorate heads (DSE/DEE/DGE/DMS/DTERT/DPSE/DNFE)", "Resolves cross-directorate operations and standards", "DIRECTOR", "scheme.approve"},
+		{"G4", "Programme Management Unit (PMU)", "Delivery management + monitoring", "PMU Director + programme leads", "Runs delivery, tracks indicators, escalates risk", "DEO", "scheme.recommend"},
+		{"G5", "Technology Architecture Board", "Technical + AI architecture authority", "Chief AI Architect + platform leads", "Owns architecture, model governance and tech standards", "ARCHITECT", "tech.approve"},
+		{"G6", "Ethics, Equity & RPwD-21 Review", "AI ethics, fairness, accessibility and child safety", "Ethics Chair + equity + RPwD + child-safety experts", "Reviews bias, fairness, accessibility; can block a model/feature", "ETHICS_CHAIR", "ethics.review"},
+		{"G7", "External Audit (CAG & independent)", "Independent assurance over everything", "CAG liaison + independent auditors", "Audits the evidence chain; findings are public and binding", "AUDITOR", "audit.sign"},
 	}
 }
 

@@ -125,6 +125,12 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/governance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"summary": s.p.GovernanceSummary(), "tiers": s.p.GovernanceTiers(), "control_tower": s.p.ControlTower()}, nil)
 	}))
+	mux.HandleFunc("/sanction", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the register-driven escalation chain: ?stakes=high (G4→G3→G2→G1) or routine (G4→G5→G6).
+		high := r.URL.Query().Get("stakes") != "routine"
+		def := s.p.SanctionDefinitionFor(high)
+		s.writeJSON(w, map[string]any{"high_stakes": high, "escalation": s.p.SanctionEscalation(high), "workflow": def}, nil)
+	}))
 	mux.HandleFunc("/portals", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.Portals(), nil)
 	}))
