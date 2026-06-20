@@ -411,3 +411,20 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   `?asset=ID` · `?trace=ID`). 2 integration tests. Verified live: /catalogue → 37 assets, 32 loaded, 191
   records, 16 stewards, 5 SLAs; /catalogue?trace=SEED-GEOGRAPHY → downstream [SEED-OFFICES, SEED-SCHOOLS].
 - Status page: **38 modules · 335 tests**. Green bar: 38 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §G AI-operational governance — model-card registry
+- `platform/L8-engines/modelregistry` — the authoritative register of every model the platform may run, making
+  the §F.2 **"no model in production without a signed card"** SLA enforceable. Each entry binds an
+  `evaluation.ModelCard` (intended use + bias + drift + signed attestation) to **red-team evidence** and a
+  lifecycle state machine (registered → pending-approval → deployed → retired; blocked/rejected). The transition
+  into production is **fail-closed** and needs all three: the card-level gate (four-fifths fairness + drift
+  under threshold + **signed** attestation), red-team evidence on file, and a **named human approver** (HITL).
+  Live drift past threshold on a deployed model trips an **automatic rollback** to blocked (canary discipline);
+  `IsServable` is the enforcement point (unregistered/non-deployed ⇒ never servable). 5 module tests.
+- Wired: `Platform.Models` boots mirroring what actually runs — the deterministic safety classifier is carried
+  through the full gate (red-team → request → human approval) to **deployed**; the GPU-served generative + Indic
+  models are **registered but un-deployed**, awaiting their B-011 substrate + independent evidence (honest).
+  Accessors `ModelRegistry/Entries/Entry/Servable/CardCoverage` (the last feeds the §F.2 SLA live);
+  `platformd GET /models` (summary · `?list=1` · `?model=…`). 2 integration tests. Verified live: /models →
+  4 models, 1 deployed, coverage 1.0; the classifier entry shows its full lifecycle history + human approver.
+- Status page: **39 modules · 342 tests**. Green bar: 39 Go modules pass, OPA 33/33, tsc 0 errors.

@@ -34,6 +34,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
+	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
@@ -120,3 +121,5 @@ replace github.com/vasa-eos-se-tn/platform/quality => ../L3-data-fabric/quality
 replace github.com/vasa-eos-se-tn/platform/volumes => ../L10-surfaces/volumes
 
 replace github.com/vasa-eos-se-tn/platform/catalogue => ../L3-data-fabric/catalogue
+
+replace github.com/vasa-eos-se-tn/platform/modelregistry => ../L8-engines/modelregistry

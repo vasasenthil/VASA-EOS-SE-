@@ -22,6 +22,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/i18n"
 	"github.com/vasa-eos-se-tn/platform/kms"
 	"github.com/vasa-eos-se-tn/platform/knowledgegraph"
+	"github.com/vasa-eos-se-tn/platform/modelregistry"
 	"github.com/vasa-eos-se-tn/platform/notary"
 	"github.com/vasa-eos-se-tn/platform/notify"
 	"github.com/vasa-eos-se-tn/platform/offswitch"
@@ -86,6 +87,8 @@ type Platform struct {
 	seedManifest seed.Manifest
 	// L3 §F.3 data-lineage / catalogue surface — built over the inventory once the seed is loaded.
 	Catalogue *catalogue.Catalogue
+	// L8 §G AI-operational governance — the authoritative model-card registry + deploy gate.
+	Models *modelregistry.Registry
 
 	now func() string
 
@@ -241,6 +244,11 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	// with classification, steward, SLAs and the just-loaded lineage.
 	allSeeds := append(append([]seed.Item(nil), inv...), seed.SyntheticInventory()...)
 	p.Catalogue = catalogue.Build(allSeeds, loader.Lineage)
+
+	// §G: the AI-operational model registry. The in-production deterministic safety classifier is taken through
+	// the full gate (red-team → deploy-request → human approval → deployed); the GPU-served models are
+	// registered but remain un-deployed, awaiting their B-011 substrate + bias/red-team evidence (honest).
+	p.Models = bootstrapModels(now)
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

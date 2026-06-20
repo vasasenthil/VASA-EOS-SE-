@@ -114,6 +114,7 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, s.p.VolumeModel(), nil)
 	}))
 	mux.HandleFunc("/catalogue", s.count(s.handleCatalogue))
+	mux.HandleFunc("/models", s.count(s.handleModels))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -235,6 +236,30 @@ func (s *server) handleCatalogue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.writeJSON(w, s.p.CatalogueSummary(), nil)
+}
+
+// handleModels serves the §G AI-operational model registry: ?model=NAME&version=V for one entry (card + state
+// + history), ?list=1 for every registered model, else the governance summary (deploy/blocked counts + the
+// live model-card coverage SLA).
+func (s *server) handleModels(w http.ResponseWriter, r *http.Request) {
+	if name := r.URL.Query().Get("model"); name != "" {
+		ver := r.URL.Query().Get("version")
+		if ver == "" {
+			ver = "v1"
+		}
+		e, ok := s.p.ModelEntry(name, ver)
+		if !ok {
+			http.Error(w, `{"error":"unknown model"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, e, nil)
+		return
+	}
+	if r.URL.Query().Get("list") != "" {
+		s.writeJSON(w, s.p.ModelEntries(), nil)
+		return
+	}
+	s.writeJSON(w, s.p.ModelRegistry(), nil)
 }
 
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
@@ -364,6 +389,8 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/volumes')">GET /volumes (§D scale model)</button>
 <button class="alt" onclick="g('/catalogue')">GET /catalogue (§F.3 summary)</button>
 <button class="alt" onclick="g('/catalogue?trace=SEED-GEOGRAPHY')">GET /catalogue?trace=… (lineage)</button>
+<button class="alt" onclick="g('/models')">GET /models (§G registry)</button>
+<button class="alt" onclick="g('/models?list=1')">GET /models?list=1 (cards + state)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
