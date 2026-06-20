@@ -73,3 +73,30 @@ func (p *Platform) FileGrievance(id, subject, by, tier string) civic.Grievance {
 
 // CivicSummary returns the L12 civic roll-up (RTI + grievance state + open datasets).
 func (p *Platform) CivicSummary() civic.Summary { return p.Civic.Summarise() }
+
+// EnrolmentStat is a publishable, k-anonymity-protected person-level statistic: per-class enrolment counts
+// with any cell below the threshold suppressed, so no published figure can single out a small group.
+type EnrolmentStat struct {
+	Dimension     string         `json:"dimension"`
+	K             int            `json:"k"`
+	Published     map[string]int `json:"published"`
+	Suppressed    []string       `json:"suppressed"` // cells withheld because their count < k
+	PIISuppressed bool           `json:"pii_suppressed"`
+}
+
+// PublicEnrolment produces a publishable per-class enrolment statistic from a synthetic cohort, applying
+// k-anonymity small-cell suppression (DPDP-safe open data): a class with fewer than k learners is withheld
+// rather than published. This is how a person-level public statistic leaves the L12 civic layer without ever
+// exposing an identifiable small group.
+func (p *Platform) PublicEnrolment(cohort, k int) EnrolmentStat {
+	if k < 1 {
+		k = 5
+	}
+	coh := p.SyntheticCohort(cohort, 0)
+	counts := map[string]int{}
+	for _, s := range coh.Students {
+		counts[s.Class]++
+	}
+	pub, sup := civic.SuppressSmallCells(counts, k)
+	return EnrolmentStat{Dimension: "class", K: k, Published: pub, Suppressed: sup, PIISuppressed: true}
+}

@@ -152,6 +152,20 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, s.p.ModuleCatalogue(), nil)
 	}))
 	mux.HandleFunc("/civic", s.count(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("enrolment") != "" {
+			cohort, k := 1500, 5
+			if v := r.URL.Query().Get("cohort"); v != "" {
+				fmt.Sscanf(v, "%d", &cohort)
+			}
+			if v := r.URL.Query().Get("k"); v != "" {
+				fmt.Sscanf(v, "%d", &k)
+			}
+			if cohort > 50000 {
+				cohort = 50000
+			}
+			s.writeJSON(w, s.p.PublicEnrolment(cohort, k), nil)
+			return
+		}
 		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
 	}))
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))

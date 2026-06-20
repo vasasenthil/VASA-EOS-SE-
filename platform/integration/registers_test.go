@@ -42,3 +42,32 @@ func TestPlatformAlignmentsAndCivic(t *testing.T) {
 		t.Fatalf("civic summary wrong: %+v", s)
 	}
 }
+
+func TestPublicEnrolmentKAnonymity(t *testing.T) {
+	p := newPlatform(t)
+	// a large cohort: every class clears the k-threshold, so all are published, none suppressed.
+	big := p.PublicEnrolment(1500, 5)
+	if !big.PIISuppressed || len(big.Suppressed) != 0 || len(big.Published) == 0 {
+		t.Fatalf("a large cohort should publish all classes with none suppressed: %+v", big)
+	}
+	total := 0
+	for _, n := range big.Published {
+		total += n
+		if n < big.K {
+			t.Fatalf("a published cell must be >= k: %+v", big)
+		}
+	}
+	if total != 1500 {
+		t.Fatalf("published counts should cover the whole cohort, got %d", total)
+	}
+	// a tiny cohort: classes fall below the threshold and MUST be suppressed (no identifiable small group).
+	small := p.PublicEnrolment(30, 5)
+	if len(small.Suppressed) == 0 {
+		t.Fatalf("a tiny cohort must suppress small cells, got none: %+v", small)
+	}
+	for _, n := range small.Published {
+		if n < small.K {
+			t.Fatal("no published cell may be below k")
+		}
+	}
+}

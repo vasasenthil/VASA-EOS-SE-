@@ -632,3 +632,13 @@ wired into the composition root and surfaced on platformd:
   after filing a grounded + an ungrounded grievance → grievances_open 1, grievance_queue_pending 1 (the
   ungrounded one held in HITL).
 - Status page: **48 modules · 396 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## k-anonymity person-level public statistic (L12 privacy guarantee on real population data)
+- `Platform.PublicEnrolment(cohort, k)` + `platformd GET /civic?enrolment=1&cohort=&k=` — produces a
+  publishable per-class enrolment statistic from a synthetic cohort and applies **k-anonymity small-cell
+  suppression** (`civic.SuppressSmallCells`): any class with fewer than k learners is withheld, never
+  published, so no open-data figure can single out an identifiable small group (DPDP-safe). 1 integration test.
+- Verified live: cohort=1500/k=5 → all 15 classes published, none suppressed; cohort=30/k=5 → 0 published, all
+  15 small cells suppressed. The L12 civic layer now demonstrably emits person-level public stats without
+  exposing small groups.
+- Status page: **48 modules · 397 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
