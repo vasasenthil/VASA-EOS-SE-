@@ -28,17 +28,23 @@ require (
 
 require (
 	github.com/vasa-eos-se-tn/platform/agents v0.0.0
+	github.com/vasa-eos-se-tn/platform/alignments v0.0.0
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
+	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
 	github.com/vasa-eos-se-tn/platform/engines v0.0.0
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
+	github.com/vasa-eos-se-tn/platform/govtiers v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
+	github.com/vasa-eos-se-tn/platform/modulecatalogue v0.0.0
+	github.com/vasa-eos-se-tn/platform/ndears v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
 	github.com/vasa-eos-se-tn/platform/population v0.0.0
+	github.com/vasa-eos-se-tn/platform/portals v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
@@ -132,3 +138,15 @@ replace github.com/vasa-eos-se-tn/platform/consent => ../L3-data-fabric/consent
 replace github.com/vasa-eos-se-tn/platform/population => ../L3-data-fabric/population
 
 replace github.com/vasa-eos-se-tn/platform/tenancy => ../L6-platform-services/tenancy
+
+replace github.com/vasa-eos-se-tn/platform/govtiers => ../L11-governance/govtiers
+
+replace github.com/vasa-eos-se-tn/platform/portals => ../L10-surfaces/portals
+
+replace github.com/vasa-eos-se-tn/platform/ndears => ../L4-integration/ndears
+
+replace github.com/vasa-eos-se-tn/platform/alignments => ../L11-governance/alignments
+
+replace github.com/vasa-eos-se-tn/platform/modulecatalogue => ../L11-governance/catalogue
+
+replace github.com/vasa-eos-se-tn/platform/civic => ../L12-civic/civic

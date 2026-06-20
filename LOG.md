@@ -540,3 +540,25 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   Education Secretariat → Directorate of School Education → Chennai"; governs(DSE, Chennai)=true;
   governs(Chennai, Madurai)=false. Conformance diff + status page updated to mark the gap closed.
 - Status page: **42 modules**. Green bar: 42 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Closed the TS-only gaps — L11 governance · L12 civic · 13 portals · 391-module catalogue · NDEAR-S · alignments
+Promoted six registers that previously lived only in the TS app into first-class, self-verifying Go modules,
+wired into the composition root and surfaced on platformd:
+- `L11-governance/govtiers` — G1–G7 governance tiers (mandate/composition/authority) + 3 AI Control Tower
+  bodies + escalation paths. `GET /governance`. 3 tests.
+- `L10-surfaces/portals` — the 13 role-tailored stakeholder portals (role · home · tier · grants). `GET /portals`. 2 tests.
+- `L4-integration/ndears` — NDEAR-S 29 building blocks with sovereign/federated/pending posture, headline
+  computed (26/29 addressed today). `GET /ndears`. 2 tests.
+- `L11-governance/alignments` — GLO-TN-001: 12 international frameworks (SDG·UNESCO·PISA·STARS·GPAI·UNESCO AI
+  Ethics·ESG) mapped to in-mesh evidence + posture. `GET /alignments`. 2 tests.
+- `L11-governance/catalogue` — the 391 functional modules as families across the 7 tiers + Platform, counts
+  **computed** to 329 core + 62 TN = 391 (self-verified, can't drift). `GET /modules`. 2 tests.
+- `L12-civic/civic` — PII-suppressed public dashboard (from the real estate), k-anonymity cell suppression, RTI
+  register with the 30-day statutory clock, grievance tracker, open-data (CKAN-style) catalogue. `GET /civic`.
+  4 tests. Wired: `Platform.{GovernanceTiers,ControlTower,Portals,NDEAR*,Alignments,ModuleCatalogue,Public
+  Dashboard,FileRTI,FileGrievance,CivicSummary,…}` + 3 integration tests.
+- Verified live: /modules → 329+62=391 headline_match true; /ndears → 29 blocks (26 addressed); /governance →
+  7 tiers + 3 bodies; /portals → 13; /alignments → 12 (6 instrumented); /civic → 69k-school PII-suppressed
+  dashboard + 6 open datasets + live RTI/grievance. Conformance diff updated: L11/L12 and all six gaps marked
+  closed (per-module Next.js UIs remain in the TS app, by design).
+- Status page: **48 modules · 388 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

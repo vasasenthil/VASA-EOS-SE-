@@ -1,0 +1,89 @@
+package integration
+
+import (
+	"sync"
+	"time"
+
+	"github.com/vasa-eos-se-tn/platform/alignments"
+	"github.com/vasa-eos-se-tn/platform/civic"
+	"github.com/vasa-eos-se-tn/platform/govtiers"
+	"github.com/vasa-eos-se-tn/platform/modulecatalogue"
+	"github.com/vasa-eos-se-tn/platform/ndears"
+	"github.com/vasa-eos-se-tn/platform/portals"
+)
+
+// This file wires the L11 governance / L12 civic / experience / federation registers — previously only in the
+// TS app — into the Go composition root, closing the conformance-diff gap. Each is a first-class, tested Go
+// module; the platform surfaces them and the civic register holds live RTI + grievance state.
+
+// ── L11 Governance & Oversight (G1–G7 + AI Control Tower) ──
+
+// GovernanceTiers returns the seven governance tiers G1–G7.
+func (p *Platform) GovernanceTiers() []govtiers.Tier { return govtiers.Tiers() }
+
+// ControlTower returns the three permanent AI Control Tower bodies.
+func (p *Platform) ControlTower() []govtiers.Body { return govtiers.ControlTower() }
+
+// GovernanceSummary returns the L11 governance roll-up.
+func (p *Platform) GovernanceSummary() govtiers.Summary { return govtiers.Summarise() }
+
+// ── L10 Experience — the 13 stakeholder portals ──
+
+// Portals returns the thirteen role-tailored stakeholder portals.
+func (p *Platform) Portals() []portals.Portal { return portals.Portals() }
+
+// ── L4 Federation — NDEAR-S 29/29 ──
+
+// NDEARSummary returns the NDEAR-S conformance roll-up (the headline N/29 addressed).
+func (p *Platform) NDEARSummary() ndears.Summary { return ndears.Summarise() }
+
+// NDEARBlocks returns the 29 NDEAR-S building blocks and their conformance posture.
+func (p *Platform) NDEARBlocks() []ndears.Block { return ndears.Blocks() }
+
+// ── L11 International alignments (GLO-TN-001) ──
+
+// Alignments returns the international-framework alignment register.
+func (p *Platform) Alignments() []alignments.Alignment { return alignments.Alignments() }
+
+// AlignmentSummary returns the alignment roll-up.
+func (p *Platform) AlignmentSummary() alignments.Summary { return alignments.Summarise() }
+
+// ── The 391 functional-module catalogue ──
+
+// ModuleCatalogue returns the 391-module catalogue counts (329 core + 62 TN, computed from the families).
+func (p *Platform) ModuleCatalogue() modulecatalogue.Counts { return modulecatalogue.Tally() }
+
+// ModuleFamilies returns the catalogue's module families across the seven tiers + Platform.
+func (p *Platform) ModuleFamilies() []modulecatalogue.Family { return modulecatalogue.Families() }
+
+// ── L12 Citizen & Civic ──
+
+// the civic register holds live RTI + grievance state for the running platform.
+var (
+	civicOnce sync.Once
+	civicReg  *civic.Registry
+)
+
+func civicRegistry() *civic.Registry {
+	civicOnce.Do(func() { civicReg = civic.New(func() time.Time { return time.Now().UTC() }) })
+	return civicReg
+}
+
+// PublicDashboard returns the PII-suppressed public institutional dashboard built from the real estate.
+func (p *Platform) PublicDashboard() civic.PublicDashboard { return civic.Dashboard(tree()) }
+
+// OpenDatasets returns the open-data (CKAN-style) dataset catalogue (non-personal only).
+func (p *Platform) OpenDatasets() []civic.Dataset { return civic.OpenDatasets() }
+
+// FileRTI files a citizen RTI request.
+func (p *Platform) FileRTI(id, subject, by string) civic.RTIRequest {
+	return civicRegistry().FileRTI(id, subject, by)
+}
+
+// FileGrievance files a citizen grievance at a governance tier.
+func (p *Platform) FileGrievance(id, subject, by, tier string) civic.Grievance {
+	return civicRegistry().FileGrievance(id, subject, by, tier)
+}
+
+// CivicSummary returns the L12 civic roll-up (RTI + grievance state + open datasets).
+func (p *Platform) CivicSummary() civic.Summary { return civicRegistry().Summarise() }

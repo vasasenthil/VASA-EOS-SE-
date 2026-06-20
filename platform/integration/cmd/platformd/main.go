@@ -122,6 +122,32 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/population", s.count(s.handlePopulation))
 	mux.HandleFunc("/tenancy", s.count(s.handleTenancy))
+	mux.HandleFunc("/governance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, map[string]any{"summary": s.p.GovernanceSummary(), "tiers": s.p.GovernanceTiers(), "control_tower": s.p.ControlTower()}, nil)
+	}))
+	mux.HandleFunc("/portals", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.Portals(), nil)
+	}))
+	mux.HandleFunc("/ndears", s.count(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("list") != "" {
+			s.writeJSON(w, s.p.NDEARBlocks(), nil)
+			return
+		}
+		s.writeJSON(w, s.p.NDEARSummary(), nil)
+	}))
+	mux.HandleFunc("/alignments", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, map[string]any{"summary": s.p.AlignmentSummary(), "alignments": s.p.Alignments()}, nil)
+	}))
+	mux.HandleFunc("/modules", s.count(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("families") != "" {
+			s.writeJSON(w, s.p.ModuleFamilies(), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ModuleCatalogue(), nil)
+	}))
+	mux.HandleFunc("/civic", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
+	}))
 	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 200
 		if q := r.URL.Query().Get("n"); q != "" {
@@ -515,6 +541,12 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/population?cohort=1000')">GET /population?cohort=1000 (synthetic)</button>
 <button onclick="g('/exercise?n=200')">GET /exercise?n=200 (drive cohort through the live gate)</button>
 <button class="alt" onclick="g('/tenancy')">GET /tenancy (T0–T6 hierarchy)</button>
+<button class="alt" onclick="g('/governance')">GET /governance (G1–G7 + Control Tower)</button>
+<button class="alt" onclick="g('/portals')">GET /portals (13 stakeholder portals)</button>
+<button class="alt" onclick="g('/modules')">GET /modules (391 catalogue)</button>
+<button class="alt" onclick="g('/ndears')">GET /ndears (NDEAR-S 29/29)</button>
+<button class="alt" onclick="g('/alignments')">GET /alignments (SDG·PISA·GPAI…)</button>
+<button class="alt" onclick="g('/civic')">GET /civic (L12 public + RTI + open-data)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
