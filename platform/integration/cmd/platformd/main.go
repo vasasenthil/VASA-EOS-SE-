@@ -149,6 +149,9 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
 	}))
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))
+	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
+	}))
 	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 200
 		if q := r.URL.Query().Get("n"); q != "" {
@@ -570,6 +573,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/modules')">GET /modules (391 catalogue)</button>
 <button class="alt" onclick="g('/ndears')">GET /ndears (NDEAR-S 29/29)</button>
 <button class="alt" onclick="g('/alignments')">GET /alignments (SDG·PISA·GPAI…)</button>
+<button onclick="g('/conformance')">GET /conformance (live headline self-check)</button>
 <button class="alt" onclick="g('/civic')">GET /civic (L12 public + RTI + open-data)</button>
 <button onclick="p('/grievance',{id:'GRV-1',citizen:'Anbu',subject:'a child safety pocso concern at our school'})">POST /grievance (L9 agent → L12 tracker → audit)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>

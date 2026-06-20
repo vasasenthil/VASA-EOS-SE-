@@ -583,3 +583,14 @@ wired into the composition root and surfaced on platformd:
   grievance state is instance-scoped (fixed cross-test leakage). Verified live: meal-quality → block (cites
   MDM-QUAL); POCSO → district (cites POCSO-MR); both filed in the tracker + audited.
 - Status page: **48 modules · 393 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Live /conformance self-check — the headline figures, machine-verified from the running mesh
+- `Platform.Conformance()` + `platformd GET /conformance` — computes every CC-SPEC-001/Synthesis headline from
+  the **live registers** and compares to the briefs' published figures, so the conformance claim can never
+  silently drift: 12 layers · 7 governance tiers · 3 Control Tower bodies · 7 tenancy tiers (T0–T6) · 6 engines ·
+  6 agents (live from `agentregistry.Agents`) · 13 portals · 391 modules (329 core + 62 TN, computed) · 29
+  NDEAR-S blocks · 12 international alignments · 8 pillars (6 built / 2 partial). `HeadlinesMatch` is asserted
+  by the test (which prints exactly which figure drifted on failure). 2 integration tests.
+- Verified live: /conformance → headlines_match:true, all 13 rows OK, pillars 6/8 built. The markdown
+  conformance diff is now backed by a runtime self-check.
+- Status page: **48 modules · 395 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
