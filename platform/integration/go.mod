@@ -38,6 +38,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/notify v0.0.0
 	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
+	github.com/vasa-eos-se-tn/platform/population v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
@@ -126,3 +127,5 @@ replace github.com/vasa-eos-se-tn/platform/catalogue => ../L3-data-fabric/catalo
 replace github.com/vasa-eos-se-tn/platform/modelregistry => ../L8-engines/modelregistry
 
 replace github.com/vasa-eos-se-tn/platform/consent => ../L3-data-fabric/consent
+
+replace github.com/vasa-eos-se-tn/platform/population => ../L3-data-fabric/population

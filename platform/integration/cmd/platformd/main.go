@@ -19,6 +19,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
+	"github.com/vasa-eos-se-tn/platform/population"
 	"github.com/vasa-eos-se-tn/platform/quality"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 )
@@ -119,6 +120,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/sla", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.SLABoard(), nil)
 	}))
+	mux.HandleFunc("/population", s.count(s.handlePopulation))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -304,6 +306,45 @@ func (s *server) consentDemo(w http.ResponseWriter, r *http.Request) {
 	}, nil)
 }
 
+// handlePopulation serves the materialised institutional estate: ?district=NAME lists that real district's
+// schools; ?cohort=N materialises a labelled-synthetic cohort of N students (+ teachers + guardians); else the
+// summary (385 blocks / 3,800 clusters / 69,000 schools validated against §D, plus the §D.1 scale plan).
+func (s *server) handlePopulation(w http.ResponseWriter, r *http.Request) {
+	if d := r.URL.Query().Get("district"); d != "" {
+		schools := s.p.SchoolsInDistrict(d)
+		s.writeJSON(w, map[string]any{"district": d, "schools": len(schools), "sample": firstN(schools, 5)}, nil)
+		return
+	}
+	if c := r.URL.Query().Get("cohort"); c != "" {
+		n := 0
+		fmt.Sscanf(c, "%d", &n)
+		if n > 5000 {
+			n = 5000
+		}
+		coh := s.p.SyntheticCohort(n, n/20+1)
+		s.writeJSON(w, map[string]any{
+			"students": len(coh.Students), "teachers": len(coh.Teachers), "parents": len(coh.Parents),
+			"sample_student": firstStudent(coh), "note": "all ids SYN-prefixed; synthetic, never production",
+		}, nil)
+		return
+	}
+	s.writeJSON(w, s.p.PopulationSummary(), nil)
+}
+
+func firstN(xs []population.School, n int) []population.School {
+	if len(xs) < n {
+		return xs
+	}
+	return xs[:n]
+}
+
+func firstStudent(c integration.SyntheticCohort) any {
+	if len(c.Students) == 0 {
+		return nil
+	}
+	return c.Students[0]
+}
+
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
 func (s *server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -436,6 +477,9 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/consent')">GET /consent (§E DPDP register)</button>
 <button class="alt" onclick="p('/consent',{})">POST /consent (rights flow demo)</button>
 <button class="alt" onclick="g('/sla')">GET /sla (§F.2 live SLA board)</button>
+<button class="alt" onclick="g('/population')">GET /population (real estate · §D scale)</button>
+<button class="alt" onclick="g('/population?district=Chennai')">GET /population?district=Chennai</button>
+<button class="alt" onclick="g('/population?cohort=1000')">GET /population?cohort=1000 (synthetic)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>

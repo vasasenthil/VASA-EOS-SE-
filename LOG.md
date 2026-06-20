@@ -469,3 +469,22 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   their substrate are deliberately left off the live board rather than faked. 1 integration test. Verified
   live: /sla → model_card 1.0/met (source "model-registry (§G)"), audit 1.0/met (source "audit hash-chain").
 - Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Populate at §D scale — TN institutional estate + synthetic population (honest real/synthetic line)
+- `platform/L3-data-fabric/population` — materialises the TN education estate so the platform is **populated
+  end-to-end at §D scale without fabricating real personal data**. The institutional tree is **anchored to the
+  real 38 districts** (`seed.Districts`) and distributes blocks/clusters/schools to hit **385 / 3,800 / 69,000
+  exactly**, with TN-shaped UDISE codes (33…) and a realistic management mix (~65% Government / 15% Aided /
+  15% Matriculation / 5% CBSE). People (students/teachers/guardians) are **synthetic by construction** — every
+  id `SYN-`-prefixed, `synthetic:true`, anchored to the real estate but never production. The full §D.1 cohort
+  (1.27 Cr students etc.) is a validated `ScalePlan`, not materialised. Deterministic. 5 module tests.
+- Wired: `Platform.PopulationSummary/SchoolsInDistrict/SyntheticCohort` (tree built lazily once via sync.Once);
+  `platformd GET /population` (summary · `?district=NAME` · `?cohort=N`). 2 integration tests. Verified live:
+  /population → 38/385/3800/69000 tree_valid:true, mix 44,850 Govt etc., scale 1.27 Cr; ?district=Chennai →
+  real-anchored schools with 33… UDISE; ?cohort=1000 → 1000 SYN-APAAR students anchored to real districts.
+- **Honest note:** real reference/master data (districts, directorates, 22 languages, 21 RPwD, schemes, NEP)
+  was already 100% real and test-enforced; this slice materialises the institutional tree on top of it and adds
+  a labelled-synthetic population. Real population PII (actual crores of people) is **deliberately not
+  fabricated** — it requires the live federated substrate (APAAR/UDISE+/PFMS) and data-sharing agreements,
+  which remain gated/out-of-scope by design.
+- Status page: **41 modules · 361 tests**. Green bar: 41 Go modules pass, OPA 33/33, tsc 0 errors.
