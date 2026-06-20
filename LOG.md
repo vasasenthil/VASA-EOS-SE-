@@ -525,3 +525,18 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   **T0–T6 tenancy hierarchy is partial in Go** (tenant-ids yes, hierarchy in TS); **L11/L12, 13 portals, 391
   functional modules, NDEAR-S 29/29 and the international registers are TS-app, not the Go mesh**; HSM/K8s/8
   datastores/GPU/Besu/IoT/Edge/DAO are gated by design.
+
+## Closed the Go gap — T0–T6 sovereign multi-tenancy as a first-class module
+- `platform/L6-platform-services/tenancy` — the seven-tier sovereign hierarchy (T0 Sovereign/off-switch → T1
+  Secretariat → T2 Directorate → T3 District → T4 Block → T5 Cluster → T6 School), promoted from tenant-ids-on-
+  records to a real Go module mirroring `lib/tenancy`. **Strict-chain invariant** enforced on `Add` (a node's
+  tier must be exactly one below its parent; unique T0 root). **Downward governance** (`Governs`) is fail-closed:
+  a subject governs itself + descendants only — never an ancestor, never a sibling. `BuildTN` materialises the
+  tree over the **real estate** (`seed.Directorates` + `population` tree) → ≈73k nodes with tier counts
+  1·1·7·38·385·3,800·69,000. 5 module tests.
+- Wired: `Platform.TenancyTiers/TenancySummary/TenancyPath/Governs/TenantNode` (hierarchy built lazily once via
+  sync.Once); `platformd GET /tenancy` (summary · `?path=ID` · `?governs=A&over=B`). 2 integration tests.
+  Verified live: /tenancy → 73,232 nodes, valid:true; path(Chennai) → "Tamil Nadu (Sovereign) → School
+  Education Secretariat → Directorate of School Education → Chennai"; governs(DSE, Chennai)=true;
+  governs(Chennai, Madurai)=false. Conformance diff + status page updated to mark the gap closed.
+- Status page: **42 modules**. Green bar: 42 Go modules pass, OPA 33/33, tsc 0 errors.

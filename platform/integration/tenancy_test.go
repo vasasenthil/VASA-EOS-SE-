@@ -1,0 +1,40 @@
+package integration
+
+import "testing"
+
+func TestPlatformTenancyHierarchy(t *testing.T) {
+	p := newPlatform(t)
+	if len(p.TenancyTiers()) != 7 {
+		t.Fatalf("the platform must expose the 7-tier T0–T6 catalogue, got %d", len(p.TenancyTiers()))
+	}
+	sum := p.TenancySummary()
+	if !sum.Valid {
+		t.Fatalf("the materialised T0–T6 hierarchy must validate against §D: %+v", sum.TierCounts)
+	}
+	if sum.Root != "TN" || sum.Nodes != 1+1+7+38+385+3800+69000 {
+		t.Fatalf("hierarchy root/size wrong: root=%s nodes=%d", sum.Root, sum.Nodes)
+	}
+}
+
+func TestPlatformTenancyDownwardGovernance(t *testing.T) {
+	p := newPlatform(t)
+	// TN (T0) governs a directorate; the secretariat governs Chennai district; a district governs its blocks.
+	if !p.Governs("TN", "TN-DIR-DSE") {
+		t.Fatal("the sovereign must govern a directorate")
+	}
+	if !p.Governs("TN-DIR-DSE", "TN-DIST-Chennai") {
+		t.Fatal("DSE must govern the Chennai district")
+	}
+	// a district must NOT govern a sibling district (fail-closed jurisdiction).
+	if p.Governs("TN-DIST-Chennai", "TN-DIST-Madurai") {
+		t.Fatal("a district must not govern a sibling district")
+	}
+	// a real school leaf traces back to TN through all seven tiers.
+	path, ok := p.TenancyPath("TN-DIST-Chennai")
+	if !ok || path == "" {
+		t.Fatalf("Chennai must have a governance path, got %q ok=%v", path, ok)
+	}
+	if !p.Governs("TN", "TN-DIST-Chennai") {
+		t.Fatal("the sovereign governs every district")
+	}
+}

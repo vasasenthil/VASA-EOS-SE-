@@ -43,6 +43,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
+	github.com/vasa-eos-se-tn/platform/tenancy v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/volumes v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
@@ -129,3 +130,5 @@ replace github.com/vasa-eos-se-tn/platform/modelregistry => ../L8-engines/modelr
 replace github.com/vasa-eos-se-tn/platform/consent => ../L3-data-fabric/consent
 
 replace github.com/vasa-eos-se-tn/platform/population => ../L3-data-fabric/population
+
+replace github.com/vasa-eos-se-tn/platform/tenancy => ../L6-platform-services/tenancy

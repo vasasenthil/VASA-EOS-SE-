@@ -78,11 +78,13 @@ an auditable trail"* via the orchestrator + audit chain.
 | Commitment | Verdict | Evidence |
 |---|---|---|
 | **7 Governance tiers** G1–G7 | 🟡 **Go-partial** / 🟦 TS | G3/G5/G7 roles drive the live scheme-sanction flow ✅ Go; full G1–G7 bodies register 🟦 `lib/governance` |
-| **7 Multi-tenancy tiers** T0–T6 | 🟡 **Go-partial** / 🟦 TS | records carry `tenant_id` + onboarding `TenantResolver` ✅ Go; the **T0→T6 hierarchy model 🟦** `lib/tenancy`, `lib/access/scope` |
+| **7 Multi-tenancy tiers** T0–T6 | ✅ **Go** *(gap closed)* | first-class `L6-platform-services/tenancy`: strict T0→T6 chain, fail-closed downward governance, anchored to the real estate (≈73k nodes, tier counts 1·1·7·38·385·3,800·69,000 test-enforced); surfaced at `GET /tenancy` |
 | **AI Control Tower** (Sovereignty Console · Ethics Board · Leadership Council) | 🟡 **partial** | off-switch (T0 instrument) ✅ Go; the three **bodies as a console 🟦** `lib/governance/control-tower`; model/ethics discipline ✅ Go (`modelregistry`) |
 
-**Honest gap:** the **T0–T6 tenancy hierarchy is not a first-class Go module** — it exists as tenant-ids on
-records and is modelled in the TS app. This is the clearest layer-level gap in the Go build.
+**Gap closed (2026-06-20):** the **T0–T6 tenancy hierarchy is now a first-class Go module**
+(`L6-platform-services/tenancy`) — a strict-chain hierarchy with fail-closed downward governance, materialised
+over the real estate (≈73k nodes), wired into `integration.Platform` and surfaced at `GET /tenancy`. What
+remains in the TS app is the *national-root* extension (TN sits at T0 today by design) and the operator UI.
 
 ---
 
@@ -194,7 +196,7 @@ through the live workflows (the `/exercise` end-to-end run: onboard → admit �
 | Access-control policy models | 4 of 5 (IAM gated) |
 | Indian statutory regimes | 6 fully tested · 3 partial |
 | Scale **analysis** + populated estate | **Full** (physical load proof gated) |
-| Tenancy T0–T6 hierarchy | **Partial gap** in Go (tenant-ids yes; hierarchy in TS) |
+| Tenancy T0–T6 hierarchy | **Full** in Go *(gap closed — `L6-platform-services/tenancy`, ≈73k nodes, downward governance)* |
 | L11 governance / L12 civic / 13 portals / 391 modules / NDEAR-S / international registers | **TS app**, not the Go mesh |
 | HSM · K8s · 8 datastores · GPU · Besu · IoT · Edge · DAO | **Gated by design** (`BLOCKERS`), honest-pending |
 

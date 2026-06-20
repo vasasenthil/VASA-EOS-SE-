@@ -121,6 +121,7 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, s.p.SLABoard(), nil)
 	}))
 	mux.HandleFunc("/population", s.count(s.handlePopulation))
+	mux.HandleFunc("/tenancy", s.count(s.handleTenancy))
 	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 200
 		if q := r.URL.Query().Get("n"); q != "" {
@@ -355,6 +356,28 @@ func firstStudent(c integration.SyntheticCohort) any {
 	return c.Students[0]
 }
 
+// handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
+// path (T0 → … → node); ?governs=A&over=B answers a downward-governance jurisdiction check; else the summary
+// (the seven tiers + the materialised estate counts validated against §D).
+func (s *server) handleTenancy(w http.ResponseWriter, r *http.Request) {
+	if id := r.URL.Query().Get("path"); id != "" {
+		path, ok := s.p.TenancyPath(id)
+		if !ok {
+			http.Error(w, `{"error":"unknown tenant"}`, http.StatusNotFound)
+			return
+		}
+		node, _ := s.p.TenantNode(id)
+		s.writeJSON(w, map[string]any{"id": id, "level": node.Level, "path": path}, nil)
+		return
+	}
+	if a := r.URL.Query().Get("governs"); a != "" {
+		b := r.URL.Query().Get("over")
+		s.writeJSON(w, map[string]any{"subject": a, "target": b, "governs": s.p.Governs(a, b)}, nil)
+		return
+	}
+	s.writeJSON(w, s.p.TenancySummary(), nil)
+}
+
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
 func (s *server) handleRetrieve(w http.ResponseWriter, r *http.Request) {
 	var req struct {
@@ -491,6 +514,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/population?district=Chennai')">GET /population?district=Chennai</button>
 <button class="alt" onclick="g('/population?cohort=1000')">GET /population?cohort=1000 (synthetic)</button>
 <button onclick="g('/exercise?n=200')">GET /exercise?n=200 (drive cohort through the live gate)</button>
+<button class="alt" onclick="g('/tenancy')">GET /tenancy (T0–T6 hierarchy)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
