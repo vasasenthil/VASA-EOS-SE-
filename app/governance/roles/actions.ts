@@ -13,6 +13,18 @@ const CRITICAL_DB_ERROR_MSG =
 const ROLES_BASE_PATH = "/admin/governance/roles" // Adjust if your admin path is different
 const PERMISSIONS_BASE_PATH = "/admin/governance/permissions"
 
+// isDbUnreachable detects a network/connection failure to the database (as opposed to a query error). When
+// Supabase is configured but the instance can't be reached (offline preview, restricted network, paused
+// project), the underlying fetch throws "TypeError: fetch failed" / ECONNREFUSED / ENOTFOUND / ETIMEDOUT.
+// In that case read-only pages should degrade to the demo data set rather than surface a hard error.
+function isDbUnreachable(err: unknown): boolean {
+  const e = err as any
+  const msg = String(e?.message ?? e ?? "").toLowerCase()
+  const cause = String(e?.cause?.code ?? e?.cause?.message ?? e?.code ?? "").toLowerCase()
+  const needles = ["fetch failed", "econnrefused", "enotfound", "etimedout", "econnreset", "network", "und_err", "socket"]
+  return needles.some((n) => msg.includes(n) || cause.includes(n))
+}
+
 export interface RoleActionState<T = Role | Role[] | RolePermission | null> {
   success: boolean
   message: string
@@ -141,6 +153,10 @@ export async function getRolesAction(params?: {
 
     if (error) {
       console.error("Error fetching roles:", error)
+      // a configured-but-unreachable database should not blank the page — fall back to the demo roles.
+      if (isDbUnreachable(error)) {
+        return { success: true, message: "Database unreachable — showing demo roles.", data: demoRoles() }
+      }
       return { success: false, message: `Failed to fetch roles: ${error.message}`, data: [] }
     }
 
@@ -163,6 +179,10 @@ export async function getRolesAction(params?: {
     return { success: true, message: "Roles fetched successfully.", data: roles }
   } catch (e: any) {
     console.error("Unexpected error fetching roles:", e)
+    // a thrown network failure (TypeError: fetch failed) degrades to demo roles instead of a hard error.
+    if (isDbUnreachable(e)) {
+      return { success: true, message: "Database unreachable — showing demo roles.", data: demoRoles() }
+    }
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
   }
 }
