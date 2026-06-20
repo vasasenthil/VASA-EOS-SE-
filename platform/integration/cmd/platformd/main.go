@@ -113,6 +113,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/volumes", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.VolumeModel(), nil)
 	}))
+	mux.HandleFunc("/catalogue", s.count(s.handleCatalogue))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -210,6 +211,30 @@ func (s *server) handleOnboard(w http.ResponseWriter, r *http.Request) {
 		"accepted": res.Accepted, "quarantined": res.Quarantined, "failed_step": res.FailedStep,
 		"reason": res.Reason, "steps_passed": len(res.Passed), "store": res.Store, "alerted": res.Alerted,
 	}, nil)
+}
+
+// handleCatalogue serves the §F.3 data-lineage / catalogue surface: ?asset=ID for one asset, ?trace=ID for an
+// impact/provenance trace, ?list=1 for the full dictionary, else the governance summary roll-up.
+func (s *server) handleCatalogue(w http.ResponseWriter, r *http.Request) {
+	if id := r.URL.Query().Get("asset"); id != "" {
+		a, ok := s.p.CatalogueAsset(id)
+		if !ok {
+			http.Error(w, `{"error":"unknown asset"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, a, nil)
+		return
+	}
+	if id := r.URL.Query().Get("trace"); id != "" {
+		up, down := s.p.CatalogueTrace(id)
+		s.writeJSON(w, map[string]any{"asset": id, "upstream": up, "downstream": down}, nil)
+		return
+	}
+	if r.URL.Query().Get("list") != "" {
+		s.writeJSON(w, s.p.CatalogueAssets(), nil)
+		return
+	}
+	s.writeJSON(w, s.p.CatalogueSummary(), nil)
 }
 
 // handleRetrieve runs the L7 policy-bound hybrid retriever (Context Engineering).
@@ -337,6 +362,8 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/notifications')">GET /notifications (Tamil inbox)</button>
 <button class="alt" onclick="g('/seed')">GET /seed</button>
 <button class="alt" onclick="g('/volumes')">GET /volumes (§D scale model)</button>
+<button class="alt" onclick="g('/catalogue')">GET /catalogue (§F.3 summary)</button>
+<button class="alt" onclick="g('/catalogue?trace=SEED-GEOGRAPHY')">GET /catalogue?trace=… (lineage)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>

@@ -397,3 +397,17 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   `platformd GET /volumes` returns the live model. 2 integration tests. Verified live: /volumes → 1.27 Cr
   students + 9 streams + 6 tiers; /readiness → StorageOK:true, TotalStorageTB:16450, GoLiveReady:true.
 - Status page: **37 modules · 329 tests**. Green bar: 37 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## DAT-TN-001 §F.3 data-lineage / catalogue surface
+- `platform/L3-data-fabric/catalogue` — a single queryable **data dictionary** that unifies the seed inventory
+  (Section C), loaded lineage (source · version · checksum · load time · amendments), the Section E PII
+  classification (with sensitivity labels), and the §F.1/§F.2 governance register (named steward + applicable
+  data-quality SLAs) per asset. Queries: `ByCategory`, `ByPIIClass` (e.g. surface every Class-1 asset for an
+  audit), `BySteward`, and `Trace` (transitive upstream provenance + downstream impact over the dependency
+  graph), plus a `Summary` roll-up. Pure + stdlib-only. 4 module tests.
+- Wired: `Platform.Catalogue` is assembled at boot over **every known asset** (production + synthetic dev
+  fixtures), enriched with the just-loaded lineage — synthetic seeds show as inventoried-but-not-loaded.
+  Accessors `CatalogueSummary/Assets/Asset/Trace`; `platformd GET /catalogue` (summary · `?list=1` ·
+  `?asset=ID` · `?trace=ID`). 2 integration tests. Verified live: /catalogue → 37 assets, 32 loaded, 191
+  records, 16 stewards, 5 SLAs; /catalogue?trace=SEED-GEOGRAPHY → downstream [SEED-OFFICES, SEED-SCHOOLS].
+- Status page: **38 modules · 335 tests**. Green bar: 38 Go modules pass, OPA 33/33, tsc 0 errors.

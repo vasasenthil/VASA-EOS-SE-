@@ -33,6 +33,7 @@ DESC = {
     "onboarding": "§B.6 12-step gate: schema→sig→rate→classify→consent→residency→tenant→policy→encrypt→persist→audit→emit",
     "quality": "§F data governance: steward register · SLAs · DQ checks · quarantine bucket",
     "volumes": "§D scale model: per-entity counts · annual transaction volumes · storage-capacity plan (validated)",
+    "catalogue": "§F.3 data-lineage/catalogue: data dictionary · steward+SLA cross-ref · classification · lineage trace",
     "resilience": "Circuit breaker · retry+backoff/jitter · idempotency",
     "reconcile": "Field + numeric (tolerance) federation drift reconciliation",
     "adapters": "APAAR anti-corruption adapter on the resilience core",

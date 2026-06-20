@@ -28,6 +28,7 @@ require (
 
 require (
 	github.com/vasa-eos-se-tn/platform/agents v0.0.0
+	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/engines v0.0.0
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
@@ -117,3 +118,5 @@ replace github.com/vasa-eos-se-tn/platform/onboarding => ../L3-data-fabric/onboa
 replace github.com/vasa-eos-se-tn/platform/quality => ../L3-data-fabric/quality
 
 replace github.com/vasa-eos-se-tn/platform/volumes => ../L10-surfaces/volumes
+
+replace github.com/vasa-eos-se-tn/platform/catalogue => ../L3-data-fabric/catalogue

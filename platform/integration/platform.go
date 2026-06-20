@@ -16,6 +16,7 @@ import (
 
 	"github.com/vasa-eos-se-tn/platform/agentregistry"
 	"github.com/vasa-eos-se-tn/platform/audit"
+	"github.com/vasa-eos-se-tn/platform/catalogue"
 	"github.com/vasa-eos-se-tn/platform/dr"
 	"github.com/vasa-eos-se-tn/platform/hitl"
 	"github.com/vasa-eos-se-tn/platform/i18n"
@@ -83,6 +84,8 @@ type Platform struct {
 	Seed         *seed.Loader
 	seedReport   seed.Report
 	seedManifest seed.Manifest
+	// L3 §F.3 data-lineage / catalogue surface — built over the inventory once the seed is loaded.
+	Catalogue *catalogue.Catalogue
 
 	now func() string
 
@@ -234,6 +237,10 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	loader := seed.NewLoader(true)
 	p.Seed, p.seedManifest = loader, man
 	p.seedReport = loader.Load(inv, man)
+	// §F.3: assemble the data catalogue over every known asset (production + synthetic dev fixtures), enriched
+	// with classification, steward, SLAs and the just-loaded lineage.
+	allSeeds := append(append([]seed.Item(nil), inv...), seed.SyntheticInventory()...)
+	p.Catalogue = catalogue.Build(allSeeds, loader.Lineage)
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a
