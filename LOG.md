@@ -460,3 +460,12 @@ Read the full Data Architecture Brief (DAT-TN-001) and implemented the seed-data
   "no active lawful basis on file for this principal + purpose"; Class-1 with §7 statutory → passes consent,
   blocked at residency.
 - Status page: **40 modules · 353 tests**. Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## §F.2 SLA board measured live (§G registry → §F.2 SLA)
+- Added `Platform.SLABoard()` + `SLAStatus` and a `platformd GET /sla` endpoint that grades the §F.2 SLAs the
+  platform can measure live **today**, honestly: **model_card/coverage** sourced from the §G model registry
+  (the only production model is the signed, deployed safety classifier → 1.0, met) and **audit/integrity**
+  sourced from the L5 hash-chain (`Audit.Verify()` → 1.0, met). SLAs that need operational telemetry pending
+  their substrate are deliberately left off the live board rather than faked. 1 integration test. Verified
+  live: /sla → model_card 1.0/met (source "model-registry (§G)"), audit 1.0/met (source "audit hash-chain").
+- Green bar: 40 Go modules pass, OPA 33/33, tsc 0 errors.

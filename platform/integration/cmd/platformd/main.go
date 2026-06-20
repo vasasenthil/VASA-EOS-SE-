@@ -116,6 +116,9 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/catalogue", s.count(s.handleCatalogue))
 	mux.HandleFunc("/models", s.count(s.handleModels))
 	mux.HandleFunc("/consent", s.count(s.handleConsent))
+	mux.HandleFunc("/sla", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.SLABoard(), nil)
+	}))
 	mux.HandleFunc("/onboard", s.count(s.handleOnboard))
 	mux.HandleFunc("/quality", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// a demo §F.4 run over a deliberately-dirty school sample (master-data domain).
@@ -432,6 +435,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/models?list=1')">GET /models?list=1 (cards + state)</button>
 <button class="alt" onclick="g('/consent')">GET /consent (§E DPDP register)</button>
 <button class="alt" onclick="p('/consent',{})">POST /consent (rights flow demo)</button>
+<button class="alt" onclick="g('/sla')">GET /sla (§F.2 live SLA board)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
 <div class="card"><h3>Onboarding gate (§B.6 · 12-step L4→L5 chokepoint)</h3>
