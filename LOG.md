@@ -594,3 +594,15 @@ wired into the composition root and surfaced on platformd:
 - Verified live: /conformance → headlines_match:true, all 13 rows OK, pillars 6/8 built. The markdown
   conformance diff is now backed by a runtime self-check.
 - Status page: **48 modules · 395 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Grievance human-authority loop — ungrounded routings go through the real HITL queue
+- An ungrounded / low-confidence grievance routing is no longer auto-filed: `RouteGrievance` now **enqueues a
+  HITL request** (`grievance.route`, scope-gated) for a tier officer to confirm; the grievance is filed into the
+  L12 civic tracker only when the human approves (the HITL executor's `grievance.route` branch). Policy-grounded
+  routings still file directly. Added `Platform.DecideGrievance` + `PendingGrievances`; `platformd GET/POST
+  /grievance-queue`. Updated/added integration tests (the ungrounded case now asserts the full queue→approve→
+  file loop).
+- Verified live: ungrounded grievance → routed:false, pending_approval:true, request_id TR-0001; queue shows it
+  pending; officer DEO-Chennai approves → "grievance GRV-9 confirmed + filed at directorate"; civic tracker then
+  holds it. AI assists; humans decide.
+- Status page: **48 modules · 395 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

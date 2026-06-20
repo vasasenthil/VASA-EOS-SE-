@@ -7,6 +7,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/agents"
 	"github.com/vasa-eos-se-tn/platform/civic"
 	"github.com/vasa-eos-se-tn/platform/engines"
+	"github.com/vasa-eos-se-tn/platform/hitl"
 )
 
 // grievancePolicyCorpus is the small governing-policy corpus the L9 grievance agent cites when routing. In
@@ -33,7 +34,9 @@ type GrievanceInput struct {
 // was filed at in the L12 civic tracker, and whether a human must confirm the routing.
 type GrievanceOutcome struct {
 	ID               string          `json:"id"`
-	Routed           bool            `json:"routed"`
+	Routed           bool            `json:"routed"`           // filed into the civic tracker now
+	PendingApproval  bool            `json:"pending_approval"` // held in the HITL queue for an officer to confirm
+	RequestID        string          `json:"request_id,omitempty"`
 	Tier             string          `json:"tier"`
 	Recommendation   string          `json:"recommendation"`
 	CitedPolicy      string          `json:"cited_policy,omitempty"`
@@ -67,15 +70,49 @@ func (p *Platform) RouteGrievance(ctx context.Context, in GrievanceInput) Grieva
 	rec := agents.Grievance(in.Subject, grievancePolicyCorpus())
 	grounded := !rec.RequiresApproval // the grievance agent only clears approval when it found a governing policy
 	tier, policy := tierFromCitation(rec.Detail, grounded)
-
-	g := p.Civic.FileGrievance(in.ID, in.Subject, in.Citizen, tier)
-	p.appendAudit("citizen:"+in.Citizen, "grievance.route", in.ID, tier, rec.Agent)
-
-	return GrievanceOutcome{
-		ID: in.ID, Routed: true, Tier: tier, Recommendation: rec.Summary, CitedPolicy: policy,
-		Confidence: rec.Confidence, RequiresApproval: rec.RequiresApproval, Grievance: g,
-		AuditSeq: uint64(p.Audit.Len()),
+	out := GrievanceOutcome{
+		ID: in.ID, Tier: tier, Recommendation: rec.Summary, CitedPolicy: policy,
+		Confidence: rec.Confidence, RequiresApproval: rec.RequiresApproval,
 	}
+
+	if rec.RequiresApproval {
+		// an ungrounded / low-confidence routing is NOT auto-filed — it goes to the HITL queue for a tier
+		// officer to confirm. The grievance is filed only when the human approves (Execute → FileGrievance).
+		req, err := p.Queue.Enqueue("grievance", "grievance.route",
+			map[string]any{"id": in.ID, "subject": in.Subject, "citizen": in.Citizen, "tier": tier},
+			"grievance.route")
+		if err == nil {
+			out.PendingApproval, out.RequestID = true, req.ID
+		}
+		p.appendAudit("citizen:"+in.Citizen, "grievance.queue", in.ID, tier, rec.Agent)
+		out.AuditSeq = uint64(p.Audit.Len())
+		return out
+	}
+
+	// a policy-grounded routing is filed directly.
+	out.Grievance = p.Civic.FileGrievance(in.ID, in.Subject, in.Citizen, tier)
+	out.Routed = true
+	p.appendAudit("citizen:"+in.Citizen, "grievance.route", in.ID, tier, rec.Agent)
+	out.AuditSeq = uint64(p.Audit.Len())
+	return out
+}
+
+// DecideGrievance is the tier officer's confirmation of a queued (ungrounded) grievance routing: approving it
+// executes the routing (files the grievance into the L12 civic tracker via the HITL executor); rejecting it
+// closes the request without filing. The approver must hold the grievance.route scope.
+func (p *Platform) DecideGrievance(ctx context.Context, requestID string, approve bool, officer string) (hitl.Request, error) {
+	return p.Queue.Decide(ctx, requestID, approve, hitl.Approver{ID: officer, Scopes: []string{"grievance.route"}})
+}
+
+// PendingGrievances returns the grievance routings awaiting a human officer's confirmation.
+func (p *Platform) PendingGrievances() []hitl.Request {
+	var out []hitl.Request
+	for _, r := range p.Queue.Pending() {
+		if r.Tool == "grievance.route" {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // ResolveGrievance closes a grievance in the L12 civic tracker (after the tier officer has acted).

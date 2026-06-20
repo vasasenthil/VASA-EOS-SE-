@@ -199,6 +199,14 @@ func (p *Platform) Execute(_ context.Context, tool string, args map[string]any) 
 		}
 		return "rejection upheld and recorded", nil
 	}
+	if tool == "grievance.route" {
+		id, _ := args["id"].(string)
+		subject, _ := args["subject"].(string)
+		citizen, _ := args["citizen"].(string)
+		tier, _ := args["tier"].(string)
+		p.Civic.FileGrievance(id, subject, citizen, tier)
+		return "grievance " + id + " confirmed + filed at " + tier, nil
+	}
 	// Any tool in the agent registry is a valid (advisory or human-approved) action.
 	if _, err := p.Reg.Lookup(tool); err == nil {
 		return "executed: " + tool, nil

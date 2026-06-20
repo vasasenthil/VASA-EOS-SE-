@@ -36,17 +36,32 @@ func TestRouteGrievancePOCSOEscalatesToDistrict(t *testing.T) {
 	}
 }
 
-func TestRouteGrievanceUngroundedRequiresHuman(t *testing.T) {
+func TestRouteGrievanceUngroundedGoesToHITL(t *testing.T) {
 	p := newPlatform(t)
 	out := p.RouteGrievance(context.Background(), GrievanceInput{
 		ID: "GRV-3", Citizen: "Cholan", Subject: "xyzzy unrelated nonsense with no governing policy",
 	})
-	// no governing policy → escalate to the directorate for manual routing, flagged for a human.
-	if out.Tier != "directorate" || !out.RequiresApproval {
-		t.Fatalf("an ungrounded grievance must escalate + require human confirmation: %+v", out)
+	// no governing policy → escalate to the directorate, NOT auto-filed: it waits in the HITL queue.
+	if out.Tier != "directorate" || !out.RequiresApproval || !out.PendingApproval || out.RequestID == "" {
+		t.Fatalf("an ungrounded grievance must be queued for a human, not auto-filed: %+v", out)
 	}
-	// the tier officer can resolve it in the tracker.
-	if _, ok := p.ResolveGrievance("GRV-3"); !ok {
-		t.Fatal("resolving a filed grievance must succeed")
+	if out.Routed {
+		t.Fatal("an ungrounded grievance must NOT be filed until a human approves")
+	}
+	// it is not yet in the civic tracker.
+	if _, ok := p.ResolveGrievance("GRV-3"); ok {
+		t.Fatal("a queued grievance must not exist in the tracker before approval")
+	}
+	// it appears in the pending-approval queue.
+	if len(p.PendingGrievances()) != 1 {
+		t.Fatalf("expected 1 pending grievance, got %d", len(p.PendingGrievances()))
+	}
+	// the tier officer confirms → the executor files it into the civic tracker.
+	if _, err := p.DecideGrievance(context.Background(), out.RequestID, true, "DEO-Chennai"); err != nil {
+		t.Fatalf("officer confirmation should succeed: %v", err)
+	}
+	g, ok := p.ResolveGrievance("GRV-3")
+	if !ok || g.Tier != "directorate" {
+		t.Fatalf("after approval the grievance must be filed at the directorate: %+v ok=%v", g, ok)
 	}
 }

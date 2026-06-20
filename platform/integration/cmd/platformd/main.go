@@ -149,6 +149,7 @@ func (s *server) routes() http.Handler {
 		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
 	}))
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))
+	mux.HandleFunc("/grievance-queue", s.count(s.handleGrievanceQueue))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
@@ -403,6 +404,28 @@ func (s *server) handleGrievance(w http.ResponseWriter, r *http.Request) {
 		req.Subject = "mid-day meal quality complaint at our school"
 	}
 	s.writeJSON(w, s.p.RouteGrievance(r.Context(), req), nil)
+}
+
+// handleGrievanceQueue lists grievances awaiting a tier officer's confirmation, or — on POST {request_id,
+// approve} — records the officer's decision (approving files the grievance via the HITL executor).
+func (s *server) handleGrievanceQueue(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		s.writeJSON(w, s.p.PendingGrievances(), nil)
+		return
+	}
+	var req struct {
+		RequestID string `json:"request_id"`
+		Approve   bool   `json:"approve"`
+		Officer   string `json:"officer"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.Officer == "" {
+		req.Officer = "DEO"
+	}
+	res, err := s.p.DecideGrievance(r.Context(), req.RequestID, req.Approve, req.Officer)
+	s.writeJSON(w, res, err)
 }
 
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
