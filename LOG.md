@@ -1129,3 +1129,24 @@ wired into the composition root and surfaced on platformd:
   backbone now share ONE decision engine.
 - Green bar (both stacks): 55 Go modules pass (in-memory sweep), 6 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Production-wiring vertical 6: Grievance Redressal cases (SLA auto-escalation) → durable PostgreSQL
+- New L12 `grievance` module — a citizen grievance becomes a durable case handled by a tier of officers under
+  an SLA. DISTINCT feature vs the AI grievance-routing in grievance.go: TIME-DRIVEN escalation. Category drives
+  the chain (safety → HEAD_TEACHER·DEO·DIRECTOR, SLA 3d; financial → HEAD_TEACHER·BEO·DEO; others →
+  HEAD_TEACHER·BEO, SLA 7d). Pure transitions (NewGrievance/ApplyResolve/ApplyReject/ApplyEscalate/Overdue).
+- Integration `grievance_case.go` (named to avoid colliding with the existing routing feature):
+  `FileGrievanceCase` · `HandleGrievanceCase` (resolve/reject/escalate, fail-closed handler gating) ·
+  `EscalateOverdueCases` (the SLA sweep — every open case past due auto-escalates, "sla" actor) ·
+  `GrievanceCaseDashboard` (scoped: by status/category, overdue count, open list) · `GrievanceCasesScopedBy`.
+  Durable PG adapter `grievance_case_pg.go` (chain JSONB). platformd: `POST /grievance-case`,
+  `POST /grievance-case/act`, `POST /grievance-case/sweep`, `GET /grievance-case?scope=&status=&list=`.
+  Migration: `scripts/085-create-grievance-cases-table.sql`.
+- PROVEN LIVE (raw): `TestPgGrievanceDurable` (file safety case → 3-tier chain; wrong-handler fail-closed;
+  escalate + resolve persist across fresh instances) and `TestSLAAutoEscalation` (an overdue open case is
+  auto-escalated, recording the "sla" actor) pass. platformd (durable audit + DATABASE_URL): filed a safety
+  grievance (chain HEAD_TEACHER→DEO→DIRECTOR, SLA due +3d) → head teacher resolved at tier 0; a DEO acting at
+  tier 0 was fail-closed ("needs HEAD_TEACHER"); both persisted in Postgres.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+- Durable verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain · Grievance cases.

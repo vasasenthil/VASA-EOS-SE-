@@ -533,6 +533,63 @@ func (s *server) routes() http.Handler {
 		ctx := directory.Context{Emergency: req.Emergency, ThreatLevel: req.Threat}
 		s.writeJSON(w, s.p.EvaluateAccess(u, req.Action, res, ctx), nil)
 	}))
+	mux.HandleFunc("/grievance-case", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Grievance Redressal cases. GET ?scope=<org>&status= → scoped dashboard (or list with &list=1).
+		// POST { id,complainant,category,subject,org_unit } lodges a case (dynamic SLA + escalation chain).
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID          string `json:"id"`
+				Complainant string `json:"complainant"`
+				Category    string `json:"category"`
+				Subject     string `json:"subject"`
+				OrgUnit     string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "GRV-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			g, err := s.p.FileGrievanceCase(req.ID, req.Complainant, req.Category, req.Subject, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+			return
+		}
+		q := r.URL.Query()
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.GrievanceCasesScopedBy(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GrievanceCaseDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/grievance-case/act", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act on a case at its current tier. POST { id, action: resolve|reject|escalate, role, actor, note }.
+		var req struct {
+			ID     string `json:"id"`
+			Action string `json:"action"`
+			Role   string `json:"role"`
+			Actor  string `json:"actor"`
+			Note   string `json:"note"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		g, err := s.p.HandleGrievanceCase(req.ID, req.Action, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+	}))
+	mux.HandleFunc("/grievance-case/sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the SLA sweep: auto-escalate every open case past its deadline.
+		escalated := s.p.EscalateOverdueCases()
+		s.writeJSON(w, map[string]any{"escalated": escalated, "count": len(escalated)}, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {
