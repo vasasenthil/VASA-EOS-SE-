@@ -329,6 +329,56 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"user": u, "action": action, "resource": res, "decision": dec}, nil)
 	}))
+	mux.HandleFunc("/calendar", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the Events & Academic Calendar. GET ?scope=<org>&type=&year=&as=<role>&from=<YYYY-MM-DD> returns the
+		// jurisdiction-scoped, date-ordered dashboard (totals by type/status, pending backlog, role inbox,
+		// upcoming feed). POST { id,title,type,start_date,end_date,org_unit } adds a draft, then optionally
+		// ?submit=1 routes it into its dynamic multi-level approval chain.
+		q := r.URL.Query()
+		scope := orDefault(q.Get("scope"), "TN")
+		if r.Method == http.MethodPost {
+			var d integration.CalendarDraft
+			if !decode(w, r, &d) {
+				return
+			}
+			e, err := s.p.AddCalendarEntry(d)
+			if err != nil {
+				s.writeJSON(w, map[string]any{"error": err.Error()}, nil)
+				return
+			}
+			if q.Get("submit") == "1" {
+				e, err = s.p.SubmitCalendarEntry(e.ID)
+			}
+			s.writeJSON(w, map[string]any{"entry": e, "error_is_nil": err == nil}, nil)
+			return
+		}
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.CalendarEntries(scope, q.Get("type"), q.Get("year")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CalendarDashboard(scope, orDefault(q.Get("as"), "DEO"), orDefault(q.Get("from"), "2026-06-15")), nil)
+	}))
+	mux.HandleFunc("/calendar/decide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act at a calendar entry's CURRENT approval level (multi-level, fail-closed). POST
+		// { entry_id, approve, actor, role, scopes:[...], note }.
+		var req struct {
+			EntryID string   `json:"entry_id"`
+			Approve bool     `json:"approve"`
+			Actor   string   `json:"actor"`
+			Role    string   `json:"role"`
+			Scopes  []string `json:"scopes"`
+			Note    string   `json:"note"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		e, err := s.p.DecideCalendarEntry(req.EntryID, req.Approve, orDefault(req.Actor, "officer"), req.Role, req.Scopes, req.Note)
+		errMsg := ""
+		if err != nil {
+			errMsg = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"entry": e, "ok": err == nil, "error": errMsg}, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {

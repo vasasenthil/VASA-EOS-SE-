@@ -966,3 +966,32 @@ wired into the composition root and surfaced on platformd:
   Directory scope: TN sees all 19, Chennai district sees a strict subset (never the Secretary above it),
   unknown subject sees nobody.
 - Green bar: 52 Go modules pass, OPA 33/33, gofmt clean. 478 tests.
+
+## Events & Academic Calendar with dynamic multi-level approval (Go L6)
+- New L6 module `calendar` — plan the academic year as durable, jurisdiction-scoped entries (terms · exams ·
+  holidays · PTM · events), CRUD-complete, filterable by type/year, always returned in date order:
+  - `Entry{Title,Type,StartDate,EndDate,OrgUnit,AcademicYear,Status,Chain[],CurrentStep,...}` with date
+    validation (YYYY-MM-DD, start≤end) and an immutability rule (in-flight/published entries can't be edited).
+  - `Store`: Create · Get · Update · Delete · List(Filter{Type,Year,Orgs}) — date-ordered.
+  - **Multi-level approval state machine**: `Submit(id, chain)` opens a chain; `Act(id, approve, role, scopes)`
+    advances level-by-level, **fail-closed** (actor must hold the level's role AND required scope), publishes on
+    the last approval, and a reject stops the chain. An empty chain auto-publishes (zero-stakes local entry).
+  - `Summarise()` (dashboard roll-up: by type/status, pending backlog, published, upcoming feed) and
+    `PendingFor(role)` (the role-gated approval inbox).
+- Integration (`calendar.go`): **dynamic chain sizing** — `chainFor(type, orgUnit)` derives the number of
+  approval levels from the entry type AND the tenancy level it applies to, materialising each level from the
+  L11 govtiers register (G-code → approver role + required scope):
+  - state/board examination (T0–T2) → **G4→G3→G2→G1** (Cabinet); district exam (T3) → G4→G3→G2; school exam →
+    G4→G3 · holidays → G4→G3→G2 (wide) / G4→G3 · terms → up to G4→G3→G2 · school PTM → single G4 · school event
+    → none (head-teacher authority, auto-publish).
+  - `AddCalendarEntry` · `SubmitCalendarEntry` · `DecideCalendarEntry` (all audited) · `CalendarEntries(scope,
+    type, year)` (downward-governance scoped + filtered + date-ordered) · `CalendarDashboard(scope, asRole,
+    from)` (realtime: totals by type/status, pending approvals, the role's own inbox, upcoming published feed).
+  - Seeded AY 2026-2027 anchored to REAL org units: ratified state terms/holidays (published), the SSLC/HSC
+    board exams (live in approval), a Chennai district quarterly exam, and a real Chennai school's PTM + events.
+- `platformd`: `GET /calendar?scope=&type=&year=&as=&from=` (dashboard; `&list=1` for the raw date-ordered
+  list), `POST /calendar` (add; `?submit=1` routes into the dynamic chain), `POST /calendar/decide` (act).
+- Verified live: TN dashboard 11 entries / 7 published / by-type+by-status / date-ordered upcoming feed; adding
+  a state board exam materialises G4→G3→G2→G1; wrong role at level 1 denied (fail-closed); full G4→G3→G2→G1 walk
+  publishes; district scope (4) is a strict subset of state (12).
+- Green bar: 53 Go modules pass, OPA 33/33, gofmt clean. 488 tests.

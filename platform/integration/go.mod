@@ -6,6 +6,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/adapters v0.0.0
 	github.com/vasa-eos-se-tn/platform/agentregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/audit v0.0.0
+	github.com/vasa-eos-se-tn/platform/calendar v0.0.0
 	github.com/vasa-eos-se-tn/platform/capacity v0.0.0
 	github.com/vasa-eos-se-tn/platform/credentials v0.0.0
 	github.com/vasa-eos-se-tn/platform/cutover v0.0.0
@@ -162,3 +163,5 @@ replace github.com/vasa-eos-se-tn/platform/edge => ../L2-infrastructure/edge
 replace github.com/vasa-eos-se-tn/platform/dao => ../L11-governance/dao
 
 replace github.com/vasa-eos-se-tn/platform/directory => ../L5-security/directory
+
+replace github.com/vasa-eos-se-tn/platform/calendar => ../L6-platform-services/calendar
