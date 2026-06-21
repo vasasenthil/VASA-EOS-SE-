@@ -54,12 +54,11 @@ type ComplianceOutcome struct {
 	AuditSeq        uint64              `json:"audit_seq"`
 }
 
-// CheckCompliance derives RTE/RPwD/DPDP/POCSO findings from a school's facts (L8 reasoning via the L9
-// Compliance agent) and, when there are findings, routes them to a compliance officer for sign-off (HITL). A
-// clean school records no findings and needs no sign-off.
-func (p *Platform) CheckCompliance(ctx context.Context, req ComplianceRequest) ComplianceOutcome {
-	facts := make([]engines.Fact, 0, len(req.Facts))
-	for k, val := range req.Facts {
+// deriveComplianceFindings runs the regulatory rule base over a school's facts and returns the statute-cited
+// non-compliance findings (pure; no HITL). Shared by the single-school check and the estate-wide sweep.
+func deriveComplianceFindings(factsMap map[string]string) []ComplianceFinding {
+	facts := make([]engines.Fact, 0, len(factsMap))
+	for k, val := range factsMap {
 		facts = append(facts, engines.Fact{Key: k, Value: val})
 	}
 	rules := complianceRules()
@@ -69,16 +68,23 @@ func (p *Platform) CheckCompliance(ctx context.Context, req ComplianceRequest) C
 		plain[i] = cr.rule
 		statuteFor[cr.rule.Then.Key] = cr
 	}
-
-	out := ComplianceOutcome{School: req.School}
+	var findings []ComplianceFinding
 	for _, d := range engines.Reason(facts, plain) {
 		if !strings.HasPrefix(d.Fact.Key, "violation.") {
 			continue
 		}
 		cr := statuteFor[d.Fact.Key]
-		out.Findings = append(out.Findings, ComplianceFinding{Key: d.Fact.Key, Statute: cr.statute, Detail: d.Because})
+		findings = append(findings, ComplianceFinding{Key: d.Fact.Key, Statute: cr.statute, Detail: d.Because})
 	}
-	sort.Slice(out.Findings, func(i, j int) bool { return out.Findings[i].Key < out.Findings[j].Key })
+	sort.Slice(findings, func(i, j int) bool { return findings[i].Key < findings[j].Key })
+	return findings
+}
+
+// CheckCompliance derives RTE/RPwD/DPDP/POCSO findings from a school's facts (L8 reasoning via the L9
+// Compliance agent) and, when there are findings, routes them to a compliance officer for sign-off (HITL). A
+// clean school records no findings and needs no sign-off.
+func (p *Platform) CheckCompliance(ctx context.Context, req ComplianceRequest) ComplianceOutcome {
+	out := ComplianceOutcome{School: req.School, Findings: deriveComplianceFindings(req.Facts)}
 
 	if len(out.Findings) == 0 {
 		out.Clean = true

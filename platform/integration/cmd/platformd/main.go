@@ -221,6 +221,16 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.CheckCompliance(r.Context(), req), nil)
 	}))
+	mux.HandleFunc("/compliance-sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
+		n := 1000
+		if v := r.URL.Query().Get("n"); v != "" {
+			fmt.Sscanf(v, "%d", &n)
+		}
+		if n > 20000 {
+			n = 20000
+		}
+		s.writeJSON(w, s.p.ComplianceSweep(n), nil)
+	}))
 	mux.HandleFunc("/compliance-signoff", s.count(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			RequestID string `json:"request_id"`

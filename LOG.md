@@ -786,3 +786,22 @@ wired into the composition root and surfaced on platformd:
   citing DPDP §6, RPwD §16, RTE §16, RTE §12; requires_signoff:true, queued; G6-Compliance signs off (audited).
   A fully-compliant school → clean, no sign-off. The 6th agent (Compliance) is now live end-to-end.
 - Status page: **48 modules · 421 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Estate-wide compliance sweep (Compliance rule base rolled up by statute + district)
+- `Platform.ComplianceSweep(n)` + `platformd GET /compliance-sweep?n=` — runs the regulatory rule base
+  (RTE/RPwD/DPDP/POCSO) over a deterministic sample of schools spread across the whole estate and rolls up:
+  schools-checked, schools-with-findings, total findings, **by statute**, and **by district** (+
+  `TopComplianceDistricts`). Read-only/analytical (the per-school HITL sign-off stays on the single-school
+  check). The estate/UDISE/district are real; the compliance facts are **synthetic/illustrative** (live
+  inspection data gated, B-022), declared `synthetic:true`. Refactored the finding-derivation into a shared
+  `deriveComplianceFindings`. 2 integration tests.
+- Verified live (n=2000): 955/2000 schools with findings (1206 total); by statute RPwD §16 (394) > RTE §12
+  (290) > RTE Schedule (180) > DPDP §6 (148) > POCSO (100) > RTE §16 (94); top districts Theni/Coimbatore/
+  Thoothukudi. The directorate's single compliance operating picture across the State.
+- Status page: **48 modules · 423 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## CI status note
+- Diagnosed the "some jobs were not successful" report: all four workflows (CI · platform · security · NodeJS-
+  with-Gulp) are GREEN on the latest commits. The historical failures were (a) old CI failures on long-
+  superseded commits and (b) the default "NodeJS with Gulp" starter, which was already rewritten to run the
+  real tsc + next build (Node 20.x/22.x) and now passes. No current failing job.
