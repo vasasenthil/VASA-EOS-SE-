@@ -207,6 +207,16 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Wallet(id), nil)
 	}))
+	mux.HandleFunc("/transfer", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req integration.TransferRequest
+		if !decode(w, r, &req) {
+			return
+		}
+		if req.Class == "" {
+			req.Class = "Grade 2"
+		}
+		s.writeJSON(w, s.p.TransferStudent(r.Context(), req), nil)
+	}))
 	mux.HandleFunc("/revoke", s.count(func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
 			CredentialID string `json:"credential_id"`

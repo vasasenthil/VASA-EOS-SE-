@@ -738,3 +738,15 @@ wired into the composition root and surfaced on platformd:
   revoked:true, failures [REVOKED], all_valid:false. The credential lifecycle (issue → anchor → verify →
   revoke) is now complete and trust-correct.
 - Status page: **48 modules · 413 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Student transfer / portability ("a child who moves … does not start over")
+- `Platform.TransferStudent(ctx, TransferRequest)` — moves a learner between schools while **preserving their
+  journey**: validates the destination is a real T6 school in the estate; **revokes** the prior enrolment
+  credential (kept in the wallet, flagged revoked); issues a **fresh enrolment credential at the new school**
+  under the same APAAR id (so wallet + journey + lawful basis carry across); resolves both districts; audits
+  the move. Enrolment credential ids are now school-specific (`ENR-<apaar>-<udise>`) so transfers produce
+  distinct records. `platformd POST /transfer`. 2 integration tests.
+- Verified live: Tirunelveli → Tiruvallur — transferred:true, old cred (…-33300053701) revoked, new cred
+  (…-33330059101) valid, history_preserved:true; the wallet shows the revoked prior enrolment + the valid new
+  one, and the journey grows (does not reset). Exactly the brief's portable-identity promise.
+- Status page: **48 modules · 415 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

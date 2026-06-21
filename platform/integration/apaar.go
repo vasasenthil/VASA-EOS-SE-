@@ -102,7 +102,8 @@ func (p *Platform) tenancyAncestorAtLevel(id string, level int) string {
 // issueEnrolmentCredential mints a verifiable, notarised enrolment-record credential.
 func (p *Platform) issueEnrolmentCredential(a reconcile.ApaarRecord, udise, class string) (credentials.AnchoredCredential, error) {
 	c := credentials.Credential{
-		ID: "ENR-" + a.ApaarID, Type: "EnrolmentRecord", Subject: a.ApaarID,
+		// school-specific id so a transfer produces a distinct enrolment record (the old one is revoked, kept).
+		ID: "ENR-" + a.ApaarID + "-" + udise, Type: "EnrolmentRecord", Subject: a.ApaarID,
 		Issuer: "APAAR-TamilNadu", IssuedAt: p.now(),
 		Claims: map[string]string{"udise": udise, "class": class, "category": a.Category, "status": "enrolled"},
 	}
