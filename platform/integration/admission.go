@@ -220,6 +220,12 @@ func (p *Platform) Execute(_ context.Context, tool string, args map[string]any) 
 		p.appendAudit("role:COMPLIANCE", "compliance.signoff", school, "signed", summary)
 		return "compliance findings signed off for " + school, nil
 	}
+	if tool == "council.ratify" {
+		proposal, _ := args["proposal"].(string)
+		title, _ := args["title"].(string)
+		p.appendAudit("role:AUTHORITY", "council.ratify", proposal, "ratified", title)
+		return "council proposal ratified by the statutory authority: " + proposal, nil
+	}
 	// Any tool in the agent registry is a valid (advisory or human-approved) action.
 	if _, err := p.Reg.Lookup(tool); err == nil {
 		return "executed: " + tool, nil

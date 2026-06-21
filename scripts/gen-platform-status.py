@@ -42,6 +42,7 @@ DESC = {
     "population": "§D estate: real 38-district-anchored tree (385 blocks · 3,800 clusters · 69,000 schools) + labelled-synthetic cohort at §D scale",
     "consent": "§E DPDP register: lawful-basis ledger · child protections (§9) · retention clock · access/erasure/withdrawal rights",
     "tenancy": "T0–T6 sovereign multi-tenancy: strict-chain hierarchy · downward governance · anchored to the real estate (≈73k nodes)",
+    "dao": "L11 Education-DAO: SMC councils · non-transferable soulbound badges · quorum/threshold voting · advisory→statutory ratification",
     "govtiers": "L11 governance: G1–G7 tiers + 3 AI Control Tower bodies · escalation paths",
     "portals": "L10 experience: the 13 role-tailored stakeholder portals (role · home · tier · grants)",
     "ndears": "L4 NDEAR-S conformance: 29 building blocks · sovereign/federated/pending posture (28/29 addressed)",

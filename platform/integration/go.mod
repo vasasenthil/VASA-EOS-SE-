@@ -32,6 +32,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
+	github.com/vasa-eos-se-tn/platform/dao v0.0.0
 	github.com/vasa-eos-se-tn/platform/edge v0.0.0
 	github.com/vasa-eos-se-tn/platform/engines v0.0.0
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
@@ -156,3 +157,5 @@ replace github.com/vasa-eos-se-tn/platform/civic => ../L12-civic/civic
 replace github.com/vasa-eos-se-tn/platform/iot => ../L4-integration/iot
 
 replace github.com/vasa-eos-se-tn/platform/edge => ../L2-infrastructure/edge
+
+replace github.com/vasa-eos-se-tn/platform/dao => ../L11-governance/dao

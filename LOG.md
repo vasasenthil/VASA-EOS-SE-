@@ -835,3 +835,18 @@ wired into the composition root and surfaced on platformd:
   Deployment + Service + HPA, non-root/read-only-rootfs/caps-dropped, readiness `/readiness` liveness
   `/healthz`, HPA→240 app replicas per the L10 capacity model) and a Helm chart `deploy/helm/platformd`.
 - Status page: **50 modules · 440 tests**. Green bar: 50 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Built the last absent tech-fabric element — Education DAOs (advisory to statutory authority)
+- `platform/L11-governance/dao` — SMC (School Management Committee) councils whose members hold
+  **NON-TRANSFERABLE soulbound badges** (TransferBadge always errors), deliberating proposals by
+  one-member-one-vote with **quorum + threshold**. The defining rule: a passed proposal is **ADVISORY ONLY**
+  (`Advisory=true, NeedsRatify=true`) — the council recommends, the statutory authority decides. Besu/Snapshot
+  substrate gated (B-020). 3 module tests (soulbound non-transfer · members-only/one-vote · quorum/threshold).
+- Wired: `Platform.DemoCouncilVote` runs a council deliberation and routes a passed (advisory) proposal to the
+  **HITL queue** for the head teacher/BEO to **ratify** (`RatifyCouncil`, council.ratify scope; executor
+  `council.ratify` branch). `platformd GET /council` + `POST /council-ratify`. 1 integration test. Verified
+  live: SMC passes 3-1 (75%), advisory + needs_ratify, queued TR-0001; HEAD_TEACHER ratifies → audited.
+- Status page: **51 modules · 444 tests**. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+- MILESTONE: every advanced-tech-fabric element with an application-code dimension is now built —
+  ML(analytics) · DL-seam · IoT mesh · Blockchain-analogue(notary) · NFT-analogue(credentials) · **Education
+  DAOs** · Edge compute(CRDT) · RAG+MCP. Remaining pending is purely substrate/procurement/real-data/audits.

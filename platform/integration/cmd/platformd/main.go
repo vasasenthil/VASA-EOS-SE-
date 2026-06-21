@@ -247,6 +247,29 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/edge", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.EdgeConvergenceDemo(), nil)
 	}))
+	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
+		udise := r.URL.Query().Get("udise")
+		if udise == "" {
+			udise = "33010100101"
+		}
+		title := r.URL.Query().Get("title")
+		if title == "" {
+			title = "Adopt the new library-hours plan"
+		}
+		s.writeJSON(w, s.p.DemoCouncilVote(r.Context(), udise, title), nil)
+	}))
+	mux.HandleFunc("/council-ratify", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			RequestID string `json:"request_id"`
+			Approve   bool   `json:"approve"`
+			Authority string `json:"authority"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		res, err := s.p.RatifyCouncil(r.Context(), req.RequestID, req.Approve, orDefault(req.Authority, "HEAD_TEACHER"))
+		s.writeJSON(w, res, err)
+	}))
 	mux.HandleFunc("/compliance-sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 1000
 		if v := r.URL.Query().Get("n"); v != "" {
