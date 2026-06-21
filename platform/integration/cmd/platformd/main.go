@@ -440,6 +440,62 @@ func (s *server) routes() http.Handler {
 		d, _ := s.p.ExamSheet(req.ExamID)
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "sheet": d}, nil)
 	}))
+	mux.HandleFunc("/leave", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Leave & Approval — the workflow the Next.js app drives over HTTP.
+		// GET ?scope=<org>&status=&as=<role> → scoped requests (or the role's approval inbox when as= is set).
+		// POST { id,employee,type,from_date,to_date,reason,org_unit } files a new request and routes it into its
+		// dynamic multi-level chain (principal → +BEO >5d → +DEO >15d).
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID       string `json:"id"`
+				Employee string `json:"employee"`
+				Type     string `json:"type"`
+				From     string `json:"from_date"`
+				To       string `json:"to_date"`
+				Reason   string `json:"reason"`
+				OrgUnit  string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "LV-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			out, err := s.p.FileLeave(req.ID, req.Employee, req.Type, req.From, req.To, req.Reason, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "request": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		scope := orDefault(q.Get("scope"), "TN")
+		if role := q.Get("as"); role != "" {
+			s.writeJSON(w, s.p.LeaveInboxFor(scope, role), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LeaveScopedBy(scope, q.Get("status")), nil)
+	}))
+	mux.HandleFunc("/leave/decide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act at a leave request's CURRENT approval level. POST { id, approve, role, actor, note }.
+		var req struct {
+			ID      string `json:"id"`
+			Approve bool   `json:"approve"`
+			Role    string `json:"role"`
+			Actor   string `json:"actor"`
+			Note    string `json:"note"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		out, err := s.p.DecideLeave(req.ID, req.Approve, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "request": out}, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {

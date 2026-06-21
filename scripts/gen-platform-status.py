@@ -43,6 +43,7 @@ DESC = {
     "consent": "§E DPDP register: lawful-basis ledger · child protections (§9) · retention clock · access/erasure/withdrawal rights",
     "tenancy": "T0–T6 sovereign multi-tenancy: strict-chain hierarchy · downward governance · anchored to the real estate (≈73k nodes)",
     "calendar": "L6 Events & Academic Calendar: plan the year (terms·exams·holidays·PTM·events) · CRUD · type/year filter · date-ordered · DYNAMIC multi-level approval (depth from type + tenancy level: state board exam G4→G3→G2→G1) · scoped realtime dashboard + role inbox · DURABLE PostgreSQL store (pgx) when DATABASE_URL set — survives restarts, proven in CI against a live database",
+    "leave": "L6 Staff Leave & Approval: file → DYNAMIC multi-level approval (principal → +BEO >5d → +DEO >15d) · scoped approval inbox · DURABLE PostgreSQL store · the Next.js leave-approval flow calls platformd over HTTP (lib/platform-client) — the frontend↔backbone connection",
     "exams": "L6 Examinations & Results: marks sheet per exam · entry gated by the unified PDP (teaching-cadre ABAC + jurisdiction ReBAC) · open→submit→moderate→publish with separation of duties · grade bands + pass% analytics · scoped results dashboard · DURABLE PostgreSQL store (pgx, sheets+results) when DATABASE_URL set — survives restarts, proven in CI",
     "dao": "L11 Education-DAO: SMC councils · non-transferable soulbound badges · quorum/threshold voting · advisory→statutory ratification",
     "govtiers": "L11 governance: G1–G7 tiers + 3 AI Control Tower bodies · escalation paths",

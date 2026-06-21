@@ -53,6 +53,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/iot v0.0.0
+	github.com/vasa-eos-se-tn/platform/leave v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/modulecatalogue v0.0.0
@@ -178,3 +179,5 @@ replace github.com/vasa-eos-se-tn/platform/directory => ../L5-security/directory
 replace github.com/vasa-eos-se-tn/platform/calendar => ../L6-platform-services/calendar
 
 replace github.com/vasa-eos-se-tn/platform/exams => ../L6-platform-services/exams
+
+replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leave

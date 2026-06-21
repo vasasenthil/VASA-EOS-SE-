@@ -1056,3 +1056,23 @@ wired into the composition root and surfaced on platformd:
   persisted in Postgres.
 - Green bar: 54 Go modules pass (in-memory sweep), durable PG tests (calendar + exams) pass via the CI
   `TestPg` step against the live PostgreSQL service, OPA 33/33, gofmt clean.
+
+## Production-wiring vertical 3 + the frontend↔backbone connection: Staff Leave & Approval
+- Closes the audit's biggest gap ("the Next.js app never calls the Go platformd; two disconnected stacks").
+- New L6 `leave` module — file a request → DYNAMIC multi-level approval whose depth is the number of days
+  (principal always · +BEO over 5 days · +DEO over 15 days); pure transitions (NewRequest/ApplyDecide) shared
+  by both stores. `platform/integration/leave.go` (+ scoped listing + role-gated approval inbox) and
+  `leave_pg.go` (durable PostgreSQL adapter, chain as JSONB). platformd: `POST /leave`, `POST /leave/decide`,
+  `GET /leave?scope=&status=&as=`. Migration of record: `scripts/083-create-leave-requests-table.sql`.
+- THE CONNECTION: new `lib/platform-client.ts` (typed HTTP client to platformd; active when `PLATFORM_URL` is
+  set). `app/leave-approvals/actions.ts` now routes file/decide/list through the Go backbone when configured
+  (adapting the backbone leave.Request into the board's LeaveFlowRecord), with the existing Supabase/in-memory
+  path as the credential-free fallback. So a frontend "Submit leave request" button → Next.js server action →
+  HTTP → Go platformd → PostgreSQL, with OPA enforcement and a real audit chain.
+- PROVEN LIVE (raw): `TestPgLeaveDurable` passes (20-day request routes principal→BEO→DEO; every decision
+  survives fresh store instances; wrong-role fail-closed; list/filter durable). Against platformd
+  (live-opa + DATABASE_URL): the EXACT request `platformFileLeave()` sends filed LV-DEMO-1 (16 days → 3-level
+  chain) → confirmed in Postgres via psql; walked HEAD_TEACHER→BEO→DEO via `/leave/decide` to approved;
+  DEO-first attempt fail-closed; final state durable in Postgres.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 3 durable PG tests (calendar+exams+leave)
+  pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors. 505 tests.
