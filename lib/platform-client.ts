@@ -83,6 +83,27 @@ export async function platformListLeave(scope = "TN", status = ""): Promise<Plat
   return (await res.json()) as PlatformLeaveRequest[]
 }
 
+export interface PlatformDirectoryUser {
+  id: string
+  name?: string
+  role: string
+  org_unit: string
+  attributes?: Record<string, string>
+  suspended?: boolean
+}
+
+/**
+ * Upsert a user into the Go sovereign directory (the durable identity plane the five-model PDP decides over).
+ * This is the bridge that stops the Next.js user model and the backbone directory being two disconnected
+ * systems: a user registered in the app is propagated to the directory so the PDP and ReBAC know about them.
+ * org_unit MUST be a real tenancy node (a school UDISE, or a canonical state node) for ReBAC to work.
+ */
+export async function platformUpsertUser(
+  u: PlatformDirectoryUser,
+): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/directory", u)
+}
+
 export interface PlatformGrievanceStep {
   role: string
   decision: string // "" | resolved | rejected | escalated

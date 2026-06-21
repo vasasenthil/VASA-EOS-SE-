@@ -178,3 +178,29 @@ export async function getUserRoleAndSchool(userId: string): Promise<{ role: stri
     return null
   }
 }
+
+/**
+ * Returns ALL roles a user holds, closing the multi-role gap: the primary role on public.users PLUS any roles
+ * granted via user_ou_assignments (one per org unit). A user who is, say, TEACHER at a school and ACADEMIC_HEAD
+ * at a cluster gets both — previously only the first (public.users.role) was ever resolved. Deduplicated;
+ * always includes the primary role; degrades gracefully when the assignments tables are absent/empty.
+ */
+export async function getUserRoles(userId: string): Promise<string[]> {
+  const roles = new Set<string>()
+  const primary = await getUserRoleAndSchool(userId)
+  if (primary?.role) roles.add(primary.role)
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data } = await supabase
+      .from("user_ou_assignments")
+      .select("roles(name)")
+      .eq("user_id", userId)
+    for (const row of (data ?? []) as Array<{ roles?: { name?: string } | null }>) {
+      const name = row?.roles?.name
+      if (name) roles.add(name)
+    }
+  } catch {
+    // user_ou_assignments / roles tables are optional in the MVP schema — fall back to the primary role only.
+  }
+  return [...roles]
+}

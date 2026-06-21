@@ -1254,3 +1254,33 @@ wired into the composition root and surfaced on platformd:
   HEAD_TEACHER, filed_on, due_by, escalations:0} — a grep for the PII strings found NONE; unknown ticket → 404.
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Resolve Governance + User-Management issues (audit-driven)
+Fixed the concrete, evidence-backed defects an audit surfaced in Governance and User Management:
+- **G-1 / UM-4 (HIGH, runtime bug):** `getAuthUsersForSelectionAction` (`app/governance/user-assignments/
+  actions.ts`) selected `raw_user_meta_data` — a Supabase auth.users column that does NOT exist on
+  public.users — failing with column-not-found. Now selects `id,email,full_name` and maps `full_name` into the
+  `AuthUser.raw_user_meta_data.name` shape the assignment UI expects.
+- **G-3 (multi-role gap):** `resolveSubject` only ever resolved the FIRST role. Added `getUserRoles(userId)`
+  (`lib/auth/server.ts`) — primary public.users role UNION user_ou_assignments roles — and `resolveSubject`
+  (`lib/access/resolve.ts`) now authorises ALL of a user's valid portal roles.
+- **G-2 (3 dangling TODOs):** the policy-CRUD "Determine OU context" TODOs (`app/policies/create/actions.ts`)
+  are resolved as an explicit DESIGN DECISION: policies are STATE-TIER artifacts (gated by *_NATIONAL
+  permissions), deliberately not per-OU — OU-scoping would fragment statutory State policy. 0 TODOs remain in
+  governance/policy/access TS.
+- **UM-1 / G-4 (the two disconnected identity planes):** new `lib/access/backbone-sync.ts` propagates a
+  Next.js-registered user into the Go sovereign directory (the durable identity plane the five-model PDP
+  decides over). Correctness-first: org_unit must be a REAL tenancy node — school-tier users → their UDISE
+  (a T6 node), state-tier roles → canonical Go nodes (TN/TN-SEC/TN-DIR-DSE); district/block roles with no
+  resolvable node are SKIPPED (not mis-anchored, which would break ReBAC). Wired into `register-user-action.ts`
+  (best-effort; a sync failure never fails a successful registration). No-op without PLATFORM_URL.
+  `platform-client.platformUpsertUser` + exported `backendRoleFor` from the PDP bridge.
+- **UM-3 was a FALSE alarm:** `app/admin/governance/users/page.tsx` and the assignments page both exist.
+- **Drift fix:** regenerated `scripts/bootstrap.sql` (85 migrations) — it was stale after this session's durable
+  migrations (081–086); the bootstrap drift test now passes.
+- PROVEN LIVE (raw): POSTing the exact payload `syncUserToBackbone` sends for a registered TEACHER created a
+  durable Go directory user (org_unit = real Chennai UDISE 33030004181, cadre=teaching); the unified PDP then
+  decided over them correctly — `write:assessment` in own school → permit (RBAC), in another school → deny
+  (ReBAC).
+- Green bar (both stacks): TS suite 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ 95/80/88 gate), tsc 0, lint
+  clean; Go 56 modules + 8 durable PG tests + OPA 33/33, gofmt clean.

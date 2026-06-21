@@ -324,8 +324,11 @@ export async function getAuthUsersForSelectionAction(params?: {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
   }
   try {
-    // The `auth.users` table is in the `auth` schema.
-    let query = supabaseAdmin!.from("users").select("id, email, raw_user_meta_data", { count: "exact" })
+    // The directory of people lives in public.users (id, email, full_name, role, school_id). The previous
+    // implementation selected `raw_user_meta_data` — a Supabase auth.users column that does NOT exist on
+    // public.users — so it failed at runtime with a column-not-found error. Select the real columns and map
+    // full_name into the AuthUser.raw_user_meta_data.name shape the assignment UI expects.
+    let query = supabaseAdmin!.from("users").select("id, email, full_name", { count: "exact" })
 
     if (params?.searchTerm) {
       query = query.ilike("email", `%${params.searchTerm}%`) // Simple email search
@@ -344,7 +347,12 @@ export async function getAuthUsersForSelectionAction(params?: {
       console.error("Error fetching auth users:", error)
       return { success: false, message: `Failed to fetch users: ${error.message}`, data: [] }
     }
-    return { success: true, message: "Auth users fetched successfully.", data: data || [], total: count ?? undefined }
+    const mapped: AuthUser[] = (data || []).map((u: { id: string; email: string | null; full_name: string | null }) => ({
+      id: u.id,
+      email: u.email,
+      raw_user_meta_data: { name: u.full_name ?? undefined },
+    }))
+    return { success: true, message: "Auth users fetched successfully.", data: mapped, total: count ?? undefined }
   } catch (e: any) {
     console.error("Unexpected error fetching auth users:", e)
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }

@@ -45,6 +45,11 @@ const ACTION_MAP: Record<string, string> = {
   "vote:smc": "read:school",
 }
 
+/** Map a TS portal role onto its Go directory role code (the canonical governance-hierarchy catalogue). */
+export function backendRoleFor(tsRole: string): string {
+  return ROLE_MAP[tsRole] ?? tsRole
+}
+
 /** True when the sovereign PDP should be consulted (configured AND the action has a mapping). */
 export function bridgeHandles(action: string): boolean {
   return platformConfigured() && ACTION_MAP[action] !== undefined

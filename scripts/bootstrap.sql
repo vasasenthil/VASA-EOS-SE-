@@ -2,7 +2,7 @@
 --
 -- Run this ONCE in your Supabase / Postgres SQL editor to provision the entire schema: all tables,
 -- indexes and deny-by-default row-level security. Idempotent — safe to re-run.
--- Generated from 79 migrations. Regenerate with: node scripts/build-bootstrap.mjs
+-- Generated from 85 migrations. Regenerate with: node scripts/build-bootstrap.mjs
 --
 -- After this runs, set NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and the app goes live.
 
@@ -3725,5 +3725,142 @@ begin
     execute format('alter table public.%I enable row level security;', r.tablename);
   end loop;
 end $$;
+
+-- ==== 081-create-calendar-entries-table.sql ====
+-- VASA-EOS(SE) TN — Academic Calendar durable store (L6 calendar service / platformd).
+-- Backs platform/integration/calendar_pg.go. Entries plan the academic year (terms, exams, holidays, PTM,
+-- events) and carry their dynamic multi-level approval chain as JSONB. Applied automatically by the adapter's
+-- ensureSchema() on first connect; kept here as the canonical migration of record.
+CREATE TABLE IF NOT EXISTS calendar_entries (
+    id            TEXT PRIMARY KEY,
+    title         TEXT NOT NULL,
+    type          TEXT NOT NULL,                       -- term | exam | holiday | ptm | event
+    start_date    TEXT NOT NULL,                       -- YYYY-MM-DD (inclusive)
+    end_date      TEXT NOT NULL,                       -- YYYY-MM-DD (inclusive)
+    org_unit      TEXT NOT NULL,                       -- tenant node the entry applies to
+    academic_year TEXT NOT NULL DEFAULT '',
+    description   TEXT NOT NULL DEFAULT '',
+    status        TEXT NOT NULL DEFAULT 'draft',       -- draft | pending | approved | rejected
+    current_step  INT  NOT NULL DEFAULT 0,
+    chain         JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered approval steps (G-tier/role/scope/decision)
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL,
+    synthetic     BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX IF NOT EXISTS calendar_entries_type_idx ON calendar_entries (type);
+CREATE INDEX IF NOT EXISTS calendar_entries_org_idx  ON calendar_entries (org_unit);
+CREATE INDEX IF NOT EXISTS calendar_entries_date_idx ON calendar_entries (start_date);
+
+-- ==== 082-create-exam-sheets-tables.sql ====
+-- VASA-EOS(SE) TN — Examinations & Results durable store (L6 exams service / platformd).
+-- Backs platform/integration/exams_pg.go. A marks sheet per examination and one row per student result.
+-- Applied automatically by the adapter's ensureSchema() on first connect; kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS exam_sheets (
+    exam_id   TEXT PRIMARY KEY,
+    org_unit  TEXT NOT NULL,                  -- the school (T6) the exam belongs to
+    subject   TEXT NOT NULL,
+    class     TEXT NOT NULL,
+    max_marks INT  NOT NULL,
+    status    TEXT NOT NULL DEFAULT 'open'    -- open | submitted | published | returned
+);
+
+CREATE TABLE IF NOT EXISTS exam_results (
+    exam_id    TEXT NOT NULL REFERENCES exam_sheets(exam_id) ON DELETE CASCADE,
+    student_id TEXT NOT NULL,                 -- APAAR-anchored learner id (synthetic in demo)
+    marks      INT  NOT NULL,
+    grade      TEXT NOT NULL DEFAULT '',      -- A1..E, computed on submit
+    pass       BOOLEAN NOT NULL DEFAULT false,
+    seq        BIGSERIAL,                     -- preserves entry order
+    PRIMARY KEY (exam_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS exam_sheets_org_idx ON exam_sheets (org_unit);
+
+-- ==== 083-create-leave-requests-table.sql ====
+-- VASA-EOS(SE) TN — Staff Leave & Approval durable store (L6 leave service / platformd).
+-- Backs platform/integration/leave_pg.go. The Next.js leave-approval flow (app/leave-approvals) calls platformd
+-- which persists here. The dynamic multi-level approval chain (principal → +BEO over 5 days → +DEO over 15 days)
+-- is stored as JSONB. Applied automatically by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS leave_requests (
+    id           TEXT PRIMARY KEY,
+    employee     TEXT NOT NULL,
+    type         TEXT NOT NULL,                       -- casual | medical | earned | maternity | duty
+    from_date    TEXT NOT NULL,                       -- YYYY-MM-DD
+    to_date      TEXT NOT NULL,                       -- YYYY-MM-DD
+    days         INT  NOT NULL,
+    reason       TEXT NOT NULL DEFAULT '',
+    org_unit     TEXT NOT NULL,                       -- the school the request is filed at
+    status       TEXT NOT NULL DEFAULT 'pending',     -- pending | approved | rejected
+    chain        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered approval steps (role/decision/decided_by/...)
+    current_step INT  NOT NULL DEFAULT 0,
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS leave_requests_org_idx    ON leave_requests (org_unit);
+CREATE INDEX IF NOT EXISTS leave_requests_status_idx ON leave_requests (status);
+
+-- ==== 084-create-audit-chain-table.sql ====
+-- VASA-EOS(SE) TN — durable tamper-evident audit hash-chain (L5 audit / platformd).
+-- Backs platform/integration/audit_pg.go (the audit.Sink). Append-only: the seq primary key and the UNIQUE
+-- hash mean any insertion, reordering, or truncation is detectable, and each prev_hash links to the prior
+-- record's hash. On startup the platform reloads this table and RE-VERIFIES the chain, refusing to run on a
+-- tampered history. Applied automatically by the sink's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS audit_chain (
+    seq       BIGINT PRIMARY KEY,
+    ts        TEXT NOT NULL DEFAULT '',
+    actor     TEXT NOT NULL DEFAULT '',
+    action    TEXT NOT NULL,
+    resource  TEXT NOT NULL DEFAULT '',
+    effect    TEXT NOT NULL DEFAULT '',   -- permit | deny | require-approval | executed
+    detail    TEXT NOT NULL DEFAULT '',
+    prev_hash TEXT NOT NULL,
+    hash      TEXT NOT NULL UNIQUE        -- sha256 over the canonical payload (incl. prev_hash)
+);
+
+-- ==== 085-create-grievance-cases-table.sql ====
+-- VASA-EOS(SE) TN — Grievance Redressal case store (L12 grievance service / platformd).
+-- Backs platform/integration/grievance_case_pg.go. A citizen grievance becomes a durable case handled by a
+-- tier of officers under an SLA; the escalation chain (by category) is stored as JSONB, and a case past its
+-- due_at is auto-escalated by the platform's SLA sweep. Applied by the adapter's ensureSchema(); migration of record.
+CREATE TABLE IF NOT EXISTS grievance_cases (
+    id           TEXT PRIMARY KEY,
+    complainant  TEXT NOT NULL,
+    category     TEXT NOT NULL,                       -- academic | infrastructure | safety | financial | service
+    subject      TEXT NOT NULL DEFAULT '',
+    org_unit     TEXT NOT NULL,                       -- the school/office the grievance concerns
+    status       TEXT NOT NULL DEFAULT 'open',        -- open | resolved | rejected | escalated
+    chain        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered handler tiers (role/decision/decided_by/...)
+    current_tier INT  NOT NULL DEFAULT 0,
+    filed_at     TEXT NOT NULL,
+    due_at       TEXT NOT NULL,                       -- SLA deadline for the current tier
+    resolution   TEXT NOT NULL DEFAULT '',
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS grievance_cases_org_idx    ON grievance_cases (org_unit);
+CREATE INDEX IF NOT EXISTS grievance_cases_status_idx ON grievance_cases (status);
+
+-- ==== 086-create-admission-applications-table.sql ====
+-- VASA-EOS(SE) TN — durable admission applications register (admission workflow / platformd).
+-- Backs platform/integration/admission_pg.go. Records the decision for each RTE admission application — stage,
+-- governing reasons, HITL request id, anchored credential id — WITHOUT cleartext PII (the applicant's name is
+-- sealed under the tenant KEK during the workflow; only a pii_sealed flag is kept here). Applied by the
+-- adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS admission_applications (
+    id            TEXT PRIMARY KEY,                  -- applicant id (APAAR-anchored; synthetic in demo)
+    category      TEXT NOT NULL DEFAULT '',          -- GEN | OBC | SC | ST | EWS | DG
+    age           INT  NOT NULL DEFAULT 0,
+    tenant        TEXT NOT NULL DEFAULT '',
+    region        TEXT NOT NULL DEFAULT '',
+    decision      TEXT NOT NULL DEFAULT '',          -- requested: admit | reject
+    stage         TEXT NOT NULL DEFAULT '',          -- admitted | denied | pending-approval | residency
+    effect        TEXT NOT NULL DEFAULT '',          -- permit | deny | require-approval (from the Rego PDP)
+    reasons       TEXT NOT NULL DEFAULT '',          -- governing rule ids
+    request_id    TEXT NOT NULL DEFAULT '',          -- HITL request id when pending approval
+    credential_id TEXT NOT NULL DEFAULT '',          -- anchored admission credential id on admit
+    pii_sealed    BOOLEAN NOT NULL DEFAULT false,    -- PII was enveloped under the tenant KEK
+    decided_at    TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS admission_applications_tenant_idx ON admission_applications (tenant);
+CREATE INDEX IF NOT EXISTS admission_applications_stage_idx  ON admission_applications (stage);
 
 commit;
