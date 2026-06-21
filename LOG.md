@@ -907,3 +907,16 @@ wired into the composition root and surfaced on platformd:
 - The platform now has all three 360 views: **student journey** (learner) · **school profile** (institution) ·
   **teacher profile** (staff) — each a single auditable record assembled live across L1–L12.
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Sovereign Operations Console (super-admin for the entire VASA-EOS-SE-TN platform)
+- `Platform.SovereignConsole(actorRole)` — the T0 super-admin operating picture of the WHOLE platform, role-
+  gated (SUPERADMIN/SECRETARY/MINISTER): off-switch state · live conformance (12 layers · 7 G-tiers · 6/6
+  engines/agents · 13 portals · 391 modules) · tenancy estate (73,232 nodes · 69,000 schools · valid) · NDEAR
+  28/29 · model-card SLA · the §F.2 SLA board · civic backlog (grievances/RTI) · audit+notary tamper-evidence
+  counters · a computed `go_live_ready`. **Fail-closed**: a non-super-admin gets an unauthorised, empty console
+  (nothing disclosed). Plus the T0 **kill-switch** as super-admin-only actions (`SovereignDisable/Enable`,
+  audited; non-super-admin denied). `platformd GET /sovereign?role=` (403 if unauthorised) + `POST
+  /sovereign-offswitch`. 2 integration tests.
+- Verified live: SUPERADMIN → full picture, go_live_ready:true; TEACHER → HTTP 403, authorised:false, 0 nodes;
+  off-switch — TEACHER denied, SECRETARY engages → off_switch_engaged:true, go_live_ready:false.
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.

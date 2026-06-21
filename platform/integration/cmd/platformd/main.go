@@ -389,6 +389,35 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
+	mux.HandleFunc("/sovereign", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the T0 super-admin console — role-gated. ?role=SUPERADMIN|SECRETARY|MINISTER to authorise.
+		role := r.URL.Query().Get("role")
+		if role == "" {
+			role = "SUPERADMIN"
+		}
+		console := s.p.SovereignConsole(role)
+		if !console.Authorised {
+			w.WriteHeader(http.StatusForbidden)
+		}
+		s.writeJSON(w, console, nil)
+	}))
+	mux.HandleFunc("/sovereign-offswitch", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			Role   string `json:"role"`
+			Engage bool   `json:"engage"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		var ok bool
+		var err error
+		if req.Engage {
+			ok, err = s.p.SovereignDisable(orDefault(req.Role, "x"), "OFF-1")
+		} else {
+			ok, err = s.p.SovereignEnable(orDefault(req.Role, "x"), "ON-1")
+		}
+		s.writeJSON(w, map[string]any{"engaged_request": req.Engage, "ok": ok, "error_is_denied": err != nil}, nil)
+	}))
 	mux.HandleFunc("/exercise", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 200
 		if q := r.URL.Query().Get("n"); q != "" {
