@@ -850,3 +850,19 @@ wired into the composition root and surfaced on platformd:
 - MILESTONE: every advanced-tech-fabric element with an application-code dimension is now built —
   ML(analytics) · DL-seam · IoT mesh · Blockchain-analogue(notary) · NFT-analogue(credentials) · **Education
   DAOs** · Edge compute(CRDT) · RAG+MCP. Remaining pending is purely substrate/procurement/real-data/audits.
+
+## Deepened the school taxonomy — every school classified across 5 TN dimensions
+- `seed/schooltypes.go` — canonical TN school-taxonomy master data: **SchoolLevels** (Primary 1–5 · Upper-
+  Primary 1–8 · High 1–10 · Higher-Secondary 1–12, grade spans), **SchoolCategories** (8 management forms:
+  Government · Aided · Matriculation · Private-CBSE · Private-Unaided · Central(KV/JNV) · Social-Welfare ·
+  Municipal), **Mediums** (Tamil-first), **GenderTypes** (Co-ed/Girls/Boys), **ResidentialTypes** (Day/
+  Residential/KGBV). 1 test.
+- `population` — every one of the 69,000 materialised schools is now stamped on **all five dimensions**
+  (management · level+grades · medium · gender · residential) at realistic TN distributions; `Summary` rolls up
+  all five mixes; `FilterSchools(SchoolFilter)` queries across them. Tests assert each mix covers all 69,000 +
+  realistic shape (Government/Primary/Tamil/Co-ed/Day pluralities, Girls schools + KGBV present).
+- Surfaced: `Platform.SchoolsMatching` + enriched `PopulationSummary`; `platformd GET /population?district=&
+  management=&level=&medium=&gender=&residential=` (deep filter) and a new open-data `schools-by-type.csv`
+  (level × management cross-tab) export. 3 integration tests. Verified live: full 5-dimension mix over 69,000;
+  Girls Hr-Sec in Chennai → 104 matches; schools-by-type CSV cross-tab.
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.

@@ -36,6 +36,12 @@ func (p *Platform) SchoolsInDistrict(district string) []population.School {
 	return out
 }
 
+// SchoolsMatching returns the materialised schools matching a taxonomy filter (district × management × level ×
+// medium × gender × residential; empty fields match anything).
+func (p *Platform) SchoolsMatching(f population.SchoolFilter) []population.School {
+	return population.FilterSchools(tree(), f)
+}
+
 // SyntheticCohort materialises a labelled-synthetic cohort (students + teachers + their guardians) across the
 // real institutional estate — a representative, clearly-synthetic population to exercise the platform. The ids
 // are all SYN-prefixed; this never enters the production seed.

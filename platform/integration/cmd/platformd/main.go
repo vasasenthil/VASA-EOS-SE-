@@ -552,9 +552,15 @@ func (s *server) consentDemo(w http.ResponseWriter, r *http.Request) {
 // schools; ?cohort=N materialises a labelled-synthetic cohort of N students (+ teachers + guardians); else the
 // summary (385 blocks / 3,800 clusters / 69,000 schools validated against §D, plus the §D.1 scale plan).
 func (s *server) handlePopulation(w http.ResponseWriter, r *http.Request) {
-	if d := r.URL.Query().Get("district"); d != "" {
-		schools := s.p.SchoolsInDistrict(d)
-		s.writeJSON(w, map[string]any{"district": d, "schools": len(schools), "sample": firstN(schools, 5)}, nil)
+	q := r.URL.Query()
+	// a taxonomy query (any of district/management/level/medium/gender/residential) returns matching schools.
+	f := population.SchoolFilter{
+		District: q.Get("district"), Management: q.Get("management"), Level: q.Get("level"),
+		Medium: q.Get("medium"), Gender: q.Get("gender"), Residential: q.Get("residential"),
+	}
+	if f.District != "" || f.Management != "" || f.Level != "" || f.Medium != "" || f.Gender != "" || f.Residential != "" {
+		schools := s.p.SchoolsMatching(f)
+		s.writeJSON(w, map[string]any{"filter": f, "schools": len(schools), "sample": firstN(schools, 5)}, nil)
 		return
 	}
 	if c := r.URL.Query().Get("cohort"); c != "" {

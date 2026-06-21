@@ -61,6 +61,46 @@ func TestSchoolCodesAndManagement(t *testing.T) {
 	}
 }
 
+func TestSchoolTaxonomyFullyClassified(t *testing.T) {
+	tr := BuildTree()
+	// every school carries a value on all five dimensions.
+	for _, s := range tr.Schools[:200] {
+		if s.Management == "" || s.Level == "" || s.Grades == "" || s.Medium == "" || s.Gender == "" || s.Residential == "" {
+			t.Fatalf("school is not fully classified: %+v", s)
+		}
+	}
+	sum := Summarise(tr)
+	// each dimension's mix must cover every one of the 69,000 schools.
+	for name, mix := range map[string]map[string]int{
+		"management": sum.Management, "level": sum.Level, "medium": sum.Medium,
+		"gender": sum.Gender, "residential": sum.Residential,
+	} {
+		total := 0
+		for _, n := range mix {
+			total += n
+		}
+		if total != sum.Schools {
+			t.Fatalf("%s mix must cover all %d schools, got %d", name, sum.Schools, total)
+		}
+	}
+	// realistic shape: Government + Primary + Tamil + Co-educational + Day are each the plurality.
+	if sum.Management["Government"]*2 < sum.Schools {
+		t.Fatalf("Government should be the management plurality, got %d", sum.Management["Government"])
+	}
+	if sum.Level["Primary School"] == 0 || sum.Level["Higher Secondary School"] == 0 {
+		t.Fatalf("all four levels must appear: %+v", sum.Level)
+	}
+	if sum.Medium["Tamil"] <= sum.Medium["English"] {
+		t.Fatalf("Tamil-medium must dominate English, got %+v", sum.Medium)
+	}
+	if sum.Gender["Co-educational"]*2 < sum.Schools || sum.Gender["Girls"] == 0 {
+		t.Fatalf("co-ed plurality + girls' schools expected: %+v", sum.Gender)
+	}
+	if sum.Residential["Day"]*2 < sum.Schools || sum.Residential["KGBV"] == 0 {
+		t.Fatalf("day plurality + KGBV residential expected: %+v", sum.Residential)
+	}
+}
+
 func TestSyntheticPopulationLabelled(t *testing.T) {
 	tr := BuildTree()
 	students := StudentSample(tr, 1000)

@@ -39,7 +39,7 @@ DESC = {
     "volumes": "§D scale model: per-entity counts · annual transaction volumes · storage-capacity plan (validated)",
     "catalogue": "§F.3 data-lineage/catalogue: data dictionary · steward+SLA cross-ref · classification · lineage trace",
     "modelregistry": "§G AI-operational governance: model-card registry · deploy gate (bias+drift+red-team+human) · drift rollback",
-    "population": "§D estate: real 38-district-anchored tree (385 blocks · 3,800 clusters · 69,000 schools) + labelled-synthetic cohort at §D scale",
+    "population": "§D estate: real 38-district tree (385 blocks · 3,800 clusters · 69,000 schools fully classified: management/level/medium/gender/residential) + synthetic cohort at §D scale",
     "consent": "§E DPDP register: lawful-basis ledger · child protections (§9) · retention clock · access/erasure/withdrawal rights",
     "tenancy": "T0–T6 sovereign multi-tenancy: strict-chain hierarchy · downward governance · anchored to the real estate (≈73k nodes)",
     "dao": "L11 Education-DAO: SMC councils · non-transferable soulbound badges · quorum/threshold voting · advisory→statutory ratification",

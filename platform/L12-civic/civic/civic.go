@@ -221,6 +221,7 @@ type Dataset struct {
 func OpenDatasets() []Dataset {
 	return []Dataset{
 		{"schools-by-district", "Schools by district + management category", "CSV/JSON", true},
+		{"schools-by-type", "Schools by level × management category", "CSV/JSON", true},
 		{"enrolment-aggregates", "Enrolment aggregates (k-anonymity suppressed)", "CSV/JSON", true},
 		{"scheme-coverage", "Welfare-scheme coverage by district", "CSV/JSON", true},
 		{"infrastructure-index", "School-infrastructure index by block", "CSV/JSON", true},
@@ -273,6 +274,44 @@ func SchoolsByDistrictCSV(tree population.Tree) string {
 	}
 	header := append([]string{"district", "schools"}, []string{"government", "aided", "matriculation", "private_cbse"}...)
 	return writeCSV(header, rows)
+}
+
+// SchoolsByTypeCSV is the open-data export of the school taxonomy: the count of schools per (level ×
+// management) cross-tab. Non-personal — safe to publish openly.
+func SchoolsByTypeCSV(tree population.Tree) string {
+	// level → management → count.
+	byType := map[string]map[string]int{}
+	mgmts := map[string]bool{}
+	for _, s := range tree.Schools {
+		if byType[s.Level] == nil {
+			byType[s.Level] = map[string]int{}
+		}
+		byType[s.Level][s.Management]++
+		mgmts[s.Management] = true
+	}
+	levels := make([]string, 0, len(byType))
+	for l := range byType {
+		levels = append(levels, l)
+	}
+	sort.Strings(levels)
+	cats := make([]string, 0, len(mgmts))
+	for m := range mgmts {
+		cats = append(cats, m)
+	}
+	sort.Strings(cats)
+	rows := make([][]string, 0, len(levels))
+	for _, l := range levels {
+		total := 0
+		for _, n := range byType[l] {
+			total += n
+		}
+		row := []string{l, strconv.Itoa(total)}
+		for _, c := range cats {
+			row = append(row, strconv.Itoa(byType[l][c]))
+		}
+		rows = append(rows, row)
+	}
+	return writeCSV(append([]string{"level", "schools"}, cats...), rows)
 }
 
 // EnrolmentCSV is the open-data export of a k-anonymity-suppressed person-level enrolment statistic: only

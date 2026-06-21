@@ -107,6 +107,8 @@ func (p *Platform) ExportDataset(id string, cohort, k int) (body, filename strin
 	switch id {
 	case "schools-by-district":
 		return civic.SchoolsByDistrictCSV(tree()), "schools-by-district.csv", true
+	case "schools-by-type":
+		return civic.SchoolsByTypeCSV(tree()), "schools-by-type.csv", true
 	case "enrolment-aggregates":
 		st := p.PublicEnrolment(cohort, k)
 		return civic.EnrolmentCSV(st.Dimension, st.Published, st.Suppressed), "enrolment-aggregates.csv", true
