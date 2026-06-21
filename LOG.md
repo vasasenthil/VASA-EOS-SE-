@@ -819,3 +819,19 @@ wired into the composition root and surfaced on platformd:
   **28/29 addressed** (only ID-AUTH/Keycloak pending, infra B-010). Conformance diff updated: L4 adapters
   **13 of 21** (was 5).
 - Status page: **48 modules · 431 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Built the absent tech-fabric seams — Edge CRDT (L2) + IoT mesh (L4) + deployment skeleton
+- `platform/L2-infrastructure/edge` — offline-first **CRDT sync** (LWWRegister · GCounter · ORSet add-wins);
+  state-based, conflict-free, converges with **no coordinator + no lost writes** (K3s/Pi5 hardware gated B-010).
+  4 tests incl. convergence + add-wins. Fills the L2 layer (previously YAML-only).
+- `platform/L4-integration/iot` — IoT-mesh **telemetry ingestion**: classify (biometric attendance = Class-1)
+  → **residency gate** (offshore Class-1 quarantined, never stored) → timeseries `Sink` seam → audit; plus a
+  device `Fleet` with **OTA** roll-out (online devices update; offline reconcile on reconnect). 2 tests.
+- Wired: `Platform.IngestTelemetry/TelemetryStored/OTARollout/FirmwareSpread/EdgeConvergenceDemo`; platformd
+  `POST /iot`, `GET /iot-ota`, `GET /edge`. 3 integration tests. Verified live: offshore biometric → quarantined
+  (Class-1 residency); OTA v2 → BIO-1 (online), spread {v1:2,v2:1}; edge 28+31 → converged 59, consistent,
+  add-wins APAAR-2 survives.
+- **Deployment skeleton** (one `apply` from the substrate): `platform/deploy/k8s/platformd.yaml` (Namespace +
+  Deployment + Service + HPA, non-root/read-only-rootfs/caps-dropped, readiness `/readiness` liveness
+  `/healthz`, HPA→240 app replicas per the L10 capacity model) and a Helm chart `deploy/helm/platformd`.
+- Status page: **50 modules · 440 tests**. Green bar: 50 Go modules pass, OPA 33/33, tsc 0 errors.

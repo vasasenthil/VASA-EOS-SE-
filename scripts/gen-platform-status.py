@@ -28,6 +28,8 @@ LAYERS = {
 }
 
 DESC = {
+    "edge": "L2 edge offline-first: CRDT sync (LWW · G-Counter · OR-Set add-wins) · converges with no coordinator",
+    "iot": "L4 IoT mesh: telemetry ingestion · Class-1 biometric residency gate · timeseries sink · device fleet + OTA",
     "off-switch-svc": "Sovereign M-of-N ed25519 kill-switch (replay-safe, audited)",
     "escrow-agent": "Deterministic, verifiable source-code escrow manifest",
     "dataplane": "Classification → store/region routing → retention (policy-parity)",

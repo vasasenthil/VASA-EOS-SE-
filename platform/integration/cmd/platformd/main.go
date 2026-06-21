@@ -18,6 +18,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/capacity"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
+	"github.com/vasa-eos-se-tn/platform/iot"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
 	"github.com/vasa-eos-se-tn/platform/quality"
@@ -220,6 +221,31 @@ func (s *server) routes() http.Handler {
 			req.Facts = map[string]string{"ews_quota_met": "no", "ptr_compliant": "yes", "accessible_infra": "no", "consent_recorded": "yes", "child_safety_policy": "yes", "detention_practiced": "no"}
 		}
 		s.writeJSON(w, s.p.CheckCompliance(r.Context(), req), nil)
+	}))
+	mux.HandleFunc("/iot", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var rd iot.Reading
+		if !decode(w, r, &rd) {
+			return
+		}
+		if rd.DeviceID == "" {
+			rd = iot.Reading{DeviceID: "BIO-1", SchoolUDISE: "33010100101", Kind: iot.BiometricAttendance, Value: 1, Region: "TN-SDC"}
+		}
+		res := s.p.IngestTelemetry(rd)
+		s.writeJSON(w, map[string]any{"result": res, "stored_total": s.p.TelemetryStored()}, nil)
+	}))
+	mux.HandleFunc("/iot-ota", s.count(func(w http.ResponseWriter, r *http.Request) {
+		kind := r.URL.Query().Get("kind")
+		if kind == "" {
+			kind = "biometric-attendance"
+		}
+		fw := r.URL.Query().Get("firmware")
+		if fw == "" {
+			fw = "v2"
+		}
+		s.writeJSON(w, map[string]any{"updated": s.p.OTARollout(kind, fw), "firmware_spread": s.p.FirmwareSpread()}, nil)
+	}))
+	mux.HandleFunc("/edge", s.count(func(w http.ResponseWriter, r *http.Request) {
+		s.writeJSON(w, s.p.EdgeConvergenceDemo(), nil)
 	}))
 	mux.HandleFunc("/compliance-sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
 		n := 1000

@@ -1,0 +1,15 @@
+image:
+  repository: ghcr.io/vasasenthil/vasa-platformd
+  tag: latest
+  pullPolicy: IfNotPresent
+replicaCount: 3
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 240
+  targetCPUUtilizationPercentage: 70
+service:
+  port: 80
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 256Mi }

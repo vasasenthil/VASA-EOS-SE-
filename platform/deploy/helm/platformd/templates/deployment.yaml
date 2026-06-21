@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-platformd
+  labels: { app: {{ .Release.Name }}-platformd }
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector: { matchLabels: { app: {{ .Release.Name }}-platformd } }
+  template:
+    metadata:
+      labels: { app: {{ .Release.Name }}-platformd }
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 65532 }
+      containers:
+        - name: platformd
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports: [ { containerPort: 8080, name: http } ]
+          env: [ { name: PORT, value: "8080" } ]
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          readinessProbe: { httpGet: { path: /readiness, port: http } }
+          livenessProbe:  { httpGet: { path: /healthz, port: http } }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ "ALL" ] }

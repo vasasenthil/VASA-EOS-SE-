@@ -32,11 +32,13 @@ require (
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
+	github.com/vasa-eos-se-tn/platform/edge v0.0.0
 	github.com/vasa-eos-se-tn/platform/engines v0.0.0
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
 	github.com/vasa-eos-se-tn/platform/govtiers v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
+	github.com/vasa-eos-se-tn/platform/iot v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/modulecatalogue v0.0.0
@@ -150,3 +152,7 @@ replace github.com/vasa-eos-se-tn/platform/alignments => ../L11-governance/align
 replace github.com/vasa-eos-se-tn/platform/modulecatalogue => ../L11-governance/catalogue
 
 replace github.com/vasa-eos-se-tn/platform/civic => ../L12-civic/civic
+
+replace github.com/vasa-eos-se-tn/platform/iot => ../L4-integration/iot
+
+replace github.com/vasa-eos-se-tn/platform/edge => ../L2-infrastructure/edge
