@@ -1178,3 +1178,24 @@ wired into the composition root and surfaced on platformd:
   frontend flow (grievance) now drives the durable, SLA-enforced, audited Go backbone over HTTP.
 - Green bar: tsc 0 errors (TS-only change this turn); the Go backbone (56 modules, 7 durable PG tests, OPA
   33/33) is unchanged from the prior green sweep.
+
+## Production-wiring vertical 7: durable Admission applications register (PII-free)
+- The admission workflow computed + audited decisions but never persisted the APPLICATION. Added a durable
+  applications register: `admission_store.go` (AdmissionApplication + interface + in-memory store + dashboard)
+  and `admission_pg.go` (PostgreSQL adapter, upsert). `recordAdmission(req,res)` is called at each terminal
+  outcome (admitted/denied/pending-approval/residency) — guarded to never persist an id-less request. NO
+  cleartext PII is stored (the name is sealed under the tenant KEK during the workflow; only a pii_sealed flag
+  is kept). `Platform.AdmissionApplicationRecord` + `AdmissionDashboard(tenant)`; `GET /admissions`. Migration:
+  `scripts/086-create-admission-applications-table.sql`.
+- Surfaced + fixed a latent bug: `recordAdmission` guards against an empty applicant id (the endpoint contract
+  is camelCase — `applicantId` — which binds case-insensitively; a malformed snake_case body would otherwise
+  collide on id="").
+- PROVEN LIVE (raw): `TestPgAdmissionDurable` (admitted + pending records persist across fresh instances;
+  post-HITL upsert to admitted is durable) and `TestAdmissionPersistsApplication` (the live EWS-reject workflow
+  records a pending-approval application with its HITL request id; dashboard rolls it up) pass. platformd
+  (live-opa + DATABASE_URL): admitted a GEN applicant (credential ADM-LIVE-A1) and an EWS reject → pending; the
+  `admission_applications` table held both with proper ids, effect, credential id and pii_sealed — and NO PII;
+  `/admissions?tenant=TN/Chennai` rolled them up by stage/category.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests
+  (calendar·exams·leave·directory·audit×2·grievance·admission) pass via the CI TestPg step against the live
+  PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

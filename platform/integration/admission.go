@@ -88,6 +88,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 	if !place.Allowed {
 		res.Stage, res.Reasons = "residency", place.Reasons
 		p.appendAudit("role:"+req.ActorRole, "data.residency.deny", req.ApplicantID, "deny", strings.Join(place.Reasons, ","))
+		p.recordAdmission(req, res)
 		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true) // correctly refused — a policy outcome, not an availability fault
 		return res, nil
@@ -120,6 +121,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 	switch dec.Effect {
 	case pep.Deny:
 		res.Stage, res.Allowed = "denied", false
+		p.recordAdmission(req, res)
 		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil
@@ -135,6 +137,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 			return res, err
 		}
 		res.Stage, res.RequestID, res.Allowed = "pending-approval", r.ID, false
+		p.recordAdmission(req, res)
 		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil
@@ -149,6 +152,7 @@ func (p *Platform) Admission(ctx context.Context, req AdmissionRequest) (Admissi
 			}
 			res.Credential = &ac
 		}
+		p.recordAdmission(req, res)
 		p.notifyAdmission(ctx, req, res.Stage)
 		p.recordOutcome(true)
 		return res, nil

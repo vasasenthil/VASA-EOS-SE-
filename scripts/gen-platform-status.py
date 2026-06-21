@@ -80,7 +80,7 @@ DESC = {
     "cutover": "Ordered, idempotent, reversible go-live runbook engine",
     "dr": "Chennai→Coimbatore failover + drill; RPO/RTO grading",
     "slo": "SLO + error-budget engine; burn rate; deploy-freeze gate",
-    "integration": "Composition root — every layer wired into end-to-end workflows",
+    "integration": "Composition root — every layer wired into end-to-end workflows; durable PostgreSQL verticals (calendar·exams·leave·directory·audit·grievance·admissions) selected by DATABASE_URL, proven in CI; admission applications persisted PII-free",
 }
 
 BLOCKERS = [

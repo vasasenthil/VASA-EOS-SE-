@@ -558,6 +558,20 @@ func (s *server) routes() http.Handler {
 		ctx := directory.Context{Emergency: req.Emergency, ThreatLevel: req.Threat}
 		s.writeJSON(w, s.p.EvaluateAccess(u, req.Action, res, ctx), nil)
 	}))
+	mux.HandleFunc("/admissions", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the durable admission applications register. GET ?tenant=TN/Chennai → dashboard (by stage/category);
+		// ?id=<applicant> → a single persisted application record.
+		if id := r.URL.Query().Get("id"); id != "" {
+			a, ok := s.p.AdmissionApplicationRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown application"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, a, nil)
+			return
+		}
+		s.writeJSON(w, s.p.AdmissionDashboard(r.URL.Query().Get("tenant")), nil)
+	}))
 	mux.HandleFunc("/grievance-case", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Grievance Redressal cases. GET ?scope=<org>&status= → scoped dashboard (or list with &list=1).
 		// POST { id,complainant,category,subject,org_unit } lodges a case (dynamic SLA + escalation chain).
