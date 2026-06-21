@@ -866,3 +866,17 @@ wired into the composition root and surfaced on platformd:
   (level × management cross-tab) export. 3 integration tests. Verified live: full 5-dimension mix over 69,000;
   Girls Hr-Sec in Chennai → 104 matches; schools-by-type CSV cross-tab.
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## School 360 / institutional profile (the institution counterpart to the student journey)
+- `Platform.SchoolProfile(udise)` — assembles a school's complete auditable record across the layers: the full
+  **taxonomy classification** (management · level+grades · medium · gender · residential), its **T0–T6
+  governance chain** (`GovernancePath` + owning directorate/district/block/cluster), its **IoT device fleet**
+  (`fleet.DevicesAt`), a **compliance snapshot** (rule base over the school's facts → compliant iff no
+  findings), and the **count of audit records** concerning it. The estate is indexed by UDISE once (lazy map)
+  for O(1) lookup. `SchoolComplianceSignoff` is the actionable variant (findings → HITL officer sign-off).
+  Added `iot.Fleet.DevicesAt`; anchored the demo IoT fleet to real estate schools. `platformd GET
+  /school?udise=`. 3 integration tests.
+- Verified live: Chennai school 33030004181 → Government Primary (1–5), Tamil/Co-ed/Day, governance path
+  "TN (Sovereign) → Secretariat → DSE → Chennai → Block → Cluster → School", directorate/district/block/cluster
+  resolved; school 33010000001 → 2 IoT devices (BIO-1 biometric + ENV-1 environment).
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.

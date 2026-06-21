@@ -154,6 +154,18 @@ func (f *Fleet) RolloutOTA(kind Kind, firmware string) []string {
 	return updated
 }
 
+// DevicesAt returns the registered devices at a school (UDISE), sorted by id.
+func (f *Fleet) DevicesAt(udise string) []Device {
+	var out []Device
+	for _, d := range f.devices {
+		if d.UDISE == udise {
+			out = append(out, *d)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
+}
+
 // FirmwareSpread returns the count of devices per firmware version (the OTA roll-out picture).
 func (f *Fleet) FirmwareSpread() map[string]int {
 	out := map[string]int{}

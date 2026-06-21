@@ -19,10 +19,15 @@ func iotState() (*iot.MemSink, *iot.Fleet) {
 	iotOnce.Do(func() {
 		iotSink = &iot.MemSink{}
 		iotFleet = iot.NewFleet()
-		// seed a small demo fleet across two schools.
-		iotFleet.Register(iot.Device{ID: "BIO-1", UDISE: "33010100101", Kind: iot.BiometricAttendance, Firmware: "v1", Online: true})
-		iotFleet.Register(iot.Device{ID: "BIO-2", UDISE: "33010100102", Kind: iot.BiometricAttendance, Firmware: "v1", Online: false})
-		iotFleet.Register(iot.Device{ID: "ENV-1", UDISE: "33010100101", Kind: iot.Environment, Firmware: "v1", Online: true})
+		// seed a small demo fleet anchored to the first two REAL estate schools.
+		schools := tree().Schools
+		a, b := "33010000001", "33010000002"
+		if len(schools) >= 2 {
+			a, b = schools[0].UDISE, schools[1].UDISE
+		}
+		iotFleet.Register(iot.Device{ID: "BIO-1", UDISE: a, Kind: iot.BiometricAttendance, Firmware: "v1", Online: true})
+		iotFleet.Register(iot.Device{ID: "BIO-2", UDISE: b, Kind: iot.BiometricAttendance, Firmware: "v1", Online: false})
+		iotFleet.Register(iot.Device{ID: "ENV-1", UDISE: a, Kind: iot.Environment, Firmware: "v1", Online: true})
 	})
 	return iotSink, iotFleet
 }

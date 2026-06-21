@@ -247,6 +247,18 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/edge", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.EdgeConvergenceDemo(), nil)
 	}))
+	mux.HandleFunc("/school", s.count(func(w http.ResponseWriter, r *http.Request) {
+		udise := r.URL.Query().Get("udise")
+		if udise == "" {
+			udise = s.p.SchoolsGovernedBy("TN-DIST-Chennai").Sample[0]
+		}
+		prof := s.p.SchoolProfile(udise)
+		if !prof.Found {
+			http.Error(w, `{"error":"unknown school"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, prof, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {
