@@ -689,3 +689,17 @@ wired into the composition root and surfaced on platformd:
   investigate the local figure against the state master"). This is the brief's "no leakage, no manual
   reconciliation" made operational.
 - Status page: **48 modules · 404 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## APAAR student-enrolment flow (federate → reconcile → enrol into the estate)
+- `Platform.EnrolViaAPAAR(ctx, APAAREnrolment)` — an APAAR-anchored enrolment end-to-end, fail-closed:
+  **reconciles** the upstream APAAR identity (source of truth) against the school's submitted record via the L4
+  comparator and **blocks on any identity-critical drift** (no enrolment on a mismatched name/DOB/id — a human
+  verifies); requires the **target school to exist in the T0–T6 estate** (UDISE = a real T6 leaf, district
+  resolved from its T3 ancestor); records the **§7 legal-obligation lawful basis** (RTE/UDISE+); and issues a
+  **verifiable, notarised EnrolmentRecord credential**. Every step audited. `platformd POST /enrol`. 3
+  integration tests.
+- Verified live: defaults → enrolled:true, reconciled:true, district Chennai, UDISE 33030004181, credential
+  minted; name+DOB mismatch → refused, critical_drift 2 ("Identity-critical drift on Name, Date of birth —
+  verify before trusting either copy"); unknown UDISE → refused. The L4 APAAR adapter, reconcile drift check,
+  L6 tenancy, §E consent, L7 credentials+notary and L5 audit all interlock in one enrolment.
+- Status page: **48 modules · 407 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

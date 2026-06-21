@@ -192,6 +192,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/rti", s.count(s.handleRTI))
 	mux.HandleFunc("/dbt", s.count(s.handleDBT))
 	mux.HandleFunc("/pfms-reconcile", s.count(s.handlePFMSReconcile))
+	mux.HandleFunc("/enrol", s.count(s.handleEnrol))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
@@ -559,6 +560,30 @@ func (s *server) handlePFMSReconcile(w http.ResponseWriter, r *http.Request) {
 	}
 	up := reconcile.PfmsExpenditure{Allocated: req.Allocated, Released: req.Released, Utilised: req.Utilised}
 	s.writeJSON(w, s.p.ReconcilePFMS(req.Scheme, up), nil)
+}
+
+// handleEnrol runs an APAAR-anchored student enrolment: it reconciles the APAAR identity against the local
+// record (blocking on identity drift), checks the school exists in the estate, records the lawful basis, and
+// issues a verifiable enrolment credential. The demo anchors to a real estate school when none is supplied.
+func (s *server) handleEnrol(w http.ResponseWriter, r *http.Request) {
+	var req integration.APAAREnrolment
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.APAAR.ApaarID == "" {
+		req.APAAR = reconcile.ApaarRecord{ApaarID: "SYN-APAAR-000000000001", Name: "Anbu", DateOfBirth: "2018-06-01", Gender: "F", Category: "GEN", JourneyStatus: "enrolled"}
+	}
+	if req.Local.ApaarID == "" {
+		// mirror the APAAR record (clean match) unless the caller supplied a deliberately-drifting local record.
+		req.Local = reconcile.StudentRecord{ApaarID: req.APAAR.ApaarID, Name: req.APAAR.Name, DOB: req.APAAR.DateOfBirth, Gender: req.APAAR.Gender, Category: req.APAAR.Category, Status: "Enrolled"}
+	}
+	if req.UDISE == "" {
+		req.UDISE = s.p.SchoolsGovernedBy("TN-DIST-Chennai").Sample[0] // a real Chennai school
+	}
+	if req.Class == "" {
+		req.Class = "Grade 1"
+	}
+	s.writeJSON(w, s.p.EnrolViaAPAAR(r.Context(), req), nil)
 }
 
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
