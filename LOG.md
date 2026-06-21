@@ -880,3 +880,17 @@ wired into the composition root and surfaced on platformd:
   "TN (Sovereign) → Secretariat → DSE → Chennai → Block → Cluster → School", directorate/district/block/cluster
   resolved; school 33010000001 → 2 IoT devices (BIO-1 biometric + ENV-1 environment).
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Teacher / staff onboarding via HRMS (the staff counterpart to APAAR student enrolment)
+- `Platform.OnboardTeacher(ctx, TeacherOnboarding)` — HRMS-anchored staff onboarding end-to-end, fail-closed:
+  **reconciles** the upstream HRMS identity (emp-id + name identity-critical) against the school's submitted
+  record via the L4 comparator and **blocks on critical drift**; requires the **posting school to exist in the
+  T0–T6 estate** (district resolved from its T3 ancestor); records the **§7 employment lawful basis** (HRMS
+  service record, 50y retention); issues a **verifiable, notarised ServiceRecord credential** that lands in the
+  staff member's wallet. Added the `staff-hrms` consent purpose. `platformd POST /staff-onboard`. 3 integration
+  tests.
+- Verified live: clean → onboarded:true, reconciled:true, district Chennai, service credential minted +
+  wallet-verifiable; name mismatch → refused, critical_drift 1 ("Identity-critical drift on Name — verify…");
+  unknown school → refused. The L4 HRMS adapter, reconcile, L6 tenancy, §E employment basis, L7 credentials +
+  notary and L5 audit all interlock — and the platform now onboards BOTH students (APAAR) and staff (HRMS).
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.

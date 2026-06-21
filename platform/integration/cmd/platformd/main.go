@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/vasa-eos-se-tn/platform/adapters"
 	"github.com/vasa-eos-se-tn/platform/capacity"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
@@ -246,6 +247,22 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/edge", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, s.p.EdgeConvergenceDemo(), nil)
+	}))
+	mux.HandleFunc("/staff-onboard", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req integration.TeacherOnboarding
+		if !decode(w, r, &req) {
+			return
+		}
+		if req.HRMS.EmployeeID == "" {
+			req.HRMS = adapters.TeacherRecord{EmployeeID: "E-1001", Name: "R. Anbu", Designation: "BT Assistant", SchoolUDISE: req.UDISE, Teaching: true}
+		}
+		if req.Local.EmployeeID == "" {
+			req.Local = req.HRMS // clean match unless the caller supplied a drifting local record
+		}
+		if req.UDISE == "" {
+			req.UDISE = s.p.SchoolsGovernedBy("TN-DIST-Chennai").Sample[0]
+		}
+		s.writeJSON(w, s.p.OnboardTeacher(r.Context(), req), nil)
 	}))
 	mux.HandleFunc("/school", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")

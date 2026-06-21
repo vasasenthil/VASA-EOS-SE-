@@ -12,6 +12,7 @@ func bootstrapConsent() *consent.Register {
 	r.RegisterPurpose(consent.Purpose{ID: "assessment", Name: "Assessment & marks", PIIClass: 3, RetentionDays: 3650})                   // 10y
 	r.RegisterPurpose(consent.Purpose{ID: "scheme-dbt", Name: "Scholarship / DBT delivery (PFMS)", PIIClass: 1, RetentionDays: 2555})    // 7y (financial)
 	r.RegisterPurpose(consent.Purpose{ID: "ai-tutoring", Name: "AI tutoring & personalisation", PIIClass: 3, RetentionDays: 365})        // 1y, consent-based
+	r.RegisterPurpose(consent.Purpose{ID: "staff-hrms", Name: "Staff service record (HRMS-TN)", PIIClass: 2, RetentionDays: 18250})      // 50y service+pension (§7 employment)
 	r.RegisterPurpose(consent.Purpose{ID: "behaviour-ads", Name: "Behavioural advertising / profiling", PIIClass: 2, RetentionDays: 0, ChildProhibited: true})
 	return r
 }
