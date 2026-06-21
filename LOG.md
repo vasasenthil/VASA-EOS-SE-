@@ -920,3 +920,18 @@ wired into the composition root and surfaced on platformd:
 - Verified live: SUPERADMIN → full picture, go_live_ready:true; TEACHER → HTTP 403, authorised:false, 0 nodes;
   off-switch — TEACHER denied, SECRETARY engages → off_switch_engaged:true, go_live_ready:false.
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Jurisdiction-scoped officer operating dashboard (CRC/BEO/DEO/Director)
+- `Platform.OfficerDashboard(nodeID)` — the field-officer counterpart to the sovereign console: the operating
+  picture of ONLY the schools a tenant node governs, via the T0–T6 **downward-governance scope**
+  (`LeavesUnder(node, 6)`). For each governed school it rolls up the full 5-dimension taxonomy mix
+  (management · level · medium · gender · residential), runs the regulatory **compliance sweep**
+  (RTE 2009 / RPwD 2016 / DPDP 2023 / POCSO 2012, statute-cited) and counts IoT devices — all scoped to the
+  subtree. A district officer sees their district; a block officer sees their block; **nobody sees outside
+  their subtree** (an unknown node resolves to nothing — fail-closed). `platformd GET /officer?node=` (404 if
+  unknown). 3 integration tests (district scope == governance scope · every mix sums to the governed schools ·
+  block strictly narrower than its district · unknown node discloses nothing).
+- Verified live: `/officer?node=TN-DIST-Chennai` → tier District, governance_path T0→Secretariat→DSE→Chennai,
+  2,090 schools governed, mixes summing to 2,090 (Tamil 1,362 · Govt 1,357 · Primary 1,154 · Co-ed 1,778 …),
+  compliance sweep citing all six statutes across 1,032 schools-with-findings; unknown node → HTTP 404.
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors. 463 tests.

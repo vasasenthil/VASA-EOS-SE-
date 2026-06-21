@@ -283,6 +283,20 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, prof, nil)
 	}))
+	mux.HandleFunc("/officer", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the jurisdiction-scoped officer operating dashboard (CRC/BEO/DEO/Director) — rolls up ONLY the
+		// schools the tenant node governs (downward-governance scope). ?node=TN-DIST-Chennai (or a block id).
+		node := r.URL.Query().Get("node")
+		if node == "" {
+			node = "TN-DIST-Chennai"
+		}
+		d := s.p.OfficerDashboard(node)
+		if !d.Found {
+			http.Error(w, `{"error":"unknown tenant node"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, d, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {
