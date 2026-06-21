@@ -1076,3 +1076,19 @@ wired into the composition root and surfaced on platformd:
   DEO-first attempt fail-closed; final state durable in Postgres.
 - Green bar (both stacks): 55 Go modules pass (in-memory sweep), 3 durable PG tests (calendar+exams+leave)
   pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors. 505 tests.
+
+## Production-wiring vertical 4: User Directory / IAM → durable PostgreSQL
+- New `platform/integration/directory_pg.go` — durable PostgreSQL user store (`directory_users`: role, org unit,
+  ABAC attributes as JSONB, suspension). `userDirectory` interface; `iamState()` selects the Postgres store when
+  `DATABASE_URL` is set, in-memory otherwise; idempotent seed (upsert) refreshes the synthetic catalogue without
+  disturbing real added users. `AccessExplain` now resolves the user from the store and runs the engine over it
+  (so the five-model PDP decides over PERSISTED records). New `Platform.AddUser` (durable CRUD) + `POST /directory`.
+- PROVEN LIVE (raw): `TestPgDirectoryDurable` passes — users persist across fresh store instances; idempotent
+  update; rollups durable; the unified PDP decides over persisted users (in-jurisdiction read permit;
+  out-of-jurisdiction ReBAC deny; a durably-suspended user ABAC-denied). Against platformd (live-opa +
+  DATABASE_URL): `POST /directory` added a new DEO → confirmed in Postgres via psql → `/access-explain` over the
+  persisted user returned permit (RBAC, in-jurisdiction); directory count grew durably.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 4 durable PG tests
+  (calendar+exams+leave+directory) pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33,
+  gofmt clean, tsc 0 errors. 506 tests.
+- Durable, restart-surviving, PDP-enforced verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM.

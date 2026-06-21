@@ -300,7 +300,21 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/directory", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// the User Directory & IAM roll-up — every user category bound to an org unit + the 5-model catalogue.
-		// ?scope=<org> applies downward-governance scoping to the user list.
+		// GET ?scope=<org> applies downward-governance scoping to the user list.
+		// POST { id,name,role,org_unit,attributes,suspended } durably adds/updates a user.
+		if r.Method == http.MethodPost {
+			var u directory.User
+			if !decode(w, r, &u) {
+				return
+			}
+			out, err := s.p.AddUser(u)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "user": out}, nil)
+			return
+		}
 		if scope := r.URL.Query().Get("scope"); scope != "" {
 			s.writeJSON(w, map[string]any{"scope": scope, "users": s.p.DirectoryScopedBy(scope)}, nil)
 			return

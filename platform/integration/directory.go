@@ -1,6 +1,9 @@
 package integration
 
 import (
+	"errors"
+	"log"
+	"os"
 	"sync"
 
 	"github.com/vasa-eos-se-tn/platform/directory"
@@ -14,11 +17,14 @@ import (
 // the PEP is fronted by Keycloak (gated B-010); this wires the sovereign decision logic that runs over them.
 var (
 	dirOnce   sync.Once
-	dirStore  *directory.Directory
+	dirStore  userDirectory
 	dirEngine *directory.Engine
 )
 
-func iamState() (*directory.Directory, *directory.Engine) {
+// iamState builds (once) the user directory + the unified PDP engine. The directory is the DURABLE PostgreSQL
+// store when DATABASE_URL is set (users survive restarts and are CRUD-mutable), in-memory otherwise. The seed
+// is idempotent (upsert), so it refreshes the synthetic catalogue users without disturbing real added users.
+func iamState() (userDirectory, *directory.Engine) {
 	dirOnce.Do(func() {
 		h, _ := tenancyHierarchy()
 		governs := func(subjectOrg, resourceOrg string) bool {
@@ -28,7 +34,17 @@ func iamState() (*directory.Directory, *directory.Engine) {
 			return h.Governs(subjectOrg, resourceOrg)
 		}
 		dirEngine = directory.NewEngine(governs)
-		dirStore = directory.NewDirectory()
+		if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
+			if pg, err := newPgUserDirectory(dsn); err == nil {
+				dirStore = pg
+				log.Printf("directory: using durable PostgreSQL user store (DATABASE_URL set)")
+			} else {
+				log.Printf("directory: DATABASE_URL set but PostgreSQL unavailable (%v); using in-memory", err)
+				dirStore = directory.NewDirectory()
+			}
+		} else {
+			dirStore = directory.NewDirectory()
+		}
 		seedDirectory(dirStore, h)
 	})
 	return dirStore, dirEngine
@@ -38,7 +54,7 @@ func iamState() (*directory.Directory, *directory.Engine) {
 // field-office chain (district → block → cluster → school) is resolved from the live tenancy tree so the ReBAC
 // jurisdiction tests exercise genuine downward governance. These are synthetic identities (SYN-prefixed), not
 // real PII.
-func seedDirectory(d *directory.Directory, h *tenancy.Hierarchy) {
+func seedDirectory(d userDirectory, h *tenancy.Hierarchy) {
 	// resolve a real Chennai field chain: district → block → cluster → school.
 	district := "TN-DIST-Chennai"
 	var block, cluster, school string
@@ -123,7 +139,34 @@ func (p *Platform) DirectorySummary() DirectorySummary {
 // X" lookup — returning the composed effect and the full per-model trace. ok=false for an unknown user.
 func (p *Platform) AccessExplain(userID, action string, res directory.Resource, ctx directory.Context) (directory.Decision, directory.User, bool) {
 	d, e := iamState()
-	return e.Explain(d, userID, action, res, ctx)
+	u, ok := d.Get(userID)
+	if !ok {
+		return directory.Decision{}, directory.User{}, false
+	}
+	return e.Evaluate(u, action, res, ctx), u, true
+}
+
+// AddUser creates or updates a directory user durably (CRUD over the persisted identity plane). The role must
+// be a known category and the user must be bound to an org unit. Audited.
+func (p *Platform) AddUser(u directory.User) (directory.User, error) {
+	if u.ID == "" || u.Role == "" || u.OrgUnit == "" {
+		return directory.User{}, errors.New("directory: id, role and org_unit are required")
+	}
+	known := false
+	for _, r := range directory.Roles() {
+		if r.Code == u.Role {
+			known = true
+			break
+		}
+	}
+	if !known {
+		return directory.User{}, errors.New("directory: unknown role " + u.Role)
+	}
+	d, _ := iamState()
+	d.Upsert(u)
+	p.appendAudit("directory", "user.upsert", u.ID, "executed", u.Role+" @ "+u.OrgUnit)
+	stored, _ := d.Get(u.ID)
+	return stored, nil
 }
 
 // DirectoryScopedBy applies the same downward-governance scope used everywhere else: the directory users an
