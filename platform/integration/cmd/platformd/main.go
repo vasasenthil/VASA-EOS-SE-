@@ -17,6 +17,7 @@ import (
 
 	"github.com/vasa-eos-se-tn/platform/adapters"
 	"github.com/vasa-eos-se-tn/platform/capacity"
+	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
@@ -296,6 +297,37 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, d, nil)
+	}))
+	mux.HandleFunc("/directory", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the User Directory & IAM roll-up — every user category bound to an org unit + the 5-model catalogue.
+		// ?scope=<org> applies downward-governance scoping to the user list.
+		if scope := r.URL.Query().Get("scope"); scope != "" {
+			s.writeJSON(w, map[string]any{"scope": scope, "users": s.p.DirectoryScopedBy(scope)}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.DirectorySummary(), nil)
+	}))
+	mux.HandleFunc("/access-explain", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// verify ANY access decision for a directory user — the reverse "why can/can't this person do X" lookup,
+		// returning the composed five-model effect + the full per-model trace.
+		// ?user=&action=&resource_org=&sensitive=&pii=&emergency=&threat=
+		q := r.URL.Query()
+		user := orDefault(q.Get("user"), "SYN-U-DEO")
+		action := orDefault(q.Get("action"), "read:school")
+		res := directory.Resource{ID: q.Get("resource"), OrgUnit: q.Get("resource_org"), Attributes: map[string]string{}}
+		if q.Get("sensitive") == "true" {
+			res.Attributes["sensitive"] = "true"
+		}
+		if q.Get("pii") == "true" {
+			res.Attributes["pii"] = "true"
+		}
+		ctx := directory.Context{Emergency: q.Get("emergency") == "true", ThreatLevel: q.Get("threat")}
+		dec, u, ok := s.p.AccessExplain(user, action, res, ctx)
+		if !ok {
+			http.Error(w, `{"error":"unknown directory user"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, map[string]any{"user": u, "action": action, "resource": res, "decision": dec}, nil)
 	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")

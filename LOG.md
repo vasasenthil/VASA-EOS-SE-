@@ -935,3 +935,34 @@ wired into the composition root and surfaced on platformd:
   2,090 schools governed, mixes summing to 2,090 (Tamil 1,362 · Govt 1,357 · Primary 1,154 · Co-ed 1,778 …),
   compliance sweep citing all six statutes across 1,032 schools-with-findings; unknown node → HTTP 404.
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors. 463 tests.
+
+## User Directory & unified five-model IAM (Access Explorer + User Management) — Go
+- New L5-security module `directory` — the User Directory + a single Policy Decision Point that composes ALL
+  FIVE access models over one request, deny-wins / fail-closed, with a full per-model trace:
+  - **RBAC** — a 19-role catalogue covering every user category across the governance hierarchy (STUDENT ·
+    PARENT · TEACHER · HEAD_TEACHER · CRC_COORDINATOR · BEO · DEO · CEO · DIRECTOR · SECRETARY · MINISTER ·
+    SUPERADMIN · AUDITOR · ETHICS_CHAIR · ARCHITECT · PIO · CITIZEN · VENDOR · RESEARCHER), each with action
+    grants (SUPERADMIN wildcard).
+  - **ABAC** — subject/resource attribute gates: suspended → deny · teaching-cadre gate on marks/attendance ·
+    sensitive→public/partner deny · pii→researcher deny.
+  - **ReBAC** — jurisdiction gate delegated to the live tenancy `Governs()` (downward governance over the 73k
+    tree): a permit on a scoped resource requires the subject's org unit to govern the resource's org unit.
+  - **PBAC** — statute routes high-stakes actions (release:fund · sanction:scheme · adopt:policy · sign:audit)
+    to **require-approval**, never a silent permit (PFMS/GFR · TN Financial Code · Cabinet rules · CAG).
+  - **CABAC** — elevated actions (override:lockdown · declare:emergency) permitted ONLY inside an emergency
+    window and never at high threat.
+  - `Decision{Effect, DecidingModel, Reason, Trace[]}` — every model's verdict is recorded so the Access
+    Explorer can show exactly why a request was permitted / denied / routed to approval.
+- Integration wiring (`directory.go`): a per-Platform directory seeded with one synthetic (SYN-) user of every
+  category bound to a REAL org unit — the Chennai field chain (district→block→cluster→school) resolved from the
+  live tenancy tree. `Platform.DirectorySummary()` (user-management roll-up + role census + catalogue),
+  `Platform.AccessExplain(user, action, resource, ctx)` (reverse "why can/can't this person do X" lookup),
+  `Platform.DirectoryScopedBy(org)` (the same downward-governance scope applied to the user list).
+- `platformd`: `GET /directory` (+ `?scope=<org>` for jurisdiction-scoped user lists) and
+  `GET /access-explain?user=&action=&resource_org=&sensitive=&pii=&emergency=&threat=` (404 unknown user).
+- Verified live: 19 users / 19 roles / 5 models; DEO read in-district → permit (RBAC, ReBAC governs);
+  out-of-district → deny by ReBAC; SECRETARY release:fund → require-approval by PBAC; MINISTER declare:emergency
+  → deny by CABAC normally, permit inside the window; CITIZEN + sensitive → deny by ABAC; unknown user → 404.
+  Directory scope: TN sees all 19, Chennai district sees a strict subset (never the Secretary above it),
+  unknown subject sees nobody.
+- Green bar: 52 Go modules pass, OPA 33/33, gofmt clean. 478 tests.
