@@ -1241,3 +1241,16 @@ wired into the composition root and surfaced on platformd:
   `vasa_exam_sheets 3`, `vasa_calendar_entries 12`, `vasa_directory_users 22` — all from the durable stores.
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Citizen-facing grievance tracker (public, PII-suppressed)
+- `Platform.GrievancePublicStatus(id)` + public `GET /track/grievance?id=` — a citizen tracks their grievance
+  ticket with no authentication. The view is PII-SUPPRESSED by construction: it returns only the ticket id,
+  category, status, the handling tier (role), the SLA filed/due dates and the escalation count — never the
+  complainant identity OR the free-text complaint (both of which may carry PII). Unknown ticket → not-found.
+- PROVEN LIVE (raw): `TestGrievancePublicStatusSuppressesPII` files a grievance with PII in the complainant +
+  subject and asserts none of it (name/phone/child-name/complaint text) appears in the public view. platformd
+  (durable + DATABASE_URL): filed PUB-1 with PII (complainant "Mrs. Lakshmi 98xxxxxx21", subject naming a child
+  + scholarship); `/track/grievance?id=PUB-1` returned only {category:financial, status:open, with_tier:
+  HEAD_TEACHER, filed_on, due_by, escalations:0} — a grep for the PII strings found NONE; unknown ticket → 404.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

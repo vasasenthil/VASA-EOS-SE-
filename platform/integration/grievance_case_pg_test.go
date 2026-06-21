@@ -1,7 +1,9 @@
 package integration
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/vasa-eos-se-tn/platform/grievance"
@@ -75,5 +77,32 @@ func TestSLAAutoEscalation(t *testing.T) {
 	out, err := st.Escalate("SLA-1", "sla", "SLA breached")
 	if err != nil || out.CurrentTier != 1 || out.Chain[0].DecidedBy != "sla" {
 		t.Fatalf("SLA escalation must advance the tier and record the sla actor: %+v err=%v", out, err)
+	}
+}
+
+func TestGrievancePublicStatusSuppressesPII(t *testing.T) {
+	p := newPlatform(t)
+	// file a grievance with PII in the complainant + subject fields.
+	_, err := p.FileGrievanceCase("TKT-1", "Mrs. Lakshmi (98xxxxxx21)", "safety", "my daughter Priya was harassed near gate 3", "TN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := p.GrievancePublicStatus("TKT-1")
+	if !v.Found || v.Status != "open" || v.Category != "safety" {
+		t.Fatalf("public status wrong: %+v", v)
+	}
+	if v.WithTier != "HEAD_TEACHER" || v.FiledOn == "" || v.DueBy == "" {
+		t.Fatalf("public status must show the handling tier + SLA dates: %+v", v)
+	}
+	// the PII (complainant identity + complaint text) must NOT appear anywhere in the public view.
+	blob := fmt.Sprintf("%+v", v)
+	for _, leak := range []string{"Lakshmi", "98xxxxxx21", "Priya", "harassed", "gate 3"} {
+		if strings.Contains(blob, leak) {
+			t.Fatalf("PII leaked into the public view (%q): %s", leak, blob)
+		}
+	}
+	// an unknown ticket is simply not found (no information disclosed).
+	if u := p.GrievancePublicStatus("TKT-NOPE"); u.Found {
+		t.Fatalf("an unknown ticket must report not-found: %+v", u)
 	}
 }

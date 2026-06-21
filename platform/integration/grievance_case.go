@@ -134,6 +134,51 @@ func (p *Platform) GrievanceCaseDashboard(scopeOrg string) GrievanceCaseDashboar
 	return d
 }
 
+// GrievancePublicView is the PII-SUPPRESSED public status of a grievance case — what a complainant sees when
+// they track their ticket. It deliberately omits the complainant identity AND the free-text subject (which may
+// contain PII): only the ticket id, category, status, the tier currently handling it, the SLA dates and the
+// escalation count. Safe to serve unauthenticated.
+type GrievancePublicView struct {
+	ID          string `json:"id"`
+	Found       bool   `json:"found"`
+	Category    string `json:"category"`
+	Status      string `json:"status"` // open | resolved | rejected | escalated
+	WithTier    string `json:"with_tier,omitempty"`
+	FiledOn     string `json:"filed_on,omitempty"` // date only (YYYY-MM-DD)
+	DueBy       string `json:"due_by,omitempty"`   // date only
+	Escalations int    `json:"escalations"`
+	Resolved    bool   `json:"resolved"`
+}
+
+func dateOnly(ts string) string {
+	if len(ts) >= 10 {
+		return ts[:10]
+	}
+	return ts
+}
+
+// GrievancePublicStatus returns the PII-suppressed public status of a grievance ticket (the citizen accountability
+// surface). Found is false for an unknown id.
+func (p *Platform) GrievancePublicStatus(id string) GrievancePublicView {
+	g, ok := grievState().Get(id)
+	if !ok {
+		return GrievancePublicView{ID: id, Found: false}
+	}
+	v := GrievancePublicView{
+		ID: g.ID, Found: true, Category: g.Category, Status: g.Status,
+		FiledOn: dateOnly(g.FiledAt), DueBy: dateOnly(g.DueAt), Resolved: g.Status == grievance.Resolved,
+	}
+	for _, s := range g.Chain {
+		if s.Decision == "escalated" {
+			v.Escalations++
+		}
+	}
+	if g.Status == grievance.Open && g.CurrentTier >= 0 && g.CurrentTier < len(g.Chain) {
+		v.WithTier = g.Chain[g.CurrentTier].Role
+	}
+	return v
+}
+
 // GrievanceCasesScopedBy returns the cases a tenant node governs, filtered by status.
 func (p *Platform) GrievanceCasesScopedBy(scopeOrg, status string) []grievance.Grievance {
 	h, err := tenancyHierarchy()

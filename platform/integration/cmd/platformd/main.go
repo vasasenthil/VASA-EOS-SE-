@@ -641,6 +641,21 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
 	}))
+	mux.HandleFunc("/track/grievance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// PUBLIC, unauthenticated, PII-suppressed grievance ticket tracker. GET ?id=<ticket>. Returns only the
+		// status/tier/dates — never the complainant identity or the complaint text.
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, `{"error":"id required"}`, http.StatusBadRequest)
+			return
+		}
+		v := s.p.GrievancePublicStatus(id)
+		if !v.Found {
+			http.Error(w, `{"error":"no such ticket"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, v, nil)
+	}))
 	mux.HandleFunc("/grievance-case/sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// the SLA sweep: auto-escalate every open case past its deadline.
 		escalated := s.p.EscalateOverdueCases()
