@@ -1214,3 +1214,17 @@ wired into the composition root and surfaced on platformd:
   admitted / cleared-request / credential ADM-FE-EWS.
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Sovereign Console surfaces live durable operations
+- The T0 super-admin console now shows the LIVE operating state of the durable workflow verticals, not just
+  conformance figures: a new `operations` block rolls up admissions (+pending review), grievance cases
+  (+overdue), leave (+pending), exam sheets, calendar entries and directory users — with a `durable` flag
+  (true when DATABASE_URL is set, so the counts are persisted). Read-only; role-gated like the rest of the
+  console (a non-super-admin sees nothing).
+- PROVEN LIVE (raw): `TestSovereignConsoleSurfacesLiveOperations` passes (the driven EWS admission + filed
+  grievance + seeded exams/calendar/directory all reflected; a TEACHER sees zero operations). platformd
+  (live-opa + DATABASE_URL): after driving a pending EWS admission and a grievance, `/sovereign?role=SUPERADMIN`
+  reported operations.durable=true, admissions 6 (pending 2), grievance_cases 5, leave 3, exam_sheets 3,
+  calendar 12, directory_users 22 — all from the durable Postgres stores; `role=TEACHER` → HTTP 403.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

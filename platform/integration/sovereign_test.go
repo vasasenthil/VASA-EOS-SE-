@@ -1,6 +1,9 @@
 package integration
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestSovereignConsoleRoleGated(t *testing.T) {
 	p := newPlatform(t)
@@ -56,3 +59,32 @@ func TestSovereignOffSwitchSuperAdminOnly(t *testing.T) {
 		t.Fatal("the platform must be re-enabled after disengage")
 	}
 }
+
+func TestSovereignConsoleSurfacesLiveOperations(t *testing.T) {
+	p := newPlatform(t)
+	// drive a couple of durable workflows so the console has live operating state to surface.
+	p.Admission(testContext(), AdmissionRequest{Tenant: "TN/Chennai", ActorRole: "HEAD_TEACHER", Decision: "reject", Category: "EWS", ApplicantID: "OPS-1", ApplicantName: "syn", ApplicantAge: 6, Region: "TN-SDC"})
+	p.FileGrievanceCase("OPS-G1", "parent", "safety", "x", "TN")
+
+	c := p.SovereignConsole("SUPERADMIN")
+	ops := c.Operations
+	// the seeded directory + the workflows we just drove must be reflected.
+	if ops.DirectoryUsers == 0 {
+		t.Fatalf("operations must surface the directory: %+v", ops)
+	}
+	if ops.Admissions == 0 || ops.AdmissionsPending == 0 {
+		t.Fatalf("the pending EWS admission must show: %+v", ops)
+	}
+	if ops.GrievanceCases == 0 {
+		t.Fatalf("the filed grievance must show: %+v", ops)
+	}
+	if ops.ExamSheets == 0 || ops.CalendarEntries == 0 {
+		t.Fatalf("seeded exams + calendar must show: %+v", ops)
+	}
+	// a non-super-admin sees no operations (fail-closed — the whole console is empty).
+	if d := p.SovereignConsole("TEACHER"); d.Operations.Admissions != 0 || d.Operations.DirectoryUsers != 0 {
+		t.Fatalf("a non-super-admin must see no operations: %+v", d.Operations)
+	}
+}
+
+func testContext() context.Context { return context.Background() }

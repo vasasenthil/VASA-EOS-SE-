@@ -1,6 +1,9 @@
 package integration
 
-import "errors"
+import (
+	"errors"
+	"os"
+)
 
 // errADenied is returned when a non-super-admin attempts a sovereign action.
 var errADenied = errors.New("integration: not authorised (super-admin / T0 sovereign only)")
@@ -42,6 +45,41 @@ type SovereignConsole struct {
 	AuditRecords      int          `json:"audit_records"`
 	NotaryBlocks      int          `json:"notary_blocks"`
 	AuditChainIntact  bool         `json:"audit_chain_intact"`
+	Operations        opsSummary   `json:"operations"`
+}
+
+// opsSummary is the live operating state of the durable workflow verticals — what is actually happening on the
+// platform right now (not just whether it is conformant). Durable is true when a database is configured (the
+// counts are persisted and survive restarts) and false for the in-memory demo.
+type opsSummary struct {
+	Durable           bool `json:"durable"`
+	Admissions        int  `json:"admissions"`
+	AdmissionsPending int  `json:"admissions_pending_review"`
+	GrievanceCases    int  `json:"grievance_cases"`
+	GrievanceOverdue  int  `json:"grievance_overdue"`
+	LeaveRequests     int  `json:"leave_requests"`
+	LeavePending      int  `json:"leave_pending"`
+	ExamSheets        int  `json:"exam_sheets"`
+	CalendarEntries   int  `json:"calendar_entries"`
+	DirectoryUsers    int  `json:"directory_users"`
+}
+
+// operationsSummary rolls up the durable workflow verticals for the sovereign operating picture. Read-only.
+func (p *Platform) operationsSummary() opsSummary {
+	adm := p.AdmissionDashboard("")
+	gr := p.GrievanceCaseDashboard("TN")
+	return opsSummary{
+		Durable:           os.Getenv("DATABASE_URL") != "",
+		Admissions:        adm.Total,
+		AdmissionsPending: adm.PendingRevw,
+		GrievanceCases:    gr.Total,
+		GrievanceOverdue:  gr.Overdue,
+		LeaveRequests:     len(p.LeaveScopedBy("TN", "")),
+		LeavePending:      len(p.LeaveScopedBy("TN", "pending")),
+		ExamSheets:        p.ExamResultsDashboard("TN").Sheets,
+		CalendarEntries:   len(p.CalendarEntries("TN", "", "")),
+		DirectoryUsers:    p.DirectorySummary().Users,
+	}
 }
 
 // civicSummary mirrors the civic roll-up the console surfaces (avoids importing the civic type into the API).
@@ -92,6 +130,8 @@ func (p *Platform) SovereignConsole(actorRole string) SovereignConsole {
 	c.NotaryBlocks = p.Notary.Len()
 	_, err := p.Audit.Verify()
 	c.AuditChainIntact = err == nil
+
+	c.Operations = p.operationsSummary()
 
 	// go-live readiness without re-running the heavy capacity drill: conformant + tenancy-valid + chain-intact
 	// + not disabled is the console's headline readiness signal.
