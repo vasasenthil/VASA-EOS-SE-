@@ -83,6 +83,59 @@ export async function platformListLeave(scope = "TN", status = ""): Promise<Plat
   return (await res.json()) as PlatformLeaveRequest[]
 }
 
+export interface PlatformGrievanceStep {
+  role: string
+  decision: string // "" | resolved | rejected | escalated
+  decided_by?: string
+  decided_at?: string
+  note?: string
+}
+
+export interface PlatformGrievanceCase {
+  id: string
+  complainant: string
+  category: string
+  subject: string
+  org_unit: string
+  status: string // open | resolved | rejected | escalated
+  escalation_chain: PlatformGrievanceStep[]
+  current_tier: number
+  filed_at: string
+  due_at: string
+  resolution?: string
+  updated_at: string
+}
+
+/** Lodge a grievance case on the Go backend (persists to Postgres, opens the SLA escalation chain). */
+export async function platformFileGrievance(input: {
+  id?: string
+  complainant: string
+  category: string
+  subject: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string; case: PlatformGrievanceCase }> {
+  return postJSON("/grievance-case", { org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Act on a grievance case at its current tier (resolve | reject | escalate) on the Go backend. */
+export async function platformActGrievance(
+  id: string,
+  action: string,
+  role: string,
+  actor: string,
+  note?: string,
+): Promise<{ ok: boolean; error: string; case: PlatformGrievanceCase }> {
+  return postJSON("/grievance-case/act", { id, action, role, actor, note: note ?? "" })
+}
+
+/** List grievance cases a tenant node governs (downward-governance scoped), from the Go backend. */
+export async function platformListGrievance(scope = "TN", status = ""): Promise<PlatformGrievanceCase[]> {
+  const url = `${BASE}/grievance-case?list=1&scope=${encodeURIComponent(scope)}${status ? `&status=${encodeURIComponent(status)}` : ""}`
+  const res = await fetch(url, { cache: "no-store" })
+  if (!res.ok) throw new Error(`platformd /grievance-case: HTTP ${res.status}`)
+  return (await res.json()) as PlatformGrievanceCase[]
+}
+
 export interface PlatformAccessDecision {
   effect: string // permit | deny | require-approval
   deciding_model: string

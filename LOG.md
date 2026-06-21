@@ -1164,3 +1164,17 @@ wired into the composition root and surfaced on platformd:
   record was persisted to the audit chain.
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Second frontend↔backbone flow: the grievance board → durable Go grievance-case service
+- Extends the frontend↔backbone connection (after leave) to a second flow. `lib/platform-client.ts` gains
+  `platformFileGrievance` / `platformActGrievance` / `platformListGrievance` (calling `/grievance-case`,
+  `/grievance-case/act`). `app/grievance-approvals/actions.ts` now routes file/act/list through the Go backbone
+  when `PLATFORM_URL` is set — adapting the backbone grievance.Grievance into the board's GrievanceFlowRecord
+  (synthesising the workflow instance from the escalation chain), with a category mapper onto the canonical set
+  and PRINCIPAL→HEAD_TEACHER role mapping. The existing in-memory/Supabase path remains the demo fallback.
+- PROVEN LIVE (raw): the EXACT requests the grievance actions send drove the Go backend — filed a "safety"
+  grievance (category mapped → 3-tier chain HEAD_TEACHER→DEO→DIRECTOR) confirmed in Postgres via psql; resolved
+  at tier 0 (PRINCIPAL→HEAD_TEACHER) → status resolved; the list endpoint returned it as resolved. So a second
+  frontend flow (grievance) now drives the durable, SLA-enforced, audited Go backbone over HTTP.
+- Green bar: tsc 0 errors (TS-only change this turn); the Go backbone (56 modules, 7 durable PG tests, OPA
+  33/33) is unchanged from the prior green sweep.
