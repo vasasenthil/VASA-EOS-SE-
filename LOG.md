@@ -1110,3 +1110,22 @@ wired into the composition root and surfaced on platformd:
   (calendar+exams+leave+directory+audit×2) pass via the CI TestPg step against the live PostgreSQL service,
   OPA 33/33, gofmt clean, tsc 0 errors. 511 tests.
 - Durable, restart-surviving verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain.
+
+## Unifying the two PDPs: the Next.js access guard delegates to the Go sovereign PDP
+- Closes the audit's "TS and Go PDPs are separate code, could diverge" finding, and confirms the ADMIN-default
+  is already gated: `resolveSubject()` returns a ROLE-LESS anonymous subject in a configured deployment (canDo
+  denies); only the credential-free demo (no DB) falls back to a configurable DEMO_ROLE.
+- Go: `Platform.EvaluateAccess(user, action, resource, ctx)` evaluates an EXPLICIT subject (not a pre-seeded
+  user) against the unified five-model engine; new `POST /access-decide` endpoint exposes it. Test
+  `TestEvaluateAccessExplicitSubject` (head teacher write:school permit · teacher RBAC-deny · role-less deny).
+- TS: `lib/platform-client.platformDecideAccess()` calls `/access-decide`; new `lib/access/pdp-bridge.ts` maps
+  the app's 17 portal roles + 12 guarded actions onto the Go PDP vocabulary (e.g. PRINCIPAL→HEAD_TEACHER,
+  approve:leave→write:school, manage:users→manage:users, resolve:grievance→route:grievance). `lib/access/
+  guard.ts canDo()` now consults the sovereign PDP first when `PLATFORM_URL` is set (authoritative for mapped
+  actions); unmapped actions / a backbone blip degrade to the local PDP (which uses the real resolved role).
+- PROVEN LIVE (raw): `/access-decide` over the mapped vocabulary — PRINCIPAL approve:leave→permit, TEACHER
+  approve:leave→deny (RBAC), PUBLIC manage:users→deny, ADMIN manage:users→permit (wildcard), SECRETARY
+  manage:users→permit, DEO resolve:grievance→permit, anonymous→deny (fail-closed). The frontend and the
+  backbone now share ONE decision engine.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 6 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

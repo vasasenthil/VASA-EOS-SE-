@@ -146,6 +146,14 @@ func (p *Platform) AccessExplain(userID, action string, res directory.Resource, 
 	return e.Evaluate(u, action, res, ctx), u, true
 }
 
+// EvaluateAccess decides an access request for an EXPLICIT subject (not a pre-seeded directory user) against
+// the unified five-model PDP. This is the seam the Next.js access guard delegates to, so the frontend and the
+// backbone share ONE decision engine rather than two divergent PDPs.
+func (p *Platform) EvaluateAccess(u directory.User, action string, res directory.Resource, ctx directory.Context) directory.Decision {
+	_, e := iamState()
+	return e.Evaluate(u, action, res, ctx)
+}
+
 // AddUser creates or updates a directory user durably (CRUD over the persisted identity plane). The role must
 // be a known category and the user must be bound to an org unit. Audited.
 func (p *Platform) AddUser(u directory.User) (directory.User, error) {

@@ -510,6 +510,29 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "request": out}, nil)
 	}))
+	mux.HandleFunc("/access-decide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// decide an access request for an EXPLICIT subject against the unified five-model PDP — the seam the
+		// Next.js access guard delegates to. POST { role, org_unit, attributes, suspended, action, resource_org,
+		// resource_attributes, emergency, threat }.
+		var req struct {
+			Role          string            `json:"role"`
+			OrgUnit       string            `json:"org_unit"`
+			Attributes    map[string]string `json:"attributes"`
+			Suspended     bool              `json:"suspended"`
+			Action        string            `json:"action"`
+			ResourceOrg   string            `json:"resource_org"`
+			ResourceAttrs map[string]string `json:"resource_attributes"`
+			Emergency     bool              `json:"emergency"`
+			Threat        string            `json:"threat"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		u := directory.User{Role: req.Role, OrgUnit: req.OrgUnit, Attributes: req.Attributes, Suspended: req.Suspended}
+		res := directory.Resource{OrgUnit: req.ResourceOrg, Attributes: req.ResourceAttrs}
+		ctx := directory.Context{Emergency: req.Emergency, ThreatLevel: req.Threat}
+		s.writeJSON(w, s.p.EvaluateAccess(u, req.Action, res, ctx), nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {

@@ -82,3 +82,38 @@ export async function platformListLeave(scope = "TN", status = ""): Promise<Plat
   if (!res.ok) throw new Error(`platformd /leave: HTTP ${res.status}`)
   return (await res.json()) as PlatformLeaveRequest[]
 }
+
+export interface PlatformAccessDecision {
+  effect: string // permit | deny | require-approval
+  deciding_model: string
+  reason: string
+}
+
+export interface PlatformAccessSubject {
+  role: string
+  org_unit?: string
+  attributes?: Record<string, string>
+  suspended?: boolean
+}
+
+/**
+ * Decide an access request against the Go backbone's unified five-model PDP (RBAC·ABAC·ReBAC·PBAC·CABAC). This
+ * is the single decision engine the Next.js access guard delegates to when PLATFORM_URL is set, so the
+ * frontend and the backbone no longer run two divergent PDPs.
+ */
+export async function platformDecideAccess(
+  subject: PlatformAccessSubject,
+  action: string,
+  resourceOrg = "",
+  resourceAttributes: Record<string, string> = {},
+): Promise<PlatformAccessDecision> {
+  return postJSON("/access-decide", {
+    role: subject.role,
+    org_unit: subject.org_unit ?? "",
+    attributes: subject.attributes ?? {},
+    suspended: subject.suspended ?? false,
+    action,
+    resource_org: resourceOrg,
+    resource_attributes: resourceAttributes,
+  })
+}
