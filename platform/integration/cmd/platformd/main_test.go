@@ -210,6 +210,9 @@ func TestMetricsReflectActivity(t *testing.T) {
 		// governance / conformance / civic gauges sourced from the live registers
 		"vasa_conformance_headlines_match 1", "vasa_functional_modules 391", "vasa_model_card_coverage 1",
 		"vasa_tenancy_nodes 73232", "vasa_tenancy_valid 1", "vasa_grievances_open", "vasa_grievance_queue_pending",
+		// durable operational backlog gauges
+		"vasa_store_durable", "vasa_admissions ", "vasa_admissions_pending_review", "vasa_grievance_cases",
+		"vasa_grievance_overdue", "vasa_leave_pending", "vasa_exam_sheets", "vasa_directory_users",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("metrics missing %q in:\n%s", want, body)

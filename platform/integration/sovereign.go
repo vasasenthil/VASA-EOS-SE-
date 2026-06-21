@@ -45,13 +45,13 @@ type SovereignConsole struct {
 	AuditRecords      int          `json:"audit_records"`
 	NotaryBlocks      int          `json:"notary_blocks"`
 	AuditChainIntact  bool         `json:"audit_chain_intact"`
-	Operations        opsSummary   `json:"operations"`
+	Operations        OpsSummary   `json:"operations"`
 }
 
-// opsSummary is the live operating state of the durable workflow verticals — what is actually happening on the
+// OpsSummary is the live operating state of the durable workflow verticals — what is actually happening on the
 // platform right now (not just whether it is conformant). Durable is true when a database is configured (the
 // counts are persisted and survive restarts) and false for the in-memory demo.
-type opsSummary struct {
+type OpsSummary struct {
 	Durable           bool `json:"durable"`
 	Admissions        int  `json:"admissions"`
 	AdmissionsPending int  `json:"admissions_pending_review"`
@@ -64,11 +64,15 @@ type opsSummary struct {
 	DirectoryUsers    int  `json:"directory_users"`
 }
 
+// Operations is the exported read-only roll-up of the durable workflow verticals (for /metrics and ops
+// dashboards). Unlike the SovereignConsole it is NOT role-gated — it exposes only aggregate counts, no PII.
+func (p *Platform) Operations() OpsSummary { return p.operationsSummary() }
+
 // operationsSummary rolls up the durable workflow verticals for the sovereign operating picture. Read-only.
-func (p *Platform) operationsSummary() opsSummary {
+func (p *Platform) operationsSummary() OpsSummary {
 	adm := p.AdmissionDashboard("")
 	gr := p.GrievanceCaseDashboard("TN")
-	return opsSummary{
+	return OpsSummary{
 		Durable:           os.Getenv("DATABASE_URL") != "",
 		Admissions:        adm.Total,
 		AdmissionsPending: adm.PendingRevw,

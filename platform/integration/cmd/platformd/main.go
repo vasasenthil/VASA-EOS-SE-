@@ -1272,6 +1272,23 @@ func (s *server) metrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# HELP vasa_slo_success_rate Rolling SLO success rate.\n# TYPE vasa_slo_success_rate gauge\nvasa_slo_success_rate %g\n", h.SLO.SuccessRate)
 	fmt.Fprintf(w, "# HELP vasa_platform_disabled Off-switch engaged (1=disabled).\n# TYPE vasa_platform_disabled gauge\nvasa_platform_disabled %d\n", disabled)
 
+	// ── Durable operational gauges (backlogs ops can alert on), sourced live from the persisted stores ──
+	ops := s.p.Operations()
+	durable := 0
+	if ops.Durable {
+		durable = 1
+	}
+	fmt.Fprintf(w, "# HELP vasa_store_durable Workflow stores are persisted to a database (1) vs in-memory (0).\n# TYPE vasa_store_durable gauge\nvasa_store_durable %d\n", durable)
+	fmt.Fprintf(w, "# HELP vasa_admissions Admission applications on record.\n# TYPE vasa_admissions gauge\nvasa_admissions %d\n", ops.Admissions)
+	fmt.Fprintf(w, "# HELP vasa_admissions_pending_review Admissions awaiting HITL finalisation.\n# TYPE vasa_admissions_pending_review gauge\nvasa_admissions_pending_review %d\n", ops.AdmissionsPending)
+	fmt.Fprintf(w, "# HELP vasa_grievance_cases Grievance redressal cases on record.\n# TYPE vasa_grievance_cases gauge\nvasa_grievance_cases %d\n", ops.GrievanceCases)
+	fmt.Fprintf(w, "# HELP vasa_grievance_overdue Open grievance cases past their SLA deadline.\n# TYPE vasa_grievance_overdue gauge\nvasa_grievance_overdue %d\n", ops.GrievanceOverdue)
+	fmt.Fprintf(w, "# HELP vasa_leave_requests Staff leave requests on record.\n# TYPE vasa_leave_requests gauge\nvasa_leave_requests %d\n", ops.LeaveRequests)
+	fmt.Fprintf(w, "# HELP vasa_leave_pending Staff leave requests awaiting approval.\n# TYPE vasa_leave_pending gauge\nvasa_leave_pending %d\n", ops.LeavePending)
+	fmt.Fprintf(w, "# HELP vasa_exam_sheets Examination marks sheets on record.\n# TYPE vasa_exam_sheets gauge\nvasa_exam_sheets %d\n", ops.ExamSheets)
+	fmt.Fprintf(w, "# HELP vasa_calendar_entries Academic calendar entries on record.\n# TYPE vasa_calendar_entries gauge\nvasa_calendar_entries %d\n", ops.CalendarEntries)
+	fmt.Fprintf(w, "# HELP vasa_directory_users Directory users on record.\n# TYPE vasa_directory_users gauge\nvasa_directory_users %d\n", ops.DirectoryUsers)
+
 	// ── Governance / conformance / civic gauges, sourced live from the registers ──
 	conf := s.p.Conformance()
 	confOK := 0

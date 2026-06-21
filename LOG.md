@@ -1228,3 +1228,16 @@ wired into the composition root and surfaced on platformd:
   calendar 12, directory_users 22 — all from the durable Postgres stores; `role=TEACHER` → HTTP 403.
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Prometheus gauges for the durable operational backlogs
+- `/metrics` now exposes the live operating state of the durable verticals as Prometheus gauges, so ops can
+  alert on backlogs: `vasa_store_durable` (1=persisted), `vasa_admissions` + `vasa_admissions_pending_review`,
+  `vasa_grievance_cases` + `vasa_grievance_overdue`, `vasa_leave_requests` + `vasa_leave_pending`,
+  `vasa_exam_sheets`, `vasa_calendar_entries`, `vasa_directory_users`. Sourced live from the persisted stores
+  via a new exported `Platform.Operations()` (aggregate counts only, no PII — `/metrics` is unauthenticated).
+- PROVEN LIVE (raw): the endpoint test asserts the new gauges; platformd (live-opa + DATABASE_URL) scrape
+  returned `vasa_store_durable 1`, `vasa_admissions 6`, `vasa_admissions_pending_review 2`,
+  `vasa_grievance_cases 5`, `vasa_grievance_overdue 0`, `vasa_leave_requests 3`, `vasa_leave_pending 1`,
+  `vasa_exam_sheets 3`, `vasa_calendar_entries 12`, `vasa_directory_users 22` — all from the durable stores.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
