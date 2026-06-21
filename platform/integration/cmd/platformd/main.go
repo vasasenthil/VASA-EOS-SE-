@@ -207,6 +207,14 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Wallet(id), nil)
 	}))
+	mux.HandleFunc("/cohort-analytics", s.count(func(w http.ResponseWriter, r *http.Request) {
+		ind := r.URL.Query().Get("indicator")
+		z := 0.0
+		if v := r.URL.Query().Get("z"); v != "" {
+			fmt.Sscanf(v, "%g", &z)
+		}
+		s.writeJSON(w, s.p.CohortAnomalies(ind, z), nil)
+	}))
 	mux.HandleFunc("/transfer", s.count(func(w http.ResponseWriter, r *http.Request) {
 		var req integration.TransferRequest
 		if !decode(w, r, &req) {

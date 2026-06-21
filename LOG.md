@@ -750,3 +750,15 @@ wired into the composition root and surfaced on platformd:
   (…-33330059101) valid, history_preserved:true; the wallet shows the revoked prior enrolment + the valid new
   one, and the journey grows (does not reset). Exactly the brief's portable-identity promise.
 - Status page: **48 modules · 415 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Cohort analytics / early-warning surface (L8 anomaly detection over the estate)
+- `Platform.CohortAnomalies(indicator, z)` + `platformd GET /cohort-analytics?indicator=&z=` — runs the L8
+  analytics **z-score anomaly detector** (`engines.Anomalies`) over a per-district indicator series across all
+  38 real districts, flagging the **early-warning** outliers (district + value + z + high/low direction). The
+  district structure is real (seed.Districts); the indicator values are **synthetic/illustrative** (live
+  operational telemetry — attendance/dropout/FLN — is gated on the federated substrate, B-022), honestly
+  declared `synthetic:true`. Deterministic. 2 integration tests.
+- Verified live (dropout-risk, z=2): mean 49.6, flagged Nilgiris (91, z=4.79, high) + Ramanathapuram (22,
+  z=-3.19, low). The Governance/early-warning agent surface — "surface risk in an indicator for an officer" —
+  is now real over the populated estate.
+- Status page: **48 modules · 417 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
