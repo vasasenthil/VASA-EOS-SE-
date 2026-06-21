@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -213,5 +214,19 @@ func TestMetricsReflectActivity(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Fatalf("metrics missing %q in:\n%s", want, body)
 		}
+	}
+}
+
+func TestGrievanceSweeperConfig(t *testing.T) {
+	s := &server{}
+	// no env → the sweeper is off (no goroutine, no platform access).
+	os.Unsetenv("GRIEVANCE_SWEEP_SECONDS")
+	if got := s.startGrievanceSweeper(); got != "off" {
+		t.Fatalf("sweeper must be off by default, got %q", got)
+	}
+	// a non-positive value is also off.
+	t.Setenv("GRIEVANCE_SWEEP_SECONDS", "0")
+	if got := s.startGrievanceSweeper(); got != "off" {
+		t.Fatalf("zero interval must be off, got %q", got)
 	}
 }

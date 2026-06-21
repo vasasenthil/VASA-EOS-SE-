@@ -1150,3 +1150,17 @@ wired into the composition root and surfaced on platformd:
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
   against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
 - Durable verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain · Grievance cases.
+
+## Automatic SLA enforcement: background grievance sweeper inside platformd
+- platformd now runs the grievance SLA sweep on a timer (`GRIEVANCE_SWEEP_SECONDS` > 0 → a background ticker),
+  so an overdue case auto-escalates to the next tier WITHOUT an external cron — escalation is genuinely
+  time-driven. The banner shows `sla-sweep <interval>` (or `off`); a new metric
+  `vasa_grievance_sla_escalations_total` counts auto-escalations; each is written to the durable audit chain.
+  Unit test `TestGrievanceSweeperConfig` (off by default / off at zero interval).
+- PROVEN LIVE (raw): seeded an overdue open grievance directly in Postgres (due 2026-06-08), started platformd
+  with `GRIEVANCE_SWEEP_SECONDS=2` → banner `sla-sweep 2s`; at +2s the log showed "auto-escalated 1 overdue
+  grievance case(s): [SWEEP-1]"; the row moved tier 0→1 with `decided_by=sla, decision=escalated` (no manual
+  call); `/metrics` reported `vasa_grievance_sla_escalations_total 1`; a `system:sla grievance.case.escalate.sla`
+  record was persisted to the audit chain.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

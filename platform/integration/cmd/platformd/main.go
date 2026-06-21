@@ -50,6 +50,29 @@ type server struct {
 	tutor     atomic.Int64
 	refused   atomic.Int64
 	errors    atomic.Int64
+	swept     atomic.Int64 // grievance cases auto-escalated by the SLA sweeper
+}
+
+// startGrievanceSweeper runs the grievance SLA sweep on a timer when GRIEVANCE_SWEEP_SECONDS > 0, so a case
+// that breaches its deadline auto-escalates to the next tier WITHOUT an external cron. It returns a short
+// status for the banner; the loop runs in a background goroutine for the life of the process.
+func (s *server) startGrievanceSweeper() string {
+	secs := 0
+	fmt.Sscanf(envOr("GRIEVANCE_SWEEP_SECONDS", "0"), "%d", &secs)
+	if secs <= 0 {
+		return "off"
+	}
+	go func() {
+		t := time.NewTicker(time.Duration(secs) * time.Second)
+		defer t.Stop()
+		for range t.C {
+			if escalated := s.p.EscalateOverdueCases(); len(escalated) > 0 {
+				s.swept.Add(int64(len(escalated)))
+				log.Printf("sla-sweep: auto-escalated %d overdue grievance case(s): %v", len(escalated), escalated)
+			}
+		}
+	}()
+	return fmt.Sprintf("%ds", secs)
 }
 
 // newServer constructs the platform and returns its HTTP handler plus a banner describing the policy stack.
@@ -64,7 +87,9 @@ func newServer() (http.Handler, string) {
 		log.Fatal(err)
 	}
 	p.SetRetriever(demoRetriever()) // a small public demo corpus so /retrieve and tutor grounding work
-	return (&server{p: p}).routes(), banner
+	srv := &server{p: p}
+	sweep := srv.startGrievanceSweeper()
+	return srv.routes(), banner + " · sla-sweep " + sweep
 }
 
 // demoGraph is a tiny curriculum graph source for the demo retriever.
@@ -1210,6 +1235,7 @@ func (s *server) metrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# HELP vasa_tutor_total Tutor workflows run.\n# TYPE vasa_tutor_total counter\nvasa_tutor_total %d\n", s.tutor.Load())
 	fmt.Fprintf(w, "# HELP vasa_refused_total Requests refused by policy/guardrails/residency.\n# TYPE vasa_refused_total counter\nvasa_refused_total %d\n", s.refused.Load())
 	fmt.Fprintf(w, "# HELP vasa_errors_total Workflow errors.\n# TYPE vasa_errors_total counter\nvasa_errors_total %d\n", s.errors.Load())
+	fmt.Fprintf(w, "# HELP vasa_grievance_sla_escalations_total Grievance cases auto-escalated by the SLA sweeper.\n# TYPE vasa_grievance_sla_escalations_total counter\nvasa_grievance_sla_escalations_total %d\n", s.swept.Load())
 	fmt.Fprintf(w, "# HELP vasa_audit_records Records in the immutable audit chain.\n# TYPE vasa_audit_records gauge\nvasa_audit_records %d\n", s.p.Audit.Len())
 	fmt.Fprintf(w, "# HELP vasa_notary_blocks Blocks in the notary ledger.\n# TYPE vasa_notary_blocks gauge\nvasa_notary_blocks %d\n", s.p.Notary.Len())
 	fmt.Fprintf(w, "# HELP vasa_slo_success_rate Rolling SLO success rate.\n# TYPE vasa_slo_success_rate gauge\nvasa_slo_success_rate %g\n", h.SLO.SuccessRate)
