@@ -57,6 +57,33 @@ func TestRTILifecycleAndStatutoryClock(t *testing.T) {
 	}
 }
 
+func TestRTIAcknowledgeAndList(t *testing.T) {
+	cur := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	r := New(func() time.Time { return cur })
+	r.FileRTI("RTI-A", "infrastructure data", "citizen-a")
+	ack, ok := r.AcknowledgeRTI("RTI-A")
+	if !ok || ack.Status != RTIAcknowledged {
+		t.Fatalf("acknowledging a filed RTI must move it to acknowledged: %+v ok=%v", ack, ok)
+	}
+	// acknowledging does not stop the statutory clock.
+	cur = cur.Add(31 * 24 * time.Hour)
+	if !r.RTIOverdue("RTI-A") {
+		t.Fatal("an acknowledged-but-unanswered RTI past 30 days is still overdue")
+	}
+	got, found, overdue := r.GetRTI("RTI-A")
+	if !found || !overdue || got.Status != RTIAcknowledged {
+		t.Fatalf("GetRTI wrong: %+v found=%v overdue=%v", got, found, overdue)
+	}
+	if len(r.RTIRequests()) != 1 {
+		t.Fatalf("expected 1 RTI in the register, got %d", len(r.RTIRequests()))
+	}
+	// answering after acknowledgement clears the overdue flag.
+	r.AnswerRTI("RTI-A", "data published at /open-data")
+	if _, ok := r.AcknowledgeRTI("RTI-A"); ok {
+		t.Fatal("an answered RTI cannot be re-acknowledged")
+	}
+}
+
 func TestGrievanceAndOpenData(t *testing.T) {
 	r := New(func() time.Time { return time.Unix(0, 0).UTC() })
 	r.FileGrievance("G-1", "mid-day meal quality", "parent-1", "block")

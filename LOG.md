@@ -642,3 +642,12 @@ wired into the composition root and surfaced on platformd:
   15 small cells suppressed. The L12 civic layer now demonstrably emits person-level public stats without
   exposing small groups.
 - Status page: **48 modules · 397 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## RTI lifecycle (L12) — file → acknowledge → answer under the 30-day statutory clock
+- Civic module: added `AcknowledgeRTI` (PIO acknowledgement; clock keeps running), `GetRTI` (status +
+  overdue), `RTIRequests` (register list). 1 module test (acknowledge + list + still-overdue-after-ack).
+- Integration: `FileRTI/AcknowledgeRTI/AnswerRTI/RTIRequests/RTIStatus` — every transition **audited** to the
+  L5 chain; `platformd GET /rti` (list · `?id=` status incl. overdue) + `POST /rti {action:file|acknowledge|
+  answer}`. 2 integration tests. Verified live: file → "filed" (clock starts) → acknowledge → "acknowledged"
+  → answer → "answered" (overdue:false), each step audited; an answered RTI can't be re-acknowledged.
+- Status page: **48 modules · 400 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

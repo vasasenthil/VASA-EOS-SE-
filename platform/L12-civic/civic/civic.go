@@ -126,6 +126,17 @@ func (r *Registry) FileRTI(id, subject, by string) RTIRequest {
 	return *req
 }
 
+// AcknowledgeRTI records that a request has been acknowledged by the Public Information Officer (the statutory
+// clock keeps running until it is answered). ok is false if the id is unknown or already answered.
+func (r *Registry) AcknowledgeRTI(id string) (RTIRequest, bool) {
+	req, ok := r.rti[id]
+	if !ok || req.Status == RTIAnswered {
+		return RTIRequest{}, false
+	}
+	req.Status = RTIAcknowledged
+	return *req, true
+}
+
 // AnswerRTI records an answer; ok is false if the id is unknown.
 func (r *Registry) AnswerRTI(id, answer string) (RTIRequest, bool) {
 	req, ok := r.rti[id]
@@ -143,6 +154,25 @@ func (r *Registry) RTIOverdue(id string) bool {
 		return false
 	}
 	return r.now().UTC().Sub(req.Filed) > RTIStatutoryDays*24*time.Hour
+}
+
+// GetRTI returns a single RTI request and whether it is past the statutory window.
+func (r *Registry) GetRTI(id string) (RTIRequest, bool, bool) {
+	req, ok := r.rti[id]
+	if !ok {
+		return RTIRequest{}, false, false
+	}
+	return *req, true, r.RTIOverdue(id)
+}
+
+// RTIRequests returns every RTI request, sorted by id.
+func (r *Registry) RTIRequests() []RTIRequest {
+	out := make([]RTIRequest, 0, len(r.rti))
+	for _, req := range r.rti {
+		out = append(out, *req)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
 }
 
 // FileGrievance files a grievance at a governance tier.

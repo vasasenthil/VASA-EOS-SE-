@@ -61,10 +61,36 @@ func (p *Platform) PublicDashboard() civic.PublicDashboard { return civic.Dashbo
 // OpenDatasets returns the open-data (CKAN-style) dataset catalogue (non-personal only).
 func (p *Platform) OpenDatasets() []civic.Dataset { return civic.OpenDatasets() }
 
-// FileRTI files a citizen RTI request.
+// FileRTI files a citizen RTI request (it is audited; the 30-day statutory clock starts now).
 func (p *Platform) FileRTI(id, subject, by string) civic.RTIRequest {
-	return p.Civic.FileRTI(id, subject, by)
+	r := p.Civic.FileRTI(id, subject, by)
+	p.appendAudit("citizen:"+by, "rti.file", id, string(r.Status), "rti")
+	return r
 }
+
+// AcknowledgeRTI records the PIO acknowledging an RTI (the statutory clock keeps running).
+func (p *Platform) AcknowledgeRTI(id string) (civic.RTIRequest, bool) {
+	r, ok := p.Civic.AcknowledgeRTI(id)
+	if ok {
+		p.appendAudit("role:PIO", "rti.acknowledge", id, string(r.Status), "rti")
+	}
+	return r, ok
+}
+
+// AnswerRTI records the PIO's answer to an RTI (stops the statutory clock).
+func (p *Platform) AnswerRTI(id, answer string) (civic.RTIRequest, bool) {
+	r, ok := p.Civic.AnswerRTI(id, answer)
+	if ok {
+		p.appendAudit("role:PIO", "rti.answer", id, string(r.Status), "rti")
+	}
+	return r, ok
+}
+
+// RTIRequests returns every RTI request in the register.
+func (p *Platform) RTIRequests() []civic.RTIRequest { return p.Civic.RTIRequests() }
+
+// RTIStatus returns one RTI request and whether it is past the 30-day statutory window.
+func (p *Platform) RTIStatus(id string) (civic.RTIRequest, bool, bool) { return p.Civic.GetRTI(id) }
 
 // FileGrievance files a citizen grievance at a governance tier.
 func (p *Platform) FileGrievance(id, subject, by, tier string) civic.Grievance {

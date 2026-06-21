@@ -170,6 +170,7 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))
 	mux.HandleFunc("/grievance-queue", s.count(s.handleGrievanceQueue))
+	mux.HandleFunc("/rti", s.count(s.handleRTI))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
@@ -448,6 +449,55 @@ func (s *server) handleGrievanceQueue(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, res, err)
 }
 
+// handleRTI is the L12 Right-to-Information lifecycle: GET ?id=… for one request's status (incl. overdue), GET
+// for the register; POST {action: file|acknowledge|answer, id, subject, by, answer} drives the lifecycle under
+// the 30-day statutory clock.
+func (s *server) handleRTI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		if id := r.URL.Query().Get("id"); id != "" {
+			req, found, overdue := s.p.RTIStatus(id)
+			if !found {
+				http.Error(w, `{"error":"unknown rti"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, map[string]any{"request": req, "overdue": overdue}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.RTIRequests(), nil)
+		return
+	}
+	var req struct {
+		Action  string `json:"action"`
+		ID      string `json:"id"`
+		Subject string `json:"subject"`
+		By      string `json:"by"`
+		Answer  string `json:"answer"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.ID == "" {
+		req.ID = "RTI-DEMO"
+	}
+	switch req.Action {
+	case "acknowledge":
+		out, ok := s.p.AcknowledgeRTI(req.ID)
+		s.writeJSON(w, map[string]any{"ok": ok, "request": out}, nil)
+	case "answer":
+		out, ok := s.p.AnswerRTI(req.ID, orDefault(req.Answer, "data published at /civic open-data"))
+		s.writeJSON(w, map[string]any{"ok": ok, "request": out}, nil)
+	default: // file
+		s.writeJSON(w, s.p.FileRTI(req.ID, orDefault(req.Subject, "school sanitation data"), orDefault(req.By, "citizen")), nil)
+	}
+}
+
+func orDefault(v, d string) string {
+	if v == "" {
+		return d
+	}
+	return v
+}
+
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
 // path (T0 → … → node); ?governs=A&over=B answers a downward-governance jurisdiction check; else the summary
 // (the seven tiers + the materialised estate counts validated against §D).
@@ -652,6 +702,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button class="alt" onclick="g('/alignments')">GET /alignments (SDG·PISA·GPAI…)</button>
 <button onclick="g('/conformance')">GET /conformance (live headline self-check)</button>
 <button class="alt" onclick="g('/civic')">GET /civic (L12 public + RTI + open-data)</button>
+<button onclick="p('/rti',{action:'file',id:'RTI-1',subject:'school sanitation data',by:'Anbu'})">POST /rti (file → audited, 30-day clock)</button>
 <button onclick="p('/grievance',{id:'GRV-1',citizen:'Anbu',subject:'a child safety pocso concern at our school'})">POST /grievance (L9 agent → L12 tracker → audit)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 
