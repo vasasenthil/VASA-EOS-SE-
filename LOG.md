@@ -651,3 +651,15 @@ wired into the composition root and surfaced on platformd:
   answer}`. 2 integration tests. Verified live: file → "filed" (clock starts) → acknowledge → "acknowledged"
   → answer → "answered" (overdue:false), each step audited; an answered RTI can't be re-acknowledged.
 - Status page: **48 modules · 400 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Open-data CSV exports (CKAN-style downloads from L12 civic)
+- Civic module: `SchoolsByDistrictCSV(tree)` (institutional aggregates: schools per district × management) and
+  `EnrolmentCSV(dim, published, suppressed)` (k-anonymity person-level stat — suppressed cells rendered as
+  "suppressed(<k)", never with a count). RFC-4180 via encoding/csv. 1 module test.
+- Integration: `Platform.ExportDataset(id, cohort, k)` — only non-personal datasets are exportable
+  (schools-by-district, enrolment-aggregates); unknown/PII datasets refused. `platformd GET
+  /civic?download=ID` serves text/csv with a Content-Disposition attachment filename. 1 integration test.
+- Verified live: /civic?download=schools-by-district → CSV w/ headers + real per-district mix (e.g.
+  Chennai,2090,1362,312,312,104); /civic?download=enrolment-aggregates&cohort=30&k=5 → all small cells
+  "suppressed(<k)". The L12 open-data promise is now downloadable + privacy-preserving.
+- Status page: **48 modules · 402 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

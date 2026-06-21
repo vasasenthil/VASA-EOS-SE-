@@ -166,6 +166,24 @@ func (s *server) routes() http.Handler {
 			s.writeJSON(w, s.p.PublicEnrolment(cohort, k), nil)
 			return
 		}
+		if ds := r.URL.Query().Get("download"); ds != "" {
+			cohort, k := 1500, 5
+			if v := r.URL.Query().Get("cohort"); v != "" {
+				fmt.Sscanf(v, "%d", &cohort)
+			}
+			if v := r.URL.Query().Get("k"); v != "" {
+				fmt.Sscanf(v, "%d", &k)
+			}
+			body, filename, ok := s.p.ExportDataset(ds, cohort, k)
+			if !ok {
+				http.Error(w, `{"error":"unknown or non-exportable dataset"}`, http.StatusNotFound)
+				return
+			}
+			w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+			w.Header().Set("Content-Disposition", "attachment; filename=\""+filename+"\"")
+			_, _ = w.Write([]byte(body))
+			return
+		}
 		s.writeJSON(w, map[string]any{"dashboard": s.p.PublicDashboard(), "open_datasets": s.p.OpenDatasets(), "summary": s.p.CivicSummary()}, nil)
 	}))
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))

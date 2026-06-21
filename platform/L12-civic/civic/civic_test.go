@@ -1,6 +1,7 @@
 package civic
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -97,6 +98,22 @@ func TestGrievanceAndOpenData(t *testing.T) {
 		if !d.PIIFree {
 			t.Fatalf("every open dataset must be PII-free: %+v", d)
 		}
+	}
+	// CSV exports are well-formed and non-personal.
+	csvOut := SchoolsByDistrictCSV(population.BuildTree())
+	if !strings.HasPrefix(csvOut, "district,schools,government,aided,matriculation,private_cbse") {
+		t.Fatalf("schools CSV header wrong: %q", csvOut[:60])
+	}
+	if !strings.Contains(csvOut, "Chennai,") {
+		t.Fatal("schools CSV must include real districts")
+	}
+	// enrolment CSV publishes large cells and records suppressed ones without a count.
+	enr := EnrolmentCSV("class", map[string]int{"Grade 1": 120}, []string{"Pre-KG"})
+	if !strings.Contains(enr, "Grade 1,120") || !strings.Contains(enr, "Pre-KG,suppressed(<k)") {
+		t.Fatalf("enrolment CSV wrong: %q", enr)
+	}
+	if strings.Contains(enr, "Pre-KG,0") {
+		t.Fatal("a suppressed cell must not be published with a count")
 	}
 	s := r.Summarise()
 	if s.GrievResolved != 1 || s.OpenDatasets == 0 {

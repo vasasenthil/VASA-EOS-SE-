@@ -7,7 +7,10 @@
 package civic
 
 import (
+	"bytes"
+	"encoding/csv"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/vasa-eos-se-tn/platform/population"
@@ -212,6 +215,71 @@ func OpenDatasets() []Dataset {
 		{"grievance-stats", "Grievance volumes + resolution rates (aggregate)", "CSV/JSON", true},
 		{"quality-index", "TN School Education Quality Index (disaggregated)", "CSV/JSON", true},
 	}
+}
+
+// writeCSV renders rows to a CSV string (RFC 4180, deterministic).
+func writeCSV(header []string, rows [][]string) string {
+	var b bytes.Buffer
+	w := csv.NewWriter(&b)
+	_ = w.Write(header)
+	for _, r := range rows {
+		_ = w.Write(r)
+	}
+	w.Flush()
+	return b.String()
+}
+
+// SchoolsByDistrictCSV is the open-data export of the institutional estate: schools per district by management
+// category. Non-personal — safe to publish openly.
+func SchoolsByDistrictCSV(tree population.Tree) string {
+	// district → management → count.
+	byDistrict := map[string]map[string]int{}
+	for _, s := range tree.Schools {
+		if byDistrict[s.District] == nil {
+			byDistrict[s.District] = map[string]int{}
+		}
+		byDistrict[s.District][s.Management]++
+	}
+	districts := make([]string, 0, len(byDistrict))
+	for d := range byDistrict {
+		districts = append(districts, d)
+	}
+	sort.Strings(districts)
+	cats := []string{"Government", "Aided", "Matriculation", "Private-CBSE"}
+	rows := make([][]string, 0, len(districts))
+	for _, d := range districts {
+		m := byDistrict[d]
+		total := 0
+		for _, n := range m {
+			total += n
+		}
+		row := []string{d, strconv.Itoa(total)}
+		for _, c := range cats {
+			row = append(row, strconv.Itoa(m[c]))
+		}
+		rows = append(rows, row)
+	}
+	header := append([]string{"district", "schools"}, []string{"government", "aided", "matriculation", "private_cbse"}...)
+	return writeCSV(header, rows)
+}
+
+// EnrolmentCSV is the open-data export of a k-anonymity-suppressed person-level enrolment statistic: only
+// published (>= k) cells appear; suppressed cells are listed in a trailing comment row, never with a count.
+func EnrolmentCSV(dimension string, published map[string]int, suppressed []string) string {
+	keys := make([]string, 0, len(published))
+	for k := range published {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	rows := make([][]string, 0, len(keys)+1)
+	for _, k := range keys {
+		rows = append(rows, []string{k, strconv.Itoa(published[k])})
+	}
+	// record suppression transparently (count withheld, not zeroed-and-shown).
+	for _, s := range suppressed {
+		rows = append(rows, []string{s, "suppressed(<k)"})
+	}
+	return writeCSV([]string{dimension, "enrolment"}, rows)
 }
 
 // Summary is the civic-layer roll-up.

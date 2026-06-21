@@ -1,6 +1,9 @@
 package integration
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPlatformGovernanceAndPortals(t *testing.T) {
 	p := newPlatform(t)
@@ -40,6 +43,24 @@ func TestPlatformAlignmentsAndCivic(t *testing.T) {
 	s := p.CivicSummary()
 	if s.RTIOpen != 1 || s.GrievOpen != 1 || s.OpenDatasets == 0 {
 		t.Fatalf("civic summary wrong: %+v", s)
+	}
+}
+
+func TestOpenDataCSVExport(t *testing.T) {
+	p := newPlatform(t)
+	body, filename, ok := p.ExportDataset("schools-by-district", 0, 0)
+	if !ok || filename != "schools-by-district.csv" {
+		t.Fatalf("schools-by-district must export: ok=%v filename=%q", ok, filename)
+	}
+	if !strings.HasPrefix(body, "district,schools,") || !strings.Contains(body, "Chennai,") {
+		t.Fatalf("schools CSV malformed: %q", body[:60])
+	}
+	enr, _, ok := p.ExportDataset("enrolment-aggregates", 1500, 5)
+	if !ok || !strings.HasPrefix(enr, "class,enrolment") {
+		t.Fatalf("enrolment CSV malformed: ok=%v body=%q", ok, enr[:40])
+	}
+	if _, _, ok := p.ExportDataset("students-pii", 0, 0); ok {
+		t.Fatal("a non-exportable / unknown dataset must be refused")
 	}
 }
 

@@ -100,6 +100,21 @@ func (p *Platform) FileGrievance(id, subject, by, tier string) civic.Grievance {
 // CivicSummary returns the L12 civic roll-up (RTI + grievance state + open datasets).
 func (p *Platform) CivicSummary() civic.Summary { return p.Civic.Summarise() }
 
+// ExportDataset renders an open-data dataset as a downloadable CSV (CKAN-style). Only non-personal datasets
+// are exportable: "schools-by-district" (institutional aggregates) and "enrolment-aggregates" (k-anonymity
+// suppressed). Returns the CSV body, a filename, and ok=false for an unknown/non-exportable dataset.
+func (p *Platform) ExportDataset(id string, cohort, k int) (body, filename string, ok bool) {
+	switch id {
+	case "schools-by-district":
+		return civic.SchoolsByDistrictCSV(tree()), "schools-by-district.csv", true
+	case "enrolment-aggregates":
+		st := p.PublicEnrolment(cohort, k)
+		return civic.EnrolmentCSV(st.Dimension, st.Published, st.Suppressed), "enrolment-aggregates.csv", true
+	default:
+		return "", "", false
+	}
+}
+
 // EnrolmentStat is a publishable, k-anonymity-protected person-level statistic: per-class enrolment counts
 // with any cell below the threshold suppressed, so no published figure can single out a small group.
 type EnrolmentStat struct {
