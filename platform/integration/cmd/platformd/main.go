@@ -189,6 +189,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/grievance", s.count(s.handleGrievance))
 	mux.HandleFunc("/grievance-queue", s.count(s.handleGrievanceQueue))
 	mux.HandleFunc("/rti", s.count(s.handleRTI))
+	mux.HandleFunc("/dbt", s.count(s.handleDBT))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
@@ -516,6 +517,28 @@ func orDefault(v, d string) string {
 	return v
 }
 
+// handleDBT runs a scheme-DBT delivery end-to-end: it first records the §7 subsidy lawful basis for the
+// beneficiary (so the disbursement is DPDP-lawful), then delivers — G-tier sanction → fund release →
+// verifiable receipt, all audited.
+func (s *server) handleDBT(w http.ResponseWriter, r *http.Request) {
+	var req integration.DBTRequest
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.Scheme == "" {
+		req.Scheme = "PUDHUMAI-PENN"
+	}
+	if req.Beneficiary == "" {
+		req.Beneficiary = "SYN-APAAR-000000000001"
+	}
+	if req.AmountINR <= 0 {
+		req.AmountINR = 1000
+	}
+	// record the lawful basis first (a real onboarding would have done this at enrolment).
+	_, _ = s.p.RecordSubsidyBasis("DBT-BASIS-"+req.Beneficiary, req.Beneficiary)
+	s.writeJSON(w, s.p.DeliverDBT(r.Context(), req), nil)
+}
+
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
 // path (T0 → … → node); ?governs=A&over=B answers a downward-governance jurisdiction check; else the summary
 // (the seven tiers + the materialised estate counts validated against §D).
@@ -721,6 +744,7 @@ h3{margin:0 0 8px;font-size:15px;color:#6c8cff}
 <button onclick="g('/conformance')">GET /conformance (live headline self-check)</button>
 <button class="alt" onclick="g('/civic')">GET /civic (L12 public + RTI + open-data)</button>
 <button onclick="p('/rti',{action:'file',id:'RTI-1',subject:'school sanitation data',by:'Anbu'})">POST /rti (file → audited, 30-day clock)</button>
+<button onclick="p('/dbt',{scheme:'PUDHUMAI-PENN',beneficiary:'SYN-APAAR-000000000001',amount_inr:1000,high_stakes:true})">POST /dbt (sanction → fund release → receipt)</button>
 <button onclick="p('/grievance',{id:'GRV-1',citizen:'Anbu',subject:'a child safety pocso concern at our school'})">POST /grievance (L9 agent → L12 tracker → audit)</button>
 <button class="alt" onclick="t('/metrics')">GET /metrics</button></div>
 

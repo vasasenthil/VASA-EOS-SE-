@@ -663,3 +663,17 @@ wired into the composition root and surfaced on platformd:
   Chennai,2090,1362,312,312,104); /civic?download=enrolment-aggregates&cohort=30&k=5 → all small cells
   "suppressed(<k)". The L12 open-data promise is now downloadable + privacy-preserving.
 - Status page: **48 modules · 402 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Scheme-DBT delivery workflow end-to-end (lawful basis → G-tier sanction → fund release → receipt)
+- `Platform.DeliverDBT(ctx, DBTRequest)` — runs a welfare-scheme benefit end-to-end, **fail-closed** at every
+  gate: validates the scheme against the seeded catalogue; requires a **§E DPDP lawful basis** (§7 subsidy) for
+  the beneficiary (no money moves without one); **sanctions** the disbursement through the govtiers escalation
+  (high-stakes → G4→G3→G2→G1 to the Cabinet, run on the real L6 workflow engine); **releases** funds on the
+  local per-scheme `reconcile.FundLedger` (reconciled against PFMS when the adapter is live, B-022); mints a
+  **verifiable, notarised BenefitReceipt credential**; and audits each step. Added `RecordSubsidyBasis`,
+  `FundLedger`; `platformd POST /dbt`. 2 integration tests.
+- Verified live: PUDHUMAI-PENN ₹1000 to a synthetic beneficiary → no-basis refusal first; after recording the
+  subsidy basis → delivered:true, sanctioned:true, escalation [G4,G3,G2,G1], released/utilised 1000, receipt
+  minted, audited. The §E consent register, G-tier escalation, L4 fund ledger, L7 credentials + notary, and L5
+  audit all interlock in one welfare-delivery flow.
+- Status page: **48 modules · 404 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

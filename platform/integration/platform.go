@@ -31,6 +31,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/orchestrator"
 	"github.com/vasa-eos-se-tn/platform/pep"
 	"github.com/vasa-eos-se-tn/platform/ratelimit"
+	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 	"github.com/vasa-eos-se-tn/platform/seed"
 	"github.com/vasa-eos-se-tn/platform/serving"
@@ -95,6 +96,9 @@ type Platform struct {
 	Consent *consent.Register
 	// L12 citizen & civic register (RTI + grievance state).
 	Civic *civic.Registry
+	// scheme-DBT fund ledgers (per scheme code) — the local source of truth reconciled against PFMS.
+	Funds   map[string]*reconcile.FundLedger
+	fundsMu sync.Mutex
 
 	now func() string
 
@@ -261,6 +265,7 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	p.Consent = bootstrapConsent()
 	// §L12: a per-platform civic register holds this instance's RTI + grievance state.
 	p.Civic = civic.New(nil)
+	p.Funds = map[string]*reconcile.FundLedger{}
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a
