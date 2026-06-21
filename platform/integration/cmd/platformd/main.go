@@ -193,6 +193,13 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/dbt", s.count(s.handleDBT))
 	mux.HandleFunc("/pfms-reconcile", s.count(s.handlePFMSReconcile))
 	mux.HandleFunc("/enrol", s.count(s.handleEnrol))
+	mux.HandleFunc("/journey", s.count(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("apaar")
+		if id == "" {
+			id = "SYN-APAAR-000000000001"
+		}
+		s.writeJSON(w, s.p.StudentJourney(id), nil)
+	}))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))

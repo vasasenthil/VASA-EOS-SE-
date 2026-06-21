@@ -703,3 +703,15 @@ wired into the composition root and surfaced on platformd:
   verify before trusting either copy"); unknown UDISE → refused. The L4 APAAR adapter, reconcile drift check,
   L6 tenancy, §E consent, L7 credentials+notary and L5 audit all interlock in one enrolment.
 - Status page: **48 modules · 407 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Student 360 / journey view — one identity, one auditable record
+- Civic: `GrievancesBy(filer)` query. Integration: `Platform.StudentJourney(apaarID)` assembles a learner's
+  complete record across the verticals — the §E **lawful bases** (AccessReport), the **grievances** they raised
+  (L12), and the full **audit timeline** of platform actions about them, reconstructed straight from the
+  tamper-evident L5 chain (re-verified). Read-only + derived: the record can't show an action the chain doesn't
+  contain. `platformd GET /journey?apaar=`. 2 integration + (civic GrievancesBy covered) tests.
+- Verified live (after enrol → DBT → grievance for one learner): lawful_bases [enrolment/legal-obligation,
+  scheme-dbt/subsidy], 1 grievance (block, open), 8-event timeline (enrol.apaar → 4× G-tier workflow → dbt.
+  deliver → grievance.route), audit_chain_verified:true. This is the brief's "every directorate, every district,
+  every school answers the same question with the same number" — the learner's single source of truth.
+- Status page: **48 modules · 409 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

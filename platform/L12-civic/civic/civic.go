@@ -185,6 +185,18 @@ func (r *Registry) FileGrievance(id, subject, by, tier string) Grievance {
 	return *g
 }
 
+// GrievancesBy returns every grievance filed by a given citizen/principal, sorted by id.
+func (r *Registry) GrievancesBy(filer string) []Grievance {
+	var out []Grievance
+	for _, g := range r.grievances {
+		if g.FiledBy == filer {
+			out = append(out, *g)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
+}
+
 // ResolveGrievance marks a grievance resolved; ok is false if unknown.
 func (r *Registry) ResolveGrievance(id string) (Grievance, bool) {
 	g, ok := r.grievances[id]
