@@ -207,6 +207,32 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Wallet(id), nil)
 	}))
+	mux.HandleFunc("/compliance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req integration.ComplianceRequest
+		if !decode(w, r, &req) {
+			return
+		}
+		if req.School == "" {
+			req.School = "33010100101"
+		}
+		if req.Facts == nil {
+			// a demo school with two breaches.
+			req.Facts = map[string]string{"ews_quota_met": "no", "ptr_compliant": "yes", "accessible_infra": "no", "consent_recorded": "yes", "child_safety_policy": "yes", "detention_practiced": "no"}
+		}
+		s.writeJSON(w, s.p.CheckCompliance(r.Context(), req), nil)
+	}))
+	mux.HandleFunc("/compliance-signoff", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			RequestID string `json:"request_id"`
+			Approve   bool   `json:"approve"`
+			Officer   string `json:"officer"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		res, err := s.p.SignoffCompliance(r.Context(), req.RequestID, req.Approve, orDefault(req.Officer, "G6-Compliance"))
+		s.writeJSON(w, res, err)
+	}))
 	mux.HandleFunc("/policy", s.count(func(w http.ResponseWriter, r *http.Request) {
 		var req integration.PolicyLeverRequest
 		if !decode(w, r, &req) {

@@ -774,3 +774,15 @@ wired into the composition root and surfaced on platformd:
   TR-0001; MINISTER approves → "policy lever adopted". AI assists; the human authority decides — every decision
   reversible + audited.
 - Status page: **48 modules · 419 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Compliance-findings surface (Compliance agent → statute-cited findings → human sign-off)
+- `Platform.CheckCompliance(ctx, req)` — the L9 Compliance agent forward-chains a **regulatory rule base**
+  (RTE 2009 §12/§16/Schedule · RPwD 2016 §16 · DPDP 2023 §6 · POCSO 2012) over a school's facts (L8 reasoning
+  engine), deriving **statute-cited non-compliance findings**. Findings are **high-stakes**: routed to the HITL
+  queue for a **compliance officer** (compliance.sign scope) to sign off; a clean school records no findings.
+  `SignoffCompliance` records the sign-off (HITL executor `compliance.signoff` branch). `platformd POST
+  /compliance` + `/compliance-signoff`. 2 integration tests.
+- Verified live: a school with EWS-quota-not-met / no-accessible-infra / no-consent / detention → 4 findings
+  citing DPDP §6, RPwD §16, RTE §16, RTE §12; requires_signoff:true, queued; G6-Compliance signs off (audited).
+  A fully-compliant school → clean, no sign-off. The 6th agent (Compliance) is now live end-to-end.
+- Status page: **48 modules · 421 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
