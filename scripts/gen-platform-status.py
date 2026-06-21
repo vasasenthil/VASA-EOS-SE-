@@ -55,7 +55,7 @@ DESC = {
     "resilience": "Circuit breaker · retry+backoff/jitter · idempotency",
     "reconcile": "Field + numeric (tolerance) federation drift reconciliation",
     "adapters": "APAAR anti-corruption adapter on the resilience core",
-    "audit": "Immutable hash-chain + Merkle root (tamper-evident)",
+    "audit": "Immutable hash-chain + Merkle root (tamper-evident) · DURABLE PostgreSQL sink when DATABASE_URL set — the chain survives restarts, is re-verified on load, and refuses to start on a tampered history",
     "kms": "Envelope encryption · per-tenant KEK hierarchy · rotation",
     "pep": "Policy Enforcement Point over the Rego plane (fail-closed)",
     "directory": "User Directory & unified IAM: every user category bound to an org unit · one PDP composing all 5 models (RBAC·ABAC·ReBAC·PBAC·CABAC) · explainable per-model decision trace (Access Explorer) · DURABLE PostgreSQL user store + CRUD when DATABASE_URL set — decisions run over persisted users",

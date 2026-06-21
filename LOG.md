@@ -1092,3 +1092,21 @@ wired into the composition root and surfaced on platformd:
   (calendar+exams+leave+directory) pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33,
   gofmt clean, tsc 0 errors. 506 tests.
 - Durable, restart-surviving, PDP-enforced verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM.
+
+## Production-wiring vertical 5: tamper-evident Audit chain → durable PostgreSQL
+- Added an optional `Sink` to the pure L5 `audit` module (interface only — module stays stdlib): `NewWithSink`
+  loads + RE-VERIFIES the persisted chain on startup and continues from its head; `Append` persists each sealed
+  record before acknowledging and rolls back the in-memory append on a persist failure (memory/storage never
+  diverge). Module tests: persist+reload+continue, tamper-on-load rejection, persist-failure rollback.
+- New `platform/integration/audit_pg.go` — PostgreSQL audit sink (`audit_chain`: seq PK, UNIQUE hash, prev_hash
+  links). `newAuditLog()` wires it into the Platform when `DATABASE_URL` is set; a persisted chain that fails
+  verification at startup makes the platform refuse to run (fail-closed). Migration: `scripts/084`.
+- PROVEN LIVE (raw): `TestPgAuditDurable` + `TestPgAuditPlatformDurable` pass — the chain survives fresh log
+  AND fresh platform instances, re-verifies, continues contiguously, and a directly-tampered persisted row is
+  rejected at startup. platformd restart proof: run 1 wrote 2 audited records (leave.file, leave.decide) to
+  Postgres; a fresh process reported audit_records=2 / chain_intact=true and a new action continued the SAME
+  chain (seq 3, prev_hash = seq 2's hash across the restart boundary); SQL self-join showed 0 broken links.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 6 durable PG tests
+  (calendar+exams+leave+directory+audit×2) pass via the CI TestPg step against the live PostgreSQL service,
+  OPA 33/33, gofmt clean, tsc 0 errors. 511 tests.
+- Durable, restart-surviving verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain.

@@ -61,12 +61,41 @@ type Entry struct {
 type Log struct {
 	mu      sync.Mutex
 	records []Record
+	sink    Sink // optional durability backend (nil = in-memory only)
 }
 
-// New constructs an empty log.
+// Sink is an optional durability backend for the log: it persists every sealed record and can reload the
+// existing chain on startup. Implementations live outside this (pure) package — e.g. a PostgreSQL sink in the
+// integration layer — so the audit log survives process restarts while staying tamper-evident.
+type Sink interface {
+	Persist(Record) error
+	Load() ([]Record, error)
+}
+
+// New constructs an empty in-memory log.
 func New() *Log { return &Log{} }
 
-// Append adds an entry, chaining it to the current head, and returns the sealed record.
+// NewWithSink constructs a log backed by a durability sink: it loads and VERIFIES the persisted chain, then
+// continues appending from its head. A tampered or broken persisted chain is rejected at startup (fail-closed).
+func NewWithSink(s Sink) (*Log, error) {
+	l := &Log{sink: s}
+	if s == nil {
+		return l, nil
+	}
+	recs, err := s.Load()
+	if err != nil {
+		return nil, fmt.Errorf("audit: load persisted chain: %w", err)
+	}
+	if _, err := Verify(recs); err != nil {
+		return nil, fmt.Errorf("audit: persisted chain failed verification: %w", err)
+	}
+	l.records = recs
+	return l, nil
+}
+
+// Append adds an entry, chaining it to the current head, and returns the sealed record. When a durability sink
+// is configured the record is persisted before it is acknowledged; a persistence failure rolls back the
+// in-memory append so memory and storage never diverge.
 func (l *Log) Append(e Entry) (Record, error) {
 	if e.Action == "" {
 		return Record{}, errors.New("audit: action required")
@@ -85,6 +114,11 @@ func (l *Log) Append(e Entry) (Record, error) {
 		Resource: e.Resource, Effect: e.Effect, Detail: e.Detail, PrevHash: prev,
 	}
 	r.Hash = r.computeHash()
+	if l.sink != nil {
+		if err := l.sink.Persist(r); err != nil {
+			return Record{}, fmt.Errorf("audit: persist: %w", err)
+		}
+	}
 	l.records = append(l.records, r)
 	return r, nil
 }
