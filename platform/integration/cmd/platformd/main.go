@@ -207,6 +207,20 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Wallet(id), nil)
 	}))
+	mux.HandleFunc("/revoke", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req struct {
+			CredentialID string `json:"credential_id"`
+			By           string `json:"by"`
+			Reason       string `json:"reason"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		if req.By == "" {
+			req.By = "REGISTRAR"
+		}
+		s.writeJSON(w, s.p.RevokeCredential(req.CredentialID, req.By, orDefault(req.Reason, "issued in error")), nil)
+	}))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))

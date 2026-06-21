@@ -726,3 +726,15 @@ wired into the composition root and surfaced on platformd:
   BenefitReceipt (₹1000 disbursed) — both valid:true (signature + inclusion proof), all_valid:true. This is the
   brief's "portable credentials (NFT)" — verifiable, portable, tamper-evident — made real on the notary.
 - Status page: **48 modules · 411 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Credential-revocation registry (closes issue → anchor → verify → revoke)
+- `Platform.RevokeCredential(credID, by, reason)` + `RevocationStatus` — the NDEAR-S credential revocation
+  registry: a revoked credential is recorded (audited) and thereafter fails verification, **even though its
+  ed25519 signature + notary inclusion proof remain mathematically valid** (revocation is an authoritative
+  status the verifier must consult). The wallet folds it in: a revoked entry is `valid:false, revoked:true`
+  with a `REVOKED` failure, and the wallet is no longer all-valid. `platformd POST /revoke`. 2 integration
+  tests.
+- Verified live: enrolment credential valid:true → revoke (by DEO-Chennai, audited) → wallet shows valid:false,
+  revoked:true, failures [REVOKED], all_valid:false. The credential lifecycle (issue → anchor → verify →
+  revoke) is now complete and trust-correct.
+- Status page: **48 modules · 413 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

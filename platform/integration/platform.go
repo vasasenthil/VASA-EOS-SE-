@@ -103,6 +103,9 @@ type Platform struct {
 	// per-subject verifiable-credential wallet (admission/enrolment/DBT receipts), indexed by APAAR id.
 	wallet   map[string][]credentials.AnchoredCredential
 	walletMu sync.Mutex
+	// credential-revocation registry (credential id → revocation); a revoked credential fails verification.
+	revoked map[string]Revocation
+	revMu   sync.Mutex
 
 	now func() string
 
@@ -271,6 +274,7 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	p.Civic = civic.New(nil)
 	p.Funds = map[string]*reconcile.FundLedger{}
 	p.wallet = map[string][]credentials.AnchoredCredential{}
+	p.revoked = map[string]Revocation{}
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

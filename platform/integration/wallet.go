@@ -25,7 +25,8 @@ type WalletEntry struct {
 	Issuer   string            `json:"issuer"`
 	IssuedAt string            `json:"issued_at"`
 	Claims   map[string]string `json:"claims,omitempty"`
-	Valid    bool              `json:"valid"` // signature + notary inclusion proof both verify
+	Valid    bool              `json:"valid"`   // crypto verifies AND the credential is not revoked
+	Revoked  bool              `json:"revoked"` // present in the revocation registry
 	Failures []string          `json:"failures,omitempty"`
 }
 
@@ -49,9 +50,16 @@ func (p *Platform) Wallet(subject string) Wallet {
 	for _, ac := range creds {
 		valid, failures := credentials.Verify(ac)
 		c := ac.Signed.Credential
+		// revocation is an authoritative status the verifier must consult: a revoked credential is untrustworthy
+		// even though its signature + inclusion proof remain mathematically valid.
+		revoked := false
+		if _, isRevoked := p.RevocationStatus(c.ID); isRevoked {
+			revoked, valid = true, false
+			failures = append(failures, "REVOKED")
+		}
 		w.Credentials = append(w.Credentials, WalletEntry{
 			ID: c.ID, Type: c.Type, Issuer: c.Issuer, IssuedAt: c.IssuedAt, Claims: c.Claims,
-			Valid: valid, Failures: failures,
+			Valid: valid, Revoked: revoked, Failures: failures,
 		})
 		if !valid {
 			w.AllValid = false
