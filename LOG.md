@@ -677,3 +677,15 @@ wired into the composition root and surfaced on platformd:
   minted, audited. The §E consent register, G-tier escalation, L4 fund ledger, L7 credentials + notary, and L5
   audit all interlock in one welfare-delivery flow.
 - Status page: **48 modules · 404 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## PFMS reconciliation surface (fund-flow leakage detection)
+- `Platform.ReconcilePFMS(scheme, upstream)` + `platformd POST /pfms-reconcile` — reconciles a scheme's local
+  fund ledger (from DBT deliveries) against the upstream PFMS figures (source of truth) using the L4 reconcile
+  comparator: any money-field drift beyond the tight tolerance is **critical** (potential leakage/mis-posting),
+  surfaced with a human-readable rationale for a reconciler. Advisory only — mutates nothing; audited. Upstream
+  figures are supplied (live PFMS fetch gated B-022). 1 integration test.
+- Verified live: after delivering ₹2000, PFMS=2000/2000/2000 → Reconciled (clean, 0 critical drift);
+  PFMS utilised=900 vs local 2000 → Flagged, 1 critical drift ("Count drift beyond 1% tolerance on Utilised —
+  investigate the local figure against the state master"). This is the brief's "no leakage, no manual
+  reconciliation" made operational.
+- Status page: **48 modules · 404 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

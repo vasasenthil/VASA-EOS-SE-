@@ -145,6 +145,39 @@ func (p *Platform) RecordSubsidyBasis(grantID, beneficiary string) (consent.Gran
 	return p.Consent.Grant(grantID, beneficiary, "scheme-dbt", consent.Subsidy, true, "guardian")
 }
 
+// PFMSReconciliation is the result of reconciling a scheme's local ledger against upstream PFMS figures.
+type PFMSReconciliation struct {
+	Scheme             string                    `json:"scheme"`
+	Recommendation     string                    `json:"recommendation"` // Reconciled | Review | Flagged
+	Rationale          string                    `json:"rationale"`
+	Local              reconcile.FundLedger      `json:"local"`
+	Upstream           reconcile.PfmsExpenditure `json:"upstream"`
+	DriftCount         int                       `json:"drift_count"`
+	CriticalDriftCount int                       `json:"critical_drift_count"`
+	Clean              bool                      `json:"clean"` // local agrees with PFMS within money tolerance
+}
+
+// ReconcilePFMS reconciles a scheme's local fund ledger against the upstream PFMS figures (the source of
+// truth). Drift on any money field beyond the tight tolerance is potential leakage/mis-posting and is surfaced
+// for a human reconciler — advisory only, it mutates nothing. The upstream figures are passed in (the live
+// PFMS adapter fetch is gated on MoUs, B-022); this is the reconciliation seam the platform applies to them.
+func (p *Platform) ReconcilePFMS(scheme string, upstream reconcile.PfmsExpenditure) PFMSReconciliation {
+	local := p.FundLedger(scheme)
+	l := local
+	rep := reconcile.CompareFundFlowToPfms(upstream, &l)
+	res := PFMSReconciliation{
+		Scheme: scheme, Recommendation: string(rep.Recommendation), Rationale: rep.Rationale,
+		Local: local, Upstream: upstream, DriftCount: rep.DriftCount, CriticalDriftCount: rep.CriticalDriftCount,
+		Clean: rep.Recommendation == reconcile.Reconciled,
+	}
+	verdict := "reconciled"
+	if !res.Clean {
+		verdict = "drift"
+	}
+	p.appendAudit("system", "pfms.reconcile", scheme, verdict, rep.Rationale)
+	return res
+}
+
 // FundLedger returns the local fund-flow figures for a scheme (allocated/released/utilised).
 func (p *Platform) FundLedger(scheme string) reconcile.FundLedger {
 	p.fundsMu.Lock()

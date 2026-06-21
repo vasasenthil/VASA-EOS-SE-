@@ -21,6 +21,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
 	"github.com/vasa-eos-se-tn/platform/quality"
+	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 )
 
@@ -190,6 +191,7 @@ func (s *server) routes() http.Handler {
 	mux.HandleFunc("/grievance-queue", s.count(s.handleGrievanceQueue))
 	mux.HandleFunc("/rti", s.count(s.handleRTI))
 	mux.HandleFunc("/dbt", s.count(s.handleDBT))
+	mux.HandleFunc("/pfms-reconcile", s.count(s.handlePFMSReconcile))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))
@@ -537,6 +539,26 @@ func (s *server) handleDBT(w http.ResponseWriter, r *http.Request) {
 	// record the lawful basis first (a real onboarding would have done this at enrolment).
 	_, _ = s.p.RecordSubsidyBasis("DBT-BASIS-"+req.Beneficiary, req.Beneficiary)
 	s.writeJSON(w, s.p.DeliverDBT(r.Context(), req), nil)
+}
+
+// handlePFMSReconcile reconciles a scheme's local fund ledger against supplied upstream PFMS figures and
+// surfaces any drift (potential leakage/mis-posting). Upstream figures are POSTed (the live PFMS fetch is
+// gated, B-022): {scheme, allocated_inr, released_inr, utilised_inr}.
+func (s *server) handlePFMSReconcile(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Scheme    string  `json:"scheme"`
+		Allocated float64 `json:"allocated_inr"`
+		Released  float64 `json:"released_inr"`
+		Utilised  float64 `json:"utilised_inr"`
+	}
+	if !decode(w, r, &req) {
+		return
+	}
+	if req.Scheme == "" {
+		req.Scheme = "PUDHUMAI-PENN"
+	}
+	up := reconcile.PfmsExpenditure{Allocated: req.Allocated, Released: req.Released, Utilised: req.Utilised}
+	s.writeJSON(w, s.p.ReconcilePFMS(req.Scheme, up), nil)
 }
 
 // handleTenancy serves the T0–T6 sovereign multi-tenancy hierarchy: ?path=ID renders a tenant's governance
