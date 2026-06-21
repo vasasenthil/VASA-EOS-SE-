@@ -18,6 +18,19 @@ jobs:
   go-and-policy:
     name: Go modules + OPA policy plane
     runs-on: ubuntu-latest
+    # A real PostgreSQL service so the durable-store tests (e.g. the academic-calendar Postgres adapter) run
+    # against a live database in CI, not skipped. DATABASE_URL is exported to the test step below.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vasa
+          POSTGRES_PASSWORD: vasa
+          POSTGRES_DB: vasa_eos
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -48,6 +61,15 @@ jobs:
             echo "::endgroup::"
           done
           exit $fail
+
+      - name: durable PostgreSQL store tests (live database)
+        # Runs the durable-store adapter tests against the live PostgreSQL service in isolation, so the
+        # production persistence path is proven in CI (not skipped). DATABASE_URL selects the Postgres backend.
+        env:
+          DATABASE_URL: postgres://vasa:vasa@localhost:5432/vasa_eos?sslmode=disable
+        run: |
+          cd platform/integration
+          go test ./... -run 'TestPg' -count=1 -v
 
       - name: OPA policy unit tests
         run: opa test policies/ -v

@@ -1017,3 +1017,27 @@ wired into the composition root and surfaced on platformd:
   denied; moderation — teacher denied by RBAC (no write:school), head teacher publishes; grade distribution
   A1..E surfaced on the published Tamil sheet.
 - Green bar: 54 Go modules pass, OPA 33/33, gofmt clean. 498 tests.
+
+## Production-wiring the Academic Calendar: durable PostgreSQL store (no in-memory when configured)
+- Answer to "is end-to-end-in-memory avoidable?": YES for code I control — proven here on a real database.
+  Refactored the calendar domain into PURE transitions (`ApplySubmit`/`ApplyAct`/`ApplyUpdate` in
+  `calendar/transitions.go`) so the in-memory `Store` and a new Postgres adapter apply identical rules.
+- New `platform/integration/calendar_pg.go` — a REAL PostgreSQL adapter (`database/sql` + `jackc/pgx/v5`):
+  `calendar_entries` table (approval chain as JSONB), full CRUD + Submit/Act, `ensureSchema()` auto-migrate.
+  `calStore` interface; `calendarState()` selects the **durable Postgres store when `DATABASE_URL` is set**,
+  in-memory only as the credential-free fallback (logged). Idempotent seeding (PK collisions ignored) so data
+  survives restarts. Migration of record: `scripts/081-create-calendar-entries-table.sql`.
+- Dependency: pinned `jackc/pgx/v5 v5.6.0` (+ x/text v0.14, x/sync v0.6) — max go floor across the graph is
+  1.22, so CI's Go 1.22 still builds it; no `toolchain` directive; `go mod verify` clean.
+- CI: added a **PostgreSQL 16 service** to `.github/workflows/platform.yml` + a dedicated step
+  (`go test -run TestPg` with `DATABASE_URL`) so the durable path runs in CI against a live DB — NOT skipped.
+- PROVEN LIVE (raw):
+  - `TestPgCalendarDurable` PASSES against live Postgres — CRUD + 4-level approval persist across NEW store
+    instances (fresh connection pools), publication + delete durable, edit-after-publish rejected.
+  - platformd booted `live-opa(...)` + `DATABASE_URL`; `POST /calendar PERSIST-001` written, confirmed in
+    Postgres via independent `psql`; process KILLED; a FRESH platformd served `PERSIST-001` back (12 durable
+    entries) — the audit's "in-memory vanishes on restart" failure is fixed for this vertical.
+- Green bar: 54 Go modules pass (in-memory sweep), durable PG test passes, OPA 33/33, gofmt clean. 499 tests.
+- HONEST scope: this productionises ONE vertical (calendar) as the pattern; the other verticals follow the same
+  adapter approach. Still genuinely gated (not buildable by me): live government DPI credentials (APAAR/UDISE+/
+  PFMS/DigiLocker), HSM/State Data Centre, real PII — those are wired-and-waiting seams, not mocks of record.

@@ -107,6 +107,10 @@ type Filter struct {
 	Orgs map[string]bool // nil = all org units
 }
 
+// FilterMatch reports whether an entry satisfies a filter — exported so external persistence adapters (e.g. the
+// Postgres store) apply exactly the same filtering semantics as the in-memory store.
+func FilterMatch(f Filter, e Entry) bool { return f.match(e) }
+
 func (f Filter) match(e Entry) bool {
 	if f.Type != "" && e.Type != f.Type {
 		return false
@@ -166,16 +170,12 @@ func (s *Store) Update(id, title, etype, start, end, desc string) (Entry, error)
 	if !ok {
 		return Entry{}, errors.New("calendar: not found")
 	}
-	if e.Status == Pending || e.Status == Approved {
-		return Entry{}, errors.New("calendar: cannot edit an entry that is in approval or published")
-	}
-	e.Title, e.Type, e.StartDate, e.EndDate, e.Description = title, etype, start, end, desc
-	if err := e.Validate(); err != nil {
+	updated, err := ApplyUpdate(e, title, etype, start, end, desc, s.stamp())
+	if err != nil {
 		return Entry{}, err
 	}
-	e.UpdatedAt = s.stamp()
-	s.entries[id] = e
-	return e, nil
+	s.entries[id] = updated
+	return updated, nil
 }
 
 // Delete removes an entry. Returns false if it does not exist.
@@ -215,19 +215,12 @@ func (s *Store) Submit(id string, chain []ApprovalStep) (Entry, error) {
 	if !ok {
 		return Entry{}, errors.New("calendar: not found")
 	}
-	if e.Status != Draft && e.Status != Rejected {
-		return Entry{}, errors.New("calendar: only a draft or rejected entry can be submitted")
+	out, err := ApplySubmit(e, chain, s.stamp())
+	if err != nil {
+		return Entry{}, err
 	}
-	e.Chain = append([]ApprovalStep(nil), chain...)
-	e.CurrentStep = 0
-	e.UpdatedAt = s.stamp()
-	if len(e.Chain) == 0 {
-		e.Status = Approved
-	} else {
-		e.Status = Pending
-	}
-	s.entries[id] = e
-	return e, nil
+	s.entries[id] = out
+	return out, nil
 }
 
 // Act applies a decision at the entry's current approval level. The actor must hold the step's ApproverRole
@@ -238,36 +231,12 @@ func (s *Store) Act(id string, approve bool, actorID, actorRole string, scopes [
 	if !ok {
 		return Entry{}, errors.New("calendar: not found")
 	}
-	if e.Status != Pending {
-		return Entry{}, errors.New("calendar: entry is not awaiting approval")
+	out, err := ApplyAct(e, approve, actorID, actorRole, scopes, note, s.stamp())
+	if err != nil {
+		return Entry{}, err
 	}
-	if e.CurrentStep < 0 || e.CurrentStep >= len(e.Chain) {
-		return Entry{}, errors.New("calendar: approval chain is exhausted")
-	}
-	step := e.Chain[e.CurrentStep]
-	if actorRole != step.ApproverRole {
-		return Entry{}, errors.New("calendar: actor role " + actorRole + " may not act at tier " + step.Tier)
-	}
-	if step.RequiredScope != "" && !hasScope(scopes, step.RequiredScope) {
-		return Entry{}, errors.New("calendar: actor lacks the required scope " + step.RequiredScope)
-	}
-	now := s.stamp()
-	step.DecidedBy, step.DecidedAt, step.Note = actorID, now, note
-	if approve {
-		step.Decision = "approved"
-		e.Chain[e.CurrentStep] = step
-		e.CurrentStep++
-		if e.CurrentStep >= len(e.Chain) {
-			e.Status = Approved
-		}
-	} else {
-		step.Decision = "rejected"
-		e.Chain[e.CurrentStep] = step
-		e.Status = Rejected
-	}
-	e.UpdatedAt = now
-	s.entries[id] = e
-	return e, nil
+	s.entries[id] = out
+	return out, nil
 }
 
 func hasScope(scopes []string, want string) bool {

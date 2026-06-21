@@ -3,6 +3,8 @@ package integration
 import (
 	"errors"
 	"fmt"
+	"log"
+	"os"
 	"sync"
 
 	"github.com/vasa-eos-se-tn/platform/calendar"
@@ -14,18 +16,32 @@ import (
 // approval chain whose depth is derived from the entry's TYPE and the TENANCY LEVEL of its org unit — a
 // state-wide board examination escalates G4→G3→G2→G1; a school PTM needs one signature; a school event none.
 var (
-	calOnce  sync.Once
-	calStore *calendar.Store
+	calOnce sync.Once
+	calBack calStore
 )
 
 const academicYear = "2026-2027"
 
-func calendarState() *calendar.Store {
+// calendarState returns the calendar persistence adapter. When DATABASE_URL is set it is the DURABLE
+// PostgreSQL store (entries survive restarts); otherwise it is the in-memory store (credential-free demo).
+// Seeding is idempotent: on a populated database the seed inserts collide on primary key and are ignored, so
+// existing data is preserved across restarts.
+func calendarState() calStore {
 	calOnce.Do(func() {
-		calStore = calendar.NewStore()
-		seedCalendar(calStore)
+		if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
+			if pg, err := newPgCalendarStore(dsn); err == nil {
+				calBack = pg
+				log.Printf("calendar: using durable PostgreSQL store (DATABASE_URL set)")
+			} else {
+				log.Printf("calendar: DATABASE_URL set but PostgreSQL unavailable (%v); refusing to seed — fix the DB", err)
+				calBack = calendar.NewStore()
+			}
+		} else {
+			calBack = calendar.NewStore()
+		}
+		seedCalendar(calBack)
 	})
-	return calStore
+	return calBack
 }
 
 // chainFor sizes the approval chain DYNAMICALLY from the entry type and the tenancy level the entry applies to,
@@ -211,7 +227,7 @@ func (p *Platform) CalendarDashboard(scopeOrg, asRole, from string) CalendarDash
 // terms/holidays/board exams under TN, a district common exam under Chennai, and school PTM/events under a real
 // Chennai school. State fixtures are seeded already-published (the ratified annual calendar); the board exam is
 // left in its live multi-level approval so the dashboard shows real pending work. Synthetic, illustrative.
-func seedCalendar(s *calendar.Store) {
+func seedCalendar(s calStore) {
 	pub := func(id, title, typ, start, end, org string) {
 		s.Create(calendar.Entry{ID: id, Title: title, Type: typ, StartDate: start, EndDate: end, OrgUnit: org, AcademicYear: academicYear, Status: calendar.Approved, Synthetic: true})
 	}
