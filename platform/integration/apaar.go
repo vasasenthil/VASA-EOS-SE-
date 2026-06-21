@@ -114,5 +114,6 @@ func (p *Platform) issueEnrolmentCredential(a reconcile.ApaarRecord, udise, clas
 	if err != nil {
 		return credentials.AnchoredCredential{}, err
 	}
+	p.recordCredential(anchored[0])
 	return anchored[0], nil
 }

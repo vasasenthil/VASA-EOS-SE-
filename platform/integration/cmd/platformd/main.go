@@ -200,6 +200,13 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.StudentJourney(id), nil)
 	}))
+	mux.HandleFunc("/wallet", s.count(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Query().Get("apaar")
+		if id == "" {
+			id = "SYN-APAAR-000000000001"
+		}
+		s.writeJSON(w, s.p.Wallet(id), nil)
+	}))
 	mux.HandleFunc("/conformance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]any{"conformance": s.p.Conformance(), "pillars": s.p.Pillars()}, nil)
 	}))

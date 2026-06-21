@@ -715,3 +715,14 @@ wired into the composition root and surfaced on platformd:
   deliver → grievance.route), audit_chain_verified:true. This is the brief's "every directorate, every district,
   every school answers the same question with the same number" — the learner's single source of truth.
 - Status page: **48 modules · 409 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Per-learner verifiable-credential wallet (signature + notary inclusion proof, verified on read)
+- The platform now **indexes every issued credential by subject** (admission/enrolment/DBT receipts →
+  `recordCredential`, wired into all three issuers). `Platform.Wallet(apaarID)` returns the learner's
+  credentials, each **re-verified end-to-end on read** via `credentials.Verify` — the issuer ed25519 signature
+  AND the notary Merkle inclusion proof — so any relying party can confirm a credential is genuine + tamper-
+  evident, not merely listed. `platformd GET /wallet?apaar=`. 2 integration tests.
+- Verified live (enrol + DBT for one learner): wallet count 2 — EnrolmentRecord (udise/class/category) +
+  BenefitReceipt (₹1000 disbursed) — both valid:true (signature + inclusion proof), all_valid:true. This is the
+  brief's "portable credentials (NFT)" — verifiable, portable, tamper-evident — made real on the notary.
+- Status page: **48 modules · 411 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

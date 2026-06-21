@@ -137,6 +137,7 @@ func (p *Platform) issueDBTReceipt(scheme, beneficiary string, amount float64) (
 	if err != nil {
 		return credentials.AnchoredCredential{}, err
 	}
+	p.recordCredential(anchored[0])
 	return anchored[0], nil
 }
 

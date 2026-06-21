@@ -19,6 +19,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/catalogue"
 	"github.com/vasa-eos-se-tn/platform/civic"
 	"github.com/vasa-eos-se-tn/platform/consent"
+	"github.com/vasa-eos-se-tn/platform/credentials"
 	"github.com/vasa-eos-se-tn/platform/dr"
 	"github.com/vasa-eos-se-tn/platform/hitl"
 	"github.com/vasa-eos-se-tn/platform/i18n"
@@ -99,6 +100,9 @@ type Platform struct {
 	// scheme-DBT fund ledgers (per scheme code) — the local source of truth reconciled against PFMS.
 	Funds   map[string]*reconcile.FundLedger
 	fundsMu sync.Mutex
+	// per-subject verifiable-credential wallet (admission/enrolment/DBT receipts), indexed by APAAR id.
+	wallet   map[string][]credentials.AnchoredCredential
+	walletMu sync.Mutex
 
 	now func() string
 
@@ -266,6 +270,7 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	// §L12: a per-platform civic register holds this instance's RTI + grievance state.
 	p.Civic = civic.New(nil)
 	p.Funds = map[string]*reconcile.FundLedger{}
+	p.wallet = map[string][]credentials.AnchoredCredential{}
 
 	// L8: the tutor gateway serves the deterministic oracle baseline behind the safety gate (the GPU-served
 	// model swaps in at B-011 with no change here). The token meter grants each user an equity budget and a

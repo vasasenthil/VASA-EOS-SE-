@@ -177,6 +177,7 @@ func (p *Platform) issueAdmissionCredential(tenant, applicantID, name, category 
 	if err != nil {
 		return credentials.AnchoredCredential{}, err
 	}
+	p.recordCredential(anchored[0])
 	return anchored[0], nil
 }
 
