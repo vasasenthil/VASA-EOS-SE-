@@ -762,3 +762,15 @@ wired into the composition root and surfaced on platformd:
   z=-3.19, low). The Governance/early-warning agent surface — "surface risk in an indicator for an officer" —
   is now real over the populated estate.
 - Status page: **48 modules · 417 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Policy-lever simulation (Policy agent → projection → human sanction)
+- `Platform.SimulatePolicyLever(ctx, req)` — the L9 Policy agent projects a lever's **coverage/cost/equity**
+  impact (L8 Policy engine, over the §D.1 1.27 Cr default population) and, because it is **high-stakes, never
+  auto-adopts**: the adoption is routed to the HITL queue for a **sanctioning authority** (policy.sanction
+  scope). `DecidePolicyLever` records the lever as adopted (HITL executor `policy.adopt` branch) only on human
+  approval; rejection stops it. `platformd POST /policy`, GET/POST `/policy-queue`. 2 integration tests.
+- Verified live: "Free-cycle scheme expansion to Class 9" (coverage 0.6, +0.25, ₹4500/unit, equity 0.8) →
+  projection 60%→85%, +31.75 L newly covered, ₹14,287.5 cr, equity 0.20; requires_approval:true, queued
+  TR-0001; MINISTER approves → "policy lever adopted". AI assists; the human authority decides — every decision
+  reversible + audited.
+- Status page: **48 modules · 419 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

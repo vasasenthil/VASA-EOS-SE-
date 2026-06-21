@@ -207,6 +207,32 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.Wallet(id), nil)
 	}))
+	mux.HandleFunc("/policy", s.count(func(w http.ResponseWriter, r *http.Request) {
+		var req integration.PolicyLeverRequest
+		if !decode(w, r, &req) {
+			return
+		}
+		if req.Name == "" {
+			req.Name, req.CurrentCoverage, req.CoverageDelta, req.CostPerUnit, req.EquityWeight = "Free-cycle scheme expansion", 0.6, 0.25, 4500, 0.8
+		}
+		s.writeJSON(w, s.p.SimulatePolicyLever(r.Context(), req), nil)
+	}))
+	mux.HandleFunc("/policy-queue", s.count(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			s.writeJSON(w, s.p.PendingPolicyLevers(), nil)
+			return
+		}
+		var req struct {
+			RequestID string `json:"request_id"`
+			Approve   bool   `json:"approve"`
+			Authority string `json:"authority"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		res, err := s.p.DecidePolicyLever(r.Context(), req.RequestID, req.Approve, orDefault(req.Authority, "MINISTER"))
+		s.writeJSON(w, res, err)
+	}))
 	mux.HandleFunc("/cohort-analytics", s.count(func(w http.ResponseWriter, r *http.Request) {
 		ind := r.URL.Query().Get("indicator")
 		z := 0.0

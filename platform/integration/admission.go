@@ -208,6 +208,12 @@ func (p *Platform) Execute(_ context.Context, tool string, args map[string]any) 
 		p.Civic.FileGrievance(id, subject, citizen, tier)
 		return "grievance " + id + " confirmed + filed at " + tier, nil
 	}
+	if tool == "policy.adopt" {
+		lever, _ := args["lever"].(string)
+		summary, _ := args["summary"].(string)
+		p.appendAudit("authority", "policy.adopt", lever, "adopted", summary)
+		return "policy lever adopted: " + lever, nil
+	}
 	// Any tool in the agent registry is a valid (advisory or human-approved) action.
 	if _, err := p.Reg.Lookup(tool); err == nil {
 		return "executed: " + tool, nil
