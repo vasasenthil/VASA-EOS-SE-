@@ -1199,3 +1199,18 @@ wired into the composition root and surfaced on platformd:
 - Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests
   (calendar·exams·leave·directory·audit×2·grievance·admission) pass via the CI TestPg step against the live
   PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Closing the admission loop: durable HITL finalisation
+- `Platform.FinaliseAdmission(ctx, requestID, approve, officer)` resolves a pending-approval admission
+  end-to-end: a scoped officer decides the HITL request (admission.decide, fail-closed) and the DURABLE
+  application record is flipped to its final stage. Child-protective RTE semantics: requested reject + APPROVE
+  → denied (rejection upheld); requested reject + REJECT → admitted (overturned in the child's favour, credential
+  minted+anchored); requested admit + APPROVE → admitted; requested admit + REJECT → denied. `POST
+  /admissions/finalise`.
+- PROVEN LIVE (raw): `TestFinaliseAdmissionUpdatesPersistedRecord` passes (pending → overturn admits + issues
+  ADM-credential, record finalised with no dangling request id; upheld rejection denies; unknown request id
+  errors). platformd (live-opa + DATABASE_URL): an EWS reject → pending-approval (request TR-0001, persisted);
+  the reviewer overturned it (approve=false) → the durable row flipped from pending-approval/TR-0001/no-cred to
+  admitted / cleared-request / credential ADM-FE-EWS.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.

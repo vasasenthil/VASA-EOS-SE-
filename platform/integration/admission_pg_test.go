@@ -76,3 +76,44 @@ func TestAdmissionPersistsApplication(t *testing.T) {
 		t.Fatalf("dashboard must reflect the pending EWS application: %+v", d)
 	}
 }
+
+func TestFinaliseAdmissionUpdatesPersistedRecord(t *testing.T) {
+	p := newPlatform(t)
+	// an EWS reject on an open quota is routed to HITL review (pending-approval).
+	res, err := p.Admission(context.Background(), AdmissionRequest{
+		Tenant: "TN/Chennai", ActorRole: "HEAD_TEACHER", Decision: "reject", Category: "EWS",
+		ApplicantID: "FIN-1", ApplicantName: "synthetic", ApplicantAge: 6, Region: "TN-SDC",
+	})
+	if err != nil || res.Stage != "pending-approval" || res.RequestID == "" {
+		t.Fatalf("setup: expected pending-approval with a request id: %+v err=%v", res, err)
+	}
+	if app, _ := p.AdmissionApplicationRecord("FIN-1"); app.Stage != "pending-approval" {
+		t.Fatalf("the persisted record should start pending: %+v", app)
+	}
+
+	// the reviewer OVERTURNS the rejection (rejects the HITL) → the EWS child is admitted (child-protective).
+	out, err := p.FinaliseAdmission(context.Background(), res.RequestID, false, "G6-Compliance")
+	if err != nil {
+		t.Fatalf("finalise: %v", err)
+	}
+	if out.Stage != "admitted" || out.CredentialID != "ADM-FIN-1" {
+		t.Fatalf("overturned EWS reject must admit + issue a credential: %+v", out)
+	}
+	// the DURABLE record reflects the final stage (no longer pending, no dangling request id).
+	app, ok := p.AdmissionApplicationRecord("FIN-1")
+	if !ok || app.Stage != "admitted" || app.RequestID != "" {
+		t.Fatalf("the persisted record must be finalised: %+v", app)
+	}
+	// a second EWS reject, upheld this time → denied.
+	res2, _ := p.Admission(context.Background(), AdmissionRequest{
+		Tenant: "TN/Chennai", ActorRole: "HEAD_TEACHER", Decision: "reject", Category: "EWS",
+		ApplicantID: "FIN-2", ApplicantName: "synthetic", ApplicantAge: 6, Region: "TN-SDC",
+	})
+	if out2, err := p.FinaliseAdmission(context.Background(), res2.RequestID, true, "G6-Compliance"); err != nil || out2.Stage != "denied" {
+		t.Fatalf("upheld rejection must deny: %+v err=%v", out2, err)
+	}
+	// an unknown request id is rejected.
+	if _, err := p.FinaliseAdmission(context.Background(), "NOPE", true, "G6-Compliance"); err == nil {
+		t.Fatal("an unknown HITL request must error")
+	}
+}

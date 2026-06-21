@@ -572,6 +572,23 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.AdmissionDashboard(r.URL.Query().Get("tenant")), nil)
 	}))
+	mux.HandleFunc("/admissions/finalise", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// a scoped officer finalises a pending-approval admission. POST { request_id, approve, officer }.
+		var req struct {
+			RequestID string `json:"request_id"`
+			Approve   bool   `json:"approve"`
+			Officer   string `json:"officer"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		app, err := s.p.FinaliseAdmission(r.Context(), req.RequestID, req.Approve, orDefault(req.Officer, "G6-Compliance"))
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "application": app}, nil)
+	}))
 	mux.HandleFunc("/grievance-case", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Grievance Redressal cases. GET ?scope=<org>&status= → scoped dashboard (or list with &list=1).
 		// POST { id,complainant,category,subject,org_unit } lodges a case (dynamic SLA + escalation chain).
