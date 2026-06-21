@@ -29,7 +29,7 @@ func Blocks() []Block {
 	return []Block{
 		// Registries (Electronic Registries — RC)
 		{"REG-LEARNER", "Learner Registry (APAAR)", "Registry", Federated, "L4 adapters/apaar"},
-		{"REG-TEACHER", "Teacher Registry", "Registry", Pending, "B-022 HRMS-TN"},
+		{"REG-TEACHER", "Teacher Registry", "Registry", Federated, "L4 adapters/hrms"},
 		{"REG-SCHOOL", "School Registry (UDISE+)", "Registry", Federated, "L4 adapters/udise"},
 		{"REG-CONTENT", "Content Registry", "Registry", Conformant, "L7 knowledgegraph"},
 		{"REG-CREDENTIAL", "Credential Registry", "Registry", Conformant, "L7 credentials + notary"},
@@ -54,7 +54,7 @@ func Blocks() []Block {
 		{"CRED-LOCKER", "DigiLocker Push", "Credential", Federated, "L4 adapters/digilocker"},
 		// Finance & welfare
 		{"FIN-PFMS", "PFMS Fund-Flow", "Finance", Federated, "L4 adapters/pfms"},
-		{"FIN-DBT", "DBT / Benefit Transfer", "Finance", Pending, "B-022 APBS"},
+		{"FIN-DBT", "DBT / Benefit Transfer", "Finance", Federated, "L4 adapters/bsp (APBS)"},
 		// Platform services
 		{"SVC-NOTIFY", "Notification", "Service", Conformant, "L6 notify"},
 		{"SVC-WORKFLOW", "Workflow / BPMN", "Service", Conformant, "L6 workflow"},

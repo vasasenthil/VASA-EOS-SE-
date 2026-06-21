@@ -26,7 +26,7 @@ verdict cites a path or a gate. No row is marked done that a test does not back.
 | **L1 Sovereign Foundation** | state compute/storage/net; HSM root of trust; off-switch; escrow | 🟡 **Go-partial** | off-switch ✅ `L1-foundation/off-switch-svc`, escrow ✅ `L1-foundation/escrow-agent`; **HSM/state DC ⛔** (B-001/B-002) |
 | **L2 Infrastructure Substrate** | K8s 1.30, Istio, Vault, ArgoCD, multi-region active-active | ⛔ **Gated** | deployment infra, not application code (B-010); no Go module by design |
 | **L3 Data Fabric** | one data model + knowledge graph; 8 polyglot stores | ✅ **Go** (logic) / ⛔ stores | dataplane, seed, onboarding, quality, catalogue, consent, population — all ✅ tested; the **8 datastores ⛔** (B-013); persistence seam present |
-| **L4 Integration & Federation** | 21 sovereign DPI adapters; NDEAR-S | 🟡 **Go-partial** / ✅ NDEAR | `L4-integration/adapters`: APAAR·UDISE·DIKSHA·PFMS·DigiLocker (**5 of 21**) ✅; reconcile/resilience ✅; **NDEAR-S 29/29 ✅ now `L4-integration/ndears`** (gap closed); remaining 16 adapters ⛔ (B-022) |
+| **L4 Integration & Federation** | 21 sovereign DPI adapters; NDEAR-S | 🟡 **Go-partial** / ✅ NDEAR | `L4-integration/adapters`: APAAR·UDISE·DIKSHA·PFMS·DigiLocker·HRMS·IFMS·MDM·ICDS·CBSE·TN-Board·BSP·telco (**13 of 21**) ✅; reconcile/resilience ✅; **NDEAR-S 29/29 ✅ now `L4-integration/ndears`** (gap closed); remaining 8 adapters ⛔ (B-022) |
 | **L5 Security & Compliance** | Keycloak, OPA, SPIRE, Vault, mTLS, immutable audit, zero-trust | ✅ **Go** (policy+audit) | audit ✅ `L5-security/audit`, kms ✅, pep ✅ over `policies/*.rego`; **Keycloak/SPIRE/mTLS ⛔** (infra) |
 | **L6 Platform Services** | Identity, Workflow (Camunda 8), Notify, Search, Content, Config, i18n | ✅ **Go** (re-authored) | workflow ✅, notify ✅, i18n ✅ (22-lang); **Camunda/OpenSearch** swapped for in-process engines |
 | **L7 AI Knowledge Layer** | curriculum/learner/teacher/school/gov graphs (Neo4j); embeddings (Milvus); TN canon | ✅ **Go** (logic) / ⛔ stores | knowledgegraph ✅, retrieval ✅, notary ✅, credentials ✅; **Neo4j/Milvus ⛔** (B-013) |
@@ -153,7 +153,7 @@ is ✅ Go; the **physical** load proof (real cluster, k6 against it) is gated.
 
 | Group | Verdict | Note |
 |---|---|---|
-| NDEAR-S 29/29 | ✅ **Go** *(gap closed)* | `L4-integration/ndears` — the 29 building blocks with sovereign/federated/pending posture (26/29 addressed today); `GET /ndears` |
+| NDEAR-S 29/29 | ✅ **Go** *(gap closed)* | `L4-integration/ndears` — the 29 building blocks with sovereign/federated/pending posture (28/29 addressed today; only auth/Keycloak pending); `GET /ndears` |
 | WCAG 2.1 AAA | 🟡 **TS-partial** | TS app; AAA is partial/audit-required (honest in `architecture-layers.ts`) |
 | ISO 27001/27701/42001/23894 · NIST AI RMF · OWASP · CIS · PCI | ❌ **Absent (code)** | documented/process commitments; not code in the Go build |
 | SDG 4/5/10/16 · UNESCO TES+4 · UNICEF GenU · WEF Ed 4.0 · OECD PISA · World Bank STARS · GPAI · UNESCO AI Ethics · ESG | ✅ **Go** *(gap closed)* | `L11-governance/alignments` (GLO-TN-001) — 12 frameworks mapped to in-mesh evidence with posture; `GET /alignments` |

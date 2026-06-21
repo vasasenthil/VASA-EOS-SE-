@@ -805,3 +805,17 @@ wired into the composition root and surfaced on platformd:
   with-Gulp) are GREEN on the latest commits. The historical failures were (a) old CI failures on long-
   superseded commits and (b) the default "NodeJS with Gulp" starter, which was already rewritten to run the
   real tsc + next build (Node 20.x/22.x) and now passes. No current failing job.
+
+## Built pending federation — 8 more sovereign-DPI adapters (5 → 13 of 21)
+- HONEST NOTE on "build all the pending": most pending items are NOT code (physical substrate — HSM/K8s/8
+  datastores/GPU/Besu/IoT/Edge; real population PII; external CAG/UNESCO audits; explicitly out-of-scope states/
+  national tier). Those cannot be fabricated. The genuinely-buildable pending slice is the FEDERATION code, so:
+- `platform/L4-integration/adapters` — built the 8 remaining named sovereign-DPI anti-corruption adapters
+  (HRMS-TN teacher registry · IFMS-TN treasury · PM-POSHAN/CMBS mid-day-meal · ICDS Anganwadi · CBSE
+  affiliation · TN State Board/DGE results · BSP/APBS DBT settlement · telco SMS DLR), each on the shared
+  resilient `core` (breaker + bounded retry) with a DTO → domain ACL transform. 8 tests (httptest). Live
+  endpoints/creds still gated on MoUs (B-022) — the code is ready to plug in.
+- NDEAR-S register updated: REG-TEACHER (→HRMS) and FIN-DBT (→BSP/APBS) move from pending to federated →
+  **28/29 addressed** (only ID-AUTH/Keycloak pending, infra B-010). Conformance diff updated: L4 adapters
+  **13 of 21** (was 5).
+- Status page: **48 modules · 431 tests**. Green bar: 48 Go modules pass, OPA 33/33, tsc 0 errors.

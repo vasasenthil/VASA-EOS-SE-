@@ -42,7 +42,7 @@ DESC = {
     "tenancy": "T0–T6 sovereign multi-tenancy: strict-chain hierarchy · downward governance · anchored to the real estate (≈73k nodes)",
     "govtiers": "L11 governance: G1–G7 tiers + 3 AI Control Tower bodies · escalation paths",
     "portals": "L10 experience: the 13 role-tailored stakeholder portals (role · home · tier · grants)",
-    "ndears": "L4 NDEAR-S conformance: 29 building blocks · sovereign/federated/pending posture (26/29 addressed)",
+    "ndears": "L4 NDEAR-S conformance: 29 building blocks · sovereign/federated/pending posture (28/29 addressed)",
     "alignments": "L11 GLO-TN-001: international frameworks (SDG·UNESCO·PISA·STARS·GPAI…) mapped to evidence",
     "modulecatalogue": "L11 catalogue: the 391 functional modules (329 core + 62 TN), computed + self-verified",
     "civic": "L12 citizen/civic: PII-suppressed public dashboards · RTI register (30-day clock) · grievance tracker · open data",
