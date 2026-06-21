@@ -995,3 +995,25 @@ wired into the composition root and surfaced on platformd:
   a state board exam materialises G4→G3→G2→G1; wrong role at level 1 denied (fail-closed); full G4→G3→G2→G1 walk
   publishes; district scope (4) is a strict subset of state (12).
 - Green bar: 53 Go modules pass, OPA 33/33, gofmt clean. 488 tests.
+
+## Examinations & Results with IAM-gated marks entry (Go L6)
+- New L6 module `exams` — the lifecycle AFTER an exam is scheduled on the calendar: a marks `Sheet` per exam,
+  CRUD-addressable per student, moving open → submitted → published / returned:
+  - `Enter` (open/returned only, range-checked) · `Submit` (locks + computes TN grade bands A1..E + pass@35%)
+    · `Moderate(approve)` (publish or return for correction) · `Analytics` (entered/pass/fail, pass%, mean,
+    highest, grade distribution) · `Register` + `Summarise` for multi-sheet roll-up.
+- Integration (`exams.go`): every mutation gated by the SAME unified five-model PDP — so the access models are
+  load-bearing, not decorative:
+  - `EnterMarks` / `SubmitMarksSheet` → `write:assessment` (teaching-cadre **ABAC** + jurisdiction **ReBAC**).
+  - `ModerateMarksSheet` → `write:school` (head-teacher authority) — **separation of duties**: a teacher who can
+    enter marks cannot moderate them.
+  - `ExamSheet` (single sheet detail + analytics) · `ExamResultsDashboard(scope)` (downward-governance scoped:
+    sheets governed, by-status, aggregate pass%, per-subject analytics). Seeded 3 sheets at a real Chennai
+    school across the lifecycle (open/submitted/published) with synthetic SYN-STU cohorts + deterministic marks.
+- `platformd`: `GET /exams?scope=` (results dashboard) · `GET /exams?exam=<id>` (sheet detail) ·
+  `POST /exams/marks` (PDP-gated entry) · `POST /exams/lifecycle` (submit / moderate).
+- Verified live: TN dashboard 3 sheets (open/submitted/published), 90 results, overall pass 70%, per-subject
+  pass%/mean; teacher allowed to enter marks, **citizen and DEO denied by the ABAC cadre gate**, unknown actor
+  denied; moderation — teacher denied by RBAC (no write:school), head teacher publishes; grade distribution
+  A1..E surfaced on the published Tamil sheet.
+- Green bar: 54 Go modules pass, OPA 33/33, gofmt clean. 498 tests.

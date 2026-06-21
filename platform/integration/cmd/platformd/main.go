@@ -379,6 +379,67 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"entry": e, "ok": err == nil, "error": errMsg}, nil)
 	}))
+	mux.HandleFunc("/exams", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Examinations & Results. GET ?scope=<org> → jurisdiction-scoped results dashboard; ?exam=<id> → a
+		// single marks sheet detail (results + analytics).
+		if id := r.URL.Query().Get("exam"); id != "" {
+			d, ok := s.p.ExamSheet(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown exam sheet"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, d, nil)
+			return
+		}
+		s.writeJSON(w, s.p.ExamResultsDashboard(orDefault(r.URL.Query().Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/exams/marks", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// enter a student's marks — gated by the unified PDP (teaching-cadre ABAC + jurisdiction ReBAC).
+		// POST { exam_id, student_id, marks, actor }.
+		var req struct {
+			ExamID    string `json:"exam_id"`
+			StudentID string `json:"student_id"`
+			Marks     int    `json:"marks"`
+			Actor     string `json:"actor"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		err := s.p.EnterMarks(req.ExamID, req.StudentID, req.Marks, orDefault(req.Actor, "SYN-U-TCH"))
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em}, nil)
+	}))
+	mux.HandleFunc("/exams/lifecycle", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// submit or moderate a sheet. POST { exam_id, action: "submit"|"moderate", approve, actor }.
+		var req struct {
+			ExamID  string `json:"exam_id"`
+			Action  string `json:"action"`
+			Approve bool   `json:"approve"`
+			Actor   string `json:"actor"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		var err error
+		switch req.Action {
+		case "submit":
+			err = s.p.SubmitMarksSheet(req.ExamID, orDefault(req.Actor, "SYN-U-HM"))
+		case "moderate":
+			err = s.p.ModerateMarksSheet(req.ExamID, req.Approve, orDefault(req.Actor, "SYN-U-HM"))
+		default:
+			http.Error(w, `{"error":"action must be submit or moderate"}`, http.StatusBadRequest)
+			return
+		}
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		d, _ := s.p.ExamSheet(req.ExamID)
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "sheet": d}, nil)
+	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {
