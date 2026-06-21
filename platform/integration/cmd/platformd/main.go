@@ -264,6 +264,13 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.OnboardTeacher(r.Context(), req), nil)
 	}))
+	mux.HandleFunc("/staff", s.count(func(w http.ResponseWriter, r *http.Request) {
+		emp := r.URL.Query().Get("emp")
+		if emp == "" {
+			emp = "E-1001"
+		}
+		s.writeJSON(w, s.p.TeacherProfile(emp), nil)
+	}))
 	mux.HandleFunc("/school", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
 		if udise == "" {

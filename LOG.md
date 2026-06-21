@@ -894,3 +894,16 @@ wired into the composition root and surfaced on platformd:
   unknown school → refused. The L4 HRMS adapter, reconcile, L6 tenancy, §E employment basis, L7 credentials +
   notary and L5 audit all interlock — and the platform now onboards BOTH students (APAAR) and staff (HRMS).
 - Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
+
+## Teacher 360 / service-record view (completes the student · school · teacher triad of 360 views)
+- `Platform.TeacherProfile(empID)` — the staff-360 record assembled across the layers: the §E **employment
+  lawful basis**, the **postings** derived from the verifiable ServiceRecord credentials (`CurrentPosting` = the
+  non-revoked, verifying one), the full **verifiable wallet**, and the **audit timeline** (reconstructed from
+  the L5 chain, re-verified). Read-only + derived. `platformd GET /staff?emp=`. 3 integration tests.
+- Verified live (after onboarding E-1001 at a Chennai school): found:true, lawful basis staff-hrms/employment,
+  current_posting SVC-E-1001-33030004181 (PG Assistant, teaching, valid), wallet 1 cred all_valid, audit
+  timeline [staff.onboard], chain verified. A revoked posting (transfer/retire) leaves the history but no
+  current posting — same trust model as the student wallet.
+- The platform now has all three 360 views: **student journey** (learner) · **school profile** (institution) ·
+  **teacher profile** (staff) — each a single auditable record assembled live across L1–L12.
+- Status page: green. Green bar: 51 Go modules pass, OPA 33/33, tsc 0 errors.
