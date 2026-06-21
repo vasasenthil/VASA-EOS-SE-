@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"log"
+	"os"
 	"sync"
 
 	"github.com/vasa-eos-se-tn/platform/directory"
@@ -18,12 +20,24 @@ import (
 // not decorative.
 var (
 	examOnce sync.Once
-	examReg  *exams.Register
+	examReg  examStore
 )
 
-func examState() *exams.Register {
+// examState returns the marks-sheet store. When DATABASE_URL is set it is the DURABLE PostgreSQL store
+// (results survive restarts); otherwise it is the in-memory register (credential-free demo).
+func examState() examStore {
 	examOnce.Do(func() {
-		examReg = exams.NewRegister()
+		if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
+			if pg, err := newPgExamStore(dsn); err == nil {
+				examReg = pg
+				log.Printf("exams: using durable PostgreSQL store (DATABASE_URL set)")
+			} else {
+				log.Printf("exams: DATABASE_URL set but PostgreSQL unavailable (%v); using in-memory", err)
+				examReg = exams.NewRegister()
+			}
+		} else {
+			examReg = exams.NewRegister()
+		}
 		seedExams(examReg)
 	})
 	return examReg
@@ -32,7 +46,7 @@ func examState() *exams.Register {
 // seedExams plants three marks sheets at a real Chennai school across the lifecycle: an OPEN sheet still being
 // filled, a SUBMITTED sheet awaiting the head teacher's moderation, and a PUBLISHED sheet. Students and marks
 // are synthetic + deterministic (SYN-STU ids), never real PII.
-func seedExams(r *exams.Register) {
+func seedExams(r examStore) {
 	school := tenancyLeafUnder("TN-DIST-Chennai")
 	if school == "" {
 		school = "33000000000"
@@ -95,7 +109,7 @@ func (p *Platform) EnterMarks(examID, studentID string, marks int, actorUserID s
 		p.appendAudit("user:"+actorUserID, "exams.marks.denied", examID, "deny", why)
 		return errors.New("exams: not authorised — " + why)
 	}
-	if err := sh.Enter(studentID, marks); err != nil {
+	if err := examState().Enter(examID, studentID, marks); err != nil {
 		return err
 	}
 	p.appendAudit("user:"+actorUserID, "exams.marks.enter", examID, "executed", studentID)
@@ -112,10 +126,11 @@ func (p *Platform) SubmitMarksSheet(examID, actorUserID string) error {
 		p.appendAudit("user:"+actorUserID, "exams.submit.denied", examID, "deny", why)
 		return errors.New("exams: not authorised — " + why)
 	}
-	if err := sh.Submit(); err != nil {
+	if err := examState().Submit(examID); err != nil {
 		return err
 	}
-	p.appendAudit("user:"+actorUserID, "exams.submit", examID, "executed", sh.Status)
+	updated, _ := examState().Get(examID)
+	p.appendAudit("user:"+actorUserID, "exams.submit", examID, "executed", updated.Status)
 	return nil
 }
 
@@ -130,14 +145,15 @@ func (p *Platform) ModerateMarksSheet(examID string, approve bool, actorUserID s
 		p.appendAudit("user:"+actorUserID, "exams.moderate.denied", examID, "deny", why)
 		return errors.New("exams: not authorised to moderate — " + why)
 	}
-	if err := sh.Moderate(approve); err != nil {
+	if err := examState().Moderate(examID, approve); err != nil {
 		return err
 	}
 	effect := "published"
 	if !approve {
 		effect = "returned"
 	}
-	p.appendAudit("user:"+actorUserID, "exams.moderate", examID, effect, sh.Status)
+	updated, _ := examState().Get(examID)
+	p.appendAudit("user:"+actorUserID, "exams.moderate", examID, effect, updated.Status)
 	return nil
 }
 

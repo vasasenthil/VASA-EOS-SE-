@@ -1041,3 +1041,18 @@ wired into the composition root and surfaced on platformd:
 - HONEST scope: this productionises ONE vertical (calendar) as the pattern; the other verticals follow the same
   adapter approach. Still genuinely gated (not buildable by me): live government DPI credentials (APAAR/UDISE+/
   PFMS/DigiLocker), HSM/State Data Centre, real PII — those are wired-and-waiting seams, not mocks of record.
+
+## Production-wiring vertical 2: Examinations & Results → durable PostgreSQL
+- New `platform/integration/exams_pg.go` — real PostgreSQL adapter for marks sheets: `exam_sheets` +
+  `exam_results` tables (FK + ON DELETE CASCADE), every op rehydrates the sheet via new `exams.LoadSheet`,
+  applies the SAME domain method (Enter/Submit/Moderate) as the in-memory store, and saves it back in a
+  transaction. `examStore` interface; `examState()` selects the durable Postgres store when `DATABASE_URL` is
+  set, in-memory otherwise. Marks entry/submit/moderate still gated by the unified five-model PDP.
+  Migration of record: `scripts/082-create-exam-sheets-tables.sql`.
+- PROVEN LIVE (raw): `TestPgExamsDurable` passes against live Postgres — marks, the lock+grade on submit, and
+  moderation all persist across FOUR fresh store instances; locked-sheet entry rejected durably; analytics
+  durable. platformd (live-opa + DATABASE_URL): teacher entered a mark via `POST /exams/marks` → confirmed in
+  Postgres via independent psql (marks 91); head teacher `submit` via API → grade A1/pass=t computed and
+  persisted in Postgres.
+- Green bar: 54 Go modules pass (in-memory sweep), durable PG tests (calendar + exams) pass via the CI
+  `TestPg` step against the live PostgreSQL service, OPA 33/33, gofmt clean.

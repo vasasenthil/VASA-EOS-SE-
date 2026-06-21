@@ -185,10 +185,51 @@ func (s *Sheet) Analytics() Analytics {
 	return a
 }
 
+// LoadSheet reconstructs a sheet in a known state from durable storage — its stored status and its already
+// computed results — bypassing the entry guards. Used by persistence adapters (e.g. the Postgres store) to
+// rehydrate a sheet before applying an operation.
+func LoadSheet(examID, org, subject, class string, max int, status string, results []Result) *Sheet {
+	s := &Sheet{ExamID: examID, OrgUnit: org, Subject: subject, Class: class, MaxMarks: max, Status: status, results: map[string]Result{}}
+	for _, r := range results {
+		if _, ok := s.results[r.StudentID]; !ok {
+			s.order = append(s.order, r.StudentID)
+		}
+		s.results[r.StudentID] = r
+	}
+	return s
+}
+
 // Register is the collection of marks sheets, keyed by exam id.
 type Register struct {
 	sheets map[string]*Sheet
 	order  []string
+}
+
+// Enter records a student's marks on a sheet in the register (in-memory convenience matching the store port).
+func (r *Register) Enter(examID, studentID string, marks int) error {
+	s, ok := r.sheets[examID]
+	if !ok {
+		return errors.New("exams: sheet not found")
+	}
+	return s.Enter(studentID, marks)
+}
+
+// Submit locks and grades a sheet in the register.
+func (r *Register) Submit(examID string) error {
+	s, ok := r.sheets[examID]
+	if !ok {
+		return errors.New("exams: sheet not found")
+	}
+	return s.Submit()
+}
+
+// Moderate publishes or returns a sheet in the register.
+func (r *Register) Moderate(examID string, approve bool) error {
+	s, ok := r.sheets[examID]
+	if !ok {
+		return errors.New("exams: sheet not found")
+	}
+	return s.Moderate(approve)
 }
 
 // NewRegister returns an empty register.
