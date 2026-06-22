@@ -1,6 +1,6 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled, isDbUnreachable } from "@/lib/supabase/server"
 import { demoRoles } from "@/lib/governance/demo"
 import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
@@ -12,18 +12,6 @@ const CRITICAL_DB_ERROR_MSG =
 
 const ROLES_BASE_PATH = "/admin/governance/roles" // Adjust if your admin path is different
 const PERMISSIONS_BASE_PATH = "/admin/governance/permissions"
-
-// isDbUnreachable detects a network/connection failure to the database (as opposed to a query error). When
-// Supabase is configured but the instance can't be reached (offline preview, restricted network, paused
-// project), the underlying fetch throws "TypeError: fetch failed" / ECONNREFUSED / ENOTFOUND / ETIMEDOUT.
-// In that case read-only pages should degrade to the demo data set rather than surface a hard error.
-function isDbUnreachable(err: unknown): boolean {
-  const e = err as any
-  const msg = String(e?.message ?? e ?? "").toLowerCase()
-  const cause = String(e?.cause?.code ?? e?.cause?.message ?? e?.code ?? "").toLowerCase()
-  const needles = ["fetch failed", "econnrefused", "enotfound", "etimedout", "econnreset", "network", "und_err", "socket"]
-  return needles.some((n) => msg.includes(n) || cause.includes(n))
-}
 
 export interface RoleActionState<T = Role | Role[] | RolePermission | null> {
   success: boolean
