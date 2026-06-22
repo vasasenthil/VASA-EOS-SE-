@@ -21,6 +21,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
+	"github.com/vasa-eos-se-tn/platform/infra"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
 	"github.com/vasa-eos-se-tn/platform/library"
@@ -818,6 +819,70 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.MDMDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/infra", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Infrastructure & Asset Register. GET ?scope=<org> → scoped estate dashboard (condition/status, open
+		// backlog by severity, needs-attention roster); ?tickets=<assetID> → an asset's ticket history. POST
+		// { action, ... }: asset { id,org_unit,name,category,condition,status,acquired_on } registers an asset;
+		// ticket { id,asset_id,org_unit,issue,severity,raised_on } raises a maintenance ticket; assign/resolve/
+		// close { id,assignee|on } walk a ticket; decommission/return { id,condition } move an asset.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Category   string `json:"category"`
+				Condition  string `json:"condition"`
+				Status     string `json:"status"`
+				AcquiredOn string `json:"acquired_on"`
+				AssetID    string `json:"asset_id"`
+				Issue      string `json:"issue"`
+				Severity   string `json:"severity"`
+				RaisedOn   string `json:"raised_on"`
+				Assignee   string `json:"assignee"`
+				On         string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "ticket":
+				out, err := s.p.RaiseMaintenanceTicket(infra.Ticket{
+					ID: req.ID, AssetID: req.AssetID, OrgUnit: orDefault(req.OrgUnit, "TN"), Issue: req.Issue,
+					Severity: orDefault(req.Severity, infra.SevMedium), RaisedOn: orDefault(req.RaisedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "assign":
+				out, err := s.p.AdvanceTicket(req.ID, "assign", req.Assignee)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "resolve":
+				out, err := s.p.AdvanceTicket(req.ID, "resolve", orDefault(req.On, "2026-06-22"))
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "close":
+				out, err := s.p.AdvanceTicket(req.ID, "close", "")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "decommission":
+				out, err := s.p.DecommissionAsset(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			case "return":
+				out, err := s.p.ReturnAssetToService(req.ID, req.Condition)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			default: // asset
+				out, err := s.p.RegisterAsset(infra.Asset{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Condition: orDefault(req.Condition, infra.Good), Status: orDefault(req.Status, infra.InService), AcquiredOn: req.AcquiredOn,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			}
+			return
+		}
+		if tickets := q.Get("tickets"); tickets != "" {
+			s.writeJSON(w, s.p.AssetTickets(tickets), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InfraDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral

@@ -1468,3 +1468,30 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 64 Go modules pass, 16 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (15): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·**Mid-Day Meal**.
+
+## Ecosystem vertical: Infrastructure & Asset Register — durable, constraint-checked maintenance lifecycle
+- New L6 `infra` module — the estate-management plane: a school's physical assets/rooms (with a condition grade)
+  and the maintenance tickets raised against them, as a constraint-checked state machine. Holds three register
+  invariants — (1) a ticket may only be raised against a known, non-decommissioned asset; (2) a ticket walks
+  open → in_progress → resolved → closed with no skips (pure ApplyAssign/ApplyResolve/ApplyClose); and (3) an
+  asset can NEVER be decommissioned (or returned to service) while it still has open tickets — you cannot retire
+  a room mid-repair. A critical ticket auto-flips its asset to under_maintenance. Pure + stdlib.
+- Integration `infra.go` (+ `infra_pg.go`): `RegisterAsset`, `RaiseMaintenanceTicket`, `AdvanceTicket`
+  (assign/resolve/close), `DecommissionAsset`, `ReturnAssetToService` (all audited; deny paths too),
+  `AssetTickets(assetID)`, `InfraDashboard(scope)` (downward-governance scoped: condition/status rollup, open
+  backlog by severity, needs-attention roster — unusable, under-maintenance, or critical-open assets). The
+  durable adapter enforces the invariants against the live state and writes a critical ticket's auto-flip in the
+  same transaction as the ticket; lifecycle transitions reuse the pure Apply* functions. Seeded a Chennai school
+  register (5 assets across categories/conditions) with a critical sanitation ticket + a routine ICT ticket.
+  platformd: `GET /infra?scope=&tickets=`, `POST /infra {action: asset|ticket|assign|resolve|close|
+  decommission|return, …}`. Migration `scripts/095`.
+- PROVEN LIVE (raw): `TestPgInfraDurable` (assets + tickets persist across fresh instances; the lifecycle, the
+  critical auto-flip, and the no-decommission-with-open-tickets invariant are all enforced durably) and
+  `TestInfraDashboardScoped` pass. platformd (durable + DATABASE_URL): decommissioning the toilet block (open
+  critical ticket) was REJECTED ("cannot decommission an asset with open maintenance tickets — close them
+  first"); the ticket walked assign → resolve → close; return-to-service then SUCCEEDED (in_service/fair),
+  confirmed in Postgres. Seeded Chennai dashboard: 5 assets (good 2·fair 2·poor 1), 1 under maintenance, 2 open
+  tickets (critical 1·medium 1), needs-attention roster fires.
+- Green bar (both stacks): 65 Go modules pass, 17 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (16): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·**Infrastructure & Asset Register**.
