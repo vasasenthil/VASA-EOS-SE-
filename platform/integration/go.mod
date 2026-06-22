@@ -45,6 +45,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
+	github.com/vasa-eos-se-tn/platform/cpd v0.0.0
 	github.com/vasa-eos-se-tn/platform/dao v0.0.0
 	github.com/vasa-eos-se-tn/platform/directory v0.0.0
 	github.com/vasa-eos-se-tn/platform/edge v0.0.0
@@ -190,3 +191,5 @@ replace github.com/vasa-eos-se-tn/platform/grievance => ../L12-civic/grievance
 replace github.com/vasa-eos-se-tn/platform/attendance => ../L6-platform-services/attendance
 
 replace github.com/vasa-eos-se-tn/platform/scholarship => ../L6-platform-services/scholarship
+
+replace github.com/vasa-eos-se-tn/platform/cpd => ../L6-platform-services/cpd

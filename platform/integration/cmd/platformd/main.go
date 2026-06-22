@@ -18,6 +18,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/adapters"
 	"github.com/vasa-eos-se-tn/platform/attendance"
 	"github.com/vasa-eos-se-tn/platform/capacity"
+	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
@@ -641,6 +642,34 @@ func (s *server) routes() http.Handler {
 			em = err.Error()
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+	}))
+	mux.HandleFunc("/cpd", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Teacher CPD (NEP 2020 compliance). GET ?scope=<org>&year= → scoped compliance dashboard; ?teacher=&year=
+		// → a teacher's hours + compliance. POST { id,teacher_id,org_unit,course,provider,hours,year,status,
+		// completed_on } records a completion.
+		q := r.URL.Query()
+		year := 2026
+		if v := q.Get("year"); v != "" {
+			fmt.Sscanf(v, "%d", &year)
+		}
+		if r.Method == http.MethodPost {
+			var rec cpd.Record
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.RecordCPD(rec)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "record": out}, nil)
+			return
+		}
+		if teacher := q.Get("teacher"); teacher != "" {
+			s.writeJSON(w, s.p.TeacherCPDProfile(teacher, year), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CPDDashboard(orDefault(q.Get("scope"), "TN"), year), nil)
 	}))
 	mux.HandleFunc("/scholarship", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Scholarship / DBT. GET ?scope=<org>&status= → scoped DBT dashboard (or list with &list=1); ?id= → one

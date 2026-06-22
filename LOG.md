@@ -1329,3 +1329,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 58 Go modules pass, 10 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (9): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · **Scholarship/DBT**.
+
+## Ecosystem vertical: Teacher CPD (Continuing Professional Development) — durable, NEP-2020 compliance
+- New L6 `cpd` module — completes the TEACHER lifecycle (onboarding → service → professional development). A
+  data+analytics plane: durable records of in-service training (NISHTHA/SCERT/DIET/DIKSHA) with the NEP 2020
+  compliance picture — `HoursFor` (completed/certified hours; enrolled doesn't count) and `IsCompliant` (>= 50
+  hours/year). Pure + stdlib.
+- Integration `cpd.go` (+ `cpd_pg.go`): `RecordCPD` (audited), `TeacherCPDProfile(teacher, year)` (hours vs the
+  50h target + compliant flag), `CPDDashboard(scope, year)` (downward-governance scoped: teachers, compliant
+  count, compliance rate, total hours, deficient roster). Seeded 2026 CPD for a Chennai teacher cohort incl. one
+  engineered deficient teacher. platformd: `GET /cpd?scope=&year=` (dashboard), `?teacher=&year=` (profile),
+  `POST /cpd` (record). Migration `scripts/089`.
+- PROVEN LIVE (raw): `TestPgCpdDurable` (records + upsert correction persist across fresh instances; compliance
+  computes over durable history) and `TestCPDDashboardScoped` pass. platformd (durable + DATABASE_URL): recorded
+  a NISHTHA 20h completion (confirmed in Postgres); `/cpd?scope=TN-DIST-Chennai&year=2026` → 8 teachers, 7
+  compliant (87.5%), 435 total hours, deficient ['SYN-T-02']; `/cpd?teacher=SYN-T-02` → 19h vs 50h target, not
+  compliant.
+- Green bar (both stacks): 59 Go modules pass, 11 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (10): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · Scholarship/DBT · **Teacher CPD**.

@@ -2,7 +2,7 @@
 --
 -- Run this ONCE in your Supabase / Postgres SQL editor to provision the entire schema: all tables,
 -- indexes and deny-by-default row-level security. Idempotent — safe to re-run.
--- Generated from 87 migrations. Regenerate with: node scripts/build-bootstrap.mjs
+-- Generated from 88 migrations. Regenerate with: node scripts/build-bootstrap.mjs
 --
 -- After this runs, set NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and the app goes live.
 
@@ -3902,5 +3902,25 @@ CREATE TABLE IF NOT EXISTS scholarship_disbursements (
 );
 CREATE INDEX IF NOT EXISTS scholarship_org_idx    ON scholarship_disbursements (org_unit);
 CREATE INDEX IF NOT EXISTS scholarship_status_idx ON scholarship_disbursements (status);
+
+-- ==== 089-create-cpd-records-table.sql ====
+-- VASA-EOS(SE) TN — Teacher CPD durable store (L6 cpd service / platformd).
+-- Backs platform/integration/cpd_pg.go. The record of in-service training (NISHTHA/SCERT/DIET/DIKSHA) a teacher
+-- completes, feeding the NEP 2020 compliance analytics (>=50 hours/year). Applied by the adapter's
+-- ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS cpd_records (
+    id           TEXT PRIMARY KEY,
+    teacher_id   TEXT NOT NULL,                 -- HRMS employee id (synthetic in demo)
+    org_unit     TEXT NOT NULL,                 -- the teacher's school (T6 tenancy node)
+    course       TEXT NOT NULL DEFAULT '',
+    provider     TEXT NOT NULL,                 -- NISHTHA | SCERT | DIET | DIKSHA
+    hours        INT  NOT NULL DEFAULT 0,
+    year         INT  NOT NULL,
+    status       TEXT NOT NULL,                 -- enrolled | completed | certified
+    completed_on TEXT NOT NULL DEFAULT '',      -- YYYY-MM-DD
+    recorded_at  TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS cpd_teacher_year_idx ON cpd_records (teacher_id, year);
+CREATE INDEX IF NOT EXISTS cpd_org_year_idx     ON cpd_records (org_unit, year);
 
 commit;
