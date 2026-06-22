@@ -66,6 +66,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/population v0.0.0
 	github.com/vasa-eos-se-tn/platform/portals v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
+	github.com/vasa-eos-se-tn/platform/rbsk v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
 	github.com/vasa-eos-se-tn/platform/scholarship v0.0.0
@@ -193,3 +194,5 @@ replace github.com/vasa-eos-se-tn/platform/attendance => ../L6-platform-services
 replace github.com/vasa-eos-se-tn/platform/scholarship => ../L6-platform-services/scholarship
 
 replace github.com/vasa-eos-se-tn/platform/cpd => ../L6-platform-services/cpd
+
+replace github.com/vasa-eos-se-tn/platform/rbsk => ../L12-civic/rbsk

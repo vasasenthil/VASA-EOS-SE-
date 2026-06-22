@@ -643,6 +643,66 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
 	}))
+	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
+		// worklist); ?id= → one screening. POST { id,student_id,org_unit,screened_on,findings:[...] } files a
+		// screening (auto-referring any finding).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID         string   `json:"id"`
+				StudentID  string   `json:"student_id"`
+				OrgUnit    string   `json:"org_unit"`
+				ScreenedOn string   `json:"screened_on"`
+				Findings   []string `json:"findings"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "RBSK-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			sc, err := s.p.RecordScreening(req.ID, req.StudentID, orDefault(req.OrgUnit, "TN"), orDefault(req.ScreenedOn, "2026-06-05"), req.Findings)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "screening": sc}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			sc, ok := s.p.RBSKScreening(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown screening"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, sc, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("referrals") == "1" {
+			s.writeJSON(w, s.p.RBSKReferralsScopedBy(scope), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RBSKDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/rbsk/referral", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// advance a referral. POST { id, action: treat|close, outcome }.
+		var req struct {
+			ID      string `json:"id"`
+			Action  string `json:"action"`
+			Outcome string `json:"outcome"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		sc, err := s.p.AdvanceReferral(req.ID, req.Action, req.Outcome)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "screening": sc}, nil)
+	}))
 	mux.HandleFunc("/cpd", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Teacher CPD (NEP 2020 compliance). GET ?scope=<org>&year= → scoped compliance dashboard; ?teacher=&year=
 		// → a teacher's hours + compliance. POST { id,teacher_id,org_unit,course,provider,hours,year,status,

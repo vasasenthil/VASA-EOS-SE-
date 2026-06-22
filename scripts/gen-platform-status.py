@@ -54,6 +54,7 @@ DESC = {
     "ndears": "L4 NDEAR-S conformance: 29 building blocks · sovereign/federated/pending posture (28/29 addressed)",
     "alignments": "L11 GLO-TN-001: international frameworks (SDG·UNESCO·PISA·STARS·GPAI…) mapped to evidence",
     "modulecatalogue": "L11 catalogue: the 391 functional modules (329 core + 62 TN), computed + self-verified",
+    "rbsk": "L12 RBSK child-health screening: screen for the four Ds (defect·disease·deficiency·disability) · finding AUTO-refers to the DEIC · referral pipeline (referred→under-treatment→closed) · scoped child-health dashboard (coverage · findings · closure rate) · DURABLE PostgreSQL store",
     "grievance": "L12 Grievance Redressal cases: file → category-driven escalation chain (safety→school·DEO·director · financial→school·BEO·DEO) under an SLA · SLA breach AUTO-escalates to the next tier · fail-closed handler gating · scoped dashboard · DURABLE PostgreSQL store",
     "civic": "L12 citizen/civic: PII-suppressed public dashboards · RTI register (30-day clock) · grievance tracker · open data",
     "resilience": "Circuit breaker · retry+backoff/jitter · idempotency",

@@ -1348,3 +1348,24 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 59 Go modules pass, 11 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (10): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · Scholarship/DBT · **Teacher CPD**.
+
+## Ecosystem vertical: RBSK Child-Health Screening — durable child-welfare referral pipeline
+- New L12 `rbsk` module (Rashtriya Bal Swasthya Karyakram) — completes the student-welfare side alongside
+  attendance: every student is screened for the FOUR Ds (defect / disease / deficiency / disability); any
+  finding AUTO-refers to the DEIC (District Early Intervention Centre); the referral is tracked through the
+  pipeline (referred → under-treatment → closed). Pure transitions (NewScreening/ApplyTreat/ApplyClose).
+- Integration `rbsk.go` (+ `rbsk_pg.go`): `RecordScreening` (audited; auto-referral), `AdvanceReferral`
+  (treat/close, audited), `RBSKDashboard(scope)` (downward-governance scoped: screened coverage, healthy vs
+  with-findings, the 4-D breakdown, active referrals, referral closure rate), `RBSKReferralsScopedBy` (the
+  follow-up worklist). Findings stored as JSONB. Health data is sensitive → the dashboard surfaces aggregate
+  counts; individual findings are visible only to the governing officer. Seeded a synthetic screening camp at a
+  Chennai school (~18% with findings). platformd: `GET /rbsk?scope=&id=&referrals=`, `POST /rbsk`,
+  `POST /rbsk/referral`. Migration `scripts/090`.
+- PROVEN LIVE (raw): `TestPgRbskDurable` (findings JSONB + the treat→close pipeline persist across fresh
+  instances) and `TestRBSKDashboardScoped` pass. platformd (durable + DATABASE_URL): screened a student with
+  deficiency+disability → auto-referred to DEIC (confirmed in Postgres); referral walked treat → under-treatment
+  → closed with outcome; `/rbsk?scope=TN-DIST-Chennai` → 20 screened, 15 healthy, 5 with findings
+  (defect 2·deficiency 1·disease 2), 5 active referrals.
+- Green bar (both stacks): 60 Go modules pass, 12 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (11): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·**RBSK Health**.
