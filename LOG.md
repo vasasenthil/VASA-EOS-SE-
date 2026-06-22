@@ -1369,3 +1369,25 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 60 Go modules pass, 12 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (11): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·**RBSK Health**.
+
+## Ecosystem vertical: School Timetable — durable, constraint-checked (teacher-clash detection)
+- New L6 `timetable` module — the operational scheduling plane that ties together the class roster and the
+  teacher roster: assign a class-slot (org · class · day · period → subject + teacher), and the store ENFORCES
+  the hard timetabling invariant that a teacher can never be in two classes at the same day+period
+  (`teacherClash`). Pure + stdlib: `Slot.Validate` (working day, period 1..8, teacher present), `Store.Set`
+  (validate → reject clash → upsert), `List` (day/period/class ordered), `TeacherLoad`.
+- Integration `timetable.go` (+ `timetable_pg.go`): `SetTimetableSlot` (audited; audits `timetable.set` /
+  `.set.denied`), `ClassTimetable(org,class)` + `TeacherTimetable(teacher)` (grid views), `TimetableDashboard
+  (scope)` (downward-governance scoped: slots, distinct classes/teachers, per-teacher weekly load, overloaded
+  roster > 30 periods/wk). The durable adapter does the clash check in SQL (targeted existence query on
+  teacher_id+day+period) before the ON CONFLICT upsert; index on (teacher_id,day,period). Seeded a clash-free
+  Grade 8-A weekly grid (5 days × 6 periods, 3 SYN-T teachers) at a Chennai school. platformd: `GET /timetable
+  ?class=&teacher=` (dashboard / grid), `POST /timetable` (assign). Migration `scripts/091`.
+- PROVEN LIVE (raw): `TestPgTimetableDurable` (slots + reassign upsert persist across fresh instances; the
+  teacher-clash invariant is enforced durably, surviving a fresh store) and `TestTimetableDashboardScoped`
+  pass. platformd (durable + DATABASE_URL): assigned free teacher SYN-T-09 to Grade 9-A Mon P1 (confirmed in
+  Postgres); a clash (SYN-T-09 in Grade 9-B at the same slot) was REJECTED — "teacher SYN-T-09 is already
+  teaching Grade 9-A at monday"; P2 for the same teacher was allowed; psql confirmed a clash-free schedule.
+- Green bar (both stacks): 61 Go modules pass, 13 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (12): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·**School Timetable**.

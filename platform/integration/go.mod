@@ -72,6 +72,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/scholarship v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
 	github.com/vasa-eos-se-tn/platform/tenancy v0.0.0
+	github.com/vasa-eos-se-tn/platform/timetable v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/volumes v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
@@ -196,3 +197,5 @@ replace github.com/vasa-eos-se-tn/platform/scholarship => ../L6-platform-service
 replace github.com/vasa-eos-se-tn/platform/cpd => ../L6-platform-services/cpd
 
 replace github.com/vasa-eos-se-tn/platform/rbsk => ../L12-civic/rbsk
+
+replace github.com/vasa-eos-se-tn/platform/timetable => ../L6-platform-services/timetable

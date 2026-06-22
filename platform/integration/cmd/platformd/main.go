@@ -28,6 +28,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/quality"
 	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
+	"github.com/vasa-eos-se-tn/platform/timetable"
 )
 
 func main() {
@@ -642,6 +643,34 @@ func (s *server) routes() http.Handler {
 			em = err.Error()
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+	}))
+	mux.HandleFunc("/timetable", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Timetable. GET ?scope=<org> → scoped timetabling dashboard (teacher loads, overloads);
+		// ?org=&class= → a class grid; ?teacher= → a teacher's periods. POST { org_unit,class,day,period,
+		// subject,teacher_id } assigns a slot (rejects a teacher clash).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var slot timetable.Slot
+			if !decode(w, r, &slot) {
+				return
+			}
+			out, err := s.p.SetTimetableSlot(slot)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "slot": out}, nil)
+			return
+		}
+		if teacher := q.Get("teacher"); teacher != "" {
+			s.writeJSON(w, s.p.TeacherTimetable(teacher), nil)
+			return
+		}
+		if class := q.Get("class"); class != "" {
+			s.writeJSON(w, s.p.ClassTimetable(orDefault(q.Get("org"), "TN"), class), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TimetableDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
