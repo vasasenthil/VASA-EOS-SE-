@@ -1416,3 +1416,29 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 62 Go modules pass, 14 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (13): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·**School Library**.
+
+## Ecosystem vertical: School Transport — durable, route-safety (capacity + fitness/licence gating)
+- New L6 `transport` module — the student-transport route-safety plane: register a bus route (vehicle + driver
+  with the statutory validity dates that govern whether it may carry children) and seat students on it, with the
+  TWO hard safety invariants school transport must hold — (1) a route can never carry more students than the
+  vehicle's seating CAPACITY, and (2) no student may be allotted to an UNSERVICEABLE vehicle (one whose fitness
+  certificate or whose driver's licence has lapsed). Pure + stdlib: `Route.Serviceable`/`UnserviceableReason`
+  (the safety gate), `Occupancy`, `Store.Allot` (validate → serviceability gate → dedupe → capacity check).
+- Integration `transport.go` (+ `transport_pg.go`): `RegisterRoute`, `AllotSeat`, `WithdrawSeat` (all audited;
+  deny paths too), `RouteRoster(routeID)` (the manifest), `TransportDashboard(scope)` (downward-governance
+  scoped: fleet size, total capacity vs seated → utilisation %, and the unserviceable-route SAFETY ROSTER). The
+  durable adapter enforces capacity against the live occupancy count and the serviceability gate against the
+  stored route before each insert; a partial unique index backstops one-active-seat-per-student-per-route.
+  Seeded a Chennai fleet (one full route, one engineered unserviceable route with a lapsed FC). platformd:
+  `GET /transport?scope=&roster=`, `POST /transport {action: route|allot|withdraw, …}`. Migration `scripts/093`.
+- PROVEN LIVE (raw): `TestPgTransportDurable` (routes + seats persist across fresh instances; capacity ceiling
+  and the unserviceable gate are enforced durably; a withdrawn seat frees capacity) and
+  `TestTransportDashboardScoped` pass. platformd (durable + DATABASE_URL): a 5th seat on the full capacity-4
+  route RT-CHN-01 was REJECTED ("route RT-CHN-01 is at capacity"); allotting a child to RT-CHN-03 (lapsed FC)
+  was REJECTED ("cannot allot to an unserviceable route — vehicle fitness certificate expired (2026-03-01)");
+  after withdrawing a seat the re-allot SUCCEEDED; psql confirmed exactly 4 active seats (= capacity). Seeded
+  Chennai dashboard: 3 routes, 84 capacity, 9 seated (10.7% utilisation), 1 unserviceable route on the safety
+  roster.
+- Green bar (both stacks): 63 Go modules pass, 15 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (14): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·**School Transport**.

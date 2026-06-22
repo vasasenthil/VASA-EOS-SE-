@@ -30,6 +30,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
 	"github.com/vasa-eos-se-tn/platform/timetable"
+	"github.com/vasa-eos-se-tn/platform/transport"
 )
 
 func main() {
@@ -725,6 +726,57 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.LibraryDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
+	mux.HandleFunc("/transport", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Transport route-safety. GET ?scope=<org> → scoped safety+utilisation dashboard (unserviceable
+		// roster); ?roster=<routeID> → a route's manifest. POST { action, ... }: route { id,org_unit,name,
+		// vehicle_no,capacity,fitness_valid_till,driver_name,licence_valid_till,status } registers a route;
+		// allot { id,route_id,org_unit,student_id,stop } seats a student; withdraw { id } releases a seat.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action           string `json:"action"`
+				ID               string `json:"id"`
+				OrgUnit          string `json:"org_unit"`
+				Name             string `json:"name"`
+				VehicleNo        string `json:"vehicle_no"`
+				Capacity         int    `json:"capacity"`
+				FitnessValidTill string `json:"fitness_valid_till"`
+				DriverName       string `json:"driver_name"`
+				LicenceValidTill string `json:"licence_valid_till"`
+				Status           string `json:"status"`
+				RouteID          string `json:"route_id"`
+				StudentID        string `json:"student_id"`
+				Stop             string `json:"stop"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "allot":
+				out, err := s.p.AllotSeat(transport.Allotment{
+					ID: req.ID, RouteID: req.RouteID, OrgUnit: orDefault(req.OrgUnit, "TN"),
+					StudentID: req.StudentID, Stop: req.Stop, Status: transport.Allotted,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "allotment": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawSeat(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "allotment": out}, nil)
+			default: // route
+				out, err := s.p.RegisterRoute(transport.Route{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, VehicleNo: req.VehicleNo,
+					Capacity: req.Capacity, FitnessValidTill: req.FitnessValidTill, DriverName: req.DriverName,
+					LicenceValidTill: req.LicenceValidTill, Status: orDefault(req.Status, transport.RouteActive),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "route": out}, nil)
+			}
+			return
+		}
+		if roster := q.Get("roster"); roster != "" {
+			s.writeJSON(w, s.p.RouteRoster(roster), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TransportDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
 		// worklist); ?id= → one screening. POST { id,student_id,org_unit,screened_on,findings:[...] } files a
@@ -1405,6 +1457,14 @@ func orDefault(v, d string) string {
 		return d
 	}
 	return v
+}
+
+// errStr returns an error's message, or "" if nil (for JSON {ok,error} envelopes).
+func errStr(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }
 
 // handleDBT runs a scheme-DBT delivery end-to-end: it first records the §7 subsidy lawful basis for the
