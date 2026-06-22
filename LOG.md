@@ -1521,3 +1521,31 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 66 Go modules pass, 18 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (17): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·**Fee & Finance Ledger**.
+
+## Ecosystem vertical: School Health Immunisation — durable, clinical sequence invariant
+- New L6 `immunisation` module — the school-health immunisation register: vaccine doses administered to students
+  under the school-health schedule (UIP/RBSK school-age vaccines: Td10·Td16·MR·JE·VitaminA·Albendazole), with
+  the clinical invariants an immunisation register must hold — a dose may only be recorded in SEQUENCE (dose N
+  requires doses 1..N-1 already given), a vaccine can never exceed its scheduled dose count, and a dose cannot be
+  future-dated. Immunisation status (complete/partial/due) is derived against the schedule. Pure + stdlib:
+  `Schedule`/`RequiredDoses`, `DosesGivenExcluding`, `StatusFor`, `Store.AdministerDose` (validate → sequence →
+  no-duplicate-slot).
+- Integration `immunisation.go` (+ `immunisation_pg.go`): `RecordImmunisation` (audited; deny paths too),
+  `StudentImmunisationCard(student)` (the per-child card — officer-only), `ImmunisationDashboard(scope)`
+  (downward-governance scoped: per-vaccine completion across the cohort + the due/partial follow-up worklist).
+  Health data is sensitive, so the dashboard headlines aggregate coverage and includes the per-child worklist
+  only for the governing officer (mirroring RBSK). The durable adapter enforces the schedule/sequence/no-future
+  invariants against the durable doses (reusing the pure helpers) and backstops the no-duplicate-slot rule with
+  a partial unique index. Seeded a Chennai immunisation drive (10 children: full single-dose coverage, partial
+  MR rollout). platformd: `GET /immunisation?scope=&student=&schedule=`, `POST /immunisation {dose…}`. Migration
+  `scripts/097`.
+- PROVEN LIVE (raw): `TestPgImmunisationDurable` (doses persist across fresh instances; the sequence and
+  no-duplicate-slot invariants are enforced durably; a re-record corrects in place) and
+  `TestImmunisationDashboardScoped` pass. platformd (durable + DATABASE_URL): recording MR dose 2 for a child
+  with no dose 1 was REJECTED ("out-of-sequence dose — MR dose 2 requires dose 1 first"); an off-schedule vaccine
+  (COVID) was REJECTED; a future-dated dose was REJECTED; recording MR dose 1 then dose 2 in order SUCCEEDED →
+  status complete; psql confirmed the two doses in sequence. Seeded Chennai dashboard: 10 students, 41 doses,
+  single-dose vaccines 100%, MR 40% (4 complete·3 partial·3 due).
+- Green bar (both stacks): 67 Go modules pass, 19 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (18): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·**School Health Immunisation**.

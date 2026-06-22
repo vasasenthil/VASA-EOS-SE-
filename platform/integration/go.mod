@@ -56,6 +56,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/grievance v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
+	github.com/vasa-eos-se-tn/platform/immunisation v0.0.0
 	github.com/vasa-eos-se-tn/platform/infra v0.0.0
 	github.com/vasa-eos-se-tn/platform/iot v0.0.0
 	github.com/vasa-eos-se-tn/platform/leave v0.0.0
@@ -140,6 +141,8 @@ replace github.com/vasa-eos-se-tn/platform/escrow-agent => ../L1-foundation/escr
 replace github.com/vasa-eos-se-tn/platform/workflow => ../L6-platform-services/workflow
 
 replace github.com/vasa-eos-se-tn/platform/i18n => ../L6-platform-services/i18n
+
+replace github.com/vasa-eos-se-tn/platform/immunisation => ../L6-platform-services/immunisation
 
 replace github.com/vasa-eos-se-tn/platform/infra => ../L6-platform-services/infra
 

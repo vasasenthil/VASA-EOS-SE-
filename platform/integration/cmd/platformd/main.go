@@ -22,6 +22,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/fees"
+	"github.com/vasa-eos-se-tn/platform/immunisation"
 	"github.com/vasa-eos-se-tn/platform/infra"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
@@ -936,6 +937,34 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.FeeDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/immunisation", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Health Immunisation. GET ?scope=<org> → scoped coverage dashboard (+ officer worklist);
+		// ?student= → a student's immunisation card; ?schedule=1 → the UIP school-health schedule. POST
+		// { id,student_id,org_unit,vaccine,dose_number,administered_on,batch } records a dose (rejecting an
+		// out-of-sequence or off-schedule dose).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var rec immunisation.DoseRecord
+			if !decode(w, r, &rec) {
+				return
+			}
+			if rec.OrgUnit == "" {
+				rec.OrgUnit = "TN"
+			}
+			out, err := s.p.RecordImmunisation(rec)
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "dose": out}, nil)
+			return
+		}
+		if q.Get("schedule") == "1" {
+			s.writeJSON(w, immunisation.Schedule(), nil)
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			s.writeJSON(w, s.p.StudentImmunisationCard(student), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ImmunisationDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
