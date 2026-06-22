@@ -46,7 +46,7 @@ func cpdState() cpdStore {
 // seedCPD plants 2026 CPD for a small synthetic teacher cohort at a real Chennai school — most compliant, one
 // deficient — so the NEP compliance analytics have signal. Synthetic ids (SYN-T), never real PII.
 func seedCPD(s cpdStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

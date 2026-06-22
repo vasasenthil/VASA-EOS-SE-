@@ -47,7 +47,7 @@ func examState() examStore {
 // filled, a SUBMITTED sheet awaiting the head teacher's moderation, and a PUBLISHED sheet. Students and marks
 // are synthetic + deterministic (SYN-STU ids), never real PII.
 func seedExams(r examStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		school = "33000000000"
 	}

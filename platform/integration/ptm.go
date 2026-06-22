@@ -50,7 +50,7 @@ func ptmState() ptmStore {
 // seedPTM plants a Term-1 PTM at a real Chennai school: a session with 8 slots, mostly booked, with attendance
 // marked for the past meeting (some attended, some no-show) so the turnout analytics have signal. Synthetic ids.
 func seedPTM(s ptmStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

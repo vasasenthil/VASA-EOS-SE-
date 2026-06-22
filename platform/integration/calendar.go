@@ -267,3 +267,13 @@ func tenancyLeafUnder(org string) string {
 	}
 	return ""
 }
+
+// pilotDistrict is the tenancy district the demo seeds plant against. It defaults to Chennai but is overridable
+// via the PILOT_DISTRICT env var (e.g. "TN-DIST-Madurai") so a single-district pilot deployment can be pointed
+// at the district that is actually going live, without code changes.
+func pilotDistrict() string {
+	if d := os.Getenv("PILOT_DISTRICT"); d != "" {
+		return d
+	}
+	return "TN-DIST-Chennai"
+}

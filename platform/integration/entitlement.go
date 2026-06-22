@@ -49,7 +49,7 @@ func entState() entStore {
 // set), uniforms (4 sets) and notebooks (1 set); most fully supplied, some partial, a couple pending — so the
 // fulfilment + pending analytics have signal. Synthetic SYN-S ids, never real PII.
 func seedEntitlement(s entStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

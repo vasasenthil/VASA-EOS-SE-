@@ -54,7 +54,7 @@ func todayISO() string { return time.Now().UTC().Format("2006-01-02") }
 // one engineered UNSERVICEABLE route (lapsed fitness certificate) so the safety roster has signal. Synthetic
 // student ids (SYN-S), never real PII.
 func seedTransport(s transStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

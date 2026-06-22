@@ -1627,3 +1627,20 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 70 Go modules pass, 22 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (21): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·Entitlement·**Staff Establishment**.
+
+## Pilot enablement: one-command single-district deployment (moat lever #1)
+- Made the deployment DISTRICT-SELECTABLE: new `pilotDistrict()` (reads `PILOT_DISTRICT`, default
+  TN-DIST-Chennai) now backs all 14 vertical seeds via `tenancyLeafUnder(pilotDistrict())`. Default keeps
+  every test green; an override relocates the entire seed (proven: under PILOT_DISTRICT=Madurai the
+  Chennai-asserting dashboard test fails, i.e. the data genuinely moved).
+- New `deploy/pilot/`: `docker-compose.yml` (Postgres 16 + platformd + web console, wired —
+  PLATFORM_URL points the web app's server actions at the durable Go backbone), `.env.example`,
+  `smoke.sh` (20 scoped dashboards + a durability check), `PILOT.md` (go-live runbook, honest real-vs-gated
+  table, the full-Supabase path).
+- PROVEN LIVE: against a FRESH EMPTY database, platformd self-migrated (no manual schema step) and seeded
+  TN-DIST-Madurai (5 cadres / 18 sanctioned) with Chennai correctly empty (0); smoke 20/20 dashboards 200 with
+  district-scoped data; and after a FULL process kill + restart against the same Postgres the data survived —
+  a marker sanctioned-post written before the kill (`PILOT-DURABLE-PROOF`, sanctioned 7) was read back intact,
+  audit hash-chain re-loaded from Postgres. This is a durable system of record, not a demo.
+- Green bar: 69 Go modules pass, durable PG suite passes, OPA 33/33, gofmt clean, tsc 0, `docker compose config`
+  validates. No new module (district seam + deploy package only).

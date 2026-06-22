@@ -54,7 +54,7 @@ func infraState() infraStore {
 // across condition grades — plus a couple of live maintenance tickets (one critical, flipping its asset to
 // under_maintenance) so the dashboard analytics have signal. Synthetic; no real PII.
 func seedInfra(s infraStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

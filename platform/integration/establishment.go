@@ -50,7 +50,7 @@ func estabState() estabStore {
 // most posts filled and a couple of vacancies, so the vacancy analytics have signal. Synthetic SYN-T employee
 // ids, never real PII.
 func seedEstablishment(s estabStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

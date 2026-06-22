@@ -46,7 +46,7 @@ func attState() attStore {
 // deterministic, including one engineered chronic absentee so the early-warning analytics have signal. Never
 // real PII (SYN-STU ids).
 func seedAttendance(s attStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

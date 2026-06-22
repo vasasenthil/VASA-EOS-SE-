@@ -47,7 +47,7 @@ func immState() immStore {
 // single-dose school vaccines (Td10, VitA, Albendazole) and a partial MR rollout (some children with only dose
 // 1), so the coverage + due-worklist analytics have signal. Synthetic SYN-S ids, never real PII.
 func seedImmunisation(s immStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

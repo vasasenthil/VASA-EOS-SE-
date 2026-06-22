@@ -45,7 +45,7 @@ func ttState() ttStore {
 // seedTimetable plants a clash-free weekly grid for one class at a real Chennai school (3 teachers across 5
 // days × 6 periods), so the load/coverage analytics have signal. Synthetic SYN-T teacher ids.
 func seedTimetable(s ttStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

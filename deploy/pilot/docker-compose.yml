@@ -1,0 +1,69 @@
+# VASA-EOS(SE)-TN — single-district PILOT deployment.
+#
+# Boots the durable system of record for ONE district with one command:
+#   cd deploy/pilot && cp .env.example .env && docker compose up --build
+#
+#   • db        — PostgreSQL 16 (the durable store; survives restarts via the named volume)
+#   • platformd — the Go backbone (all 20 constraint-checked verticals). Self-migrates on boot
+#                 (every adapter runs CREATE TABLE IF NOT EXISTS) and seeds against PILOT_DISTRICT.
+#   • web       — the Next.js console (login + boards). Routes its wired server actions to
+#                 platformd via PLATFORM_URL, so the frontend genuinely drives the durable backend.
+#
+# This is a real, durable, district-scoped deployment. It is NOT the sovereign-cluster production
+# topology (HSM, data-residency, live DPI credentials) — those remain disclosed-pending; see PILOT.md.
+
+name: vasa-eos-pilot
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vasa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vasa}
+      POSTGRES_DB: ${POSTGRES_DB:-vasa}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vasa} -d ${POSTGRES_DB:-vasa}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  platformd:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.platformd
+    environment:
+      # the durable store — platformd self-migrates all vertical tables here on boot
+      DATABASE_URL: postgres://${POSTGRES_USER:-vasa}:${POSTGRES_PASSWORD:-vasa}@db:5432/${POSTGRES_DB:-vasa}?sslmode=disable
+      # the district this pilot is going live for (e.g. TN-DIST-Madurai). Default: Chennai.
+      PILOT_DISTRICT: ${PILOT_DISTRICT:-TN-DIST-Chennai}
+      PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PLATFORMD_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      # public demo login is honoured (no Supabase needed for the pilot console)
+      NEXT_PUBLIC_DEMO_MODE: "true"
+      # the frontend's wired server actions (leave, grievance, …) drive the Go backbone, not an in-memory path
+      PLATFORM_URL: http://platformd:8080
+      PLATFORM_DEFAULT_ORG: ${PILOT_DISTRICT:-TN-DIST-Chennai}
+      PORT: "3000"
+    depends_on:
+      - platformd
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

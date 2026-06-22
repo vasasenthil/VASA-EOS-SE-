@@ -49,7 +49,7 @@ func mdmState() mdmStore {
 // so the stock is healthy but one school can be driven low — enough signal for coverage + days-of-cover
 // analytics. Synthetic; no real PII.
 func seedMDM(s mdmStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

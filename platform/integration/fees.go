@@ -50,7 +50,7 @@ func feesState() feesStore {
 // part- or fully-paid, a couple still outstanding (past due) and one waived as a concession — enough signal for
 // the collection + defaulter analytics. Money in paise; synthetic SYN-S student ids, never real PII.
 func seedFees(s feesStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

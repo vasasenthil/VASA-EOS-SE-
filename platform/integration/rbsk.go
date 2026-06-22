@@ -49,7 +49,7 @@ func rbskState() rbskStore {
 // seedRBSK plants a synthetic screening camp for a Chennai school cohort: most healthy, a few with findings
 // auto-referred to the DEIC (so the referral analytics have signal). Synthetic SYN-STU ids only.
 func seedRBSK(s rbskStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}

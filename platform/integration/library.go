@@ -49,7 +49,7 @@ func libState() libStore {
 // seedLibrary plants a small circulation set at a real Chennai school library: a handful of copies issued to
 // synthetic members, two of them engineered to be overdue, so the overdue analytics have signal. Synthetic ids.
 func seedLibrary(s libStore) {
-	school := tenancyLeafUnder("TN-DIST-Chennai")
+	school := tenancyLeafUnder(pilotDistrict())
 	if school == "" {
 		return
 	}
