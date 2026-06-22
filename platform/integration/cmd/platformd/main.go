@@ -21,6 +21,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
+	"github.com/vasa-eos-se-tn/platform/fees"
 	"github.com/vasa-eos-se-tn/platform/infra"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
@@ -883,6 +884,58 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.InfraDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/fees", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Fee & Finance Ledger (money in paise). GET ?scope=<org> → scoped collection dashboard (demanded/
+		// collected/outstanding, defaulter roster); ?student=&org= → a student's demands + payments. POST
+		// { action, ... }: demand { id,org_unit,student_id,category,term,amount_paise,due_on } raises a demand;
+		// payment { id,demand_id,amount_paise,mode,reference,paid_on } collects (rejects an overpayment); waive
+		// { id } grants a concession.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Category    string `json:"category"`
+				Term        string `json:"term"`
+				AmountPaise int64  `json:"amount_paise"`
+				DueOn       string `json:"due_on"`
+				DemandID    string `json:"demand_id"`
+				Mode        string `json:"mode"`
+				Reference   string `json:"reference"`
+				PaidOn      string `json:"paid_on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "payment":
+				out, err := s.p.CollectFeePayment(fees.Payment{
+					ID: req.ID, DemandID: req.DemandID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					AmountPaise: req.AmountPaise, Mode: orDefault(req.Mode, fees.UPI), Reference: req.Reference,
+					PaidOn: orDefault(req.PaidOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "payment": out}, nil)
+			case "waive":
+				out, err := s.p.WaiveFeeDemand(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "demand": out}, nil)
+			default: // demand
+				out, err := s.p.RaiseFeeDemand(fees.Demand{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Category: req.Category,
+					Term: req.Term, AmountPaise: req.AmountPaise, Status: fees.Pending, DueOn: orDefault(req.DueOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "demand": out}, nil)
+			}
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			dems, pays := s.p.StudentFeeLedger(q.Get("org"), student)
+			s.writeJSON(w, map[string]any{"demands": dems, "payments": pays}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.FeeDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral

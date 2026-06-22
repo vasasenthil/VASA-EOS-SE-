@@ -14,6 +14,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/dr v0.0.0
 	github.com/vasa-eos-se-tn/platform/evaluation v0.0.0
 	github.com/vasa-eos-se-tn/platform/exams v0.0.0
+	github.com/vasa-eos-se-tn/platform/fees v0.0.0
 	github.com/vasa-eos-se-tn/platform/hitl v0.0.0
 	github.com/vasa-eos-se-tn/platform/kms v0.0.0
 	github.com/vasa-eos-se-tn/platform/knowledgegraph v0.0.0
@@ -191,6 +192,8 @@ replace github.com/vasa-eos-se-tn/platform/directory => ../L5-security/directory
 replace github.com/vasa-eos-se-tn/platform/calendar => ../L6-platform-services/calendar
 
 replace github.com/vasa-eos-se-tn/platform/exams => ../L6-platform-services/exams
+
+replace github.com/vasa-eos-se-tn/platform/fees => ../L6-platform-services/fees
 
 replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leave
 

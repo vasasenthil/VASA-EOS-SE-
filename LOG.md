@@ -1495,3 +1495,29 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 65 Go modules pass, 17 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (16): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·**Infrastructure & Asset Register**.
+
+## Ecosystem vertical: Fee & Finance Ledger — durable, money-grade (no overpayment, paise)
+- New L6 `fees` module — the school finance plane: fee demands raised against students (exam/hostel/special
+  heads — TN government schooling is largely free, but statutory heads remain) and the payments collected, with
+  the money-grade invariants a ledger must hold — every amount is in PAISE (int64, never floats), a payment can
+  never take the collected total ABOVE the amount demanded (no overpayment), and a fully-paid or waived demand is
+  closed to further payment. Pure + stdlib: `PaidSoFar` (with idempotent exclude), `Store.RecordPayment`
+  (validate → open gate → overpayment gate → status recompute), `WaiveDemand`, `Outstanding`.
+- Integration `fees.go` (+ `fees_pg.go`): `RaiseFeeDemand`, `CollectFeePayment`, `WaiveFeeDemand` (all audited;
+  deny paths too), `StudentFeeLedger(org,student)`, `FeeDashboard(scope)` (downward-governance scoped: demanded
+  vs collected vs outstanding in paise, collection %, status breakdown, defaulter roster of open demands past
+  due). The durable adapter enforces the overpayment gate against the live collected total INSIDE the same
+  transaction that writes the payment and recomputes the demand status, so collection + status are atomic.
+  Seeded a Chennai exam-fee ledger (6 demands: 2 paid · 1 partial · 2 unpaid defaulters · 1 waived). platformd:
+  `GET /fees?scope=&student=&org=`, `POST /fees {action: demand|payment|waive, …}`. Migration `scripts/096`.
+- PROVEN LIVE (raw): `TestPgFeesDurable` (demands + payments persist across fresh instances; the no-overpayment
+  gate is enforced durably and atomically with the status recompute; a re-recorded payment corrects
+  idempotently; waiver closes a demand durably) and `TestFeeDashboardScoped` pass. platformd (durable +
+  DATABASE_URL): against demand FEE-CHN-EXAM-003 (25000p demand, 10000p paid) a 20000p payment was REJECTED
+  ("would overpay … outstanding 15000p, tendered 20000p"); a payment on a fully-paid demand was REJECTED
+  ("demand … is paid and cannot take payment"); the exact 15000p balance SUCCEEDED → status paid; psql confirmed
+  the collected total equals 25000p exactly (never more). Seeded Chennai dashboard: 6 demands, Rs1250 demanded,
+  48% collected, Rs650 outstanding, 3 defaulters, 1 waived.
+- Green bar (both stacks): 66 Go modules pass, 18 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (17): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·**Fee & Finance Ledger**.
