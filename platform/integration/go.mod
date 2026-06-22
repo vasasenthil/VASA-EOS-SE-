@@ -57,6 +57,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
 	github.com/vasa-eos-se-tn/platform/iot v0.0.0
 	github.com/vasa-eos-se-tn/platform/leave v0.0.0
+	github.com/vasa-eos-se-tn/platform/library v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/modulecatalogue v0.0.0
@@ -187,6 +188,8 @@ replace github.com/vasa-eos-se-tn/platform/calendar => ../L6-platform-services/c
 replace github.com/vasa-eos-se-tn/platform/exams => ../L6-platform-services/exams
 
 replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leave
+
+replace github.com/vasa-eos-se-tn/platform/library => ../L6-platform-services/library
 
 replace github.com/vasa-eos-se-tn/platform/grievance => ../L12-civic/grievance
 

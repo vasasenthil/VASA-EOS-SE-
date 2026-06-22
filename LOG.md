@@ -1391,3 +1391,28 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 61 Go modules pass, 13 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (12): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·**School Timetable**.
+
+## Ecosystem vertical: School Library — durable, constraint-checked circulation (one-copy-one-borrower)
+- New L6 `library` module — the learning-resources circulation plane: issue a physical book copy to a member
+  (student/teacher), renew (capped at 2), return, or mark lost. The store enforces the one hard invariant a
+  library must hold — a single physical copy can be on loan to at most one member at a time (`copyOnLoan`).
+  Pure + stdlib: `NewLoan` (computes the 14-day due date), `Validate`, the `ApplyReturn`/`ApplyRenew`/`ApplyLost`
+  transitions, `IsOverdue`/`OverdueCount` analytics.
+- Integration `library.go` (+ `library_pg.go`): `IssueBook`/`ReturnBook`/`RenewBook`/`ReportBookLost` (all
+  audited; deny paths audit too), `MemberLoans(member)` (history), `LibraryDashboard(scope)` (downward-governance
+  scoped: active loans, the overdue roster as-of today, copies lost, distinct members/titles). The durable
+  adapter enforces the copy invariant TWICE — a targeted SQL existence check before the insert AND a partial
+  unique index `(org_unit, copy_id) WHERE status='on_loan'`; transitions reuse the pure Apply* functions. Seeded
+  a circulation set at a real Chennai school library with two engineered-overdue loans. platformd: `GET /library
+  ?scope=` (dashboard), `?member=` (history), `POST /library {action: issue|return|renew|lost, …}`. Migration
+  `scripts/092`.
+- PROVEN LIVE (raw): `TestPgLibraryDurable` (loans + renew + return persist across fresh instances; the copy
+  invariant is enforced durably and survives a fresh store; a returned copy is re-issuable; lost persists) and
+  `TestLibraryDashboardScoped` pass. platformd (durable + DATABASE_URL): issued copy CP-NEW-1 to SYN-S-900
+  (confirmed in Postgres); the SAME copy to SYN-S-901 while out was REJECTED — "copy CP-NEW-1 is already on loan
+  (LOAN-…)"; renew extended the due date 2026-07-04→07-18 (renewals=1); return freed the copy; re-issue to
+  SYN-S-901 then SUCCEEDED; psql confirmed exactly one active loan per copy throughout. Seeded Chennai dashboard:
+  6 active loans, 2 overdue, 6 members, 4 titles.
+- Green bar (both stacks): 62 Go modules pass, 14 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (13): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·**School Library**.

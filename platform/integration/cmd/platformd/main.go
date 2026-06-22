@@ -23,6 +23,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
+	"github.com/vasa-eos-se-tn/platform/library"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
 	"github.com/vasa-eos-se-tn/platform/quality"
@@ -671,6 +672,58 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.TimetableDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/library", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Library circulation. GET ?scope=<org> → scoped circulation dashboard (active/overdue/lost);
+		// ?member= → a member's loan history. POST { action, ... }: issue { org_unit,book_id,title,copy_id,
+		// member_id,issued_on }; return { id,on }; renew { id }; lost { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action   string `json:"action"`
+				ID       string `json:"id"`
+				OrgUnit  string `json:"org_unit"`
+				BookID   string `json:"book_id"`
+				Title    string `json:"title"`
+				CopyID   string `json:"copy_id"`
+				MemberID string `json:"member_id"`
+				IssuedOn string `json:"issued_on"`
+				On       string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			var out library.Loan
+			var err error
+			switch req.Action {
+			case "return":
+				out, err = s.p.ReturnBook(req.ID, orDefault(req.On, "2026-06-22"))
+			case "renew":
+				out, err = s.p.RenewBook(req.ID)
+			case "lost":
+				out, err = s.p.ReportBookLost(req.ID)
+			default: // issue
+				if req.ID == "" {
+					req.ID = "LOAN-" + fmt.Sprintf("%d", time.Now().UnixNano())
+				}
+				var l library.Loan
+				l, err = library.NewLoan(req.ID, orDefault(req.OrgUnit, "TN"), req.BookID, req.Title, req.CopyID, req.MemberID, orDefault(req.IssuedOn, "2026-06-22"))
+				if err == nil {
+					out, err = s.p.IssueBook(l)
+				}
+			}
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "loan": out}, nil)
+			return
+		}
+		if member := q.Get("member"); member != "" {
+			s.writeJSON(w, s.p.MemberLoans(member), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LibraryDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
