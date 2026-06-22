@@ -1309,3 +1309,23 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 57 Go modules pass, 9 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; TS 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ gate), tsc 0, lint clean.
 - Durable verticals now: Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · **Attendance**.
+
+## Ecosystem vertical: Scholarship / DBT (Direct Benefit Transfer) — durable, money-grade
+- New L6 `scholarship` module — a financial vertical distinct from the others: a scholarship is SANCTIONED
+  through an AMOUNT-DRIVEN multi-level fund-approval chain (PFMS/GFR: school+BEO always; +DEO over Rs50,000;
+  +directorate over Rs2,00,000), DISBURSED with a payment reference, then RECONCILED against the rail (matched →
+  reconciled; unmatched → FLAGGED as a leakage signal). Money in PAISE (int64) — never floats. Pure transitions
+  (NewDisbursement/ApplyDecide/ApplyDisburse/ApplyReconcile) shared by the in-memory and Postgres stores.
+- Integration `scholarship.go` (+ `scholarship_pg.go`): `FileScholarship`, `SanctionScholarship` (high-stakes
+  fund-release, fail-closed per tier), `DisburseScholarship`, `ReconcileScholarship` (all audited),
+  `ScholarshipDashboard(scope)` (downward-governance scoped: by status/scheme, pending-sanction backlog, total
+  rupees disbursed, leakage count). platformd: `POST /scholarship` (file), `POST /scholarship/act`
+  (sanction/disburse/reconcile), `GET /scholarship?scope=&status=&id=`. Migration `scripts/088`.
+- PROVEN LIVE (raw): `TestPgScholarshipDurable` (₹60k → 3-tier sanction → disburse → reconcile all persist
+  across fresh instances; wrong tier fail-closed) and `TestScholarshipDashboardScoped` pass. platformd (durable
+  + DATABASE_URL): filed ₹60,000 post-matric (chain HEAD_TEACHER→BEO→DEO); DEO-first sanction fail-closed;
+  walked to sanctioned → disbursed (PFMS-TXN-LIVE-1) → reconcile-unmatched → FLAGGED; Postgres shows
+  status=flagged, the audit chain holds the full money trail (sanction×2 / disburse / reconcile).
+- Green bar (both stacks): 58 Go modules pass, 10 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (9): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · **Scholarship/DBT**.

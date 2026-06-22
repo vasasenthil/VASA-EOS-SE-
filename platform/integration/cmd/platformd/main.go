@@ -642,6 +642,84 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
 	}))
+	mux.HandleFunc("/scholarship", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Scholarship / DBT. GET ?scope=<org>&status= → scoped DBT dashboard (or list with &list=1); ?id= → one
+		// case. POST { id,student_id,scheme,amount_paise,org_unit } files a disbursement (amount-driven sanction
+		// chain).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID          string `json:"id"`
+				StudentID   string `json:"student_id"`
+				Scheme      string `json:"scheme"`
+				AmountPaise int64  `json:"amount_paise"`
+				OrgUnit     string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "SCH-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			d, err := s.p.FileScholarship(req.ID, req.StudentID, req.Scheme, req.AmountPaise, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": d}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			d, ok := s.p.ScholarshipCase(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown case"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, d, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScholarshipScopedBy(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ScholarshipDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/scholarship/act", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act on a disbursement. POST { id, action: sanction|disburse|reconcile, approve, matched, role, actor,
+		// note, payment_ref }.
+		var req struct {
+			ID         string `json:"id"`
+			Action     string `json:"action"`
+			Approve    bool   `json:"approve"`
+			Matched    bool   `json:"matched"`
+			Role       string `json:"role"`
+			Actor      string `json:"actor"`
+			Note       string `json:"note"`
+			PaymentRef string `json:"payment_ref"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		var out any
+		var err error
+		switch req.Action {
+		case "sanction":
+			out, err = s.p.SanctionScholarship(req.ID, req.Approve, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		case "disburse":
+			out, err = s.p.DisburseScholarship(req.ID, req.PaymentRef)
+		case "reconcile":
+			out, err = s.p.ReconcileScholarship(req.ID, req.Matched)
+		default:
+			http.Error(w, `{"error":"action must be sanction, disburse or reconcile"}`, http.StatusBadRequest)
+			return
+		}
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": out}, nil)
+	}))
 	mux.HandleFunc("/attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Student Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped daily dashboard + chronic-absentee
 		// roll-up; ?student=<id> → a learner's attendance rate + chronic flag. POST { student_id, org_unit,

@@ -67,6 +67,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
+	github.com/vasa-eos-se-tn/platform/scholarship v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
 	github.com/vasa-eos-se-tn/platform/tenancy v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
@@ -187,3 +188,5 @@ replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leav
 replace github.com/vasa-eos-se-tn/platform/grievance => ../L12-civic/grievance
 
 replace github.com/vasa-eos-se-tn/platform/attendance => ../L6-platform-services/attendance
+
+replace github.com/vasa-eos-se-tn/platform/scholarship => ../L6-platform-services/scholarship
