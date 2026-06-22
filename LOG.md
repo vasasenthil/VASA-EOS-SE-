@@ -1576,3 +1576,30 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 68 Go modules pass, 20 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (19): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·**Parent-Teacher Meeting**.
+
+## Ecosystem vertical: Free-Supply Entitlement Distribution — durable, no over-issue (leakage gate)
+- New L6 `entitlement` module — the free-supply distribution plane: each student's entitlement under TN's
+  free-supply schemes (textbooks/notebooks/uniforms/shoes/bags/cycles) and the issues distributed against it,
+  with the accountability invariant a distribution register must hold — a student can never be issued MORE than
+  their entitlement (the over-issue/leakage gate). Quantities are whole units; fulfilment status (pending →
+  partial → fulfilled) is derived. Pure + stdlib: `IssuedSoFar` (with idempotent exclude), `Store.IssueSupply`
+  (validate → open gate → over-issue gate → status recompute), `Remaining`.
+- Integration `entitlement.go` (+ `entitlement_pg.go`): `GrantEntitlement`, `IssueSupply` (both audited; deny
+  paths too), `StudentEntitlements(org,student)`, `EntitlementDashboard(scope)` (downward-governance scoped:
+  per-item entitled vs issued → fulfilment %, fulfilled-vs-pending student counts, shortfall worklist). The
+  durable adapter enforces the over-issue gate against the live issued total INSIDE the same transaction that
+  writes the issue and recomputes the entitlement status, so distribution + status are atomic. Seeded a Chennai
+  2026 free-supply roll (8 children × textbook/uniform/notebook; most fully supplied, some partial, one
+  pending). platformd: `GET /entitlement?scope=&student=&org=`, `POST /entitlement {action: grant|issue, …}`.
+  Migration `scripts/099`.
+- PROVEN LIVE (raw): `TestPgEntitlementDurable` (entitlements + issues persist across fresh instances; the
+  over-issue gate is enforced durably and atomically with the status recompute; a re-issue corrects
+  idempotently; a fulfilled entitlement is closed) and `TestEntitlementDashboardScoped` pass. platformd (durable
+  + DATABASE_URL): against ENT-CHN-006-uniform (4 entitled, 2 issued) an issue of 3 was REJECTED ("would
+  over-issue … remaining 2, tendered 3"); an issue against a fulfilled entitlement was REJECTED; issuing the
+  exact remaining 2 SUCCEEDED → status fulfilled; psql confirmed the issued total equals 4 exactly (never more).
+  Seeded Chennai dashboard: 8 students, uniform 75% / textbook·notebook 62.5% fulfilment, 9-entry shortfall
+  worklist.
+- Green bar (both stacks): 69 Go modules pass, 21 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (20): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·**Free-Supply Entitlement Distribution**.

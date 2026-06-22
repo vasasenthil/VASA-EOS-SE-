@@ -21,6 +21,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
+	"github.com/vasa-eos-se-tn/platform/entitlement"
 	"github.com/vasa-eos-se-tn/platform/fees"
 	"github.com/vasa-eos-se-tn/platform/immunisation"
 	"github.com/vasa-eos-se-tn/platform/infra"
@@ -1015,6 +1016,51 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.PTMDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/entitlement", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Free-Supply Entitlement Distribution. GET ?scope=<org> → scoped fulfilment dashboard (+ shortfall
+		// worklist); ?student=&org= → a student's entitlements + issues. POST { action, ... }: grant { id,
+		// org_unit,student_id,item,entitled_qty,term } grants an entitlement; issue { id,entitlement_id,qty,
+		// issued_on,reference } distributes against it (rejecting an over-issue).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action        string `json:"action"`
+				ID            string `json:"id"`
+				OrgUnit       string `json:"org_unit"`
+				StudentID     string `json:"student_id"`
+				Item          string `json:"item"`
+				EntitledQty   int    `json:"entitled_qty"`
+				Term          string `json:"term"`
+				EntitlementID string `json:"entitlement_id"`
+				Qty           int    `json:"qty"`
+				IssuedOn      string `json:"issued_on"`
+				Reference     string `json:"reference"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "issue" {
+				out, err := s.p.IssueSupply(entitlement.Issue{
+					ID: req.ID, EntitlementID: req.EntitlementID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					Qty: req.Qty, IssuedOn: orDefault(req.IssuedOn, "2026-06-22"), Reference: req.Reference,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "issue": out}, nil)
+				return
+			}
+			out, err := s.p.GrantEntitlement(entitlement.Entitlement{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Item: req.Item,
+				EntitledQty: req.EntitledQty, Term: req.Term, Status: entitlement.Pending,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "entitlement": out}, nil)
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			ents, issues := s.p.StudentEntitlements(q.Get("org"), student)
+			s.writeJSON(w, map[string]any{"entitlements": ents, "issues": issues}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.EntitlementDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
