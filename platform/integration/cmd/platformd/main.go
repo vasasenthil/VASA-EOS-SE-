@@ -24,6 +24,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
 	"github.com/vasa-eos-se-tn/platform/library"
+	"github.com/vasa-eos-se-tn/platform/mdm"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
 	"github.com/vasa-eos-se-tn/platform/quality"
@@ -776,6 +777,47 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.TransportDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/mdm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Mid-Day Meal (PM-POSHAN). GET ?scope=<org> → scoped coverage + foodgrain-stock dashboard (low-stock
+		// roster); ?register=<org> → a school's meal register. POST { action, ... }: receive { id,org_unit,date,
+		// grain_grams,note } records a foodgrain receipt; serve { id,org_unit,date,meals_served,enrolment,
+		// grain_grams } records a day's service (rejects an over-draw of stock or meals > enrolment).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Date        string `json:"date"`
+				GrainGrams  int64  `json:"grain_grams"`
+				Note        string `json:"note"`
+				MealsServed int    `json:"meals_served"`
+				Enrolment   int    `json:"enrolment"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "serve" {
+				out, err := s.p.ServeMeal(mdm.MealDay{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Date: orDefault(req.Date, "2026-06-22"),
+					MealsServed: req.MealsServed, Enrolment: req.Enrolment, GrainGrams: req.GrainGrams,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meal": out}, nil)
+				return
+			}
+			out, err := s.p.ReceiveFoodgrain(mdm.LedgerEntry{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Date: orDefault(req.Date, "2026-06-22"),
+				Kind: mdm.Receipt, GrainGrams: req.GrainGrams, Note: req.Note,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "receipt": out}, nil)
+			return
+		}
+		if reg := q.Get("register"); reg != "" {
+			s.writeJSON(w, s.p.SchoolMealRegister(reg), nil)
+			return
+		}
+		s.writeJSON(w, s.p.MDMDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral

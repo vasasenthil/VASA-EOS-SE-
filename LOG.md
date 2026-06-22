@@ -1442,3 +1442,29 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 63 Go modules pass, 15 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (14): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·**School Transport**.
+
+## Ecosystem vertical: Mid-Day Meal (PM-POSHAN) — durable, accountability (stock can never go negative)
+- New L6 `mdm` module — the PM-POSHAN food-accountability plane: a per-school foodgrain stock ledger (receipts
+  in / consumptions out) + the daily meal-service register, with the two invariants the scheme must hold — (1)
+  foodgrain stock can never go NEGATIVE (a day's cooking can never consume more grain than is on hand — the core
+  leakage gate), and (2) meals served can never exceed enrolment (a data-quality gate). Foodgrain is tracked in
+  GRAMS (int64, never floats), mirroring the money-in-paise discipline. Pure + stdlib: `Balance` (receipts minus
+  consumptions, with idempotent exclude), `Store.Serve` (validate → enrolment gate → stock gate → write meal +
+  matching consumption entry), `CoverageRate`.
+- Integration `mdm.go` (+ `mdm_pg.go`): `ReceiveFoodgrain`, `ServeMeal` (both audited; deny paths too),
+  `SchoolMealRegister(org)`, `MDMDashboard(scope)` (downward-governance scoped: meal coverage %, total grain
+  consumed, and the days-of-cover LOW-STOCK roster at each school's recent burn rate). The durable adapter
+  enforces the stock gate against the live balance INSIDE the same transaction that writes the meal + its
+  consumption ledger entry, so service and draw-down are atomic. Seeded a fortnight's lifting + five serving days
+  at a Chennai school (~93% coverage, driven low so the days-of-cover signal fires). platformd: `GET /mdm?scope=
+  &register=`, `POST /mdm {action: receive|serve, …}`. Migration `scripts/094`.
+- PROVEN LIVE (raw): `TestPgMdmDurable` (stock + meal register persist across fresh instances; the
+  stock-non-negative gate is enforced durably and atomically; a re-serve corrects the balance idempotently
+  without double-deducting) and `TestMDMDashboardScoped` pass. platformd (durable + DATABASE_URL): with 50.5kg on
+  hand, a day cooking 60kg was REJECTED ("insufficient foodgrain stock — need 60000g, have 50500g"); meals_served
+  400 > enrolment 320 was REJECTED; a 30kg serve SUCCEEDED and drew stock to 20.5kg (confirmed in Postgres); a
+  100kg receipt restored it to 120.5kg. Seeded Chennai dashboard: 1 school, 5 meal-days, 93.4% coverage,
+  149.5kg consumed, low-stock roster fires (1 day of cover).
+- Green bar (both stacks): 64 Go modules pass, 16 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (15): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·**Mid-Day Meal**.
