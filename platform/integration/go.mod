@@ -70,6 +70,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
 	github.com/vasa-eos-se-tn/platform/population v0.0.0
 	github.com/vasa-eos-se-tn/platform/portals v0.0.0
+	github.com/vasa-eos-se-tn/platform/ptm v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
 	github.com/vasa-eos-se-tn/platform/rbsk v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
@@ -169,6 +170,8 @@ replace github.com/vasa-eos-se-tn/platform/modelregistry => ../L8-engines/modelr
 replace github.com/vasa-eos-se-tn/platform/consent => ../L3-data-fabric/consent
 
 replace github.com/vasa-eos-se-tn/platform/population => ../L3-data-fabric/population
+
+replace github.com/vasa-eos-se-tn/platform/ptm => ../L6-platform-services/ptm
 
 replace github.com/vasa-eos-se-tn/platform/tenancy => ../L6-platform-services/tenancy
 

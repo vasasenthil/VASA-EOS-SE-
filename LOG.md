@@ -1549,3 +1549,30 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 67 Go modules pass, 19 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (18): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·**School Health Immunisation**.
+
+## Ecosystem vertical: Parent-Teacher Meeting — durable, capacity-checked booking + attendance lifecycle
+- New L6 `ptm` module — the parent-engagement plane: scheduled PTM sessions (with a fixed slot count) and the
+  guardian bookings against them, as a capacity-checked booking system with an attendance lifecycle. Holds the
+  invariants a meeting register must keep — a session can never be OVERBOOKED beyond its slots, a guardian can
+  never double-book the same session, a cancelled session takes no bookings, and a booking walks
+  booked → attended | no_show (a cancellation frees its slot). Turnout (attended vs occupied) is derived. Pure +
+  stdlib: `Occupied`, `Store.Book` (validate → session-open → no-double-book → capacity), the pure
+  ApplyAttend/ApplyNoShow/ApplyCancel transitions.
+- Integration `ptm.go` (+ `ptm_pg.go`): `SchedulePTM`, `BookPTM`, `MarkPTMAttendance` (attend/noshow/cancel) (all
+  audited; deny paths too), `SessionBookings(sessionID)` (the attendance sheet), `PTMDashboard(scope)`
+  (downward-governance scoped: per-session fill % + turnout %, overall turnout, low-turnout roster). The durable
+  adapter enforces the overbooking + double-booking invariants against the live bookings and backstops the
+  no-double-book rule with a partial unique index; transitions reuse the pure Apply* functions. Seeded a Chennai
+  Term-1 PTM (8 slots, 6 booked, 4 attended · 1 no-show · 1 booked). platformd: `GET /ptm?scope=&sheet=`,
+  `POST /ptm {action: session|book|attend|noshow|cancel, …}`. Migration `scripts/098`.
+- PROVEN LIVE (raw): `TestPgPtmDurable` (sessions + bookings persist across fresh instances; the overbooking and
+  double-booking invariants are enforced durably; a cancellation frees a slot; the attendance lifecycle
+  persists) and `TestPTMDashboardScoped` pass. platformd (durable + DATABASE_URL): after filling the 8-slot
+  session, a 9th booking was REJECTED ("session PTM-CHN-T1 is full (8 slots)"); a double-booking by an
+  already-booked student was REJECTED; cancelling an attended slot was REJECTED ("only a booked slot can be
+  cancelled"); cancelling a still-booked slot freed it and the 9th booking then SUCCEEDED; psql confirmed
+  exactly 8 occupied (non-cancelled) bookings (= slots). Seeded Chennai dashboard: 1 session, 8 slots, 6
+  occupied (75% fill), 4 attended (66.7% turnout).
+- Green bar (both stacks): 68 Go modules pass, 20 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (19): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·**Parent-Teacher Meeting**.

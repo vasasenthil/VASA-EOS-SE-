@@ -30,6 +30,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/mdm"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
+	"github.com/vasa-eos-se-tn/platform/ptm"
 	"github.com/vasa-eos-se-tn/platform/quality"
 	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
@@ -965,6 +966,55 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.ImmunisationDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/ptm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Parent-Teacher Meeting. GET ?scope=<org> → scoped parent-engagement dashboard (fill + turnout, low-
+		// turnout roster); ?sheet=<sessionID> → a session's attendance sheet. POST { action, ... }: session
+		// { id,org_unit,title,date,slots,status } schedules a session; book { id,session_id,student_id,guardian,
+		// slot } books a slot (rejecting an overbooking/double-booking); attend/noshow/cancel { id } mark
+		// attendance.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Title     string `json:"title"`
+				Date      string `json:"date"`
+				Slots     int    `json:"slots"`
+				Status    string `json:"status"`
+				SessionID string `json:"session_id"`
+				StudentID string `json:"student_id"`
+				Guardian  string `json:"guardian"`
+				Slot      string `json:"slot"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "book":
+				out, err := s.p.BookPTM(ptm.Booking{
+					ID: req.ID, SessionID: req.SessionID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					Guardian: req.Guardian, Status: ptm.Booked, Slot: req.Slot,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "booking": out}, nil)
+			case "attend", "noshow", "cancel":
+				out, err := s.p.MarkPTMAttendance(req.ID, req.Action)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "booking": out}, nil)
+			default: // session
+				out, err := s.p.SchedulePTM(ptm.Session{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Date: orDefault(req.Date, "2026-06-22"),
+					Slots: req.Slots, Status: orDefault(req.Status, ptm.Scheduled),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			}
+			return
+		}
+		if sheet := q.Get("sheet"); sheet != "" {
+			s.writeJSON(w, s.p.SessionBookings(sheet), nil)
+			return
+		}
+		s.writeJSON(w, s.p.PTMDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
