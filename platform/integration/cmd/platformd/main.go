@@ -22,6 +22,7 @@ import (
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
 	"github.com/vasa-eos-se-tn/platform/entitlement"
+	"github.com/vasa-eos-se-tn/platform/establishment"
 	"github.com/vasa-eos-se-tn/platform/fees"
 	"github.com/vasa-eos-se-tn/platform/immunisation"
 	"github.com/vasa-eos-se-tn/platform/infra"
@@ -1061,6 +1062,54 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.EntitlementDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/establishment", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Establishment & Sanctioned-Post Register. GET ?scope=<org> → scoped staffing dashboard (sanctioned
+		// vs filled, vacancy roster); ?roster=<establishmentID> → a cadre's appointments. POST { action, ... }:
+		// sanction { id,org_unit,cadre,sanctioned,status } sets a sanctioned-post line; appoint { id,
+		// establishment_id,employee_id,name,appointed_on } fills a post (rejecting an over-appointment); vacate
+		// { id } frees a post.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Cadre           string `json:"cadre"`
+				Sanctioned      int    `json:"sanctioned"`
+				Status          string `json:"status"`
+				EstablishmentID string `json:"establishment_id"`
+				EmployeeID      string `json:"employee_id"`
+				Name            string `json:"name"`
+				AppointedOn     string `json:"appointed_on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "appoint":
+				out, err := s.p.AppointStaff(establishment.Appointment{
+					ID: req.ID, EstablishmentID: req.EstablishmentID, OrgUnit: req.OrgUnit, EmployeeID: req.EmployeeID,
+					Name: req.Name, Status: establishment.Filled, AppointedOn: orDefault(req.AppointedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "appointment": out}, nil)
+			case "vacate":
+				out, err := s.p.VacatePost(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "appointment": out}, nil)
+			default: // sanction
+				out, err := s.p.SanctionPosts(establishment.Establishment{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Cadre: req.Cadre, Sanctioned: req.Sanctioned,
+					Status: orDefault(req.Status, establishment.Active),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "establishment": out}, nil)
+			}
+			return
+		}
+		if roster := q.Get("roster"); roster != "" {
+			s.writeJSON(w, s.p.EstablishmentRoster(roster), nil)
+			return
+		}
+		s.writeJSON(w, s.p.EstablishmentDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
 	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral

@@ -1603,3 +1603,27 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green bar (both stacks): 69 Go modules pass, 21 durable PG tests pass via the CI TestPg step, OPA 33/33,
   gofmt clean; tsc 0 (TS unchanged this turn).
 - Durable verticals now (20): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·**Free-Supply Entitlement Distribution**.
+
+## Ecosystem vertical: Staff Establishment & Sanctioned-Post Register — durable, no over-appointment
+- New L6 `establishment` module — the staffing-control plane: each school's sanctioned posts (by cadre) and the
+  appointments made against them, with the accountability invariant an establishment register must hold — the
+  FILLED posts of a cadre can never exceed its SANCTIONED strength (the over-appointment gate). A vacated post
+  frees its slot; vacancy (sanctioned − filled) is derived. Pure + stdlib: `FilledCount`, `Store.Appoint`
+  (validate → open gate → no-double-post → over-appointment gate), `Vacate`, `Vacancies`.
+- Integration `establishment.go` (+ `establishment_pg.go`): `SanctionPosts`, `AppointStaff`, `VacatePost` (all
+  audited; deny paths too), `EstablishmentRoster(establishmentID)`, `EstablishmentDashboard(scope)`
+  (downward-governance scoped: sanctioned vs filled strength across cadres, vacancy %, vacancy roster). The
+  durable adapter enforces the over-appointment gate against the live filled count and backstops the
+  one-filled-post-per-employee rule with a partial unique index. Seeded a Chennai sanctioned-post register
+  (5 cadres, 18 sanctioned, 15 filled, 3 vacancies). platformd: `GET /establishment?scope=&roster=`,
+  `POST /establishment {action: sanction|appoint|vacate, …}`. Migration `scripts/100`.
+- PROVEN LIVE (raw): `TestPgEstablishmentDurable` (sanctioned posts + appointments persist across fresh
+  instances; the over-appointment and no-double-post invariants are enforced durably; a vacate frees a post; a
+  frozen establishment refuses appointments) and `TestEstablishmentDashboardScoped` pass. platformd (durable +
+  DATABASE_URL): a 7th appointment to the full 6-post SGT cadre was REJECTED ("ESTAB-CHN-03 is at sanctioned
+  strength (6)"); once BT reached 8/8 a 9th was REJECTED ("at sanctioned strength (8)"); vacating a BT post then
+  re-appointing SUCCEEDED; psql confirmed exactly 8 filled BT posts (= sanctioned). Seeded Chennai dashboard:
+  5 cadres, 18 sanctioned, 15 filled, 16.7% vacancy, 3-entry vacancy roster.
+- Green bar (both stacks): 70 Go modules pass, 22 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (21): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·Entitlement·**Staff Establishment**.

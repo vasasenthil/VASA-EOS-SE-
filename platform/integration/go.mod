@@ -13,6 +13,7 @@ require (
 	github.com/vasa-eos-se-tn/platform/dataplane v0.0.0
 	github.com/vasa-eos-se-tn/platform/dr v0.0.0
 	github.com/vasa-eos-se-tn/platform/entitlement v0.0.0
+	github.com/vasa-eos-se-tn/platform/establishment v0.0.0
 	github.com/vasa-eos-se-tn/platform/evaluation v0.0.0
 	github.com/vasa-eos-se-tn/platform/exams v0.0.0
 	github.com/vasa-eos-se-tn/platform/fees v0.0.0
@@ -139,6 +140,8 @@ replace github.com/vasa-eos-se-tn/platform/agents => ../L9-agents/agents
 replace github.com/vasa-eos-se-tn/platform/engines => ../L8-engines/engines
 
 replace github.com/vasa-eos-se-tn/platform/entitlement => ../L6-platform-services/entitlement
+
+replace github.com/vasa-eos-se-tn/platform/establishment => ../L6-platform-services/establishment
 
 replace github.com/vasa-eos-se-tn/platform/escrow-agent => ../L1-foundation/escrow-agent
 
