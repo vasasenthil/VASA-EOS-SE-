@@ -78,6 +78,33 @@ func (p *Platform) TenantNode(id string) (tenancy.Node, bool) {
 	return h.Get(id)
 }
 
+// ResolveTenancyNode maps a governance hint to a REAL tenancy node id, completing the identity-plane bridge for
+// district/block officers (whose org unit cannot be inferred from a school id). Resolution order: an explicit
+// node id that exists; else a district name → its canonical T3 node; else a directorate code → its T2 node.
+// Returns the node id and whether it exists in the live estate (fail-closed: an unknown hint resolves to "").
+func (p *Platform) ResolveTenancyNode(hint struct{ Node, District, Directorate string }) (string, bool) {
+	h, err := tenancyHierarchy()
+	if err != nil || h == nil {
+		return "", false
+	}
+	candidates := []string{}
+	if hint.Node != "" {
+		candidates = append(candidates, hint.Node)
+	}
+	if hint.District != "" {
+		candidates = append(candidates, tenancy.DistrictNodeID(hint.District))
+	}
+	if hint.Directorate != "" {
+		candidates = append(candidates, tenancy.DirectorateNodeID(hint.Directorate))
+	}
+	for _, c := range candidates {
+		if _, ok := h.Get(c); ok {
+			return c, true
+		}
+	}
+	return "", false
+}
+
 // JurisdictionScope is the result of a downward-governance scope query: the schools a subject tenant governs.
 type JurisdictionScope struct {
 	Subject string   `json:"subject"`

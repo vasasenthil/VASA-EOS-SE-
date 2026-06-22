@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/vasa-eos-se-tn/platform/adapters"
+	"github.com/vasa-eos-se-tn/platform/attendance"
 	"github.com/vasa-eos-se-tn/platform/capacity"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
@@ -640,6 +641,37 @@ func (s *server) routes() http.Handler {
 			em = err.Error()
 		}
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+	}))
+	mux.HandleFunc("/attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Student Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped daily dashboard + chronic-absentee
+		// roll-up; ?student=<id> → a learner's attendance rate + chronic flag. POST { student_id, org_unit,
+		// date, status, source } marks attendance.
+		if r.Method == http.MethodPost {
+			var rec attendance.Record
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.MarkAttendance(rec)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "record": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		if student := q.Get("student"); student != "" {
+			s.writeJSON(w, s.p.StudentAttendanceProfile(student), nil)
+			return
+		}
+		s.writeJSON(w, s.p.AttendanceDashboard(orDefault(q.Get("scope"), "TN"), orDefault(q.Get("date"), "2026-06-10")), nil)
+	}))
+	mux.HandleFunc("/tenancy/resolve", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// resolve a governance hint to a real tenancy node id (the identity-plane bridge uses this to anchor a
+		// district/block officer). GET ?node=&district=&directorate=.
+		q := r.URL.Query()
+		id, ok := s.p.ResolveTenancyNode(struct{ Node, District, Directorate string }{q.Get("node"), q.Get("district"), q.Get("directorate")})
+		s.writeJSON(w, map[string]any{"resolved": ok, "node": id}, nil)
 	}))
 	mux.HandleFunc("/track/grievance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// PUBLIC, unauthenticated, PII-suppressed grievance ticket tracker. GET ?id=<ticket>. Returns only the

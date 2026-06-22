@@ -104,6 +104,21 @@ export async function platformUpsertUser(
   return postJSON("/directory", u)
 }
 
+/** Resolve a governance hint (district name / directorate code / node id) to a real backbone tenancy node id. */
+export async function platformResolveNode(hint: {
+  district?: string
+  directorate?: string
+  node?: string
+}): Promise<{ resolved: boolean; node: string }> {
+  const qs = new URLSearchParams()
+  if (hint.node) qs.set("node", hint.node)
+  if (hint.district) qs.set("district", hint.district)
+  if (hint.directorate) qs.set("directorate", hint.directorate)
+  const res = await fetch(`${BASE}/tenancy/resolve?${qs.toString()}`, { cache: "no-store" })
+  if (!res.ok) throw new Error(`platformd /tenancy/resolve: HTTP ${res.status}`)
+  return (await res.json()) as { resolved: boolean; node: string }
+}
+
 export interface PlatformGrievanceStep {
   role: string
   decision: string // "" | resolved | rejected | escalated

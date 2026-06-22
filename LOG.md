@@ -1284,3 +1284,28 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   (ReBAC).
 - Green bar (both stacks): TS suite 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ 95/80/88 gate), tsc 0, lint
   clean; Go 56 modules + 8 durable PG tests + OPA 33/33, gofmt clean.
+
+## Complete the identity-plane unification (UM-1/G-4) + new ecosystem vertical: Student Attendance
+### Identity-plane: district/block officers now anchorable
+- Go: exported `tenancy.DistrictNodeID`/`DirectorateNodeID`; `Platform.ResolveTenancyNode(hint)` resolves a
+  governance hint (node id / district name / directorate code) to a REAL tenancy node, fail-closed; endpoint
+  `GET /tenancy/resolve`. Test `TestResolveTenancyNode` (Chennai→TN-DIST-Chennai, DSE→TN-DIR-DSE, unknown→none).
+- TS: `lib/platform-client.platformResolveNode`; `backbone-sync` now anchors DEO/CEO via their district →
+  resolved tenancy node (no mis-anchoring). UM-1/G-4 is now complete across ALL tiers (school·state·district).
+- PROVEN LIVE: `/tenancy/resolve?district=Chennai` → {node:TN-DIST-Chennai, resolved:true}.
+### Student Attendance (new durable L6 vertical, RTE chronic-absentee analytics)
+- New L6 `attendance` module — high-volume daily data plane (one record per student per day), NOT a workflow:
+  Mark (idempotent on student+date — re-marking corrects), Get, List(filter), `AttendanceRate` (present+late /
+  attendable, excused-exempt), `IsChronicAbsentee` (<75% over >=10 days = RTE dropout early-warning), DaySummary.
+- Integration `attendance.go` (+ `attendance_pg.go`): per-platform store (mem/pg); `MarkAttendance` (audited),
+  `StudentAttendanceProfile` (rate + chronic flag), `AttendanceDashboard(scope, date)` (downward-governance
+  scoped: per-school day rates + chronic-absentee roll-up). Seeded ~20 days for a Chennai cohort incl. one
+  engineered chronic absentee. platformd: `GET /attendance?scope=&date=` (dashboard), `?student=` (profile),
+  `POST /attendance` (mark). Migration `scripts/087`.
+- PROVEN LIVE (raw): `TestPgAttendanceDurable` (16-day history persists + correction upsert + chronic flag over
+  the durable history) and `TestAttendanceDashboardScoped` pass. platformd (durable): marked LIVE-STU-1
+  (confirmed in Postgres); `/attendance?scope=TN-DIST-Chennai&date=` → 1 school, 12 marked, chronic_absentees
+  ['SYN-STU-D']; `/attendance?student=SYN-STU-D` → rate 30%, chronic true, 20 days.
+- Green bar (both stacks): 57 Go modules pass, 9 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; TS 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ gate), tsc 0, lint clean.
+- Durable verticals now: Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · **Attendance**.

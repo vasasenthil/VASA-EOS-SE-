@@ -41,6 +41,7 @@ require (
 require (
 	github.com/vasa-eos-se-tn/platform/agents v0.0.0
 	github.com/vasa-eos-se-tn/platform/alignments v0.0.0
+	github.com/vasa-eos-se-tn/platform/attendance v0.0.0
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
@@ -184,3 +185,5 @@ replace github.com/vasa-eos-se-tn/platform/exams => ../L6-platform-services/exam
 replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leave
 
 replace github.com/vasa-eos-se-tn/platform/grievance => ../L12-civic/grievance
+
+replace github.com/vasa-eos-se-tn/platform/attendance => ../L6-platform-services/attendance

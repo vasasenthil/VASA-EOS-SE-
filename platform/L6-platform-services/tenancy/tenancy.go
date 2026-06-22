@@ -243,6 +243,13 @@ func sanitize(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, " ", "-"), ".", "")
 }
 
+// DistrictNodeID returns the canonical T3 tenancy node id for a district name (the same scheme BuildTN uses),
+// so callers (e.g. the identity-plane bridge) can map a governance district to its tenancy node deterministically.
+func DistrictNodeID(name string) string { return "TN-DIST-" + sanitize(name) }
+
+// DirectorateNodeID returns the canonical T2 tenancy node id for a directorate code.
+func DirectorateNodeID(code string) string { return "TN-DIR-" + code }
+
 // directoryDistrictParent is the directorate that owns the territorial field hierarchy (districts → blocks →
 // clusters → schools). DSE is the apex school-education directorate, so the 38 districts hang under it; the
 // other six directorates are valid T2 nodes governing their own functional remits.
