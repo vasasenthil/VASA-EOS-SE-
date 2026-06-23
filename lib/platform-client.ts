@@ -746,3 +746,60 @@ export async function platformRecordDose(input: {
 }): Promise<{ ok: boolean; error: string }> {
   return postJSON("/immunisation", { org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
 }
+
+// ── Free-Supply Entitlement Distribution: no over-issue ──────────────────────────────────────────────────
+// A student can never be issued more than their entitlement (the leakage gate). Quantities are whole units;
+// the gate is enforced server-side, atomically with the pending→partial→fulfilled status recompute.
+
+export interface PlatformItemFulfilment {
+  item: string
+  entitled_qty: number
+  issued_qty: number
+  fulfilled_students: number
+  pending_students: number
+  fulfilment_pct: number
+}
+
+export interface PlatformEntitlementShortfall {
+  entitlement_id: string
+  student_id: string
+  item: string
+  remaining: number
+}
+
+export interface PlatformEntitlementDashboard {
+  scope: string
+  students: number
+  items: PlatformItemFulfilment[]
+  shortfall?: PlatformEntitlementShortfall[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped free-supply distribution dashboard from the backbone (null when not configured). */
+export async function platformEntitlementDashboard(scope = "TN"): Promise<PlatformEntitlementDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/entitlement?scope=${encodeURIComponent(scope)}`)
+}
+
+/** Grant a student's free-supply entitlement on the backbone. */
+export async function platformGrantEntitlement(input: {
+  id: string
+  student_id: string
+  item: string
+  entitled_qty: number
+  term?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/entitlement", { action: "grant", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Issue a distribution against an entitlement — the over-issue gate is enforced server-side. */
+export async function platformIssueSupply(input: {
+  id: string
+  entitlement_id: string
+  qty: number
+  issued_on?: string
+  reference?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/entitlement", { action: "issue", ...input })
+}

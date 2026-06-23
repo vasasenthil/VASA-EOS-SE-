@@ -1768,3 +1768,17 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (8): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation.
+
+## Full-stack rollout #9: Free-Supply Entitlement — no over-issue, working end-to-end
+- Entitlement Distribution as a working, clickable module at /free-supply driving the Go backbone.
+  lib/platform-client.ts: entitlement seam (platformEntitlementDashboard, platformGrantEntitlement,
+  platformIssueSupply). app/free-supply/: role-gated server actions (manage:school); a force-dynamic page with
+  students/items/shortfall stats, per-item fulfilment (entitled vs issued + %), an Issue form (entitlement
+  picked from the shortfall worklist), a Grant form, and a shortfall worklist.
+- PROVEN LIVE (real client code → platformd + Postgres): 8 students / 9 shortfall; issuing 3 against
+  ENT-CHN-006-uniform (2 remaining) was REJECTED ("issue would over-issue ENT-CHN-006-uniform — remaining 2,
+  tendered 3"); issuing exactly 2 SUCCEEDED; grant-a-new-entitlement + issue-within SUCCEEDED. The over-issue
+  gate enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (9): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement.
