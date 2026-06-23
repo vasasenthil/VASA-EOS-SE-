@@ -675,3 +675,74 @@ export async function platformAllotSeat(input: {
 export async function platformWithdrawSeat(id: string): Promise<{ ok: boolean; error: string }> {
   return postJSON("/transport", { action: "withdraw", id })
 }
+
+// ── School Health Immunisation: dose-sequence invariant ──────────────────────────────────────────────────
+// A dose can only be recorded in sequence (dose N requires doses 1..N-1), never off-schedule, never
+// future-dated, and never a duplicate slot — all enforced server-side.
+
+export interface PlatformVaccine {
+  code: string
+  name: string
+  required_doses: number
+}
+
+export interface PlatformVaccineCoverage {
+  vaccine: string
+  name: string
+  complete: number
+  partial: number
+  due: number
+  coverage_pct: number
+}
+
+export interface PlatformImmunisationGap {
+  student_id: string
+  vaccine: string
+  status: string
+}
+
+export interface PlatformImmunisationDashboard {
+  scope: string
+  students: number
+  doses_recorded: number
+  coverage: PlatformVaccineCoverage[]
+  worklist?: PlatformImmunisationGap[]
+  synthetic: boolean
+}
+
+export interface PlatformStudentImmunisation {
+  student_id: string
+  status: Record<string, string> // vaccine code → complete | partial | due
+  doses_recorded: number
+}
+
+/** Jurisdiction-scoped immunisation coverage dashboard from the backbone (null when not configured). */
+export async function platformImmunisationDashboard(scope = "TN"): Promise<PlatformImmunisationDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/immunisation?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The school-health immunisation schedule (UIP/RBSK vaccines + required dose counts). */
+export async function platformImmunisationSchedule(): Promise<PlatformVaccine[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/immunisation?schedule=1`)
+}
+
+/** A student's immunisation card (per-vaccine status). */
+export async function platformStudentImmunisationCard(student: string): Promise<PlatformStudentImmunisation | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/immunisation?student=${encodeURIComponent(student)}`)
+}
+
+/** Record an administered vaccine dose — sequence/schedule/no-future/no-duplicate enforced server-side. */
+export async function platformRecordDose(input: {
+  id: string
+  student_id: string
+  vaccine: string
+  dose_number: number
+  administered_on: string
+  batch?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/immunisation", { org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}

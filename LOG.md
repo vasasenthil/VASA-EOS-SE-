@@ -1753,3 +1753,18 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (7): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport.
+
+## Full-stack rollout #8: School Health Immunisation — dose-sequence invariant, working end-to-end
+- Immunisation as a working, clickable module at /health-immunisation driving the Go backbone.
+  lib/platform-client.ts: immunisation seam (platformImmunisationDashboard, platformImmunisationSchedule,
+  platformStudentImmunisationCard, platformRecordDose). app/health-immunisation/: role-gated server actions
+  (manage:students); a force-dynamic page with students/doses/vaccines stats, per-vaccine coverage
+  (complete/partial/due + %), a Record-dose form (vaccine from the live schedule), and an officer-only follow-up
+  worklist. Health data sensitive: aggregate coverage public, per-child worklist officer-only.
+- PROVEN LIVE (real client code → platformd + Postgres): schedule [Albendazole, JE, MR, Td10, Td16, VitA];
+  10 students / 41 doses; recording MR dose 2 with no dose 1 was REJECTED ("out-of-sequence dose — MR dose 2
+  requires dose 1 first"); an off-schedule vaccine (COVID) was REJECTED; recording dose 1 then dose 2 in order
+  SUCCEEDED. All gates enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (8): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation.
