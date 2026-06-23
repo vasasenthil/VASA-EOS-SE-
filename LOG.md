@@ -1695,3 +1695,16 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   approval loop, persisted and audited.
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61. Working clickable modules now (3):
   Establishment, Fee Ledger, RTE Admissions.
+
+## Full-stack rollout #4: Grievance Redressal — durable, multi-tier SLA escalation, working end-to-end
+- Grievance Redressal as a working, clickable module at /grievance-cases driving the Go backbone (the legacy
+  local-store /grievance and /grievance-approvals stay intact). Reuses the existing platform-client grievance
+  seam (platformListGrievance, platformFileGrievance, platformActGrievance). app/grievance-cases/: a File form
+  (open to complainants), an open-cases escalation worklist rendering each case's tiered chain with the current
+  tier highlighted + SLA-breach flag, and officer Resolve/Escalate/Reject buttons (canDo manage:governance).
+- PROVEN LIVE (real client code → platformd + Postgres): file a financial grievance → chain
+  [HEAD_TEACHER, BEO, DEO], tier 0, SLA due; list scoped → 2 cases; escalate at tier 0 (HEAD_TEACHER) → tier 1
+  (BEO); resolve at tier 1 → status resolved. (A safety grievance opens the [HEAD_TEACHER, DEO, DIRECTOR]
+  chain — category-driven, as designed.) Full multi-tier escalation loop, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (4): Establishment, Fee Ledger, RTE Admissions, Grievance Redressal.
