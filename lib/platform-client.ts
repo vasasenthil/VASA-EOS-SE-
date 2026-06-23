@@ -597,3 +597,81 @@ export async function platformServeMeal(input: {
 }): Promise<{ ok: boolean; error: string }> {
   return postJSON("/mdm", { action: "serve", ...input })
 }
+
+// ── School Transport: route-safety (capacity + fitness/licence serviceability) ───────────────────────────
+// Two hard safety invariants: a route can never exceed its seating capacity, and no student may be allotted to
+// an unserviceable vehicle (lapsed fitness certificate or driver licence).
+
+export interface PlatformRouteUtilisation {
+  route_id: string
+  name: string
+  vehicle_no: string
+  capacity: number
+  seated: number
+  serviceable: boolean
+  safety_reason?: string
+}
+
+export interface PlatformTransportDashboard {
+  scope: string
+  as_of: string
+  routes: number
+  total_capacity: number
+  total_seated: number
+  utilisation_pct: number
+  unserviceable_routes?: PlatformRouteUtilisation[]
+  routes_rollup?: PlatformRouteUtilisation[]
+  synthetic: boolean
+}
+
+export interface PlatformTransportAllotment {
+  id: string
+  route_id: string
+  org_unit: string
+  student_id: string
+  stop: string
+  status: string
+}
+
+/** Jurisdiction-scoped transport-safety dashboard from the backbone (null when not configured). */
+export async function platformTransportDashboard(scope = "TN"): Promise<PlatformTransportDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/transport?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A route's seat manifest (active allotments). */
+export async function platformRouteRoster(routeId: string): Promise<PlatformTransportAllotment[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/transport?roster=${encodeURIComponent(routeId)}`)
+}
+
+/** Register (or update) a school bus route on the backbone. */
+export async function platformRegisterRoute(input: {
+  id: string
+  name: string
+  vehicle_no: string
+  capacity: number
+  fitness_valid_till: string
+  driver_name: string
+  licence_valid_till: string
+  status?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/transport", { action: "route", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Seat a student on a route — capacity + serviceability are enforced server-side. */
+export async function platformAllotSeat(input: {
+  id: string
+  route_id: string
+  student_id: string
+  stop?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/transport", { action: "allot", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Withdraw a seat (frees capacity). */
+export async function platformWithdrawSeat(id: string): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/transport", { action: "withdraw", id })
+}

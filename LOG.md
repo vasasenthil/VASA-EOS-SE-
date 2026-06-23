@@ -1736,3 +1736,20 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   server-side.
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (6): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal.
+
+## Full-stack rollout #7: School Transport — route safety (capacity + fitness/licence), working end-to-end
+- School Transport as a working, clickable module at /school-transport driving the Go backbone.
+  lib/platform-client.ts: transport seam (platformTransportDashboard, platformRouteRoster,
+  platformRegisterRoute, platformAllotSeat, platformWithdrawSeat). app/school-transport/: role-gated server
+  actions (manage:students for seats, manage:school for routes); a force-dynamic page with a realtime safety
+  picture (routes · capacity · seated · utilisation% · unserviceable count), per-route cards showing
+  seated/capacity + serviceable/UNSERVICEABLE badge + the safety reason + a roster with working Withdraw, an
+  Allot form and a Register-route form.
+- PROVEN LIVE (real client code → platformd + Postgres): 3 routes, 9/84 seats, 1 unserviceable; allotting to a
+  full route (RT-CHN-01) was REJECTED ("route RT-CHN-01 is at capacity"); allotting to an unserviceable route
+  (RT-CHN-03) was REJECTED ("cannot allot to an unserviceable route — vehicle fitness certificate expired
+  (2026-03-01)"); withdrawing a seat freed it and the re-allot SUCCEEDED. Both safety invariants enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (7): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport.
