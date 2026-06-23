@@ -1835,3 +1835,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   modules now (12): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register.
+
+## Full-stack rollout #13: Parent–Teacher Meetings — no-overbooking/no-double-booking, working end-to-end
+- PTM as a working, clickable module at /parent-teacher-meetings driving the Go backbone's /ptm service (the
+  existing /ptm reference demo stays intact). lib/platform-client.ts: ptm seam (platformPtmDashboard,
+  platformSessionSheet, platformSchedulePtm, platformBookPtm, platformMarkPtmAttendance). app/parent-teacher-
+  meetings/: role-gated server actions (manage:school); a force-dynamic page with sessions/total-slots/occupied/
+  attended/turnout stats, a per-session rollup (fill vs slots, turnout vs booked, no-shows) with a low-turnout
+  flag, a live attendance sheet for the focus session with Attended / No-show / Cancel controls, plus Schedule-
+  session and Book-slot forms. School org + focus session discovered from the rollup.
+- PROVEN LIVE (real client code → platformd + Postgres): seeded session PTM-CHN-T1 (8 slots, 6 occupied, 4
+  attended). A fresh 2-slot session: booking the SAME student twice was REJECTED ("…already has a booking…");
+  a third booking into the full session was REJECTED ("…is full (2 slots)"); attend + no-show persisted and the
+  sheet reflected them. Postgres rows verified durable (ptm_sessions=2, ptm_bookings=8, 5 attended, 2 no_show).
+  The no-overbooking and no-double-booking invariants are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (13): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings.

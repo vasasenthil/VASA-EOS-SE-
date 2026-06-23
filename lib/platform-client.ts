@@ -1016,3 +1016,94 @@ export async function platformReturnAsset(
 ): Promise<{ ok: boolean; error: string; asset?: PlatformAsset }> {
   return postJSON("/infra", { action: "return", id, condition })
 }
+
+// ── Parent-Teacher Meeting: no-overbooking / no-double-booking invariant ─────────────────────────────────
+// A session has a fixed number of slots; a guardian cannot double-book the same session and the session cannot
+// be overbooked — both enforced server-side. Booking lifecycle: book → attend | noshow | cancel.
+
+export interface PlatformPtmSession {
+  id: string
+  org_unit: string
+  title: string
+  date: string
+  slots: number
+  status: string // scheduled | cancelled
+}
+
+export interface PlatformPtmBooking {
+  id: string
+  session_id: string
+  org_unit: string
+  student_id: string
+  guardian: string
+  status: string // booked | attended | no_show | cancelled
+  slot?: string
+}
+
+export interface PlatformPtmRollup {
+  session_id: string
+  title: string
+  date: string
+  slots: number
+  booked: number
+  attended: number
+  no_show: number
+  fill_pct: number
+  turnout_pct: number
+}
+
+export interface PlatformPtmDashboard {
+  scope: string
+  sessions: number
+  total_slots: number
+  occupied: number
+  attended: number
+  turnout_pct: number
+  sessions_rollup?: PlatformPtmRollup[]
+  low_turnout?: PlatformPtmRollup[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped parent-engagement dashboard from the backbone (null when not configured). */
+export async function platformPtmDashboard(scope = "TN"): Promise<PlatformPtmDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/ptm?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A session's attendance sheet (its bookings). */
+export async function platformSessionSheet(sessionID: string): Promise<PlatformPtmBooking[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/ptm?sheet=${encodeURIComponent(sessionID)}`)
+}
+
+/** Schedule a parent-teacher meeting session with a fixed number of slots. */
+export async function platformSchedulePtm(input: {
+  id: string
+  org_unit: string
+  title: string
+  date?: string
+  slots: number
+  status?: string
+}): Promise<{ ok: boolean; error: string; session?: PlatformPtmSession }> {
+  return postJSON("/ptm", { action: "session", ...input })
+}
+
+/** Book a guardian into a session slot — overbooking and double-booking are rejected server-side. */
+export async function platformBookPtm(input: {
+  id: string
+  session_id: string
+  org_unit: string
+  student_id: string
+  guardian: string
+  slot?: string
+}): Promise<{ ok: boolean; error: string; booking?: PlatformPtmBooking }> {
+  return postJSON("/ptm", { action: "book", ...input })
+}
+
+/** Mark a booking: attend | noshow | cancel. */
+export async function platformMarkPtmAttendance(
+  id: string,
+  action: "attend" | "noshow" | "cancel",
+): Promise<{ ok: boolean; error: string; booking?: PlatformPtmBooking }> {
+  return postJSON("/ptm", { action, id })
+}
