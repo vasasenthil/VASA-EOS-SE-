@@ -1853,3 +1853,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   modules now (13): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings.
+
+## Full-stack rollout #14: RBSK Child-Health Screening — auto-referral + closure pipeline, working end-to-end
+- RBSK as a working, clickable module at /health-screening driving the Go backbone's /rbsk service (the existing
+  /rbsk, /rbsk-screening, /health-referrals reference modules stay intact). lib/platform-client.ts: rbsk seam
+  (platformRbskDashboard, platformRbskReferrals, platformRecordScreening, platformAdvanceReferral).
+  app/health-screening/: role-gated server actions (manage:school); a force-dynamic page with screened/healthy/
+  with-findings/active-referrals/closure stats, a findings breakdown (the four Ds), an active-referral worklist
+  with Accept-&-treat / Close (outcome) controls, and a Record-screening form (the four Ds as checkboxes). School
+  org discovered from the referral worklist.
+- PROVEN LIVE (real client code → platformd + Postgres): 20 seeded screenings (15 healthy, 5 referred). A healthy
+  screening (no findings) raised NO referral (status=healthy); a screening flagging "deficiency" AUTO-REFERRED to
+  DEIC (status=referred); treat → under-treatment, a second treat REJECTED ("only a referred screening can enter
+  treatment"), close(outcome) → closed, a re-close REJECTED ("only an open referral can be closed"). Postgres rows
+  verified durable (rbsk_screenings: 16 healthy, 5 referred, 1 closed). The auto-referral and pipeline transitions
+  are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (14): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening.

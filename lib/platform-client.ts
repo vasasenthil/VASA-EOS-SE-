@@ -1107,3 +1107,64 @@ export async function platformMarkPtmAttendance(
 ): Promise<{ ok: boolean; error: string; booking?: PlatformPtmBooking }> {
   return postJSON("/ptm", { action, id })
 }
+
+// ── RBSK child-health screening: auto-referral + referral-closure pipeline ────────────────────────────────
+// A screening with any of the four Ds (defect · disease · deficiency · disability) auto-refers the child to the
+// DEIC. The referral then walks referred → under-treatment (treat) → closed (close, with an outcome). A healthy
+// screening (no findings) raises no referral.
+
+export interface PlatformScreening {
+  id: string
+  student_id: string
+  org_unit: string
+  screened_on: string
+  findings: string[] // subset of defect | disease | deficiency | disability; empty = healthy
+  status: string // healthy | referred | under-treatment | closed
+  referred_to?: string
+  closed_outcome?: string
+  updated_at: string
+}
+
+export interface PlatformRbskDashboard {
+  scope: string
+  screened: number
+  healthy: number
+  with_findings: number
+  by_finding: Record<string, number>
+  active_referrals: number
+  closed: number
+  referral_closure_rate: number
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped RBSK screening dashboard from the backbone (null when not configured). */
+export async function platformRbskDashboard(scope = "TN"): Promise<PlatformRbskDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/rbsk?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The active-referral worklist (referred + under-treatment), scoped. */
+export async function platformRbskReferrals(scope = "TN"): Promise<PlatformScreening[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/rbsk?scope=${encodeURIComponent(scope)}&referrals=1`)
+}
+
+/** Record a screening — any finding auto-refers the child to the DEIC. */
+export async function platformRecordScreening(input: {
+  id?: string
+  student_id: string
+  org_unit: string
+  screened_on?: string
+  findings: string[]
+}): Promise<{ ok: boolean; error: string; screening?: PlatformScreening }> {
+  return postJSON("/rbsk", input)
+}
+
+/** Advance a referral: treat (referred → under-treatment) | close (→ closed, with an outcome). */
+export async function platformAdvanceReferral(
+  id: string,
+  action: "treat" | "close",
+  outcome = "",
+): Promise<{ ok: boolean; error: string; screening?: PlatformScreening }> {
+  return postJSON("/rbsk/referral", { id, action, outcome })
+}
