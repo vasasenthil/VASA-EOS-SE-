@@ -541,3 +541,59 @@ export async function platformActScholarship(
     payment_ref: opts.paymentRef ?? "",
   })
 }
+
+// ── Mid-Day Meal (PM-POSHAN): foodgrain stock + daily serving ────────────────────────────────────────────
+// Foodgrain in GRAMS. Stock can never go negative — a serve that would over-draw the school's balance is
+// rejected server-side, as is meals_served > enrolment.
+
+export interface PlatformSchoolStock {
+  org_unit: string
+  balance_grams: number
+  consumed_grams: number
+  meal_days: number
+  avg_daily_grams: number
+  days_of_cover: number
+  low_stock: boolean
+}
+
+export interface PlatformMdmDashboard {
+  scope: string
+  schools: number
+  meal_days: number
+  meals_served: number
+  enrolment_days: number
+  coverage_pct: number
+  consumed_grams: number
+  low_stock_schools?: PlatformSchoolStock[]
+  stock_rollup?: PlatformSchoolStock[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped PM-POSHAN dashboard from the backbone (null when not configured). */
+export async function platformMdmDashboard(scope = "TN"): Promise<PlatformMdmDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/mdm?scope=${encodeURIComponent(scope)}`)
+}
+
+/** Record a foodgrain receipt at a school (increases stock). */
+export async function platformReceiveFoodgrain(input: {
+  id: string
+  org_unit: string
+  date: string
+  grain_grams: number
+  note?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/mdm", { action: "receive", ...input })
+}
+
+/** Record a day's meal service — rejected if it over-draws stock or meals_served > enrolment. */
+export async function platformServeMeal(input: {
+  id: string
+  org_unit: string
+  date: string
+  meals_served: number
+  enrolment: number
+  grain_grams: number
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/mdm", { action: "serve", ...input })
+}

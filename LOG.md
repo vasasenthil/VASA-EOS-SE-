@@ -1723,3 +1723,16 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   full money-grade pipeline, persisted and audited.
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (5): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT.
+
+## Full-stack rollout #6: Mid-Day Meal (PM-POSHAN) — stock-non-negative + daily serving, working end-to-end
+- MDM as a working, clickable module at /mid-day-meal driving the Go backbone. lib/platform-client.ts: mdm seam
+  (platformMdmDashboard, platformReceiveFoodgrain, platformServeMeal). app/mid-day-meal/: role-gated server
+  actions (canDo manage:school); a force-dynamic page with a realtime PM-POSHAN picture (schools · meal-days ·
+  meals-served · coverage% · grain consumed), a per-school foodgrain stock table with days-of-cover + low-stock
+  flags, a Serve form (draws grain from stock) and a Receive form (tops it up). Foodgrain in grams; UI in kg.
+- PROVEN LIVE (real client code → platformd + Postgres): school balance 50.5kg / 93.4% coverage; serving 150.5kg
+  with 50.5kg on hand was REJECTED ("insufficient foodgrain stock — need 150500g, have 50500g"); meals 400 >
+  enrolment 320 was REJECTED; a valid 30kg serve and a 100kg receipt succeeded. Both invariants enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (6): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal.
