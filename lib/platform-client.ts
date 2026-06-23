@@ -913,3 +913,106 @@ export async function platformLibraryAct(
 ): Promise<{ ok: boolean; error: string }> {
   return postJSON("/library", { action, id, on })
 }
+
+// ── Infrastructure & Asset Register: no-decommission-with-open-tickets invariant ─────────────────────────
+// An asset cannot be decommissioned (or returned to service) while it carries an open/in-progress maintenance
+// ticket — enforced server-side. A *critical* open ticket auto-flips its asset to under_maintenance. Ticket
+// lifecycle: raise → assign → resolve → close.
+
+export interface PlatformAsset {
+  id: string
+  org_unit: string
+  name: string
+  category: string // room | furniture | equipment | ict | sanitation | ...
+  condition: string // good | fair | poor | unusable
+  status: string // in_service | under_maintenance | decommissioned
+  acquired_on?: string
+}
+
+export interface PlatformTicket {
+  id: string
+  asset_id: string
+  org_unit: string
+  issue: string
+  severity: string // low | medium | high | critical
+  status: string // open | in_progress | resolved | closed
+  raised_on: string
+  assignee?: string
+  resolved_on?: string
+}
+
+export interface PlatformInfraDashboard {
+  scope: string
+  assets: number
+  by_condition: Record<string, number>
+  under_maintenance: number
+  decommissioned: number
+  open_tickets: number
+  open_by_severity: Record<string, number>
+  needs_attention?: PlatformAsset[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped infrastructure dashboard from the backbone (null when not configured). */
+export async function platformInfraDashboard(scope = "TN"): Promise<PlatformInfraDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/infra?scope=${encodeURIComponent(scope)}`)
+}
+
+/** An asset's maintenance ticket history (newest-relevant first as ordered by the backbone). */
+export async function platformAssetTickets(assetID: string): Promise<PlatformTicket[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/infra?tickets=${encodeURIComponent(assetID)}`)
+}
+
+/** Register (or update) an asset on the estate register. */
+export async function platformRegisterAsset(input: {
+  id: string
+  org_unit: string
+  name: string
+  category: string
+  condition?: string
+  status?: string
+  acquired_on?: string
+}): Promise<{ ok: boolean; error: string; asset?: PlatformAsset }> {
+  return postJSON("/infra", { action: "asset", ...input })
+}
+
+/** Raise a maintenance ticket against an asset (a critical ticket auto-flips the asset to under_maintenance). */
+export async function platformRaiseTicket(input: {
+  id: string
+  asset_id: string
+  org_unit: string
+  issue: string
+  severity?: string
+  raised_on?: string
+}): Promise<{ ok: boolean; error: string; ticket?: PlatformTicket }> {
+  return postJSON("/infra", { action: "ticket", ...input })
+}
+
+/** Advance a ticket through its lifecycle: assign (with assignee) | resolve (with date) | close. */
+export async function platformAdvanceTicket(
+  id: string,
+  action: "assign" | "resolve" | "close",
+  arg = "",
+): Promise<{ ok: boolean; error: string; ticket?: PlatformTicket }> {
+  const body: Record<string, string> = { action, id }
+  if (action === "assign") body.assignee = arg
+  if (action === "resolve") body.on = arg
+  return postJSON("/infra", body)
+}
+
+/** Decommission an asset — rejected while it carries an open/in-progress ticket. */
+export async function platformDecommissionAsset(
+  id: string,
+): Promise<{ ok: boolean; error: string; asset?: PlatformAsset }> {
+  return postJSON("/infra", { action: "decommission", id })
+}
+
+/** Return an under-maintenance asset to service at a graded condition — rejected with open tickets. */
+export async function platformReturnAsset(
+  id: string,
+  condition: string,
+): Promise<{ ok: boolean; error: string; asset?: PlatformAsset }> {
+  return postJSON("/infra", { action: "return", id, condition })
+}

@@ -1812,3 +1812,26 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (11): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library.
+
+## Full-stack rollout #12: Estate & Asset Register — no-decommission-with-open-ticket, working end-to-end
+- The durable infrastructure register as a working, clickable module at /estate-register driving the Go backbone
+  (the existing /infrastructure and /maintenance reference demos stay intact; /asset-register is a separate
+  lib/assetmgmt reference module — left untouched). lib/platform-client.ts: infra seam (platformInfraDashboard,
+  platformAssetTickets, platformRegisterAsset, platformRaiseTicket, platformAdvanceTicket,
+  platformDecommissionAsset, platformReturnAsset). app/estate-register/: role-gated server actions
+  (manage:school); a force-dynamic page with assets/under-maintenance/decommissioned/open-tickets stats, a
+  by-condition breakdown, an open-backlog-by-severity strip, a needs-attention roster that renders each asset's
+  full ticket history with lifecycle controls (Assign → Resolve → Close) and per-asset Decommission /
+  Return-to-service buttons, plus Register-asset and Raise-ticket forms. School org discovered from the
+  needs-attention roster.
+- PROVEN LIVE (real client code → platformd + Postgres): 5 seeded assets; the critical sanitation ticket
+  MTK-CHN-001 auto-flipped AST-CHN-TOILET-G to under_maintenance (open_by_severity.critical=1). A fresh asset
+  with an open high-severity ticket REJECTED decommission ("…open ticket…"); after Assign→Resolve→Close the
+  decommission SUCCEEDED (status=decommissioned). Independently, return-to-service was REJECTED while a ticket
+  was open and SUCCEEDED once closed (status=in_service, condition=good). Postgres rows verified durable
+  (infra_assets=7, infra_tickets=4, 1 decommissioned). The no-decommission-with-open-ticket invariant and the
+  critical auto-flip are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (12): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register.
