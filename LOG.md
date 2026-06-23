@@ -1644,3 +1644,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   audit hash-chain re-loaded from Postgres. This is a durable system of record, not a demo.
 - Green bar: 69 Go modules pass, durable PG suite passes, OPA 33/33, gofmt clean, tsc 0, `docker compose config`
   validates. No new module (district seam + deploy package only).
+
+## Full-stack milestone: Staff Establishment as a working, clickable end-to-end module
+- Established the end-to-end pattern that turns a backbone vertical into a real, clickable application module:
+  web form → server action → `lib/platform-client` → durable Go backbone (platformd) → PostgreSQL → realtime
+  scoped dashboard. Every button performs a real, persisted, server-enforced operation (not a demo no-op).
+- `lib/platform-client.ts`: added the establishment seam — `platformEstablishmentDashboard`,
+  `platformEstablishmentRoster`, `platformSanctionPosts`, `platformAppointStaff`, `platformVacatePost` (+ a
+  `getJSON` helper). When PLATFORM_URL is set these drive the backbone; otherwise callers degrade gracefully.
+- `app/establishment/`: `actions.ts` (role-gated `canDo("manage:staff")` server actions), `page.tsx` (force-
+  dynamic; realtime sanctioned/filled/vacant/vacancy% summary + per-cadre roster with working Vacate +
+  Sanction/Appoint forms), `establishment-client.tsx` (interactive `useActionState` forms surfacing the
+  backbone's exact responses incl. the invariant rejection).
+- PROVEN LIVE (real client code against a running platformd + Postgres): READ → 5 cadres / 18 sanctioned / 15
+  filled / 3 vacant; the Appoint button to a full 6/6 cadre was REJECTED server-side ("ESTAB-CHN-03 is at
+  sanctioned strength (6)") and the over-appointment was NOT recorded (psql: still exactly 6); Sanction+Appoint
+  created a new "Lab Assistant" cadre and filled it, persisted in Postgres. District-selectable via
+  PILOT_DISTRICT; runs in the deploy/pilot full stack.
+- Green: tsc 0, lint clean, next build compiled (establishment page bundle present), 1555 TS tests over the
+  95/80/88 coverage gate. This is the template now to roll across the remaining modules, one per turn.

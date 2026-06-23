@@ -57,6 +57,12 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   return (await res.json()) as T
 }
 
+async function getJSON<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, { cache: "no-store" })
+  if (!res.ok) throw new Error(`platformd ${path}: HTTP ${res.status}`)
+  return (await res.json()) as T
+}
+
 /** File a leave request on the Go backend (persists to PostgreSQL, opens the dynamic approval chain). */
 export async function platformFileLeave(
   input: FileInput,
@@ -205,4 +211,79 @@ export async function platformDecideAccess(
     resource_org: resourceOrg,
     resource_attributes: resourceAttributes,
   })
+}
+
+// ── Staff Establishment & Sanctioned-Post Register ────────────────────────────────────────────────────
+// The web module drives the durable Go backbone: sanction posts, appoint/vacate staff (the over-appointment
+// invariant is enforced server-side, in Postgres), and read the jurisdiction-scoped staffing dashboard.
+
+export interface PlatformCadreStrength {
+  establishment_id: string
+  cadre: string
+  sanctioned: number
+  filled: number
+  vacant: number
+  vacancy_pct: number
+}
+
+export interface PlatformEstablishmentDashboard {
+  scope: string
+  cadres: number
+  sanctioned: number
+  filled: number
+  vacant: number
+  vacancy_pct: number
+  strength?: PlatformCadreStrength[]
+  vacancies?: PlatformCadreStrength[]
+  synthetic: boolean
+}
+
+export interface PlatformAppointment {
+  id: string
+  establishment_id: string
+  org_unit: string
+  employee_id: string
+  name: string
+  status: string // filled | vacated
+  appointed_on: string
+}
+
+/** Jurisdiction-scoped staffing dashboard from the Go backbone (null when the backbone is not configured). */
+export async function platformEstablishmentDashboard(scope = "TN"): Promise<PlatformEstablishmentDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/establishment?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The appointments against one sanctioned-post line (the roster). Empty when the backbone is not configured. */
+export async function platformEstablishmentRoster(establishmentId: string): Promise<PlatformAppointment[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/establishment?roster=${encodeURIComponent(establishmentId)}`)
+}
+
+/** Sanction (create/update) a cadre's post line on the Go backbone. */
+export async function platformSanctionPosts(input: {
+  id: string
+  cadre: string
+  sanctioned: number
+  org_unit?: string
+  status?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/establishment", { action: "sanction", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Appoint staff into a sanctioned post — the over-appointment invariant is enforced server-side. */
+export async function platformAppointStaff(input: {
+  id: string
+  establishment_id: string
+  employee_id: string
+  name: string
+  appointed_on?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/establishment", { action: "appoint", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Vacate a filled post (frees a sanctioned slot) on the Go backbone. */
+export async function platformVacatePost(id: string): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/establishment", { action: "vacate", id })
 }
