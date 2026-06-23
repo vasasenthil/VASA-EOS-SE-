@@ -1797,3 +1797,18 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (10): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable.
+
+## Full-stack rollout #11: School Library — one-copy-one-borrower, working end-to-end
+- Library circulation as a working, clickable module at /school-library driving the Go backbone (the existing
+  /library and /library-circulation demos stay intact). lib/platform-client.ts: library seam
+  (platformLibraryDashboard, platformMemberLoans, platformIssueBook, platformLibraryAct). app/school-library/:
+  role-gated server actions (manage:school); a force-dynamic page with active-loans/overdue/lost/members/titles
+  stats, an overdue-loans list with Return/Renew/Lost buttons, and an Issue form. The library org is discovered
+  from the seeded overdue loans.
+- PROVEN LIVE (real client code → platformd + Postgres): 6 active / 2 overdue; copy CP-SCI-002-1 held by
+  SYN-S-002; issuing the same copy to SYN-S-777 was REJECTED ("copy CP-SCI-002-1 is already on loan
+  (LOAN-002)"); returning it then re-issuing SUCCEEDED. The one-copy-one-borrower invariant enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (11): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library.

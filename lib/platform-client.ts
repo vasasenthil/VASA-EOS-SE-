@@ -849,3 +849,67 @@ export async function platformTeacherTimetable(teacher: string): Promise<Platfor
 export async function platformSetSlot(slot: PlatformSlot): Promise<{ ok: boolean; error: string }> {
   return postJSON("/timetable", slot)
 }
+
+// ── School Library: one-copy-one-borrower invariant ──────────────────────────────────────────────────────
+// A single physical copy can be on loan to at most one member at a time — enforced server-side (SQL existence
+// check + a partial unique index). Issue → renew* → return | lost.
+
+export interface PlatformLoan {
+  id: string
+  org_unit: string
+  book_id: string
+  title: string
+  copy_id: string
+  member_id: string
+  issued_on: string
+  due_on: string
+  returned_on?: string
+  status: string // on_loan | returned | lost
+  renewals: number
+}
+
+export interface PlatformLibraryDashboard {
+  scope: string
+  as_of: string
+  active_loans: number
+  overdue: number
+  overdue_loans?: PlatformLoan[]
+  lost: number
+  members: number
+  titles: number
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped library circulation dashboard from the backbone (null when not configured). */
+export async function platformLibraryDashboard(scope = "TN"): Promise<PlatformLibraryDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/library?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A member's loan history. */
+export async function platformMemberLoans(member: string): Promise<PlatformLoan[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/library?member=${encodeURIComponent(member)}`)
+}
+
+/** Issue a physical copy to a member — the one-copy-one-borrower invariant is enforced server-side. */
+export async function platformIssueBook(input: {
+  id?: string
+  org_unit: string
+  book_id: string
+  title: string
+  copy_id: string
+  member_id: string
+  issued_on?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/library", { action: "issue", ...input })
+}
+
+/** Act on a loan: return (with a date) | renew (capped) | lost. */
+export async function platformLibraryAct(
+  id: string,
+  action: "return" | "renew" | "lost",
+  on = "",
+): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/library", { action, id, on })
+}
