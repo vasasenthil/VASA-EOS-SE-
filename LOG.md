@@ -1872,3 +1872,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   modules now (14): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening.
+
+## Full-stack rollout #15: Teacher CPD (NEP-2020 50h) — count/compliance pipeline, working end-to-end
+- CPD as a working, clickable module at /teacher-cpd driving the Go backbone's /cpd service (the existing /cpd
+  reference module stays intact). lib/platform-client.ts: cpd seam (platformCpdDashboard, platformTeacherCpd,
+  platformRecordCpd). app/teacher-cpd/: role-gated server actions (manage:staff); a force-dynamic page with
+  teachers/compliant/compliance%/total-hours/deficient stats, a deficient-teacher roster with per-teacher hours-
+  toward-50 progress bars, and a Record-CPD form (teacher datalist, provider/status selects, hours). The 50-hour
+  NEP target is the gate; only completed/certified hours count. School org discovered from the deficient profiles
+  (fallback SYN-T-01).
+- PROVEN LIVE (real client code → platformd + Postgres): 8 seeded teachers, 7 compliant (87.5%), 435 total hours.
+  A brand-new teacher started at 0h/non-compliant; an ENROLLED 40h course added 0 qualifying hours (still
+  deficient, on the roster); a CERTIFIED 55h course flipped it to compliant and off the deficient roster; an
+  invalid provider ("Udemy") was REJECTED ("invalid provider Udemy"). Postgres rows verified durable (cpd_records
+  total 27, incl. the proof teacher's certified 55h + enrolled 40h). The 50-hour rule and provider/status
+  validation are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (15): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD.

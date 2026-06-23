@@ -1168,3 +1168,69 @@ export async function platformAdvanceReferral(
 ): Promise<{ ok: boolean; error: string; screening?: PlatformScreening }> {
   return postJSON("/rbsk/referral", { id, action, outcome })
 }
+
+// ── Teacher CPD (NEP 2020 50-hour compliance) ────────────────────────────────────────────────────────────
+// Every teacher should complete 50 hours of continuous professional development per year. Only completed or
+// certified courses count toward the target; enrolled courses do not. Compliance flips once a teacher crosses
+// the 50-hour line. Providers: NISHTHA · SCERT · DIET · DIKSHA.
+
+export interface PlatformCpdRecord {
+  id: string
+  teacher_id: string
+  org_unit: string
+  course: string
+  provider: string // NISHTHA | SCERT | DIET | DIKSHA
+  hours: number
+  year: number
+  status: string // enrolled | completed | certified
+  completed_on?: string
+  recorded_at?: string
+}
+
+export interface PlatformTeacherCpd {
+  teacher_id: string
+  org_unit: string
+  year: number
+  hours: number
+  target_hours: number
+  compliant: boolean
+  courses?: PlatformCpdRecord[]
+}
+
+export interface PlatformCpdDashboard {
+  scope: string
+  year: number
+  teachers: number
+  compliant: number
+  compliance_rate: number
+  total_hours: number
+  deficient_teachers: string[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped CPD compliance dashboard from the backbone (null when not configured). */
+export async function platformCpdDashboard(scope = "TN", year = 2026): Promise<PlatformCpdDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/cpd?scope=${encodeURIComponent(scope)}&year=${year}`)
+}
+
+/** A teacher's CPD picture for a year (hours, target, compliance, courses). */
+export async function platformTeacherCpd(teacher: string, year = 2026): Promise<PlatformTeacherCpd | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/cpd?teacher=${encodeURIComponent(teacher)}&year=${year}`)
+}
+
+/** Record a CPD completion (only completed/certified hours count toward the 50-hour target). */
+export async function platformRecordCpd(input: {
+  id?: string
+  teacher_id: string
+  org_unit: string
+  course: string
+  provider: string
+  hours: number
+  year: number
+  status: string
+  completed_on?: string
+}): Promise<{ ok: boolean; error: string; record?: PlatformCpdRecord }> {
+  return postJSON("/cpd", input)
+}
