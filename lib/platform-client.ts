@@ -462,3 +462,82 @@ export async function platformFinaliseAdmission(
 ): Promise<{ ok: boolean; error: string; application: PlatformAdmissionApplication }> {
   return postJSON("/admissions/finalise", { request_id: requestId, approve, officer })
 }
+
+// ── Scholarship / DBT (amount-driven multi-level sanction → disburse → reconcile) ────────────────────────
+// Money in PAISE. The sanction chain is sized by amount (PFMS/GFR): HEAD_TEACHER·BEO, +DEO over ₹50k,
+// +directorate over ₹2L. Disburse releases with a payment ref; reconcile vs the rail flags unmatched leakage.
+
+export interface PlatformScholarshipStep {
+  role: string
+  decision: string // "" | approved | rejected
+  decided_by?: string
+  decided_at?: string
+  note?: string
+}
+
+export interface PlatformDisbursement {
+  id: string
+  student_id: string
+  scheme: string
+  amount_paise: number
+  org_unit: string
+  status: string // pending | sanctioned | disbursed | reconciled | flagged | rejected
+  approval_chain: PlatformScholarshipStep[]
+  current_step: number
+  payment_ref?: string
+  filed_at: string
+  updated_at: string
+}
+
+export interface PlatformScholarshipDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_scheme: Record<string, number>
+  pending_sanction: number
+  disbursed_rupees: number
+  flagged_leakage: number
+  pending?: PlatformDisbursement[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped DBT dashboard from the backbone (null when not configured). */
+export async function platformScholarshipDashboard(scope = "TN"): Promise<PlatformScholarshipDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/scholarship?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The disbursements a tenant node governs, optionally filtered by status. */
+export async function platformScholarshipList(scope = "TN", status = ""): Promise<PlatformDisbursement[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/scholarship?list=1&scope=${encodeURIComponent(scope)}${status ? `&status=${encodeURIComponent(status)}` : ""}`)
+}
+
+/** File a scholarship disbursement — opens the amount-driven sanction chain. */
+export async function platformFileScholarship(input: {
+  id: string
+  student_id: string
+  scheme: string
+  amount_paise: number
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string; case: PlatformDisbursement }> {
+  return postJSON("/scholarship", { org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Act on a disbursement: sanction (approve/reject at the current tier) | disburse (payment ref) | reconcile (matched). */
+export async function platformActScholarship(
+  id: string,
+  action: "sanction" | "disburse" | "reconcile",
+  opts: { approve?: boolean; matched?: boolean; role?: string; note?: string; paymentRef?: string } = {},
+): Promise<{ ok: boolean; error: string; case: PlatformDisbursement }> {
+  return postJSON("/scholarship/act", {
+    id,
+    action,
+    approve: opts.approve ?? false,
+    matched: opts.matched ?? false,
+    role: opts.role ?? "officer",
+    actor: "officer",
+    note: opts.note ?? "",
+    payment_ref: opts.paymentRef ?? "",
+  })
+}

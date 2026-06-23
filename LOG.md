@@ -1708,3 +1708,18 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   chain — category-driven, as designed.) Full multi-tier escalation loop, persisted and audited.
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (4): Establishment, Fee Ledger, RTE Admissions, Grievance Redressal.
+
+## Full-stack rollout #5: Scholarship / DBT — amount-driven sanction → disburse → reconcile, working end-to-end
+- Scholarship/DBT as a working, clickable module at /dbt-scholarship driving the Go backbone. lib/platform-client.ts:
+  scholarship seam (platformScholarshipDashboard, platformScholarshipList, platformFileScholarship,
+  platformActScholarship). app/dbt-scholarship/: role-gated server actions (canDo approve:dbt); a force-dynamic
+  page with a realtime DBT picture (cases · pending sanction · disbursed ₹ · leakage flags · by-status), a File
+  form, a pending-sanction worklist rendering each case's amount-sized chain with the current tier highlighted +
+  Approve/Reject, a ready-to-disburse list with a Disburse(payment-ref) action, and a disbursed list with
+  Reconcile (rail-matched / unmatched→flag). Money in paise; UI in rupees.
+- PROVEN LIVE (real client code → platformd + Postgres): file ₹75,000 post-matric → chain
+  [HEAD_TEACHER, BEO, DEO] (DEO added because >₹50k); sanction tier-by-tier → sanctioned; disburse (PFMS ref) →
+  disbursed; reconcile UNMATCHED → flagged (leakage); dashboard flagged_leakage=1, disbursed_rupees=75000. The
+  full money-grade pipeline, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (5): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT.
