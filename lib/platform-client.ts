@@ -382,3 +382,83 @@ export async function platformCollectPayment(input: {
 export async function platformWaiveDemand(id: string): Promise<{ ok: boolean; error: string }> {
   return postJSON("/fees", { action: "waive", id })
 }
+
+// ── RTE Admissions (HITL: quota-full → pending-approval → officer finalise) ──────────────────────────────
+// The genuine RTE 25%-quota admission flow on the backbone: an application that would breach the quota is held
+// at "pending-approval" (a HITL request) until a scoped officer finalises it; PII is sealed under the tenant
+// KEK and a credential is anchored on admission. (The Go structs carry no json tags, so the apply response
+// keys are PascalCase.)
+
+export interface PlatformAdmissionResult {
+  Stage: string // admitted | denied | pending-approval | residency
+  Allowed: boolean
+  Effect: string // permit | deny | require-approval
+  Reasons: string[]
+  RequestID?: string
+  PIIEnvelope?: boolean
+  AuditSeq?: number
+}
+
+export interface PlatformAdmissionApplication {
+  id: string
+  category: string
+  age: number
+  tenant: string
+  region: string
+  decision: string
+  stage: string
+  effect: string
+  reasons: string
+  request_id?: string
+  credential_id?: string
+  pii_sealed: boolean
+  decided_at: string
+}
+
+export interface PlatformAdmissionDashboard {
+  tenant: string
+  total: number
+  by_stage: Record<string, number>
+  by_category: Record<string, number>
+  admitted: number
+  pending_review: number
+  applications: PlatformAdmissionApplication[]
+}
+
+/** The durable admissions register (by stage/category + the application list) from the backbone. */
+export async function platformAdmissionDashboard(tenant = "TN"): Promise<PlatformAdmissionDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/admissions?tenant=${encodeURIComponent(tenant)}`)
+}
+
+/** Submit an admission application. A quota-full RTE application returns Stage="pending-approval" + a RequestID. */
+export async function platformApplyAdmission(input: {
+  applicant_id: string
+  applicant_name: string
+  age: number
+  category: string
+  decision: string // admit | reject
+  quota_full: boolean
+  tenant?: string
+  actor_role?: string
+}): Promise<PlatformAdmissionResult> {
+  return postJSON("/admission", {
+    Tenant: input.tenant ?? "TN/Chennai",
+    ActorRole: input.actor_role ?? "HEAD_TEACHER",
+    Decision: input.decision,
+    ApplicantID: input.applicant_id,
+    ApplicantName: input.applicant_name,
+    ApplicantAge: input.age,
+    Category: input.category,
+    QuotaFull: input.quota_full,
+  })
+}
+
+/** A scoped officer finalises a pending-approval admission (approve → admitted, reject → denied). */
+export async function platformFinaliseAdmission(
+  requestId: string,
+  approve: boolean,
+  officer: string,
+): Promise<{ ok: boolean; error: string; application: PlatformAdmissionApplication }> {
+  return postJSON("/admissions/finalise", { request_id: requestId, approve, officer })
+}

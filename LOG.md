@@ -1680,3 +1680,18 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   deliverable.
 - Green: tsc 0, lint clean, next build compiled (fee-ledger + establishment bundles present), 1555 TS tests over
   the 95/80/88 coverage gate. Working clickable modules now: Establishment, Fee Ledger (2 of ~20; rolling on).
+
+## Full-stack rollout #3: RTE Admissions — multi-step apply + HITL (BEO/DEO) approval, working end-to-end
+- RTE Admissions as a working, clickable module at /rte-admissions (drives the Go backbone's genuine RTE flow;
+  the legacy /admissions and /admissions-approvals demos stay intact). lib/platform-client.ts: admission seam
+  (platformAdmissionDashboard, platformApplyAdmission, platformFinaliseAdmission). app/rte-admissions/:
+  role-gated server actions (canDo manage:students); a force-dynamic page with a realtime register (by
+  stage/category, admitted, pending-review), an Apply form, and — the showcase — a HITL approval inbox with
+  Uphold/Overturn buttons. The RTE rule is policy-as-code (OPA/Rego): rejecting an EWS/DG applicant while the
+  25% quota is unmet is held for BEO/DEO review (RTE §12(1)(c)).
+- PROVEN LIVE (real client code → platformd + OPA + Postgres): apply {reject, EWS, quota-unmet} → Stage
+  pending-approval (request TR-0002, reason RTE-EWS-QUOTA); the inbox showed pending_review=1; the officer
+  Overturn finalised it → admitted; an ordinary GEN admit went straight through. Full multi-step + multi-level
+  approval loop, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61. Working clickable modules now (3):
+  Establishment, Fee Ledger, RTE Admissions.
