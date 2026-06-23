@@ -803,3 +803,49 @@ export async function platformIssueSupply(input: {
 }): Promise<{ ok: boolean; error: string }> {
   return postJSON("/entitlement", { action: "issue", ...input })
 }
+
+// ── School Timetable: teacher-clash invariant ────────────────────────────────────────────────────────────
+// A teacher can never be in two classes at the same day+period — enforced server-side (in SQL) before each
+// slot upsert. Per-teacher weekly load + overload signal are surfaced.
+
+export interface PlatformSlot {
+  org_unit: string
+  class: string
+  day: string
+  period: number
+  subject: string
+  teacher_id: string
+}
+
+export interface PlatformTimetableDashboard {
+  scope: string
+  slots: number
+  classes: number
+  teachers: number
+  teacher_load: Record<string, number>
+  overloaded_teachers: string[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped timetabling dashboard (teacher loads, overloads) from the backbone (null when not configured). */
+export async function platformTimetableDashboard(scope = "TN"): Promise<PlatformTimetableDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/timetable?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A class's weekly grid (org + class). */
+export async function platformClassTimetable(org: string, klass: string): Promise<PlatformSlot[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/timetable?org=${encodeURIComponent(org)}&class=${encodeURIComponent(klass)}`)
+}
+
+/** A teacher's assigned periods. */
+export async function platformTeacherTimetable(teacher: string): Promise<PlatformSlot[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/timetable?teacher=${encodeURIComponent(teacher)}`)
+}
+
+/** Assign (or reassign) a class-slot — the teacher-clash invariant is enforced server-side. */
+export async function platformSetSlot(slot: PlatformSlot): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/timetable", slot)
+}

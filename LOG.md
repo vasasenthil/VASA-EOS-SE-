@@ -1782,3 +1782,18 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
   modules now (9): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement.
+
+## Full-stack rollout #10: Class Timetable — teacher-clash invariant, working end-to-end
+- Timetable as a working, clickable module at /class-timetable driving the Go backbone. lib/platform-client.ts:
+  timetable seam (platformTimetableDashboard, platformClassTimetable, platformTeacherTimetable, platformSetSlot).
+  app/class-timetable/: role-gated server actions (manage:school); a force-dynamic page with slots/classes/
+  teachers/overloaded stats, a rendered weekly grid (day × period) for the seeded class, an Assign-slot form
+  (class/day/period/subject/teacher), and a per-teacher weekly-load table with overload flags. The school org +
+  classes are discovered from a seeded teacher's slots.
+- PROVEN LIVE (real client code → platformd + Postgres): 30 slots / 3 teachers; SYN-T-01 busy friday P1 in
+  Grade 8-A; assigning SYN-T-01 to Grade 9-Z at the SAME friday P1 was REJECTED ("teacher SYN-T-01 is already
+  teaching Grade 8-A at friday"); assigning to a free period (P8) SUCCEEDED. The clash invariant enforced
+  server-side (in SQL).
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (10): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable.
