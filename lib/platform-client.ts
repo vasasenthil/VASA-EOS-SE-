@@ -1234,3 +1234,72 @@ export async function platformRecordCpd(input: {
 }): Promise<{ ok: boolean; error: string; record?: PlatformCpdRecord }> {
   return postJSON("/cpd", input)
 }
+
+// ── Student Attendance: chronic-absentee analytics (RTE 75% floor) ────────────────────────────────────────
+// A mark is keyed by (student, date) — re-marking the same day corrects (upserts) the record, never duplicates.
+// A learner falling below the 75% attendance floor over at least 10 attendable days is flagged a chronic
+// absentee (an RTE retention signal). Statuses: present · absent · late (counts) · excused (neutral).
+
+export interface PlatformAttendanceRecord {
+  student_id: string
+  org_unit: string
+  date: string
+  status: string // present | absent | late | excused
+  source?: string // biometric | manual | rfid
+  marked_by?: string
+  marked_at?: string
+}
+
+export interface PlatformDaySummary {
+  date: string // NB: in per_school roll-ups this field carries the school org id
+  marked: number
+  present: number
+  absent: number
+  late: number
+  excused: number
+  present_rate: number
+}
+
+export interface PlatformStudentAttendance {
+  student_id: string
+  org_unit: string
+  attendance_rate: number
+  chronic_absentee: boolean
+  days_recorded: number
+  records?: PlatformAttendanceRecord[]
+}
+
+export interface PlatformAttendanceDashboard {
+  scope: string
+  date: string
+  schools: number
+  marked: number
+  overall_present_rate: number
+  chronic_absentees: string[]
+  per_school: PlatformDaySummary[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped daily attendance dashboard + chronic-absentee roll-up (null when not configured). */
+export async function platformAttendanceDashboard(scope = "TN", date = "2026-06-10"): Promise<PlatformAttendanceDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
+}
+
+/** A learner's attendance picture: rate, chronic flag, days recorded, recent marks. */
+export async function platformStudentAttendance(student: string): Promise<PlatformStudentAttendance | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/attendance?student=${encodeURIComponent(student)}`)
+}
+
+/** Mark (or correct) a student's attendance for a date — keyed by (student, date), so a re-mark upserts. */
+export async function platformMarkAttendance(input: {
+  student_id: string
+  org_unit: string
+  date: string
+  status: string
+  source?: string
+  marked_by?: string
+}): Promise<{ ok: boolean; error: string; record?: PlatformAttendanceRecord }> {
+  return postJSON("/attendance", input)
+}

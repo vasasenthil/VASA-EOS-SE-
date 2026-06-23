@@ -1891,3 +1891,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   modules now (15): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD.
+
+## Full-stack rollout #16: Student Attendance — upsert marks + RTE chronic-absentee, working end-to-end
+- Attendance as a working, clickable module at /student-attendance driving the Go backbone's /attendance service
+  (the existing /attendance and /attendance-register reference modules stay intact). lib/platform-client.ts:
+  attendance seam (platformAttendanceDashboard, platformStudentAttendance, platformMarkAttendance).
+  app/student-attendance/: role-gated server actions (manage:students); a force-dynamic page with schools/marked/
+  present-rate/chronic stats, a per-school daily roll-up table (present/absent/late/excused + rate), a chronic-
+  absentee roster with each learner's rate + days, and a Mark form (student datalist, status/source selects,
+  date). School org discovered from the chronic profiles (fallback per_school roll-up).
+- PROVEN LIVE (real client code → platformd + Postgres): 12 seeded marks on 2026-06-10, SYN-STU-D a seeded
+  chronic absentee. Invalid status "holiday" REJECTED ("invalid status holiday"); marking a date present then
+  re-marking it absent UPSERTED (days_recorded stayed 1, rate 100→0 — a single Postgres row, not a duplicate);
+  10 days at 3-present/7-absent (30%) flagged chronic=true, while 10 present (100%) was chronic=false — the RTE
+  75% floor over >=10 attendable days. Postgres rows verified durable (1 row for the corrected date, 10 each for
+  the chronic/ok learners). The (student,date) upsert key and the chronic-absentee rule are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (16): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance.
