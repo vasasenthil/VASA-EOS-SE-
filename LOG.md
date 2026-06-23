@@ -1663,3 +1663,20 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   PILOT_DISTRICT; runs in the deploy/pilot full stack.
 - Green: tsc 0, lint clean, next build compiled (establishment page bundle present), 1555 TS tests over the
   95/80/88 coverage gate. This is the template now to roll across the remaining modules, one per turn.
+
+## Full-stack rollout #2: Fee & Finance Ledger module + the local full-stack launcher
+- Fee & Finance Ledger as a working, clickable end-to-end module at /fee-ledger (the existing /fees stays a
+  static demo). lib/platform-client.ts: fees seam (platformFeeDashboard, platformStudentFees,
+  platformRaiseDemand, platformCollectPayment, platformWaiveDemand). app/fee-ledger/: role-gated server actions
+  (canDo manage:school), a force-dynamic page (realtime demanded/collected/outstanding/collection% + a
+  defaulter roster with a working Waive + Raise/Collect forms), and useActionState client forms. Money is in
+  paise end-to-end; the UI shows rupees.
+- PROVEN LIVE (real client code → running platformd + Postgres): READ 6 demands / ₹1250 demanded / ₹600
+  collected / 48%; the Collect button overpaying FEE-CHN-EXAM-003 was REJECTED server-side ("would overpay …
+  outstanding 15000p, tendered 20000p"); Raise+Collect a new hostel demand persisted in full.
+- NEW: deploy/pilot/run-local.sh — one command boots the FULL STACK locally (no Docker): builds + starts
+  platformd (DATABASE_URL + PILOT_DISTRICT, self-migrates/seeds), then the Next.js app with PLATFORM_URL set so
+  every wired module's buttons persist. Prints the URL + demo login. This is the "local full-stack first"
+  deliverable.
+- Green: tsc 0, lint clean, next build compiled (fee-ledger + establishment bundles present), 1555 TS tests over
+  the 95/80/88 coverage gate. Working clickable modules now: Establishment, Fee Ledger (2 of ~20; rolling on).

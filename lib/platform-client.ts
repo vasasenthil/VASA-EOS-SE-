@@ -287,3 +287,98 @@ export async function platformAppointStaff(input: {
 export async function platformVacatePost(id: string): Promise<{ ok: boolean; error: string }> {
   return postJSON("/establishment", { action: "vacate", id })
 }
+
+// ── Fee & Finance Ledger ──────────────────────────────────────────────────────────────────────────────
+// Money is in PAISE end-to-end. The no-overpayment invariant (a payment can never take the collected total
+// above the amount demanded) is enforced server-side, in PostgreSQL, atomically with the status recompute.
+
+export interface PlatformFeeDefaulter {
+  demand_id: string
+  student_id: string
+  category: string
+  outstanding_paise: number
+  due_on: string
+}
+
+export interface PlatformFeeDashboard {
+  scope: string
+  as_of: string
+  demands: number
+  demanded_paise: number
+  collected_paise: number
+  outstanding_paise: number
+  waived_paise: number
+  collection_pct: number
+  by_status: Record<string, number>
+  defaulters?: PlatformFeeDefaulter[]
+  synthetic: boolean
+}
+
+export interface PlatformFeeDemand {
+  id: string
+  org_unit: string
+  student_id: string
+  category: string
+  term: string
+  amount_paise: number
+  status: string // pending | partial | paid | waived | cancelled
+  due_on: string
+}
+
+export interface PlatformFeePayment {
+  id: string
+  demand_id: string
+  org_unit: string
+  student_id: string
+  amount_paise: number
+  mode: string
+  reference?: string
+  paid_on: string
+}
+
+/** Jurisdiction-scoped fee-collection dashboard from the backbone (null when not configured). */
+export async function platformFeeDashboard(scope = "TN"): Promise<PlatformFeeDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/fees?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A student's fee ledger (demands + payments) from the backbone. */
+export async function platformStudentFees(
+  org: string,
+  student: string,
+): Promise<{ demands: PlatformFeeDemand[]; payments: PlatformFeePayment[] }> {
+  if (!platformConfigured()) return { demands: [], payments: [] }
+  return getJSON(`/fees?org=${encodeURIComponent(org)}&student=${encodeURIComponent(student)}`)
+}
+
+/** Raise a fee demand against a student on the backbone. */
+export async function platformRaiseDemand(input: {
+  id: string
+  student_id: string
+  category: string
+  term: string
+  amount_paise: number
+  due_on?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/fees", { action: "demand", org_unit: process.env.PLATFORM_DEFAULT_ORG ?? "TN", ...input })
+}
+
+/** Collect a payment against a demand — the no-overpayment invariant is enforced server-side. */
+export async function platformCollectPayment(input: {
+  id: string
+  demand_id: string
+  amount_paise: number
+  mode: string
+  reference?: string
+  paid_on?: string
+  student_id?: string
+  org_unit?: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/fees", { action: "payment", ...input })
+}
+
+/** Waive a demand (concession) on the backbone. */
+export async function platformWaiveDemand(id: string): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/fees", { action: "waive", id })
+}
