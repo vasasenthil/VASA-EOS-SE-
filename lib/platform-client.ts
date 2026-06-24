@@ -1857,3 +1857,72 @@ export async function platformBookExpenditure(
 export async function platformCloseGrant(id: string): Promise<{ ok: boolean; error: string; grant?: PlatformGrant }> {
   return postJSON("/grant", { action: "close", id })
 }
+
+// ── Lesson Plans: publish quality-gate (no objectives → no publish) ──────────────────────────────────────
+// A durable, reusable academic lesson plan (topic + objectives + FLN/NEP tags + resources). Lifecycle: draft →
+// published → archived. A plan CANNOT be published without learning objectives (the quality gate). Published
+// plans are the ones period/lesson-delivery records reference. Downward-governance scoped.
+
+export interface PlatformLessonPlan {
+  id: string
+  org_unit: string
+  class: string
+  subject: string
+  teacher_id: string
+  topic: string
+  objectives: string
+  tags: string
+  resources: string
+  periods: number
+  status: string // draft | published | archived
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformLessonPlanDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_subject: Record<string, number>
+  published: number
+  draft_worklist?: PlatformLessonPlan[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped lesson-plan dashboard from the backbone (null when not configured). */
+export async function platformLessonPlanDashboard(scope = "TN"): Promise<PlatformLessonPlanDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/lesson-plan?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped lesson-plan list (optionally filtered by status). */
+export async function platformScopedLessonPlans(scope = "TN", status = ""): Promise<PlatformLessonPlan[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/lesson-plan?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Create a lesson plan (status draft). */
+export async function platformCreateLessonPlan(input: {
+  id: string
+  org_unit: string
+  class: string
+  subject: string
+  teacher_id: string
+  topic: string
+  objectives?: string
+  tags?: string
+  resources?: string
+  periods?: number
+}): Promise<{ ok: boolean; error: string; plan?: PlatformLessonPlan }> {
+  return postJSON("/lesson-plan", { action: "create", ...input })
+}
+
+/** Publish a lesson plan — rejected if it has no learning objectives. */
+export async function platformPublishLessonPlan(id: string): Promise<{ ok: boolean; error: string; plan?: PlatformLessonPlan }> {
+  return postJSON("/lesson-plan", { action: "publish", id })
+}
+
+/** Archive a published lesson plan. */
+export async function platformArchiveLessonPlan(id: string): Promise<{ ok: boolean; error: string; plan?: PlatformLessonPlan }> {
+  return postJSON("/lesson-plan", { action: "archive", id })
+}

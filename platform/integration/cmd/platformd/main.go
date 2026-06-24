@@ -447,6 +447,66 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/lesson-plan", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Lesson Plans (academic). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped plan list;
+		// ?id= → one plan. POST { action, ... }: create { id,org_unit,class,subject,teacher_id,topic,objectives,
+		// tags,resources,periods } drafts a plan; publish { id } publishes (rejecting one without objectives);
+		// archive { id } archives it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Class      string `json:"class"`
+				Subject    string `json:"subject"`
+				TeacherID  string `json:"teacher_id"`
+				Topic      string `json:"topic"`
+				Objectives string `json:"objectives"`
+				Tags       string `json:"tags"`
+				Resources  string `json:"resources"`
+				Periods    int    `json:"periods"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "publish":
+				out, err := s.p.AdvanceLessonPlan(req.ID, "publish")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			case "archive":
+				out, err := s.p.AdvanceLessonPlan(req.ID, "archive")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			default: // create
+				per := req.Periods
+				if per == 0 {
+					per = 1
+				}
+				out, err := s.p.CreateLessonPlan(integration.LessonPlan{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Subject: req.Subject,
+					TeacherID: req.TeacherID, Topic: req.Topic, Objectives: req.Objectives, Tags: req.Tags,
+					Resources: req.Resources, Periods: per,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			l, ok := s.p.LessonPlanRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown lesson plan"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, l, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedLessonPlans(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LessonPlanDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/grant", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Grant Utilisation (money in paise). GET ?scope=<org> → scoped utilisation dashboard; ?list=1&
 		// status= → the scoped grant list; ?id= → one grant. POST { action, ... }: allocate { id,org_unit,head,

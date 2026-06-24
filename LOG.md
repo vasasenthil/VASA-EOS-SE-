@@ -2193,3 +2193,26 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   note 25→26.
 - Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 26. CI platform workflow confirmed GREEN on all recent commits (amd64 fix held).
+
+## Rollout #32 (a): NEW durable vertical — Lesson Plans (deep module #27, design-led)
+- Per a design consultation (user chose: complementary period model · reference-timetable+snapshot · full
+  Lesson-Plan module FIRST), built the durable Lesson Plans vertical (inline in integration). lessonplan.go
+  (domain LessonPlan + draft→publish→archive + PUBLISH QUALITY-GATE: cannot publish without learning objectives +
+  in-memory store + Platform methods + scoped dashboard + multi-school seed with FLN/NEP tags) and lessonplan_pg.go
+  (self-migrating PostgreSQL adapter). New platformd endpoint /lesson-plan (GET dashboard/list/id; POST create|
+  publish|archive). lib/platform-client.ts: lesson-plan seam. app/lesson-plan/ (the reference /lesson-plans stays
+  intact): role-gated (manage:school) dashboard (plans/published/draft/archived + by-subject), a draft worklist
+  with Publish/Archive controls (flagging plans with no objectives), and an authoring form (topic/objectives/
+  FLN-NEP tags/resources/periods).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded plans across 4 schools / 2 districts (8
+  published, 4 draft — the no-objectives Science plan stays draft per school); missing topic rejected; publishing a
+  draft WITHOUT objectives REJECTED ("cannot publish ... without learning objectives"); adding objectives then
+  publishing succeeded; re-publish rejected; archive succeeded. Postgres lesson_plans durable (8 published / 4
+  draft / 1 archived). districts strict subsets.
+- Register: added lesson-plan to durable-modules.ts (now 27, test-verified backbone-wired); brochure 'modules'
+  note 26→27.
+- NEXT (per the design): a Period-wise Attendance & Lesson-Delivery module that references the Class Timetable slot
+  (snapshot subject/teacher), a date, and a PUBLISHED lesson plan — computing subject-wise attendance % + teacher
+  engagement. Daily Student/Staff attendance stay as-is (RTE + payroll).
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 27.
