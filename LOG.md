@@ -1910,3 +1910,26 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   modules now (16): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance.
+
+## Full-stack rollout #17: Academic Calendar — dynamic multi-tier approval chain, working end-to-end
+- Calendar as a working, clickable module at /events-calendar driving the Go backbone's /calendar + /calendar/
+  decide services (the existing /academic-calendar reference module stays intact). lib/platform-client.ts:
+  calendar seam (platformCalendarDashboard, platformCalendarEntries, platformAddCalendarEntry,
+  platformDecideCalendarEntry). app/events-calendar/: role-gated server actions (manage:school to add,
+  manage:governance to decide); a force-dynamic page with entries/published/pending stats, an approval inbox that
+  renders each pending entry's FULL governance route (current tier highlighted) with Approve/Reject controls
+  carrying that tier's role + required scope, an upcoming-published feed, and an Add-&-submit form. The approval
+  depth is sized dynamically from entry type + tenancy level.
+- PROVEN LIVE (real client code → platformd + Postgres): 4 seeded entries (AY 2026-2027). A school EVENT
+  auto-published (empty chain → approved). A school EXAM entered a 2-level chain G4(DEO/scheme.recommend) →
+  G3(DIRECTOR/scheme.approve): a DIRECTOR acting at G4 was REJECTED ("may not act at tier G4"); a DEO without the
+  scope was REJECTED ("lacks the required scope scheme.recommend"); DEO+scheme.recommend advanced it to G3;
+  DIRECTOR+scheme.approve published it (status=approved, step 2/2). A reject at G4 stopped the chain
+  (status=rejected, not published). Postgres rows verified durable (calendar_entries: event→approved,
+  exam→approved@step2, reject→rejected). The dynamic chain sizing and fail-closed role+scope gating are enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (17): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar.

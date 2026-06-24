@@ -1303,3 +1303,85 @@ export async function platformMarkAttendance(input: {
 }): Promise<{ ok: boolean; error: string; record?: PlatformAttendanceRecord }> {
   return postJSON("/attendance", input)
 }
+
+// ── Academic Calendar: dynamic multi-tier approval chain (fail-closed) ────────────────────────────────────
+// An entry's approval depth is derived from its TYPE and the TENANCY LEVEL of its org unit. A school exam needs
+// G4 (DEO/scheme.recommend) → G3 (DIRECTOR/scheme.approve); a school event auto-publishes. Each decision is
+// fail-closed: the actor must hold the step's approver role AND its required scope. Approve advances (publishes
+// on the last step); reject stops the chain.
+
+export interface PlatformApprovalStep {
+  tier: string // G1..G7
+  approver_role: string
+  required_scope: string
+  decision: string // "" pending | approved | rejected
+  decided_by?: string
+  decided_at?: string
+  note?: string
+}
+
+export interface PlatformCalendarEntry {
+  id: string
+  title: string
+  type: string // term | exam | holiday | ptm | event
+  start_date: string
+  end_date: string
+  org_unit: string
+  academic_year: string
+  description?: string
+  status: string // draft | pending | approved | rejected
+  approval_chain?: PlatformApprovalStep[]
+  current_step: number
+  created_at: string
+  updated_at: string
+  synthetic: boolean
+}
+
+export interface PlatformCalendarDashboard {
+  scope: string
+  academic_year: string
+  total: number
+  by_type: Record<string, number>
+  by_status: Record<string, number>
+  pending_approvals: number
+  published: number
+  my_inbox: PlatformCalendarEntry[] | null
+  upcoming: PlatformCalendarEntry[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped calendar dashboard for a viewing role (its approval inbox + upcoming feed). */
+export async function platformCalendarDashboard(scope = "TN", asRole = "DEO", from = "2026-06-15"): Promise<PlatformCalendarDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/calendar?scope=${encodeURIComponent(scope)}&as=${encodeURIComponent(asRole)}&from=${encodeURIComponent(from)}`)
+}
+
+/** The scoped, date-ordered entry list (optionally filtered by type/year). */
+export async function platformCalendarEntries(scope = "TN", type = "", year = ""): Promise<PlatformCalendarEntry[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/calendar?scope=${encodeURIComponent(scope)}&list=1&type=${encodeURIComponent(type)}&year=${encodeURIComponent(year)}`)
+}
+
+/** Add a calendar draft; pass submit=true to route it straight into its dynamic approval chain. */
+export async function platformAddCalendarEntry(
+  input: { id: string; title: string; type: string; start_date: string; end_date: string; org_unit: string; description?: string },
+  submit = false,
+): Promise<{ ok: boolean; error: string; entry?: PlatformCalendarEntry }> {
+  const res = await postJSON<{ entry?: PlatformCalendarEntry; error_is_nil?: boolean; error?: string }>(
+    `/calendar${submit ? "?submit=1" : ""}`,
+    input,
+  )
+  return { ok: res.error_is_nil === true && !res.error, error: res.error ?? "", entry: res.entry }
+}
+
+/** Act at an entry's CURRENT approval level (fail-closed on role + scope). Approve advances; reject stops. */
+export async function platformDecideCalendarEntry(input: {
+  entry_id: string
+  approve: boolean
+  actor: string
+  role: string
+  scopes: string[]
+  note?: string
+}): Promise<{ ok: boolean; error: string; entry?: PlatformCalendarEntry }> {
+  return postJSON("/calendar/decide", input)
+}
