@@ -2216,3 +2216,27 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   engagement. Daily Student/Staff attendance stay as-is (RTE + payroll).
 - Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 27.
+
+## Rollout #33 (a): NEW durable vertical — Period Attendance & Lesson Delivery (deep module #28, design-led step 2)
+- Completes the period-attendance design the user approved (complementary module · reference-timetable+snapshot ·
+  Lesson-Plan first). Built the durable Period Attendance & Lesson Delivery vertical inline in integration.
+  periodattendance.go (domain PeriodAttendance keyed org|class|date|period; MarkPeriod validates the period against
+  the Class Timetable slot — rejects "no scheduled period" for that day — and SNAPSHOTS subject + teacher from the
+  slot; day derived from the date via Weekday; start/end from a 45-min bell schedule; a delivered period may LINK a
+  PUBLISHED lesson plan, validated against the lesson-plan store; present = strength − absentees; (org,class,date,
+  period) upsert corrects a mark) + in-memory store + Platform methods + scoped dashboard (delivered/not_held/
+  present_rate/by_subject SubjectAttendance/teacher_engagement) + multi-school seed (6 periods/school on 2026-06-01
+  Mon, Mathematics period linked to LP-<tag>-01). periodattendance_pg.go (self-migrating PostgreSQL adapter).
+  New platformd endpoint /period-attendance (GET dashboard/sheet; POST mark). lib/platform-client.ts: period seam.
+  app/period-attendance/ (manage:students gated): live stat strip, subject-wise attendance + teacher-engagement
+  cards, the day's period sheet, and a Mark-period form. Cross-module: reads Timetable (#10) + Lesson Plan (#27).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): dashboard rollup 24 delivered with subject-wise
+  split and teacher engagement, district subset honoured; integration test — an unscheduled period REJECTED ("no
+  scheduled period"); a DRAFT plan (LP-CHN-03) REJECTED ("must be published"); the PUBLISHED LP-CHN-01 accepted with
+  subject=Mathematics / teacher=SYN-T-03 / day=monday / present_count=28; upsert correction to 29; a not_held period
+  recorded. Postgres period_attendance durable (23 delivered + 1 not_held).
+- Register: added period-attendance to durable-modules.ts (now 28, test-verified backbone-wired); brochure 'modules'
+  note 27→28 ("28 are now DEEP-transactional").
+- Auth gateway (carried): platformd writes pass through authGate (bearer token, constant-time compare; reads + /healthz open).
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 28.

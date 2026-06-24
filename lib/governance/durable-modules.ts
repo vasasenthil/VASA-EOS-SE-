@@ -46,6 +46,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "employee-attendance", label: "Staff Attendance & Payable Days", service: "/staff-attendance", invariant: "(employee,date) upsert; payable-days + leave-without-pay computation" },
   { route: "school-grants", label: "School Grant Utilisation", service: "/grant", invariant: "no over-spend — cumulative expenditure can never exceed the allocation" },
   { route: "lesson-plan", label: "Lesson Plans", service: "/lesson-plan", invariant: "publish quality-gate — a plan cannot be published without learning objectives" },
+  { route: "period-attendance", label: "Period Attendance & Lesson Delivery", service: "/period-attendance", invariant: "timetable-validated period + published-plan link; subject/teacher snapshot; subject-wise attendance" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

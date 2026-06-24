@@ -1926,3 +1926,73 @@ export async function platformPublishLessonPlan(id: string): Promise<{ ok: boole
 export async function platformArchiveLessonPlan(id: string): Promise<{ ok: boolean; error: string; plan?: PlatformLessonPlan }> {
   return postJSON("/lesson-plan", { action: "archive", id })
 }
+
+// ── Period (lesson-wise) Attendance: timetable-validated + lesson-plan-linked ────────────────────────────
+// A single class-period that was conducted, keyed by (org, class, date, period). It REFERENCES the Class
+// Timetable slot (you cannot mark a period that isn't scheduled) and SNAPSHOTS the slot's subject + teacher; a
+// delivered period can link a PUBLISHED lesson plan. Day is derived from the date, Start/End from the bell
+// schedule. Yields subject-wise attendance + teacher engagement. Downward-governance scoped.
+
+export interface PlatformPeriodAttendance {
+  id: string
+  org_unit: string
+  class: string
+  date: string
+  day: string
+  period: number
+  subject: string
+  teacher_id: string
+  start: string
+  end: string
+  lesson_plan_id?: string
+  status: string // delivered | not_held
+  strength: number
+  present_count: number
+  absentees?: string[]
+  updated_at: string
+}
+
+export interface PlatformSubjectAttendance {
+  subject: string
+  periods: number
+  present: number
+  possible: number
+  present_pct: number
+}
+
+export interface PlatformPeriodDashboard {
+  scope: string
+  periods: number
+  delivered: number
+  not_held: number
+  present_rate: number
+  by_subject?: PlatformSubjectAttendance[]
+  teacher_engagement?: Record<string, number>
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped period-attendance dashboard (subject-wise + teacher engagement). */
+export async function platformPeriodDashboard(scope = "TN"): Promise<PlatformPeriodDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/period-attendance?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A class-date period sheet (the periods recorded that day). */
+export async function platformPeriodSheet(scope = "TN", cls = "", date = "2026-06-01"): Promise<PlatformPeriodAttendance[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/period-attendance?scope=${encodeURIComponent(scope)}&sheet=1&class=${encodeURIComponent(cls)}&date=${encodeURIComponent(date)}`)
+}
+
+/** Mark (or correct) a class-period — validated against the timetable slot + (if delivered) a published plan. */
+export async function platformMarkPeriod(input: {
+  org_unit: string
+  class: string
+  date: string
+  period: number
+  status?: string
+  strength: number
+  absentees?: string[]
+  lesson_plan_id?: string
+}): Promise<{ ok: boolean; error: string; record?: PlatformPeriodAttendance }> {
+  return postJSON("/period-attendance", input)
+}

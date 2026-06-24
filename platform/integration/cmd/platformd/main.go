@@ -447,6 +447,49 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/period-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Period (lesson-wise) Attendance. GET ?scope=<org> → scoped dashboard (delivered/not-held, present rate,
+		// subject-wise attendance, teacher engagement); ?sheet=&class=&date= → a class-date period sheet; ?id= →
+		// one record. POST { org_unit,class,date,period,status,strength,absentees[],lesson_plan_id } marks a
+		// period — validated against the timetable slot + (if delivered) a published lesson plan.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				OrgUnit      string   `json:"org_unit"`
+				Class        string   `json:"class"`
+				Date         string   `json:"date"`
+				Period       int      `json:"period"`
+				Status       string   `json:"status"`
+				Strength     int      `json:"strength"`
+				Absentees    []string `json:"absentees"`
+				LessonPlanID string   `json:"lesson_plan_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			out, err := s.p.MarkPeriod(integration.PeriodMarkInput{
+				OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Date: orDefault(req.Date, "2026-06-01"),
+				Period: req.Period, Status: req.Status, Strength: req.Strength, Absentees: req.Absentees, LessonPlanID: req.LessonPlanID,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "record": out}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			rec, ok := s.p.PeriodRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown period record"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, rec, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("sheet") == "1" {
+			s.writeJSON(w, s.p.ScopedPeriods(scope, q.Get("class"), orDefault(q.Get("date"), "2026-06-01")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.PeriodDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/lesson-plan", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Lesson Plans (academic). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped plan list;
 		// ?id= → one plan. POST { action, ... }: create { id,org_unit,class,subject,teacher_id,topic,objectives,
