@@ -44,6 +44,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "school-inspection", label: "School Inspection & Monitoring", service: "/inspection", invariant: "no duplicate open inspection per type; close only after action" },
   { route: "transfer-certificate", label: "Transfer Certificates", service: "/tc", invariant: "one active TC per student; request → issue (serial) → cancel" },
   { route: "employee-attendance", label: "Staff Attendance & Payable Days", service: "/staff-attendance", invariant: "(employee,date) upsert; payable-days + leave-without-pay computation" },
+  { route: "school-grants", label: "School Grant Utilisation", service: "/grant", invariant: "no over-spend — cumulative expenditure can never exceed the allocation" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

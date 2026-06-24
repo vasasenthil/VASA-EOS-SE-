@@ -1793,3 +1793,67 @@ export async function platformMarkStaffAttendance(input: {
 }): Promise<{ ok: boolean; error: string; record?: PlatformStaffAttendance }> {
   return postJSON("/staff-attendance", input)
 }
+
+// ── School Grant Utilisation: no-over-spend invariant (money in paise) ───────────────────────────────────
+// A school receives a grant allocation under a head; expenditures are booked against it and cumulative spend can
+// NEVER exceed the allocation — enforced server-side. Lifecycle: allocate → spend* → close. Downward-scoped.
+
+export interface PlatformGrant {
+  id: string
+  org_unit: string
+  head: string // composite | library | sports | maintenance
+  allocated_paise: number
+  spent_paise: number
+  year: number
+  status: string // open | closed
+  updated_at: string
+}
+
+export interface PlatformGrantDashboard {
+  scope: string
+  grants: number
+  allocated_paise: number
+  spent_paise: number
+  balance_paise: number
+  utilisation_pct: number
+  by_head_allocated: Record<string, number>
+  low_utilisation?: PlatformGrant[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped grant-utilisation dashboard from the backbone (null when not configured). */
+export async function platformGrantDashboard(scope = "TN"): Promise<PlatformGrantDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/grant?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped grant list (optionally filtered by status). */
+export async function platformScopedGrants(scope = "TN", status = ""): Promise<PlatformGrant[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/grant?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Allocate a grant to a school. */
+export async function platformAllocateGrant(input: {
+  id: string
+  org_unit: string
+  head: string
+  allocated_paise: number
+  year?: number
+}): Promise<{ ok: boolean; error: string; grant?: PlatformGrant }> {
+  return postJSON("/grant", { action: "allocate", ...input })
+}
+
+/** Book expenditure against a grant — an over-spend is rejected server-side. */
+export async function platformBookExpenditure(
+  id: string,
+  amount_paise: number,
+  purpose: string,
+): Promise<{ ok: boolean; error: string; grant?: PlatformGrant }> {
+  return postJSON("/grant", { action: "spend", id, amount_paise, purpose })
+}
+
+/** Close an open grant (no further expenditure). */
+export async function platformCloseGrant(id: string): Promise<{ ok: boolean; error: string; grant?: PlatformGrant }> {
+  return postJSON("/grant", { action: "close", id })
+}

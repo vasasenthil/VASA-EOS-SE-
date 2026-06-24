@@ -2175,3 +2175,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   'modules' note 24→25.
 - Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 25.
+
+## Rollout #31 (a): NEW durable vertical — School Grant Utilisation (deep module #26)
+- Fourth net-new durable backbone vertical (inline in integration), money-grade. grant.go (domain Grant +
+  allocate→spend→close + NO-OVER-SPEND invariant + in-memory store + Platform methods + scoped utilisation
+  dashboard + multi-school seed) and grant_pg.go (self-migrating PostgreSQL adapter). New platformd endpoint
+  /grant (GET dashboard/list/id; POST allocate|spend|close). lib/platform-client.ts: grant seam.
+  app/school-grants/: role-gated (manage:governance) dashboard (grants/allocated/spent/balance/utilisation% +
+  by-head, ₹ from paise), a low-utilisation roster with Book-expenditure / Close controls, and an Allocate form.
+- INVARIANT (server-side): cumulative expenditure can NEVER exceed the allocation; amounts in paise; only an open
+  grant can be spent against.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded grants across 4 schools / 2 districts;
+  invalid head rejected; allocate ₹1,000 → spend ₹600 ok → spend ₹500 REJECTED (over-spend, ₹400 remaining) →
+  spend exactly ₹400 ok (fully utilised) → further ₹0.01 rejected → close ok → spend-after-close rejected.
+  Postgres grants durable (13 rows, ₹4.01L allocated / ₹2.65L spent). districts strict subsets.
+- Register: added school-grants to durable-modules.ts (now 26, test-verified backbone-wired); brochure 'modules'
+  note 25→26.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 26. CI platform workflow confirmed GREEN on all recent commits (amd64 fix held).

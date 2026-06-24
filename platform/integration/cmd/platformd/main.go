@@ -447,6 +447,57 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/grant", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Grant Utilisation (money in paise). GET ?scope=<org> → scoped utilisation dashboard; ?list=1&
+		// status= → the scoped grant list; ?id= → one grant. POST { action, ... }: allocate { id,org_unit,head,
+		// allocated_paise,year } records an allocation; spend { id,amount_paise,purpose } books expenditure
+		// (rejecting an over-spend); close { id } closes the grant.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action         string `json:"action"`
+				ID             string `json:"id"`
+				OrgUnit        string `json:"org_unit"`
+				Head           string `json:"head"`
+				AllocatedPaise int64  `json:"allocated_paise"`
+				Year           int    `json:"year"`
+				AmountPaise    int64  `json:"amount_paise"`
+				Purpose        string `json:"purpose"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "spend":
+				out, err := s.p.BookExpenditure(req.ID, req.AmountPaise, req.Purpose)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			case "close":
+				out, err := s.p.CloseGrant(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			default: // allocate
+				out, err := s.p.AllocateGrant(integration.Grant{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Head: req.Head, AllocatedPaise: req.AllocatedPaise, Year: req.Year,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			g, ok := s.p.GrantRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown grant"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, g, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedGrants(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GrantDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/staff-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Staff (employee) Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped HR dashboard (present rate,
 		// on-leave, LWP roster); ?employee=<id> → an employee's payable-days + LWP profile. POST { employee_id,
