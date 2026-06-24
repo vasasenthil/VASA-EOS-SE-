@@ -2122,3 +2122,20 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   subsets. Postgres `inspections` table verified durable.
 - Green: go build + gofmt + go vet + full go test clean; tsc 0, lint clean, build success, 1555 tests at
   96.16/81.63/91.61. Durable backbone web modules now 23 (was 22). [(b) brochure pillar + (c) live deploy: queued.]
+
+## Rollout #28 (b): advance the 'modules' brochure pillar — self-verifying durable-module register
+- Honest advancement of the partial "391 functional modules" pillar. Its note was stale ("7 deep-transactional");
+  this session built 23 deep durable backbone-wired modules. Added lib/governance/durable-modules.ts — a register
+  pinning the 23 routes whose server actions drive platformd + PostgreSQL, each with its backbone service +
+  enforced invariant — and tests/durable-modules.test.ts which asserts every listed route has an actions.ts that
+  imports @/lib/platform-client (i.e. is genuinely durable, not reference UI). The "23 deep modules" claim is now
+  TEST-ENFORCED and cannot drift.
+- Refreshed brochure-coverage.ts notes honestly (all stay PARTIAL — no overstatement): modules → cites the 23
+  deep-transactional modules + the self-verifying register; persistence → cites the 22 self-migrating PostgreSQL
+  stores proven durable vs PG16 (state-scale load test still pending); auth → cites the new backbone auth gateway
+  (still a single shared secret, not per-user SSO).
+- Register integrity preserved: coverage stays a candid mid-range (<100%); keys-hsm/escrow-offswitch/multicloud
+  still pending; federation still partial — all enforced by tests/brochure-coverage.test.ts.
+- NOTE: the ephemeral container re-cloned stale at #12 again mid-session; all work was safe on origin (6f44cbf) —
+  fetched + hard-reset to restore the tree, no loss.
+- Green: tsc 0, lint clean, build success, 1557 tests (+2) at 96.17/81.64/91.62; durable-modules.ts 100% covered.
