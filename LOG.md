@@ -2090,3 +2090,16 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   flow not counts). Scholarship has no seed (filed interactively); calendar is approval-based.
 - Green: go build/gofmt/vet/test clean; no TS changed this turn so tsc/lint/coverage/build unchanged from #24 and
   re-confirmed green.
+
+## Rollout #26: multi-school seeding extended to CPD (14 modules; all seeded count-rollups now multi-school)
+- cpd seed now spreads across pilotSchools(4): a teacher cohort per school with one engineered deficient teacher
+  each. Teachers are per-school-suffixed (a teacher belongs to one school); school 0 keeps SYN-T-0n so existing
+  proofs/tests pass.
+- Multi-school now covers 14 modules: attendance, mdm, fees, immunisation, entitlement, rbsk, establishment,
+  infra, timetable, ptm, library, transport, exams, cpd.
+- PROVEN LIVE on a fresh Postgres: cpd scope=TN aggregates 32 teachers / 28 compliant / 4 deficient (1 per
+  school) / 1724 hours; Chennai 16 + Coimbatore 16. go build + gofmt + full go test green.
+- This completes the multi-school seeding for ALL seeded count-rollup modules. Remaining seeded modules left by
+  design: directory (the IAM role plane, not a school count) and calendar (approval workflow). grievance,
+  admission and scholarship have NO seed (filed interactively).
+- Green: go build/gofmt/test clean; no TS changed, Next build re-confirmed; 1555 tests at 96.16/81.63/91.61.

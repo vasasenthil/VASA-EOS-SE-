@@ -46,27 +46,39 @@ func cpdState() cpdStore {
 // seedCPD plants 2026 CPD for a small synthetic teacher cohort at a real Chennai school — most compliant, one
 // deficient — so the NEP compliance analytics have signal. Synthetic ids (SYN-T), never real PII.
 func seedCPD(s cpdStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Record CPD for a teacher cohort at several schools over more than one district so the NEP-compliance
+	// roll-up spans the estate (bottom-up) while each school scopes to its own teachers (top-down). Teachers are
+	// per-school (a teacher belongs to one school), with one engineered deficient teacher per school.
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	providers := []string{cpd.NISHTHA, cpd.SCERT, cpd.DIET, cpd.DIKSHA}
-	for n := 0; n < 8; n++ {
-		teacher := fmt.Sprintf("SYN-T-%02d", n+1)
-		// teacher #2 is engineered to be deficient (only ~18 hours).
-		courses := 3
-		if n == 1 {
-			courses = 1
-		}
-		for c := 0; c < courses; c++ {
-			h := fnv.New32a()
-			h.Write([]byte(teacher + fmt.Sprint(c)))
-			hours := 16 + int(h.Sum32()%8) // 16..23 hours each
-			s.Record(cpd.Record{
-				ID: teacher + "-CPD-" + fmt.Sprint(c), TeacherID: teacher, OrgUnit: school,
-				Course: providers[c%len(providers)] + " module " + fmt.Sprint(c+1), Provider: providers[c%len(providers)],
-				Hours: hours, Year: 2026, Status: cpd.Certified, CompletedOn: fmt.Sprintf("2026-0%d-15", c+1),
-			})
+	for si, school := range schools {
+		for n := 0; n < 8; n++ {
+			teacher := fmt.Sprintf("SYN-T-%02d", n+1)
+			if si > 0 {
+				teacher = fmt.Sprintf("%s-%s", teacher, schoolTag(si))
+			}
+			// teacher #2 is engineered to be deficient (only ~18 hours).
+			courses := 3
+			if n == 1 {
+				courses = 1
+			}
+			for c := 0; c < courses; c++ {
+				h := fnv.New32a()
+				h.Write([]byte(teacher + fmt.Sprint(c)))
+				hours := 16 + int(h.Sum32()%8) // 16..23 hours each
+				s.Record(cpd.Record{
+					ID: teacher + "-CPD-" + fmt.Sprint(c), TeacherID: teacher, OrgUnit: school,
+					Course: providers[c%len(providers)] + " module " + fmt.Sprint(c+1), Provider: providers[c%len(providers)],
+					Hours: hours, Year: 2026, Status: cpd.Certified, CompletedOn: fmt.Sprintf("2026-0%d-15", c+1),
+				})
+			}
 		}
 	}
 }
