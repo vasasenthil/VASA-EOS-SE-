@@ -1385,3 +1385,88 @@ export async function platformDecideCalendarEntry(input: {
 }): Promise<{ ok: boolean; error: string; entry?: PlatformCalendarEntry }> {
   return postJSON("/calendar/decide", input)
 }
+
+// ── Examinations & Results: PDP-gated marks lifecycle with separation of duties ───────────────────────────
+// A marks sheet moves open → submitted → published | returned. Entering/submitting marks needs write:assessment
+// (teaching cadre + jurisdiction); moderating needs write:school (the head teacher) — a teacher who can enter
+// marks cannot moderate them. Grades and pass/fail are computed only when a sheet is submitted (locked).
+
+export interface PlatformExamResult {
+  student_id: string
+  marks: number
+  grade?: string
+  pass: boolean
+}
+
+export interface PlatformExamAnalytics {
+  entered: number
+  pass: number
+  fail: number
+  pass_pct: number
+  mean_marks: number
+  highest: number
+  grade_distribution: Record<string, number>
+}
+
+export interface PlatformExamSheet {
+  exam_id: string
+  org_unit: string
+  subject: string
+  class: string
+  status: string // open | submitted | published | returned
+  results: PlatformExamResult[]
+  stats: PlatformExamAnalytics
+  synthetic: boolean
+}
+
+export interface PlatformSheetSummary {
+  exam_id: string
+  org_unit: string
+  subject: string
+  class: string
+  status: string
+  stats: PlatformExamAnalytics
+}
+
+export interface PlatformExamDashboard {
+  scope: string
+  sheets: number
+  by_status: Record<string, number>
+  results_recorded: number
+  overall_pass: number
+  overall_pass_pct: number
+  per_sheet: PlatformSheetSummary[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped exam-results dashboard from the backbone (null when not configured). */
+export async function platformExamDashboard(scope = "TN"): Promise<PlatformExamDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/exams?scope=${encodeURIComponent(scope)}`)
+}
+
+/** A single marks sheet with its results + analytics. */
+export async function platformExamSheet(examID: string): Promise<PlatformExamSheet | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/exams?exam=${encodeURIComponent(examID)}`)
+}
+
+/** Enter (or correct) a student's marks on an open/returned sheet — PDP-gated (write:assessment). */
+export async function platformEnterMarks(input: {
+  exam_id: string
+  student_id: string
+  marks: number
+  actor: string
+}): Promise<{ ok: boolean; error: string }> {
+  return postJSON("/exams/marks", input)
+}
+
+/** Submit (lock + grade) or moderate (publish | return) a sheet — moderation needs write:school. */
+export async function platformExamLifecycle(input: {
+  exam_id: string
+  action: "submit" | "moderate"
+  approve?: boolean
+  actor: string
+}): Promise<{ ok: boolean; error: string; sheet?: PlatformExamSheet }> {
+  return postJSON("/exams/lifecycle", input)
+}

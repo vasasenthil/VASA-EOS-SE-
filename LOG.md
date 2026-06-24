@@ -1933,3 +1933,24 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
   Academic Calendar.
+
+## Full-stack rollout #18: Examinations & Results — PDP-gated marks lifecycle, working end-to-end
+- Exams as a working, clickable module at /exam-results driving the Go backbone's /exams + /exams/marks +
+  /exams/lifecycle services (the existing /exams and /results reference modules stay intact).
+  lib/platform-client.ts: exams seam (platformExamDashboard, platformExamSheet, platformEnterMarks,
+  platformExamLifecycle). app/exam-results/: role-gated server actions (manage:school); a force-dynamic page with
+  sheets/results-recorded/overall-pass/pass% stats, a per-sheet roll-up (status + analytics: pass, mean, highest,
+  grade distribution) with stage-appropriate lifecycle controls (Submit / Publish / Return), an Enter-marks form,
+  and a PDP acting-identity selector (Teacher SYN-U-TCH vs Head Teacher SYN-U-HM).
+- PROVEN LIVE (real client code → platformd + Postgres): 3 seeded sheets (open Maths / submitted Science /
+  published Tamil), 90 results, 70% overall pass. A TEACHER entered a mark (persisted); an UNKNOWN actor was
+  DENIED ("unknown actor"); separation of duties — a TEACHER moderating the submitted Science sheet was DENIED
+  ("not authorised … write:school"), the HEAD TEACHER published it; a published sheet REJECTED further marks; the
+  head ran Maths open→submit→publish and SYN-STU-001's 77/100 graded to pass=true. Postgres rows verified durable
+  (exam_sheets all published, exam_results persisted). The PDP separation-of-duties gate and submit-locks-grades
+  rule are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (18): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar, Examinations & Results.
