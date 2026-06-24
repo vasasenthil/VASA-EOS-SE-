@@ -7,6 +7,7 @@ package main
 
 import (
 	"crypto/ed25519"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -103,7 +104,40 @@ func newServer() (http.Handler, string) {
 	p.SetRetriever(demoRetriever()) // a small public demo corpus so /retrieve and tutor grounding work
 	srv := &server{p: p}
 	sweep := srv.startGrievanceSweeper()
-	return srv.routes(), banner + " · sla-sweep " + sweep
+	h, authBanner := authGate(srv.routes())
+	return h, banner + " · sla-sweep " + sweep + " · " + authBanner
+}
+
+// authGate is the backbone's authentication gateway. When PLATFORM_API_TOKEN is set, every state-changing
+// request (POST/PUT/PATCH/DELETE) must carry `Authorization: Bearer <token>`; safe reads (GET/HEAD/OPTIONS) and
+// the /healthz liveness probe stay open so dashboards and health checks keep working. When the env var is unset
+// the gate is a no-op, so local development, the test suite and the credential-free demo are unaffected. This is
+// what makes it safe to expose platformd publicly: its mutating surface is no longer unauthenticated.
+func authGate(next http.Handler) (http.Handler, string) {
+	token := os.Getenv("PLATFORM_API_TOKEN")
+	if token == "" {
+		return next, "auth off (PLATFORM_API_TOKEN unset)"
+	}
+	want := []byte("Bearer " + token)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+			next.ServeHTTP(w, r)
+			return
+		}
+		if r.URL.Path == "/healthz" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		got := []byte(r.Header.Get("Authorization"))
+		if len(got) != len(want) || subtle.ConstantTimeCompare(got, want) != 1 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"unauthorized: a valid Bearer token is required for mutating requests"}`))
+			return
+		}
+		next.ServeHTTP(w, r)
+	}), "auth on (bearer token required for writes)"
 }
 
 // demoGraph is a tiny curriculum graph source for the demo retriever.

@@ -7,6 +7,17 @@
 
 const BASE = process.env.PLATFORM_URL ?? ""
 
+// When the backbone is protected by its auth gateway, mutating requests must carry this bearer token. Set the
+// SAME value as platformd's PLATFORM_API_TOKEN. Server-only env (never exposed to the browser).
+const API_TOKEN = process.env.PLATFORM_API_TOKEN ?? ""
+
+/** Headers for a write request — adds the bearer token when the backbone auth gateway is enabled. */
+function writeHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" }
+  if (API_TOKEN) h["Authorization"] = `Bearer ${API_TOKEN}`
+  return h
+}
+
 /** True when the Go platform backend is configured (PLATFORM_URL set). */
 export function platformConfigured(): boolean {
   return BASE !== ""
@@ -49,7 +60,7 @@ interface FileInput {
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: writeHeaders(),
     body: JSON.stringify(body),
     cache: "no-store",
   })

@@ -32,6 +32,9 @@ services:
       dockerfile: Dockerfile.platformd
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-vasa}:${POSTGRES_PASSWORD:-change-me-in-production}@db:5432/${POSTGRES_DB:-vasa}?sslmode=disable
+      # auth gateway — when set, mutating requests require `Authorization: Bearer <PLATFORM_API_TOKEN>`. Set the
+      # SAME value as the Vercel project's PLATFORM_API_TOKEN. Leave empty only for a fully-open local demo.
+      PLATFORM_API_TOKEN: ${PLATFORM_API_TOKEN:-}
       PILOT_DISTRICT: ${PILOT_DISTRICT:-TN-DIST-Chennai}
       PILOT_DISTRICT_2: ${PILOT_DISTRICT_2:-TN-DIST-Coimbatore}
       PORT: "8080"

@@ -2034,3 +2034,20 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   objective; reasoning fires RTE-25 + neighbourhood with full provenance.
 - Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all increments
   proven live.
+
+## Rollout #23: backbone auth gateway (bearer token in front of the mutating surface)
+- platformd now has a built-in auth gateway (cmd/platformd/main.go authGate middleware wrapping the mux). When
+  PLATFORM_API_TOKEN is set, every state-changing request (POST/PUT/PATCH/DELETE) must carry
+  `Authorization: Bearer <token>`; safe reads (GET/HEAD/OPTIONS) and /healthz stay open so dashboards + health
+  checks keep working. Constant-time token compare (crypto/subtle). When the var is unset the gate is a no-op —
+  local dev, the test suite and the credential-free demo are unaffected. Startup banner reports "auth on/off".
+- Web seam: lib/platform-client.ts postJSON now adds the Authorization header from PLATFORM_API_TOKEN (server-only
+  env, never sent to the browser); all writes route through postJSON, reads need no token.
+- PROVEN LIVE: a token-protected platformd — GET /attendance -> 200 (open), POST without token -> 401, POST with a
+  wrong token -> 401, POST with the correct bearer -> 200 (record persisted), GET /healthz -> 200. Through the real
+  web client: a write SUCCEEDS with the correct PLATFORM_API_TOKEN and is rejected (HTTP 401) with a wrong one.
+- Deploy package updated: render.yaml generates a PLATFORM_API_TOKEN, docker-compose/.env.example carry it, and
+  README documents setting the SAME token on platformd + Vercel (+ a curl verification). This is the prerequisite
+  that makes exposing the backend publicly safe.
+- Green: tsc 0, lint clean, gofmt + go vet + go test (cmd/platformd + integration) clean, build success, 1555
+  tests at 96.16/81.63/91.61, gate proven both server-side and through the web client.

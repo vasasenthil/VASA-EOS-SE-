@@ -29,6 +29,11 @@ services:
         fromDatabase:
           name: vasa-eos-backbone-db
           property: connectionString
+      # the auth gateway: when set, every mutating request must carry `Authorization: Bearer <this>`. Render
+      # generates a strong value; copy the SAME value into the Vercel project's PLATFORM_API_TOKEN so the console
+      # can write. Reads + /healthz stay open so dashboards and the health check work.
+      - key: PLATFORM_API_TOKEN
+        generateValue: true
       # the district this deployment seeds + scopes against (any valid TN district id; tree carries all 38)
       - key: PILOT_DISTRICT
         value: TN-DIST-Chennai
