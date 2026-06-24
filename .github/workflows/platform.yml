@@ -115,7 +115,10 @@ jobs:
         with:
           context: .
           file: Dockerfile.platformd
-          platforms: linux/amd64,linux/arm64
+          # amd64-only: the arm64 leg builds under QEMU emulation (slow + flaky) and doubles the Docker Hub
+          # base-image pulls (anonymous rate-limit). amd64 is what the deploy targets (Render/most hosts) use;
+          # re-add linux/arm64 here when an arm runtime is actually required.
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.img.outputs.name }}:latest
