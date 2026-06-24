@@ -50,9 +50,15 @@ func estabState() estabStore {
 // most posts filled and a couple of vacancies, so the vacancy analytics have signal. Synthetic SYN-T employee
 // ids, never real PII.
 func seedEstablishment(s estabStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Sanction the establishment across several schools over more than one district so the vacancy roll-up spans
+	// the estate (bottom-up) while each school scopes to its own posts (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	cadres := []struct {
 		cadre      string
@@ -65,17 +71,23 @@ func seedEstablishment(s estabStore) {
 		{"Physical Education Teacher", 1, 0}, // vacant
 		{"Office Assistant", 2, 1},           // 1 vacancy
 	}
-	empSeq := 0
-	for ci, c := range cadres {
-		eid := fmt.Sprintf("ESTAB-CHN-%02d", ci+1)
-		s.UpsertEstablishment(establishment.Establishment{ID: eid, OrgUnit: school, Cadre: c.cadre, Sanctioned: c.sanctioned, Status: establishment.Active})
-		for f := 0; f < c.filled; f++ {
-			empSeq++
-			emp := fmt.Sprintf("SYN-T-%03d", empSeq)
-			s.Appoint(establishment.Appointment{
-				ID: fmt.Sprintf("%s-APPT-%02d", eid, f+1), EstablishmentID: eid, OrgUnit: school,
-				EmployeeID: emp, Name: "Staff " + emp, Status: establishment.Filled, AppointedOn: "2024-06-01",
-			})
+	for si, school := range schools {
+		tag := schoolTag(si) // "CHN" for school 0 (preserves existing ids), "S<n>" otherwise
+		empSeq := 0
+		for ci, c := range cadres {
+			eid := fmt.Sprintf("ESTAB-%s-%02d", tag, ci+1)
+			s.UpsertEstablishment(establishment.Establishment{ID: eid, OrgUnit: school, Cadre: c.cadre, Sanctioned: c.sanctioned, Status: establishment.Active})
+			for f := 0; f < c.filled; f++ {
+				empSeq++
+				emp := fmt.Sprintf("SYN-T-%03d", empSeq)
+				if si > 0 {
+					emp = fmt.Sprintf("%s-%s", emp, tag)
+				}
+				s.Appoint(establishment.Appointment{
+					ID: fmt.Sprintf("%s-APPT-%02d", eid, f+1), EstablishmentID: eid, OrgUnit: school,
+					EmployeeID: emp, Name: "Staff " + emp, Status: establishment.Filled, AppointedOn: "2024-06-01",
+				})
+			}
 		}
 	}
 }

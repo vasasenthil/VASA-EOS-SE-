@@ -50,29 +50,42 @@ func ptmState() ptmStore {
 // seedPTM plants a Term-1 PTM at a real Chennai school: a session with 8 slots, mostly booked, with attendance
 // marked for the past meeting (some attended, some no-show) so the turnout analytics have signal. Synthetic ids.
 func seedPTM(s ptmStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Run a PTM session at several schools over more than one district so the turnout roll-up spans the estate
+	// (bottom-up) while each school scopes to its own session (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
-	s.UpsertSession(ptm.Session{ID: "PTM-CHN-T1", OrgUnit: school, Title: "Term 1 Parent-Teacher Meeting", Date: "2026-06-14", Slots: 8, Status: ptm.Scheduled})
-	// six guardians booked; four attended, one no-show, one still booked.
 	outcomes := []struct {
 		n    int
 		mark string // attend | noshow | ""
 	}{
 		{1, "attend"}, {2, "attend"}, {3, "attend"}, {4, "attend"}, {5, "noshow"}, {6, ""},
 	}
-	for _, o := range outcomes {
-		id := fmt.Sprintf("PTMB-CHN-%02d", o.n)
-		student := fmt.Sprintf("SYN-S-%03d", o.n)
-		if _, err := s.Book(ptm.Booking{ID: id, SessionID: "PTM-CHN-T1", OrgUnit: school, StudentID: student, Guardian: "Guardian of " + student, Status: ptm.Booked, Slot: fmt.Sprintf("%02d:00", 9+o.n)}); err != nil {
-			continue
-		}
-		switch o.mark {
-		case "attend":
-			s.MarkAttended(id)
-		case "noshow":
-			s.MarkNoShow(id)
+	for si, school := range schools {
+		tag := schoolTag(si) // "CHN" for school 0 (preserves existing ids), "S<n>" otherwise
+		sid := fmt.Sprintf("PTM-%s-T1", tag)
+		s.UpsertSession(ptm.Session{ID: sid, OrgUnit: school, Title: "Term 1 Parent-Teacher Meeting", Date: "2026-06-14", Slots: 8, Status: ptm.Scheduled})
+		// six guardians booked; four attended, one no-show, one still booked.
+		for _, o := range outcomes {
+			id := fmt.Sprintf("PTMB-%s-%02d", tag, o.n)
+			student := fmt.Sprintf("SYN-S-%03d", o.n)
+			if si > 0 {
+				student = fmt.Sprintf("%s-%s", student, tag)
+			}
+			if _, err := s.Book(ptm.Booking{ID: id, SessionID: sid, OrgUnit: school, StudentID: student, Guardian: "Guardian of " + student, Status: ptm.Booked, Slot: fmt.Sprintf("%02d:00", 9+o.n)}); err != nil {
+				continue
+			}
+			switch o.mark {
+			case "attend":
+				s.MarkAttended(id)
+			case "noshow":
+				s.MarkNoShow(id)
+			}
 		}
 	}
 }

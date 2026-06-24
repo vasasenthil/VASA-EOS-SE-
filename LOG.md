@@ -2072,3 +2072,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   multi-school) is proven repeatedly; the Render Blueprint + deploy/backbone package make it one sign-in away.
 - Green: tsc 0, lint clean, gofmt + go test (integration) clean, build success, 1555 tests at 96.16/81.63/91.61,
   all increments proven live.
+
+## Rollout #25: multi-school seeding extended to 7 more modules (13 total)
+- Added schoolTag(si) helper: "CHN" for school 0 (so all existing ids + the tests/proofs that reference them are
+  unchanged) and "S<n>" otherwise. Extended seven more seeds across pilotSchools(4): establishment, infra,
+  timetable, ptm, library, transport, exams. Care taken with the cross-school invariants — timetable teachers and
+  library copy ids are globally unique, so both are per-school-suffixed (a teacher can't be shared between schools;
+  a physical copy can't exist twice).
+- Multi-school now covers 13 modules: attendance, mdm, fees, immunisation, entitlement, rbsk, establishment,
+  infra, timetable, ptm, library, transport, exams.
+- PROVEN LIVE on a fresh Postgres (scope=TN aggregates, districts scope to their own 2 schools): establishment 72
+  sanctioned (Chennai 36 + Coimbatore 36); infra 20 assets / 8 open tickets / 4 under-maintenance; timetable 120
+  slots / 12 teachers; ptm 4 sessions / 32 slots / 16 attended; library 24 active loans / 8 overdue; transport 12
+  routes; exams 12 sheets / 360 results. go build + gofmt + go vet + full go test green (school-0 ids preserved so
+  every existing proof still passes).
+- Remaining (next batch): cpd (teachers), grievance + admission (case/approval workflows — multi-school is about
+  flow not counts). Scholarship has no seed (filed interactively); calendar is approval-based.
+- Green: go build/gofmt/vet/test clean; no TS changed this turn so tsc/lint/coverage/build unchanged from #24 and
+  re-confirmed green.

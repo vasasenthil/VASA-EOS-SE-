@@ -54,24 +54,35 @@ func infraState() infraStore {
 // across condition grades — plus a couple of live maintenance tickets (one critical, flipping its asset to
 // under_maintenance) so the dashboard analytics have signal. Synthetic; no real PII.
 func seedInfra(s infraStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant the asset register + tickets across several schools over more than one district so the estate
+	// roll-up spans many schools (bottom-up) while each school scopes to its own assets (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
-	assets := []infra.Asset{
-		{ID: "AST-CHN-CLASS-8A", OrgUnit: school, Name: "Classroom 8-A", Category: "room", Condition: infra.Good, Status: infra.InService, AcquiredOn: "2015-06-01"},
-		{ID: "AST-CHN-LAB-COMP", OrgUnit: school, Name: "Computer Lab", Category: "ict", Condition: infra.Fair, Status: infra.InService, AcquiredOn: "2019-07-15"},
-		{ID: "AST-CHN-TOILET-G", OrgUnit: school, Name: "Girls' Toilet Block", Category: "sanitation", Condition: infra.Poor, Status: infra.InService, AcquiredOn: "2014-01-10"},
-		{ID: "AST-CHN-FURN-DESK", OrgUnit: school, Name: "Desk Set (Block A)", Category: "furniture", Condition: infra.Fair, Status: infra.InService, AcquiredOn: "2018-04-01"},
-		{ID: "AST-CHN-LIB-ROOM", OrgUnit: school, Name: "Library Room", Category: "room", Condition: infra.Good, Status: infra.InService, AcquiredOn: "2016-08-20"},
+	for si, school := range schools {
+		tag := schoolTag(si) // "CHN" for school 0 (preserves existing ids), "S<n>" otherwise
+		toilet := fmt.Sprintf("AST-%s-TOILET-G", tag)
+		lab := fmt.Sprintf("AST-%s-LAB-COMP", tag)
+		assets := []infra.Asset{
+			{ID: fmt.Sprintf("AST-%s-CLASS-8A", tag), OrgUnit: school, Name: "Classroom 8-A", Category: "room", Condition: infra.Good, Status: infra.InService, AcquiredOn: "2015-06-01"},
+			{ID: lab, OrgUnit: school, Name: "Computer Lab", Category: "ict", Condition: infra.Fair, Status: infra.InService, AcquiredOn: "2019-07-15"},
+			{ID: toilet, OrgUnit: school, Name: "Girls' Toilet Block", Category: "sanitation", Condition: infra.Poor, Status: infra.InService, AcquiredOn: "2014-01-10"},
+			{ID: fmt.Sprintf("AST-%s-FURN-DESK", tag), OrgUnit: school, Name: "Desk Set (Block A)", Category: "furniture", Condition: infra.Fair, Status: infra.InService, AcquiredOn: "2018-04-01"},
+			{ID: fmt.Sprintf("AST-%s-LIB-ROOM", tag), OrgUnit: school, Name: "Library Room", Category: "room", Condition: infra.Good, Status: infra.InService, AcquiredOn: "2016-08-20"},
+		}
+		for _, a := range assets {
+			s.UpsertAsset(a)
+		}
+		// a critical sanitation ticket (auto-flips the toilet block to under_maintenance) and a routine ICT ticket.
+		s.RaiseTicket(infra.Ticket{ID: fmt.Sprintf("MTK-%s-001", tag), AssetID: toilet, OrgUnit: school, Issue: "Water supply failure; block unusable", Severity: infra.SevCritical, RaisedOn: "2026-06-15"})
+		s.RaiseTicket(infra.Ticket{ID: fmt.Sprintf("MTK-%s-002", tag), AssetID: lab, OrgUnit: school, Issue: "5 desktops not powering on", Severity: infra.SevMedium, RaisedOn: "2026-06-17"})
+		s.AssignTicket(fmt.Sprintf("MTK-%s-002", tag), "SYN-TECH-01")
 	}
-	for _, a := range assets {
-		s.UpsertAsset(a)
-	}
-	// a critical sanitation ticket (auto-flips the toilet block to under_maintenance) and a routine ICT ticket.
-	s.RaiseTicket(infra.Ticket{ID: "MTK-CHN-001", AssetID: "AST-CHN-TOILET-G", OrgUnit: school, Issue: "Water supply failure; block unusable", Severity: infra.SevCritical, RaisedOn: "2026-06-15"})
-	s.RaiseTicket(infra.Ticket{ID: "MTK-CHN-002", AssetID: "AST-CHN-LAB-COMP", OrgUnit: school, Issue: "5 desktops not powering on", Severity: infra.SevMedium, RaisedOn: "2026-06-17"})
-	s.AssignTicket("MTK-CHN-002", "SYN-TECH-01")
 }
 
 // RegisterAsset upserts an asset into the register. Audited.

@@ -54,36 +54,56 @@ func todayISO() string { return time.Now().UTC().Format("2006-01-02") }
 // one engineered UNSERVICEABLE route (lapsed fitness certificate) so the safety roster has signal. Synthetic
 // student ids (SYN-S), never real PII.
 func seedTransport(s transStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant the fleet at several schools over more than one district so the safety/utilisation roll-up spans the
+	// estate (bottom-up, incl. one unserviceable route per school) while each school scopes to its own routes.
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
-	routes := []transport.Route{
-		{ID: "RT-CHN-01", OrgUnit: school, Name: "Adyar–Besant Nagar", VehicleNo: "TN-09-AB-1101", Capacity: 4,
-			FitnessValidTill: "2027-03-31", DriverName: "SYN-D-01", LicenceValidTill: "2028-01-31", Status: transport.RouteActive},
-		{ID: "RT-CHN-02", OrgUnit: school, Name: "T. Nagar–Saidapet", VehicleNo: "TN-09-AB-1102", Capacity: 40,
-			FitnessValidTill: "2027-06-30", DriverName: "SYN-D-02", LicenceValidTill: "2028-05-31", Status: transport.RouteActive},
-		// engineered unserviceable: the fitness certificate lapsed in March 2026.
-		{ID: "RT-CHN-03", OrgUnit: school, Name: "Velachery–Guindy", VehicleNo: "TN-09-AB-1103", Capacity: 40,
-			FitnessValidTill: "2026-03-01", DriverName: "SYN-D-03", LicenceValidTill: "2028-02-28", Status: transport.RouteActive},
+	for si, school := range schools {
+		tag := schoolTag(si) // "CHN" for school 0 (preserves existing ids), "S<n>" otherwise
+		r1 := fmt.Sprintf("RT-%s-01", tag)
+		r2 := fmt.Sprintf("RT-%s-02", tag)
+		routes := []transport.Route{
+			{ID: r1, OrgUnit: school, Name: "Adyar–Besant Nagar", VehicleNo: fmt.Sprintf("TN-09-AB-11%02d1", si), Capacity: 4,
+				FitnessValidTill: "2027-03-31", DriverName: "SYN-D-01" + sfxIf(si), LicenceValidTill: "2028-01-31", Status: transport.RouteActive},
+			{ID: r2, OrgUnit: school, Name: "T. Nagar–Saidapet", VehicleNo: fmt.Sprintf("TN-09-AB-11%02d2", si), Capacity: 40,
+				FitnessValidTill: "2027-06-30", DriverName: "SYN-D-02" + sfxIf(si), LicenceValidTill: "2028-05-31", Status: transport.RouteActive},
+			// engineered unserviceable: the fitness certificate lapsed in March 2026.
+			{ID: fmt.Sprintf("RT-%s-03", tag), OrgUnit: school, Name: "Velachery–Guindy", VehicleNo: fmt.Sprintf("TN-09-AB-11%02d3", si), Capacity: 40,
+				FitnessValidTill: "2026-03-01", DriverName: "SYN-D-03" + sfxIf(si), LicenceValidTill: "2028-02-28", Status: transport.RouteActive},
+		}
+		for _, r := range routes {
+			s.UpsertRoute(r)
+		}
+		// fill route 1 to its capacity of 4 so the utilisation analytics show a full route.
+		for i := 1; i <= 4; i++ {
+			s.Allot(transport.Allotment{
+				ID: fmt.Sprintf("ALT-%s-01-%02d", tag, i), RouteID: r1, OrgUnit: school,
+				StudentID: fmt.Sprintf("SYN-S-%03d%s", i, sfxIf(si)), Stop: "Stop " + fmt.Sprint(i), Status: transport.Allotted,
+			}, todayISO())
+		}
+		// a few seats on route 2.
+		for i := 5; i <= 9; i++ {
+			s.Allot(transport.Allotment{
+				ID: fmt.Sprintf("ALT-%s-02-%02d", tag, i), RouteID: r2, OrgUnit: school,
+				StudentID: fmt.Sprintf("SYN-S-%03d%s", i, sfxIf(si)), Stop: "Stop " + fmt.Sprint(i), Status: transport.Allotted,
+			}, todayISO())
+		}
 	}
-	for _, r := range routes {
-		s.UpsertRoute(r)
+}
+
+// sfxIf returns a per-school id suffix ("-S<n>") for school index si>0, or "" for school 0 (so school 0 keeps
+// the canonical seed ids the existing proofs reference).
+func sfxIf(si int) string {
+	if si == 0 {
+		return ""
 	}
-	// fill RT-CHN-01 to its capacity of 4 so the utilisation analytics show a full route.
-	for i := 1; i <= 4; i++ {
-		s.Allot(transport.Allotment{
-			ID: fmt.Sprintf("ALT-01-%02d", i), RouteID: "RT-CHN-01", OrgUnit: school,
-			StudentID: fmt.Sprintf("SYN-S-%03d", i), Stop: "Stop " + fmt.Sprint(i), Status: transport.Allotted,
-		}, todayISO())
-	}
-	// a few seats on RT-CHN-02.
-	for i := 5; i <= 9; i++ {
-		s.Allot(transport.Allotment{
-			ID: fmt.Sprintf("ALT-02-%02d", i), RouteID: "RT-CHN-02", OrgUnit: school,
-			StudentID: fmt.Sprintf("SYN-S-%03d", i), Stop: "Stop " + fmt.Sprint(i), Status: transport.Allotted,
-		}, todayISO())
-	}
+	return "-" + schoolTag(si)
 }
 
 // RegisterRoute upserts a school bus route. Audited.

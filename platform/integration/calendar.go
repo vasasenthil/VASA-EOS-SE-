@@ -296,6 +296,16 @@ func pilotDistricts() []string {
 // operational seeds populate several schools across more than one district. This is what turns the downward
 // scope + upward roll-up machinery from a single-school demo into a genuine multi-node picture: a district or
 // state dashboard then aggregates real data from many schools, while each school still sees only its own.
+// schoolTag returns the id fragment a per-school seed uses for school index si. School 0 keeps the original
+// "CHN" tag so all existing ids (and the tests/proofs that reference them) are unchanged; later schools get a
+// distinct "S<n>" tag so their seeded ids stay unique across the multi-school estate.
+func schoolTag(si int) string {
+	if si == 0 {
+		return "CHN"
+	}
+	return fmt.Sprintf("S%d", si)
+}
+
 func pilotSchools(n int) []string {
 	h, err := tenancyHierarchy()
 	if err != nil || h == nil || n <= 0 {

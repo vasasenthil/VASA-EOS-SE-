@@ -45,18 +45,33 @@ func ttState() ttStore {
 // seedTimetable plants a clash-free weekly grid for one class at a real Chennai school (3 teachers across 5
 // days × 6 periods), so the load/coverage analytics have signal. Synthetic SYN-T teacher ids.
 func seedTimetable(s ttStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant a weekly grid at several schools over more than one district. Teachers are per-school (the clash
+	// invariant is per teacher across the whole estate, so a teacher cannot be shared between two schools).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	days := []string{"monday", "tuesday", "wednesday", "thursday", "friday"}
-	subjects := []struct{ subject, teacher string }{
-		{"Tamil", "SYN-T-01"}, {"English", "SYN-T-02"}, {"Mathematics", "SYN-T-03"},
-		{"Science", "SYN-T-01"}, {"Social Science", "SYN-T-02"}, {"Computer Science", "SYN-T-03"},
-	}
-	for _, day := range days {
-		for p, sub := range subjects {
-			s.Set(timetable.Slot{OrgUnit: school, Class: "Grade 8-A", Day: day, Period: p + 1, Subject: sub.subject, TeacherID: sub.teacher})
+	for si, school := range schools {
+		// teacher ids: school 0 keeps SYN-T-0n (existing proofs reference them); later schools get a suffix.
+		t := func(n string) string {
+			if si == 0 {
+				return n
+			}
+			return fmt.Sprintf("%s-%s", n, schoolTag(si))
+		}
+		subjects := []struct{ subject, teacher string }{
+			{"Tamil", t("SYN-T-01")}, {"English", t("SYN-T-02")}, {"Mathematics", t("SYN-T-03")},
+			{"Science", t("SYN-T-01")}, {"Social Science", t("SYN-T-02")}, {"Computer Science", t("SYN-T-03")},
+		}
+		for _, day := range days {
+			for p, sub := range subjects {
+				s.Set(timetable.Slot{OrgUnit: school, Class: "Grade 8-A", Day: day, Period: p + 1, Subject: sub.subject, TeacherID: sub.teacher})
+			}
 		}
 	}
 }

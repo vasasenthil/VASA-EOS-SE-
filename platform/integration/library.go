@@ -49,9 +49,16 @@ func libState() libStore {
 // seedLibrary plants a small circulation set at a real Chennai school library: a handful of copies issued to
 // synthetic members, two of them engineered to be overdue, so the overdue analytics have signal. Synthetic ids.
 func seedLibrary(s libStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant a circulation set at several schools over more than one district. Copy ids are globally unique
+	// (one-copy-one-borrower), so each school's copies + loans carry a per-school suffix; school 0 keeps the
+	// canonical ids the existing proofs reference.
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	titles := []struct{ book, title string }{
 		{"BK-TAM-001", "Ponniyin Selvan"}, {"BK-SCI-002", "NCERT Science 8"},
@@ -72,12 +79,18 @@ func seedLibrary(s libStore) {
 	for _, t := range titles {
 		titleOf[t.book] = t.title
 	}
-	for _, ln := range loans {
-		l, err := library.NewLoan(ln.id, school, ln.book, titleOf[ln.book], ln.copyID, ln.member, ln.issued)
-		if err != nil {
-			continue
+	for si, school := range schools {
+		sfx := ""
+		if si > 0 {
+			sfx = "-" + schoolTag(si)
 		}
-		s.Issue(l)
+		for _, ln := range loans {
+			l, err := library.NewLoan(ln.id+sfx, school, ln.book, titleOf[ln.book], ln.copyID+sfx, ln.member+sfx, ln.issued)
+			if err != nil {
+				continue
+			}
+			s.Issue(l)
+		}
 	}
 }
 

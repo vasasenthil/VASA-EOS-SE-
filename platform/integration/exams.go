@@ -47,9 +47,15 @@ func examState() examStore {
 // filled, a SUBMITTED sheet awaiting the head teacher's moderation, and a PUBLISHED sheet. Students and marks
 // are synthetic + deterministic (SYN-STU ids), never real PII.
 func seedExams(r examStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		school = "33000000000"
+	// Plant the marks-sheet lifecycle at several schools over more than one district so the results roll-up spans
+	// the estate (bottom-up) while each school scopes to its own sheets (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			schools = []string{"33000000000"}
+		}
 	}
 	cohort := func(n int) []string {
 		out := make([]string, n)
@@ -63,27 +69,30 @@ func seedExams(r examStore) {
 		h.Write([]byte(seed + student))
 		return int(h.Sum32() % 101) // 0..100, deterministic
 	}
-	// OPEN — Term I Mathematics, partially entered.
-	open := exams.NewSheet("EXM-CHN-MATHS-T1", school, "Mathematics", "Grade 10", 100)
-	for _, s := range cohort(30) {
-		open.Enter(s, mark("maths", s))
+	for si, school := range schools {
+		tag := schoolTag(si) // "CHN" for school 0 (preserves existing ids), "S<n>" otherwise
+		// OPEN — Term I Mathematics, partially entered.
+		open := exams.NewSheet(fmt.Sprintf("EXM-%s-MATHS-T1", tag), school, "Mathematics", "Grade 10", 100)
+		for _, s := range cohort(30) {
+			open.Enter(s, mark("maths", s))
+		}
+		r.Add(open)
+		// SUBMITTED — Science, locked, awaiting moderation.
+		sub := exams.NewSheet(fmt.Sprintf("EXM-%s-SCI-T1", tag), school, "Science", "Grade 10", 100)
+		for _, s := range cohort(30) {
+			sub.Enter(s, mark("science", s))
+		}
+		sub.Submit()
+		r.Add(sub)
+		// PUBLISHED — Tamil, moderated and live.
+		pub := exams.NewSheet(fmt.Sprintf("EXM-%s-TAM-T1", tag), school, "Tamil", "Grade 10", 100)
+		for _, s := range cohort(30) {
+			pub.Enter(s, mark("tamil", s))
+		}
+		pub.Submit()
+		pub.Moderate(true)
+		r.Add(pub)
 	}
-	r.Add(open)
-	// SUBMITTED — Science, locked, awaiting moderation.
-	sub := exams.NewSheet("EXM-CHN-SCI-T1", school, "Science", "Grade 10", 100)
-	for _, s := range cohort(30) {
-		sub.Enter(s, mark("science", s))
-	}
-	sub.Submit()
-	r.Add(sub)
-	// PUBLISHED — Tamil, moderated and live.
-	pub := exams.NewSheet("EXM-CHN-TAM-T1", school, "Tamil", "Grade 10", 100)
-	for _, s := range cohort(30) {
-		pub.Enter(s, mark("tamil", s))
-	}
-	pub.Submit()
-	pub.Moderate(true)
-	r.Add(pub)
 }
 
 // gateExam runs the unified PDP for an actor against an action on the sheet's school. Returns the deny reason
