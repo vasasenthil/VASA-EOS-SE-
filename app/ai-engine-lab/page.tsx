@@ -3,7 +3,7 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ENGINES, ENGINE_COUNT } from "@/lib/ai/engines"
-import { AnalyticsPlayground, ConversePlayground } from "./ai-engine-lab-client"
+import { AnalyticsPlayground, ConversePlayground, AssessPlayground, ReasonPlayground } from "./ai-engine-lab-client"
 
 export const dynamic = "force-dynamic"
 
@@ -14,11 +14,12 @@ export default function AiEngineLabPage() {
         <PageHeaderHeading>AI Engine Lab</PageHeaderHeading>
         <PageHeaderDescription>
           The {ENGINE_COUNT} native AI engines are pure, deterministic, explainable functions under human
-          authority — no black box, every output carries its working. This lab runs two of them <strong>live</strong>{" "}
-          on your own input: the <strong>Analytics</strong> engine (summary stats · trend · anomaly detection) and
-          the <strong>Conversational</strong> engine (grounded, citation-backed answers — it replies only from its
-          corpus and never invents). These run entirely in the app, so they work here even without the durable
-          backbone connected.
+          authority — no black box, every output carries its working. This lab runs four of them <strong>live</strong>{" "}
+          on your own input — <strong>Analytics</strong> (stats · trend · anomalies), <strong>Conversational</strong>{" "}
+          (grounded, citation-backed answers that never invent), <strong>Assessment</strong> (marks → grade band +
+          per-objective mastery) and <strong>Reasoning</strong> (transparent rule-based RTE-eligibility inference
+          with full provenance). They run entirely in the app, so they work here even without the durable backbone
+          connected.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -47,6 +48,26 @@ export default function AiEngineLabPage() {
             </CardHeader>
             <CardContent>
               <ConversePlayground />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Assessment engine</CardTitle>
+              <CardDescription>Marks → grade band, per-objective mastery, and weak-objective flags.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AssessPlayground />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Reasoning engine</CardTitle>
+              <CardDescription>Rule-based RTE-eligibility inference — every conclusion cites its rule + clause.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ReasonPlayground />
             </CardContent>
           </Card>
         </section>

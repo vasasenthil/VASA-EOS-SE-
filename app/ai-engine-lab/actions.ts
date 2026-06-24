@@ -2,6 +2,8 @@
 
 import { analyse, type AnalyticsResult } from "@/lib/ai/engines/analytics"
 import { converse, type ConversationalResult, type Doc } from "@/lib/ai/engines/conversational"
+import { assess, type AssessmentResult, type RubricItem } from "@/lib/ai/engines/assessment"
+import { reason, type ReasoningResult, type Rule, type FactValue } from "@/lib/ai/engines/reasoning"
 import { logger } from "@/lib/logger"
 
 export interface AnalyticsState {
@@ -54,6 +56,63 @@ export async function runConverseAction(_prev: ConverseState, fd: FormData): Pro
     return { ok: true, message: result.answer, result }
   } catch (e) {
     logger.error("ai.conversational failed", { error: String(e) })
+    return { ok: false, message: `Engine error: ${String(e)}` }
+  }
+}
+
+export interface AssessState {
+  ok: boolean
+  message: string
+  result?: AssessmentResult
+}
+
+// A fixed 3-item, 30-mark rubric across two objectives — the user supplies the awarded marks per item.
+const RUBRIC: RubricItem[] = [
+  { id: "q1", marks: 10, objective: "Algebra" },
+  { id: "q2", marks: 10, objective: "Algebra" },
+  { id: "q3", marks: 10, objective: "Geometry" },
+]
+
+/** Run the Assessment engine live — marks → grade band + per-objective mastery + weak-objective flags. */
+export async function runAssessAction(_prev: AssessState, fd: FormData): Promise<AssessState> {
+  const clamp = (v: number, hi: number) => Math.max(0, Math.min(hi, v))
+  const responses = RUBRIC.map((it) => ({ itemId: it.id, awarded: clamp(Number(fd.get(it.id) ?? 0), it.marks) }))
+  if (responses.some((r) => !Number.isFinite(r.awarded))) return { ok: false, message: "Marks must be numbers." }
+  try {
+    const result = assess(RUBRIC, responses)
+    return { ok: true, message: result.explanation, result }
+  } catch (e) {
+    logger.error("ai.assessment failed", { error: String(e) })
+    return { ok: false, message: `Engine error: ${String(e)}` }
+  }
+}
+
+export interface ReasonState {
+  ok: boolean
+  message: string
+  result?: ReasoningResult
+}
+
+// The RTE admission rule-set the Reasoning engine fires over the user-supplied facts (category/age/distance).
+const RTE_RULES: Rule[] = [
+  { id: "rte25", when: [{ key: "category", op: "eq", value: "EWS" }, { key: "age", op: "gte", value: 6 }], then: "RTE 25% reserved-seat eligible", because: "EWS child aged ≥ 6 (RTE §12(1)(c))" },
+  { id: "rte25dg", when: [{ key: "category", op: "eq", value: "DG" }, { key: "age", op: "gte", value: 6 }], then: "RTE 25% reserved-seat eligible", because: "Disadvantaged-group child aged ≥ 6 (RTE §12(1)(c))" },
+  { id: "nbhd", when: [{ key: "distanceKm", op: "lte", value: 1 }], then: "Neighbourhood school (priority)", because: "Within the 1 km neighbourhood norm" },
+  { id: "age6", when: [{ key: "age", op: "lte", value: 5 }], then: "Pre-primary / not yet age-eligible for Class 1", because: "Below the age-6 entry norm" },
+]
+
+/** Run the Reasoning engine live — a transparent, rule-based RTE-eligibility inference with full provenance. */
+export async function runReasonAction(_prev: ReasonState, fd: FormData): Promise<ReasonState> {
+  const category = String(fd.get("category") ?? "EWS").trim()
+  const age = Number(fd.get("age") ?? 0)
+  const distanceKm = Number(fd.get("distanceKm") ?? 0)
+  if (!Number.isFinite(age) || !Number.isFinite(distanceKm)) return { ok: false, message: "Age and distance must be numbers." }
+  const facts: Record<string, FactValue> = { category, age, distanceKm }
+  try {
+    const result = reason({ facts, rules: RTE_RULES })
+    return { ok: true, message: result.explanation, result }
+  } catch (e) {
+    logger.error("ai.reasoning failed", { error: String(e) })
     return { ok: false, message: `Engine error: ${String(e)}` }
   }
 }

@@ -47,21 +47,33 @@ func immState() immStore {
 // single-dose school vaccines (Td10, VitA, Albendazole) and a partial MR rollout (some children with only dose
 // 1), so the coverage + due-worklist analytics have signal. Synthetic SYN-S ids, never real PII.
 func seedImmunisation(s immStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Administer doses across several schools over more than one district so the coverage roll-up spans the
+	// estate (bottom-up) while each school scopes to its own cohort (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
-	for n := 1; n <= 10; n++ {
-		student := fmt.Sprintf("SYN-S-%03d", n)
-		// every child gets the single-dose school vaccines.
-		s.AdministerDose(immunisation.DoseRecord{ID: fmt.Sprintf("IMM-%03d-TD10", n), StudentID: student, OrgUnit: school, Vaccine: "Td10", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "TD10-2026"})
-		s.AdministerDose(immunisation.DoseRecord{ID: fmt.Sprintf("IMM-%03d-VITA", n), StudentID: student, OrgUnit: school, Vaccine: "VitA", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "VITA-2026"})
-		s.AdministerDose(immunisation.DoseRecord{ID: fmt.Sprintf("IMM-%03d-ALB", n), StudentID: student, OrgUnit: school, Vaccine: "Albendazole", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "ALB-2026"})
-		// MR: first 7 children get dose 1; of those, the first 4 also get dose 2 (complete). The rest are due.
-		if n <= 7 {
-			s.AdministerDose(immunisation.DoseRecord{ID: fmt.Sprintf("IMM-%03d-MR1", n), StudentID: student, OrgUnit: school, Vaccine: "MR", DoseNumber: 1, AdministeredOn: "2026-05-21", Batch: "MR-2026"})
-			if n <= 4 {
-				s.AdministerDose(immunisation.DoseRecord{ID: fmt.Sprintf("IMM-%03d-MR2", n), StudentID: student, OrgUnit: school, Vaccine: "MR", DoseNumber: 2, AdministeredOn: "2026-06-04", Batch: "MR-2026"})
+	for si, school := range schools {
+		for n := 1; n <= 10; n++ {
+			student := fmt.Sprintf("SYN-S-%03d", n)
+			if si > 0 {
+				student = fmt.Sprintf("%s-S%d", student, si)
+			}
+			pfx := fmt.Sprintf("IMM-%d-%03d", si, n)
+			// every child gets the single-dose school vaccines.
+			s.AdministerDose(immunisation.DoseRecord{ID: pfx + "-TD10", StudentID: student, OrgUnit: school, Vaccine: "Td10", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "TD10-2026"})
+			s.AdministerDose(immunisation.DoseRecord{ID: pfx + "-VITA", StudentID: student, OrgUnit: school, Vaccine: "VitA", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "VITA-2026"})
+			s.AdministerDose(immunisation.DoseRecord{ID: pfx + "-ALB", StudentID: student, OrgUnit: school, Vaccine: "Albendazole", DoseNumber: 1, AdministeredOn: "2026-05-20", Batch: "ALB-2026"})
+			// MR: first 7 children get dose 1; of those, the first 4 also get dose 2 (complete). The rest are due.
+			if n <= 7 {
+				s.AdministerDose(immunisation.DoseRecord{ID: pfx + "-MR1", StudentID: student, OrgUnit: school, Vaccine: "MR", DoseNumber: 1, AdministeredOn: "2026-05-21", Batch: "MR-2026"})
+				if n <= 4 {
+					s.AdministerDose(immunisation.DoseRecord{ID: pfx + "-MR2", StudentID: student, OrgUnit: school, Vaccine: "MR", DoseNumber: 2, AdministeredOn: "2026-06-04", Batch: "MR-2026"})
+				}
 			}
 		}
 	}

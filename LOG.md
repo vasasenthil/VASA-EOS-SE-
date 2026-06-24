@@ -2016,3 +2016,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   RTE-2009 and refuses an off-corpus question.
 - Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all three proven
   live. Working clickable modules now (21): the 20 durable verticals + AI Engine Lab.
+
+## Rollout #22: wider multi-school seeding + two more live AI engines
+- CI hygiene: fixed a pre-existing flaky test (commit 0ee56ac) — TestPgDirectoryDurable leaked PGU-* rows (one at
+  the out-of-tree node S-CHN-1) into the shared directory_users table, making TestDirectoryScopedByDownwardGov-
+  ernance flake "20 of 21" by test order; added a t.Cleanup so the durable test is self-contained. The user-
+  reported CI failure was the gofmt issue on 5bd255a, already fixed remotely by ce2c0cc (in tree); platform job is
+  green on 6f58609.
+- MULTI-SCHOOL SEED, WIDER: fees + immunisation seeds now spread across pilotSchools(4) too (joining attendance +
+  mdm). Proven live on a fresh Postgres: fees scope=TN aggregates 12 defaulters / Rs 5,000 demanded across the
+  estate, with Chennai and Coimbatore each scoping to their own 6 (2 schools); immunisation scope=TN aggregates
+  40 children / 164 doses. go build + gofmt + full go test green.
+- AI ENGINE LAB, +2 ENGINES: /ai-engine-lab now runs FOUR of the six native engines live — added Assessment
+  (marks -> grade band + per-objective mastery + weak-objective flags) and Reasoning (rule-based RTE-eligibility
+  inference where every conclusion cites its rule + clause). Pure/deterministic/explainable/human-authority,
+  in-app so they work on the deployed site without the backbone. Proven: assessment flags the weak Geometry
+  objective; reasoning fires RTE-25 + neighbourhood with full provenance.
+- Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all increments
+  proven live.

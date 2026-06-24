@@ -50,9 +50,15 @@ func feesState() feesStore {
 // part- or fully-paid, a couple still outstanding (past due) and one waived as a concession — enough signal for
 // the collection + defaulter analytics. Money in paise; synthetic SYN-S student ids, never real PII.
 func seedFees(s feesStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Raise the fee demands across several schools over more than one district so the collection / defaulter
+	// roll-up aggregates the whole estate (bottom-up) while each school scopes to its own demands (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	// six exam-fee demands of Rs 250.00 (25000 paise) each, due 1 June 2026.
 	type plan struct {
@@ -68,21 +74,27 @@ func seedFees(s feesStore) {
 		{"SYN-S-005", 0, false},     // unpaid (defaulter)
 		{"SYN-S-006", 0, true},      // waived concession
 	}
-	for i, pl := range plans {
-		id := fmt.Sprintf("FEE-CHN-EXAM-%03d", i+1)
-		s.RaiseDemand(fees.Demand{
-			ID: id, OrgUnit: school, StudentID: pl.student, Category: "exam", Term: "2026-T1",
-			AmountPaise: 25000, Status: fees.Pending, DueOn: "2026-06-01",
-		})
-		if pl.waive {
-			s.WaiveDemand(id)
-			continue
-		}
-		if pl.paid > 0 {
-			s.RecordPayment(fees.Payment{
-				ID: id + "-PAY-1", DemandID: id, OrgUnit: school, StudentID: pl.student,
-				AmountPaise: pl.paid, Mode: fees.UPI, Reference: "UPI-" + id, PaidOn: "2026-05-28",
+	for si, school := range schools {
+		for i, pl := range plans {
+			student := pl.student
+			if si > 0 {
+				student = fmt.Sprintf("%s-S%d", student, si)
+			}
+			id := fmt.Sprintf("FEE-EXAM-%d-%03d", si, i+1)
+			s.RaiseDemand(fees.Demand{
+				ID: id, OrgUnit: school, StudentID: student, Category: "exam", Term: "2026-T1",
+				AmountPaise: 25000, Status: fees.Pending, DueOn: "2026-06-01",
 			})
+			if pl.waive {
+				s.WaiveDemand(id)
+				continue
+			}
+			if pl.paid > 0 {
+				s.RecordPayment(fees.Payment{
+					ID: id + "-PAY-1", DemandID: id, OrgUnit: school, StudentID: student,
+					AmountPaise: pl.paid, Mode: fees.UPI, Reference: "UPI-" + id, PaidOn: "2026-05-28",
+				})
+			}
 		}
 	}
 }
