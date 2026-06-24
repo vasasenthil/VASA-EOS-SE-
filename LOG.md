@@ -1997,3 +1997,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   Scholarship/DBT, Mid-Day Meal, School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable,
   School Library, Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD,
   Student Attendance, Academic Calendar, Examinations & Results, User Directory & IAM, Audit Trail.
+
+## Rollout #21 (A·B·C): multi-school seed · hosted-backbone package · interactive AI Engine Lab
+- A — MULTI-SCHOOL SEED DENSIFICATION (commit 82ac177): pilotDistricts()/pilotSchools(n) round-robin helpers;
+  attendance + mdm seeds now spread across 4 schools over 2 districts. Proven live on a fresh Postgres: scope=TN
+  aggregates 4 schools / 48 marks / 4 chronic (bottom-up), Chennai + Coimbatore each scope to their own 2 schools
+  (top-down). go build/vet/test green; school 0 unchanged so prior proofs hold.
+- B — HOSTED-BACKBONE DEPLOY PACKAGE (commit f27e0a5): deploy/backbone/ — a Render blueprint (managed Postgres +
+  Dockerised platformd with /healthz), a backbone-only docker-compose + .env.example, and a README wiring guide
+  (deploy backbone → set PLATFORM_URL + PLATFORM_DEFAULT_ORG in Vercel → redeploy), incl. managed-DB option and a
+  security note. Makes the deployed Vercel site one env var from fully click-to-persist. (Provisioning the host /
+  setting Vercel secrets is the one human step I can't do from the sandbox.)
+- C — INTERACTIVE AI ENGINE LAB (this commit): app/ai-engine-lab/ runs two of the 6 native AI engines LIVE on
+  user input via server actions — the Analytics engine (mean/median/spread/trend/z-score anomaly detection) and
+  the Conversational engine (grounded, citation-backed Q&A over a fixed TN school-policy corpus that refuses
+  off-corpus questions). Pure/deterministic/explainable/human-authority — and because they run in-app they work on
+  the deployed site even without the backbone. Proven: analytics flags the injected anomaly; conversational cites
+  RTE-2009 and refuses an off-corpus question.
+- Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all three proven
+  live. Working clickable modules now (21): the 20 durable verticals + AI Engine Lab.
