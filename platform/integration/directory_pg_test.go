@@ -21,6 +21,11 @@ func TestPgDirectoryDurable(t *testing.T) {
 	if _, err := d1.db.Exec(`DELETE FROM directory_users WHERE id LIKE 'PGU-%'`); err != nil {
 		t.Fatalf("cleanup: %v", err)
 	}
+	// the durable stores are shared singletons keyed by DATABASE_URL, so this test's rows live in the same
+	// directory_users table every other test reads. Remove them when we finish, otherwise PGU-TCH (anchored to
+	// the out-of-tree node S-CHN-1) leaks into TestDirectoryScopedByDownwardGovernance and makes its global
+	// "TN sees every user" count flake (20 of 21) depending on test order.
+	t.Cleanup(func() { _, _ = d1.db.Exec(`DELETE FROM directory_users WHERE id LIKE 'PGU-%'`) })
 
 	// upsert a teaching-cadre teacher + a DEO, both bound to org units.
 	d1.Upsert(directory.User{ID: "PGU-TCH", Name: "R. Kumar", Role: "TEACHER", OrgUnit: "S-CHN-1", Attributes: map[string]string{"cadre": "teaching"}})
