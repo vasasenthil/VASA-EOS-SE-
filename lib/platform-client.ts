@@ -1599,3 +1599,71 @@ export async function platformAccessExplain(
   if (!res.ok) throw new Error(`platformd /access-explain: HTTP ${res.status}`)
   return (await res.json()) as PlatformAccessExplain
 }
+
+// ── School Inspection & Monitoring: file → action → close, no-duplicate-open invariant ───────────────────
+// A field officer records a monitoring visit (academic/administrative/safety/financial), scores compliance and
+// lists findings; a school cannot carry two OPEN inspections of the same type, and an inspection can be closed
+// only after an action is recorded against its findings (separation of finding from closure). Downward-scoped.
+
+export interface PlatformInspection {
+  id: string
+  org_unit: string
+  type: string // academic | administrative | safety | financial
+  inspector_id: string
+  visited_on: string
+  compliance_score: number
+  findings: string
+  status: string // open | action_taken | closed
+  action_note?: string
+  closed_on?: string
+  updated_at: string
+}
+
+export interface PlatformInspectionDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_type: Record<string, number>
+  open: number
+  avg_compliance: number
+  low_compliance?: PlatformInspection[]
+  open_worklist?: PlatformInspection[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped inspection oversight dashboard from the backbone (null when not configured). */
+export async function platformInspectionDashboard(scope = "TN"): Promise<PlatformInspectionDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/inspection?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped inspection list (optionally filtered by status). */
+export async function platformScopedInspections(scope = "TN", status = ""): Promise<PlatformInspection[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/inspection?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** File a monitoring visit — a duplicate open inspection of the same type at the school is rejected server-side. */
+export async function platformFileInspection(input: {
+  id: string
+  org_unit: string
+  type: string
+  inspector_id: string
+  visited_on?: string
+  compliance_score: number
+  findings?: string
+}): Promise<{ ok: boolean; error: string; inspection?: PlatformInspection }> {
+  return postJSON("/inspection", { action: "file", ...input })
+}
+
+/** Advance an inspection: action (open → action_taken, with a note) | close (→ closed). */
+export async function platformAdvanceInspection(
+  id: string,
+  action: "action" | "close",
+  arg = "",
+): Promise<{ ok: boolean; error: string; inspection?: PlatformInspection }> {
+  const body: Record<string, string> = { action, id }
+  if (action === "action") body.note = arg
+  if (action === "close") body.on = arg
+  return postJSON("/inspection", body)
+}

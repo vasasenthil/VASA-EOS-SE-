@@ -447,6 +447,60 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
+		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,
+		// inspector_id,visited_on,compliance_score,findings } records a visit (rejecting a duplicate open
+		// inspection of the same type); action { id,note } records an action; close { id,on } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Type            string `json:"type"`
+				InspectorID     string `json:"inspector_id"`
+				VisitedOn       string `json:"visited_on"`
+				ComplianceScore int    `json:"compliance_score"`
+				Findings        string `json:"findings"`
+				Note            string `json:"note"`
+				On              string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "action":
+				out, err := s.p.AdvanceInspection(req.ID, "action", req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			case "close":
+				out, err := s.p.AdvanceInspection(req.ID, "close", req.On)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			default: // file
+				out, err := s.p.FileInspection(integration.Inspection{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Type: req.Type, InspectorID: req.InspectorID,
+					VisitedOn: orDefault(req.VisitedOn, "2026-06-22"), ComplianceScore: req.ComplianceScore, Findings: req.Findings,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			in, ok := s.p.InspectionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown inspection"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, in, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedInspections(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InspectionDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/access-explain", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// verify ANY access decision for a directory user — the reverse "why can/can't this person do X" lookup,
 		// returning the composed five-model effect + the full per-model trace.

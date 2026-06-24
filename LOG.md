@@ -2103,3 +2103,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   design: directory (the IAM role plane, not a school count) and calendar (approval workflow). grievance,
   admission and scholarship have NO seed (filed interactively).
 - Green: go build/gofmt/test clean; no TS changed, Next build re-confirmed; 1555 tests at 96.16/81.63/91.61.
+
+## Rollout #27: NEW durable vertical — School Inspection & Monitoring (deep-build #23)
+- First brand-new durable backbone vertical built this phase (the prior 22 wired existing stores). Built fully
+  inline in the integration package (no go.mod change, like admission): platform/integration/inspection.go
+  (domain Inspection + file→action→close transitions + no-duplicate-open invariant + in-memory store + Platform
+  methods + scoped dashboard + multi-school seed) and inspection_pg.go (durable PostgreSQL adapter, self-
+  migrating). New platformd endpoint /inspection (GET dashboard/list/id; POST file|action|close). lib/platform-
+  client.ts: inspection seam. app/school-inspection/: role-gated (manage:governance) force-dynamic dashboard
+  (inspections/open/closed/avg-compliance/low/by-type), an open worklist with Record-action / Close controls, and
+  a File-inspection form.
+- INVARIANTS (server-side): a school cannot carry two OPEN inspections of the same type; an inspection can be
+  closed only after an action is recorded against its findings; compliance score 0..100; valid type/date.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 16 seeded visits across 4 schools / 2 districts
+  (academic/admin/safety/financial); score>100 rejected; duplicate open safety inspection rejected ("already has
+  an open"); close-before-action rejected ("after an action"); action(note)→close succeeded; a fresh inspection
+  allowed once the prior closed. TN rollup total 18 / avg compliance 58.8 / 10 low-compliance; districts strict
+  subsets. Postgres `inspections` table verified durable.
+- Green: go build + gofmt + go vet + full go test clean; tsc 0, lint clean, build success, 1555 tests at
+  96.16/81.63/91.61. Durable backbone web modules now 23 (was 22). [(b) brochure pillar + (c) live deploy: queued.]
