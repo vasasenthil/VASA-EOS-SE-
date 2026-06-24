@@ -6,10 +6,14 @@ import {
   runConverseAction,
   runAssessAction,
   runReasonAction,
+  runPersonaliseAction,
+  runPolicyAction,
   type AnalyticsState,
   type ConverseState,
   type AssessState,
   type ReasonState,
+  type PersonaliseState,
+  type PolicyState,
 } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +24,8 @@ const A0: AnalyticsState = { ok: false, message: "" }
 const C0: ConverseState = { ok: false, message: "" }
 const S0: AssessState = { ok: false, message: "" }
 const R0: ReasonState = { ok: false, message: "" }
+const P0: PersonaliseState = { ok: false, message: "" }
+const PL0: PolicyState = { ok: false, message: "" }
 
 /** Analytics engine — type a series, get summary stats + trend + anomalies, computed live. */
 export function AnalyticsPlayground() {
@@ -186,6 +192,97 @@ export function ReasonPlayground() {
               ))}
             </ul>
           )}
+        </div>
+      )}
+      {!state.ok && state.message && !state.result && <p className="text-sm text-destructive">✕ {state.message}</p>}
+    </form>
+  )
+}
+
+/** Personalisation engine — per-objective mastery → the next objectives a learner is ready for (prereq-aware). */
+export function PersonalisePlayground() {
+  const [state, action, pending] = useActionState(runPersonaliseAction, P0)
+  const fields = [
+    { id: "add", label: "Addition" },
+    { id: "mul", label: "Multiplication" },
+    { id: "div", label: "Division" },
+    { id: "frac", label: "Fractions" },
+  ]
+  const dflt: Record<string, number> = { add: 90, mul: 30, div: 0, frac: 0 }
+  return (
+    <form action={action} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-4">
+        {fields.map((f) => (
+          <div key={f.id} className="space-y-1">
+            <Label htmlFor={`p-${f.id}`}>{f.label} %</Label>
+            <Input id={`p-${f.id}`} name={f.id} type="number" min={0} max={100} defaultValue={dflt[f.id]} required />
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        The path is Addition → Multiplication → Division → Fractions; the engine recommends only objectives whose
+        prerequisites are already mastered, so it never skips ahead.
+      </p>
+      <Button type="submit" disabled={pending}>{pending ? "Planning…" : "Run Personalisation engine"}</Button>
+      {state.result && (
+        <div className="rounded-lg border p-4 text-sm">
+          {state.result.recommendations.length === 0 ? (
+            <p className="text-muted-foreground">Nothing ready right now — clear the prerequisites first.</p>
+          ) : (
+            <ul className="space-y-1">
+              {state.result.recommendations.map((r) => (
+                <li key={r.objectiveId} className="flex items-start gap-2">
+                  <Badge variant="default">next</Badge>
+                  <span><span className="font-medium">{r.label}</span> — <span className="text-muted-foreground">{r.reason}</span></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-muted-foreground">{state.result.explanation}</p>
+        </div>
+      )}
+      {!state.ok && state.message && !state.result && <p className="text-sm text-destructive">✕ {state.message}</p>}
+    </form>
+  )
+}
+
+/** Policy engine — project newly-covered beneficiaries + indicative cost of a coverage lever. */
+export function PolicyPlayground() {
+  const [state, action, pending] = useActionState(runPolicyAction, PL0)
+  return (
+    <form action={action} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="pl-label">Scheme</Label>
+          <Input id="pl-label" name="label" defaultValue="Breakfast scheme expansion" />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pl-pop">Eligible population</Label>
+          <Input id="pl-pop" name="population" type="number" min={0} defaultValue={100000} required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pl-base">Current coverage %</Label>
+          <Input id="pl-base" name="baselineCoverage" type="number" min={0} max={100} defaultValue={60} required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pl-target">Target coverage %</Label>
+          <Input id="pl-target" name="targetCoverage" type="number" min={0} max={100} defaultValue={85} required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="pl-cost">Unit cost (₹/beneficiary)</Label>
+          <Input id="pl-cost" name="unitCost" type="number" min={0} defaultValue={200} required />
+        </div>
+      </div>
+      <Button type="submit" disabled={pending}>{pending ? "Projecting…" : "Run Policy engine"}</Button>
+      {state.result && (
+        <div className="rounded-lg border p-4 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="default">+{state.result.newlyCovered.toLocaleString("en-IN")} covered</Badge>
+            <Badge variant="outline">→ {(state.result.projectedCoverage * 100).toFixed(0)}% coverage</Badge>
+            <Badge variant="secondary">₹{state.result.indicativeCost.toLocaleString("en-IN")}</Badge>
+          </div>
+          <p className="mt-2">{state.result.explanation}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{state.result.equityNote}</p>
         </div>
       )}
       {!state.ok && state.message && !state.result && <p className="text-sm text-destructive">✕ {state.message}</p>}

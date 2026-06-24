@@ -2051,3 +2051,24 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   that makes exposing the backend publicly safe.
 - Green: tsc 0, lint clean, gofmt + go vet + go test (cmd/platformd + integration) clean, build success, 1555
   tests at 96.16/81.63/91.61, gate proven both server-side and through the web client.
+
+## Rollout #24: all 6 AI engines live + wider multi-school seed; Render Blueprint to repo root
+- Render Blueprint moved to repo root (/render.yaml, commit ccfc90a) so the dashboard's "New -> Blueprint" flow
+  auto-detects it (a copy under deploy/backbone would not be found). Same content: managed Postgres +
+  token-protected platformd via Dockerfile.platformd, /healthz, auto-generated PLATFORM_API_TOKEN.
+- AI ENGINE LAB now runs ALL SIX native engines live: added Personalisation (prereq-aware next-objective
+  recommendations over a maths learning path) and Policy (coverage-lever impact -> newly-covered beneficiaries +
+  indicative cost + equity note), joining Analytics, Conversational, Assessment, Reasoning. Pure/deterministic/
+  explainable; in-app so they work on the deployed site without the backbone. Proven: personalisation recommends
+  Multiplication (Addition mastered) but not Division (prereq unmet); policy projects 60%->85% of 100k = 25,000
+  newly covered at the right cost.
+- MULTI-SCHOOL SEED, WIDER: entitlement + rbsk seeds now spread across pilotSchools(4) too (joining attendance,
+  mdm, fees, immunisation -> 6 modules). Proven live on a fresh Postgres: entitlement scope=TN aggregates 32
+  students (Chennai 16 + Coimbatore 16); rbsk scope=TN aggregates 80 screened / 12 referrals (40 + 40). Scholarship
+  has no seed (filed interactively) so nothing to spread there. go build + gofmt + full go test green.
+- DEPLOYMENT BOUNDARY (honest): cannot deploy backend+DB to a public host from the sandbox — no cloud account/
+  creds (api.render.com 403), Docker Hub image pulls firewall-blocked (403 on the blob CDN, so the production
+  image can't be built here), and no public ingress. The native stack (same Go code + real Postgres + auth gate +
+  multi-school) is proven repeatedly; the Render Blueprint + deploy/backbone package make it one sign-in away.
+- Green: tsc 0, lint clean, gofmt + go test (integration) clean, build success, 1555 tests at 96.16/81.63/91.61,
+  all increments proven live.

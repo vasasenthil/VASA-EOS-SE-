@@ -49,20 +49,31 @@ func rbskState() rbskStore {
 // seedRBSK plants a synthetic screening camp for a Chennai school cohort: most healthy, a few with findings
 // auto-referred to the DEIC (so the referral analytics have signal). Synthetic SYN-STU ids only.
 func seedRBSK(s rbskStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Run the screening camp across several schools over more than one district so the screening / referral
+	// roll-up spans the estate (bottom-up) while each school scopes to its own camp (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	ds := []string{rbsk.Defect, rbsk.Disease, rbsk.Deficiency, rbsk.Disability}
-	for n := 0; n < 20; n++ {
-		student := fmt.Sprintf("SYN-STU-%02d", n+1)
-		h := fnv.New32a()
-		h.Write([]byte(student))
-		var findings []string
-		if r := h.Sum32() % 100; r < 18 { // ~18% have a finding
-			findings = []string{ds[int(r)%len(ds)]}
+	for si, school := range schools {
+		for n := 0; n < 20; n++ {
+			student := fmt.Sprintf("SYN-STU-%02d", n+1)
+			if si > 0 {
+				student = fmt.Sprintf("%s-S%d", student, si)
+			}
+			h := fnv.New32a()
+			h.Write([]byte(student))
+			var findings []string
+			if r := h.Sum32() % 100; r < 18 { // ~18% have a finding
+				findings = []string{ds[int(r)%len(ds)]}
+			}
+			s.File(fmt.Sprintf("RBSK-%d-%s", si, student), student, school, "2026-06-05", findings)
 		}
-		s.File("RBSK-"+student, student, school, "2026-06-05", findings)
 	}
 }
 

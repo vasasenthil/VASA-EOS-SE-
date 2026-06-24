@@ -4,6 +4,8 @@ import { analyse, type AnalyticsResult } from "@/lib/ai/engines/analytics"
 import { converse, type ConversationalResult, type Doc } from "@/lib/ai/engines/conversational"
 import { assess, type AssessmentResult, type RubricItem } from "@/lib/ai/engines/assessment"
 import { reason, type ReasoningResult, type Rule, type FactValue } from "@/lib/ai/engines/reasoning"
+import { personalise, type PersonalisationResult, type Objective } from "@/lib/ai/engines/personalisation"
+import { projectPolicy, type PolicyProjection } from "@/lib/ai/engines/policy"
 import { logger } from "@/lib/logger"
 
 export interface AnalyticsState {
@@ -113,6 +115,57 @@ export async function runReasonAction(_prev: ReasonState, fd: FormData): Promise
     return { ok: true, message: result.explanation, result }
   } catch (e) {
     logger.error("ai.reasoning failed", { error: String(e) })
+    return { ok: false, message: `Engine error: ${String(e)}` }
+  }
+}
+
+export interface PersonaliseState {
+  ok: boolean
+  message: string
+  result?: PersonalisationResult
+}
+
+// A small maths learning path: division depends on multiplication, which depends on addition.
+const SYLLABUS: Objective[] = [
+  { id: "add", label: "Addition", prereqs: [] },
+  { id: "mul", label: "Multiplication", prereqs: ["add"] },
+  { id: "div", label: "Division", prereqs: ["mul"] },
+  { id: "frac", label: "Fractions", prereqs: ["div"] },
+]
+
+/** Run the Personalisation engine live — mastery → the next objectives a learner is ready for (prereq-aware). */
+export async function runPersonaliseAction(_prev: PersonaliseState, fd: FormData): Promise<PersonaliseState> {
+  const pct = (k: string) => Math.max(0, Math.min(100, Number(fd.get(k) ?? 0))) / 100
+  const mastery: Record<string, number> = { add: pct("add"), mul: pct("mul"), div: pct("div"), frac: pct("frac") }
+  if (Object.values(mastery).some((v) => !Number.isFinite(v))) return { ok: false, message: "Mastery values must be numbers." }
+  try {
+    const result = personalise({ mastery, syllabus: SYLLABUS })
+    return { ok: true, message: result.explanation, result }
+  } catch (e) {
+    logger.error("ai.personalisation failed", { error: String(e) })
+    return { ok: false, message: `Engine error: ${String(e)}` }
+  }
+}
+
+export interface PolicyState {
+  ok: boolean
+  message: string
+  result?: PolicyProjection
+}
+
+/** Run the Policy engine live — project newly-covered beneficiaries + indicative cost of a coverage lever. */
+export async function runPolicyAction(_prev: PolicyState, fd: FormData): Promise<PolicyState> {
+  const population = Number(fd.get("population") ?? 0)
+  const baselineCoverage = Math.max(0, Math.min(100, Number(fd.get("baselineCoverage") ?? 0))) / 100
+  const unitCost = Number(fd.get("unitCost") ?? 0)
+  const targetCoverage = Math.max(0, Math.min(100, Number(fd.get("targetCoverage") ?? 0))) / 100
+  const label = String(fd.get("label") ?? "Scheme expansion").trim() || "Scheme expansion"
+  if ([population, unitCost].some((v) => !Number.isFinite(v) || v < 0)) return { ok: false, message: "Population and unit cost must be non-negative numbers." }
+  try {
+    const result = projectPolicy({ population, baselineCoverage, unitCost }, { label, targetCoverage })
+    return { ok: true, message: result.explanation, result }
+  } catch (e) {
+    logger.error("ai.policy failed", { error: String(e) })
     return { ok: false, message: `Engine error: ${String(e)}` }
   }
 }

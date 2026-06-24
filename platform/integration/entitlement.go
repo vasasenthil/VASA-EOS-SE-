@@ -49,29 +49,40 @@ func entState() entStore {
 // set), uniforms (4 sets) and notebooks (1 set); most fully supplied, some partial, a couple pending — so the
 // fulfilment + pending analytics have signal. Synthetic SYN-S ids, never real PII.
 func seedEntitlement(s entStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant the free-supply roll across several schools over more than one district so the fulfilment / pending
+	// roll-up spans the estate (bottom-up) while each school scopes to its own roll (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	items := []struct {
 		item string
 		qty  int
 	}{{"textbook", 1}, {"uniform", 4}, {"notebook", 1}}
-	for n := 1; n <= 8; n++ {
-		student := fmt.Sprintf("SYN-S-%03d", n)
-		for _, it := range items {
-			eid := fmt.Sprintf("ENT-CHN-%03d-%s", n, it.item)
-			s.GrantEntitlement(entitlement.Entitlement{ID: eid, OrgUnit: school, StudentID: student, Item: it.item, EntitledQty: it.qty, Term: "2026", Status: entitlement.Pending})
-			// children 1..5 fully supplied; 6..7 partial (uniforms half-issued); 8 pending (nothing issued).
-			issue := 0
-			switch {
-			case n <= 5:
-				issue = it.qty
-			case n <= 7 && it.item == "uniform":
-				issue = 2
+	for si, school := range schools {
+		for n := 1; n <= 8; n++ {
+			student := fmt.Sprintf("SYN-S-%03d", n)
+			if si > 0 {
+				student = fmt.Sprintf("%s-S%d", student, si)
 			}
-			if issue > 0 {
-				s.IssueSupply(entitlement.Issue{ID: eid + "-ISS-1", EntitlementID: eid, OrgUnit: school, StudentID: student, Qty: issue, IssuedOn: "2026-06-05", Reference: "GRN-" + eid})
+			for _, it := range items {
+				eid := fmt.Sprintf("ENT-%d-%03d-%s", si, n, it.item)
+				s.GrantEntitlement(entitlement.Entitlement{ID: eid, OrgUnit: school, StudentID: student, Item: it.item, EntitledQty: it.qty, Term: "2026", Status: entitlement.Pending})
+				// children 1..5 fully supplied; 6..7 partial (uniforms half-issued); 8 pending (nothing issued).
+				issue := 0
+				switch {
+				case n <= 5:
+					issue = it.qty
+				case n <= 7 && it.item == "uniform":
+					issue = 2
+				}
+				if issue > 0 {
+					s.IssueSupply(entitlement.Issue{ID: eid + "-ISS-1", EntitlementID: eid, OrgUnit: school, StudentID: student, Qty: issue, IssuedOn: "2026-06-05", Reference: "GRN-" + eid})
+				}
 			}
 		}
 	}

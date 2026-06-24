@@ -3,7 +3,7 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ENGINES, ENGINE_COUNT } from "@/lib/ai/engines"
-import { AnalyticsPlayground, ConversePlayground, AssessPlayground, ReasonPlayground } from "./ai-engine-lab-client"
+import { AnalyticsPlayground, ConversePlayground, AssessPlayground, ReasonPlayground, PersonalisePlayground, PolicyPlayground } from "./ai-engine-lab-client"
 
 export const dynamic = "force-dynamic"
 
@@ -13,13 +13,14 @@ export default function AiEngineLabPage() {
       <PageHeader>
         <PageHeaderHeading>AI Engine Lab</PageHeaderHeading>
         <PageHeaderDescription>
-          The {ENGINE_COUNT} native AI engines are pure, deterministic, explainable functions under human
-          authority — no black box, every output carries its working. This lab runs four of them <strong>live</strong>{" "}
+          All {ENGINE_COUNT} native AI engines are pure, deterministic, explainable functions under human
+          authority — no black box, every output carries its working. This lab runs <strong>all six live</strong>{" "}
           on your own input — <strong>Analytics</strong> (stats · trend · anomalies), <strong>Conversational</strong>{" "}
           (grounded, citation-backed answers that never invent), <strong>Assessment</strong> (marks → grade band +
-          per-objective mastery) and <strong>Reasoning</strong> (transparent rule-based RTE-eligibility inference
-          with full provenance). They run entirely in the app, so they work here even without the durable backbone
-          connected.
+          per-objective mastery), <strong>Reasoning</strong> (rule-based RTE-eligibility with full provenance),{" "}
+          <strong>Personalisation</strong> (prereq-aware next-objective recommendations) and <strong>Policy</strong>{" "}
+          (coverage-lever impact + indicative cost projection). They run entirely in the app, so they work here
+          even without the durable backbone connected.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -68,6 +69,26 @@ export default function AiEngineLabPage() {
             </CardHeader>
             <CardContent>
               <ReasonPlayground />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Personalisation engine</CardTitle>
+              <CardDescription>Prereq-aware learning path — recommends only objectives the learner is ready for.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PersonalisePlayground />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Policy engine</CardTitle>
+              <CardDescription>Coverage-lever impact — newly-covered beneficiaries + indicative cost + equity note.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PolicyPlayground />
             </CardContent>
           </Card>
         </section>
