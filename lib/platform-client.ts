@@ -1470,3 +1470,75 @@ export async function platformExamLifecycle(input: {
 }): Promise<{ ok: boolean; error: string; sheet?: PlatformExamSheet }> {
   return postJSON("/exams/lifecycle", input)
 }
+
+// ── User Directory & IAM: durable users + the five-model "why" access lookup ──────────────────────────────
+// Every user is anchored to a tenancy node and bound to a role from the canonical catalogue. The directory is
+// the identity plane the unified PDP (RBAC·ABAC·ReBAC·PBAC·CABAC) decides over; access-explain answers the
+// reverse "why can/can't this person do X" with the composed effect plus the full per-model trace.
+
+export interface PlatformDirectoryRole {
+  code: string
+  name: string
+  tier: string
+  grants: string[]
+}
+
+export interface PlatformDirectorySummary {
+  users: number
+  roles: number
+  role_census: Record<string, number>
+  catalogue: PlatformDirectoryRole[]
+  sample: PlatformDirectoryUser[]
+  access_models: string[]
+  synthetic: boolean
+}
+
+export interface PlatformAccessTrace {
+  model: string
+  verdict: string
+  detail: string
+}
+
+export interface PlatformAccessExplain {
+  user: PlatformDirectoryUser
+  action: string
+  decision: {
+    effect: string // permit | deny | require-approval
+    deciding_model: string
+    reason: string
+    trace?: PlatformAccessTrace[]
+  }
+}
+
+/** Directory & IAM roll-up: user count, role census, the role catalogue and the five access models. */
+export async function platformDirectorySummary(): Promise<PlatformDirectorySummary | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/directory`)
+}
+
+/** The users a subject org governs (downward-governance scoped; fail-closed). */
+export async function platformDirectoryScoped(scope: string): Promise<PlatformDirectoryUser[]> {
+  if (!platformConfigured()) return []
+  const r = await getJSON<{ scope: string; users: PlatformDirectoryUser[] }>(`/directory?scope=${encodeURIComponent(scope)}`)
+  return r.users ?? []
+}
+
+/** Reverse access lookup: why can/can't a directory user perform an action on a resource (five-model trace). */
+export async function platformAccessExplain(
+  user: string,
+  action: string,
+  resourceOrg = "",
+  opts: { sensitive?: boolean; pii?: boolean; emergency?: boolean; threat?: string } = {},
+): Promise<PlatformAccessExplain | null> {
+  if (!platformConfigured()) return null
+  const qs = new URLSearchParams({ user, action })
+  if (resourceOrg) qs.set("resource_org", resourceOrg)
+  if (opts.sensitive) qs.set("sensitive", "true")
+  if (opts.pii) qs.set("pii", "true")
+  if (opts.emergency) qs.set("emergency", "true")
+  if (opts.threat) qs.set("threat", opts.threat)
+  const res = await fetch(`${BASE}/access-explain?${qs.toString()}`, { cache: "no-store" })
+  if (res.status === 404) return null // unknown directory user → fail-closed, no decision
+  if (!res.ok) throw new Error(`platformd /access-explain: HTTP ${res.status}`)
+  return (await res.json()) as PlatformAccessExplain
+}

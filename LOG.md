@@ -1954,3 +1954,24 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
   Academic Calendar, Examinations & Results.
+
+## Full-stack rollout #19: User Directory & IAM — durable users + five-model access-explain, working end-to-end
+- Directory as a working, clickable module at /user-directory driving the Go backbone's /directory +
+  /access-explain services (the existing /staff-directory reference module stays intact). lib/platform-client.ts:
+  directory seam (platformDirectorySummary, platformDirectoryScoped, platformAccessExplain; reuses the existing
+  platformUpsertUser). app/user-directory/: role-gated server actions (manage:staff to upsert); a force-dynamic
+  page with users/roles/access-models/in-scope stats, the five access models, a downward-scoped user list, an
+  Add/Update-user form (role from the canonical catalogue), the canonical role catalogue with census, and an
+  interactive ACCESS-EXPLAIN panel that renders the composed effect + the full per-model trace
+  (RBAC·ABAC·ReBAC·PBAC·CABAC).
+- PROVEN LIVE (real client code → platformd + Postgres): 19 seeded users / 19 roles / 5 access models. Adding a
+  user with an unknown role was REJECTED ("unknown role"); a valid TEACHER upserted durably and appeared in the
+  school scope (4 users). access-explain: SYN-U-TCH write:assessment @ school → PERMIT (RBAC, with per-model
+  trace); SYN-U-TCH write:school → DENY ("role TEACHER does not grant write:school"); an unknown user →
+  fail-closed null (no decision). Postgres rows verified durable (directory_users incl. the proof user). Role/
+  jurisdiction validation and the five-model PDP are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (19): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar, Examinations & Results, User Directory & IAM.
