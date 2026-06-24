@@ -12,11 +12,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/vasa-eos-se-tn/platform/adapters"
 	"github.com/vasa-eos-se-tn/platform/attendance"
+	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/capacity"
 	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
@@ -357,6 +359,59 @@ func (s *server) routes() http.Handler {
 			return
 		}
 		s.writeJSON(w, s.p.DirectorySummary(), nil)
+	}))
+	mux.HandleFunc("/audit", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the immutable, hash-chained audit trail every workflow writes to. GET ?actor=&action=&resource=&effect=
+		// filters (substring, case-insensitive); ?limit=N caps the (most-recent-first) page. The response also
+		// carries the chain length, head hash, Merkle root and a live tamper-evidence verification.
+		q := r.URL.Query()
+		fa, fac, fr, fe := strings.ToLower(q.Get("actor")), strings.ToLower(q.Get("action")), strings.ToLower(q.Get("resource")), strings.ToLower(q.Get("effect"))
+		limit := 100
+		if v := q.Get("limit"); v != "" {
+			var n int
+			if _, err := fmt.Sscanf(v, "%d", &n); err == nil && n > 0 && n <= 2000 {
+				limit = n
+			}
+		}
+		all := s.p.Audit.Records()
+		badIndex, verr := s.p.Audit.Verify()
+		match := func(rec audit.Record) bool {
+			if fa != "" && !strings.Contains(strings.ToLower(rec.Actor), fa) {
+				return false
+			}
+			if fac != "" && !strings.Contains(strings.ToLower(rec.Action), fac) {
+				return false
+			}
+			if fr != "" && !strings.Contains(strings.ToLower(rec.Resource), fr) {
+				return false
+			}
+			if fe != "" && !strings.Contains(strings.ToLower(rec.Effect), fe) {
+				return false
+			}
+			return true
+		}
+		// most-recent-first, filtered, capped.
+		out := make([]audit.Record, 0, limit)
+		for i := len(all) - 1; i >= 0 && len(out) < limit; i-- {
+			if match(all[i]) {
+				out = append(out, all[i])
+			}
+		}
+		// distinct action census (over the whole chain) for the dashboard.
+		census := map[string]int{}
+		for _, rec := range all {
+			census[rec.Effect]++
+		}
+		s.writeJSON(w, map[string]any{
+			"length":       s.p.Audit.Len(),
+			"head":         s.p.Audit.Head(),
+			"merkle_root":  s.p.Audit.MerkleRoot(),
+			"intact":       verr == nil,
+			"bad_index":    badIndex,
+			"effect_census": census,
+			"matched":      len(out),
+			"records":      out,
+		}, nil)
 	}))
 	mux.HandleFunc("/access-explain", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// verify ANY access decision for a directory user — the reverse "why can/can't this person do X" lookup,

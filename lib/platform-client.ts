@@ -1523,6 +1523,52 @@ export async function platformDirectoryScoped(scope: string): Promise<PlatformDi
   return r.users ?? []
 }
 
+// ── Audit Trail: the immutable, hash-chained, tamper-evident ledger every workflow writes to ──────────────
+// Each record links to the previous by hash; Verify walks the chain and returns intact=false + the first bad
+// index if any link is broken. The Merkle root and head hash are the integrity anchors. Read-and-verify only —
+// the ledger is append-only by construction (you append by performing operations elsewhere, never by editing).
+
+export interface PlatformAuditRecord {
+  seq: number
+  ts: string
+  actor: string
+  action: string
+  resource: string
+  effect: string // permit | deny | require-approval | executed | <workflow status>
+  detail: string
+  prev_hash: string
+  hash: string
+}
+
+export interface PlatformAuditTrail {
+  length: number
+  head: string
+  merkle_root: string
+  intact: boolean
+  bad_index: number // -1 when the chain verifies
+  effect_census: Record<string, number>
+  matched: number
+  records: PlatformAuditRecord[]
+}
+
+/** Read the hash-chained audit trail (most-recent-first), filtered + capped, with a live integrity check. */
+export async function platformAuditTrail(filter: {
+  actor?: string
+  action?: string
+  resource?: string
+  effect?: string
+  limit?: number
+} = {}): Promise<PlatformAuditTrail | null> {
+  if (!platformConfigured()) return null
+  const qs = new URLSearchParams()
+  if (filter.actor) qs.set("actor", filter.actor)
+  if (filter.action) qs.set("action", filter.action)
+  if (filter.resource) qs.set("resource", filter.resource)
+  if (filter.effect) qs.set("effect", filter.effect)
+  qs.set("limit", String(filter.limit ?? 100))
+  return getJSON(`/audit?${qs.toString()}`)
+}
+
 /** Reverse access lookup: why can/can't a directory user perform an action on a resource (five-model trace). */
 export async function platformAccessExplain(
   user: string,

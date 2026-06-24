@@ -1975,3 +1975,25 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
   Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
   Academic Calendar, Examinations & Results, User Directory & IAM.
+
+## Full-stack rollout #20: Audit Trail & Integrity Ledger — the hash-chain capstone, working end-to-end
+- Audit was the one durable Postgres store without a web module. Added a NEW backbone read endpoint /audit to
+  platformd (GET ?actor=&action=&resource=&effect=&limit= — substring filters, most-recent-first; returns chain
+  length, head hash, Merkle root, a live Verify() tamper-evidence check + bad_index, and an effect census) and
+  rebuilt platformd (go build + go vet clean). lib/platform-client.ts: audit seam (platformAuditTrail).
+  app/audit-trail/: a force-dynamic read+verify console with an integrity banner (intact ✓ / broken at #n),
+  length/integrity/showing stats, an effect census, a GET filter form (every field a real query against the
+  durable ledger), and a records table (seq · ts · actor · action · resource · effect · linked hash). Append-only
+  by construction — surfaced read-only.
+- PROVEN LIVE (real client code → platformd + Postgres): 612 durable records accumulated from every prior
+  module's operations; the hash-chain VERIFIES intact (bad_index=-1); each record's prev_hash links to the next
+  record's hash in an unbroken chain; head + Merkle root are 64-char SHA-256; filtering by effect=deny surfaces
+  the real PDP denials (exam separation-of-duties, unknown-actor); the effect census spans permit/executed/
+  approved/published/resolved/deny/rejected/… Postgres audit_chain verified durable (612 rows). The tamper-evident
+  integrity check is computed server-side.
+- Green: tsc 0, lint clean, Go vet clean, build success, 1555 tests at 96.16/81.63/91.61, live wiring proven.
+  ALL 21 durable Postgres stores now have a working clickable web module (20 operational verticals + the audit
+  ledger). Working clickable modules now (20): Establishment, Fee Ledger, RTE Admissions, Grievance,
+  Scholarship/DBT, Mid-Day Meal, School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable,
+  School Library, Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD,
+  Student Attendance, Academic Calendar, Examinations & Results, User Directory & IAM, Audit Trail.
