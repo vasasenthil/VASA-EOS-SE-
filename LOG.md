@@ -2139,3 +2139,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - NOTE: the ephemeral container re-cloned stale at #12 again mid-session; all work was safe on origin (6f44cbf) —
   fetched + hard-reset to restore the tree, no loss.
 - Green: tsc 0, lint clean, build success, 1557 tests (+2) at 96.17/81.64/91.62; durable-modules.ts 100% covered.
+
+## Rollout #29 (a): NEW durable vertical — Transfer Certificates (deep module #24)
+- Second net-new durable backbone vertical, built inline in the integration package: tc.go (domain
+  TransferCertificate + request→issue→cancel transitions + one-active-TC-per-student invariant + in-memory store +
+  Platform methods + scoped dashboard + multi-school seed) and tc_pg.go (self-migrating PostgreSQL adapter). New
+  platformd endpoint /tc (GET dashboard/list/id; POST request|issue|cancel). lib/platform-client.ts: tc seam.
+  app/transfer-certificate/: role-gated (manage:students) dashboard (total/issued/pending/cancelled + by-reason),
+  a pending worklist with Issue(serial)/Cancel controls, and a Raise-TC form.
+- INVARIANTS (server-side): a student can hold at most one ACTIVE TC (requested or issued) per school; issue needs
+  a serial number; valid reason/date.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded TCs across 4 schools / 2 districts;
+  invalid reason rejected; a SECOND active TC for the same student rejected ("already has an active TC");
+  issue-without-serial rejected; request→issue(serial)→cancel succeeded; a fresh TC allowed once the prior was
+  cancelled. Postgres transfer_certificates verified durable (8 issued / 5 requested / 1 cancelled).
+- Register updated: added transfer-certificate to lib/governance/durable-modules.ts (now 24) — the durable-modules
+  test verifies its actions.ts drives platform-client; brochure 'modules' note bumped 23→24 deep-transactional.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 24.

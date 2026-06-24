@@ -1667,3 +1667,71 @@ export async function platformAdvanceInspection(
   if (action === "close") body.on = arg
   return postJSON("/inspection", body)
 }
+
+// ── Transfer Certificate (TC): one-active-TC-per-student invariant ───────────────────────────────────────
+// When a learner leaves a school a TC is raised, issued with a serial number, and (if raised in error)
+// cancelled. A student can hold at most one ACTIVE TC (requested or issued) at a school — enforced server-side.
+// Lifecycle: request → issue → cancel. Downward-governance scoped.
+
+export interface PlatformTC {
+  id: string
+  org_unit: string
+  student_id: string
+  reason: string // transfer | completion | migration | withdrawal
+  status: string // requested | issued | cancelled
+  serial?: string
+  issued_on?: string
+  requested_on: string
+  note?: string
+  updated_at: string
+}
+
+export interface PlatformTCDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_reason: Record<string, number>
+  issued: number
+  pending?: PlatformTC[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped Transfer Certificate dashboard from the backbone (null when not configured). */
+export async function platformTCDashboard(scope = "TN"): Promise<PlatformTCDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/tc?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped TC list (optionally filtered by status). */
+export async function platformScopedTCs(scope = "TN", status = ""): Promise<PlatformTC[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/tc?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Raise a TC for a leaving student — a second active TC for the same student at the school is rejected. */
+export async function platformRequestTC(input: {
+  id: string
+  org_unit: string
+  student_id: string
+  reason: string
+  requested_on?: string
+}): Promise<{ ok: boolean; error: string; tc?: PlatformTC }> {
+  return postJSON("/tc", { action: "request", ...input })
+}
+
+/** Issue a requested TC with a serial number (and date). */
+export async function platformIssueTC(
+  id: string,
+  serial: string,
+  on = "",
+): Promise<{ ok: boolean; error: string; tc?: PlatformTC }> {
+  return postJSON("/tc", { action: "issue", id, serial, on })
+}
+
+/** Cancel an active TC (raised in error), with a note. */
+export async function platformCancelTC(
+  id: string,
+  note = "",
+): Promise<{ ok: boolean; error: string; tc?: PlatformTC }> {
+  return postJSON("/tc", { action: "cancel", id, note })
+}

@@ -447,6 +447,59 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/tc", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Transfer Certificate register. GET ?scope=<org> → scoped TC dashboard; ?list=1&status= → the scoped TC
+		// list; ?id= → one TC. POST { action, ... }: request { id,org_unit,student_id,reason,requested_on } raises
+		// a TC (rejecting a second active TC for the same student); issue { id,serial,on } issues it; cancel
+		// { id,note } cancels it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Reason      string `json:"reason"`
+				RequestedOn string `json:"requested_on"`
+				Serial      string `json:"serial"`
+				On          string `json:"on"`
+				Note        string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "issue":
+				out, err := s.p.AdvanceTC(req.ID, "issue", req.Serial, req.On)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			case "cancel":
+				out, err := s.p.AdvanceTC(req.ID, "cancel", req.Note, "")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			default: // request
+				out, err := s.p.RequestTC(integration.TransferCertificate{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Reason: req.Reason,
+					RequestedOn: orDefault(req.RequestedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.TCRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown TC"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTCs(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TCDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,
