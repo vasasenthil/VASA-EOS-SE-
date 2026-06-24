@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"hash/fnv"
 	"log"
 	"os"
@@ -46,30 +47,43 @@ func attState() attStore {
 // deterministic, including one engineered chronic absentee so the early-warning analytics have signal. Never
 // real PII (SYN-STU ids).
 func seedAttendance(s attStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Spread the daily marks across several schools in more than one district so the district/state roll-up
+	// aggregates real data from many schools (bottom-up) while each school still scopes to its own (top-down).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	base, _ := time.Parse("2006-01-02", "2026-06-01")
-	for n := 0; n < 12; n++ {
-		student := fnvStudent(n)
-		for d := 0; d < 20; d++ {
-			date := base.AddDate(0, 0, d).Format("2006-01-02")
-			status := attendance.Present
-			h := fnv.New32a()
-			h.Write([]byte(student + date))
-			r := h.Sum32() % 100
-			switch {
-			case n == 3 && r < 60: // student #3 is engineered to be a chronic absentee (~40% present)
-				status = attendance.Absent
-			case r < 6:
-				status = attendance.Absent
-			case r < 10:
-				status = attendance.Late
-			case r < 12:
-				status = attendance.Excused
+	for si, school := range schools {
+		for n := 0; n < 12; n++ {
+			// school 0 keeps the canonical SYN-STU ids (existing proofs reference them); later schools get a
+			// per-school suffix so learners stay distinct across the estate.
+			student := fnvStudent(n)
+			if si > 0 {
+				student = fmt.Sprintf("%s-S%d", student, si)
 			}
-			s.Mark(attendance.Record{StudentID: student, OrgUnit: school, Date: date, Status: status, Source: "biometric", MarkedBy: "SYN-U-TCH"})
+			for d := 0; d < 20; d++ {
+				date := base.AddDate(0, 0, d).Format("2006-01-02")
+				status := attendance.Present
+				h := fnv.New32a()
+				h.Write([]byte(student + date))
+				r := h.Sum32() % 100
+				switch {
+				case n == 3 && r < 60: // one engineered chronic absentee per school (~40% present)
+					status = attendance.Absent
+				case r < 6:
+					status = attendance.Absent
+				case r < 10:
+					status = attendance.Late
+				case r < 12:
+					status = attendance.Excused
+				}
+				s.Mark(attendance.Record{StudentID: student, OrgUnit: school, Date: date, Status: status, Source: "biometric", MarkedBy: "SYN-U-TCH"})
+			}
 		}
 	}
 }

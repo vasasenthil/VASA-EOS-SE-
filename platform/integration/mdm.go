@@ -49,26 +49,34 @@ func mdmState() mdmStore {
 // so the stock is healthy but one school can be driven low — enough signal for coverage + days-of-cover
 // analytics. Synthetic; no real PII.
 func seedMDM(s mdmStore) {
-	school := tenancyLeafUnder(pilotDistrict())
-	if school == "" {
-		return
+	// Plant the foodgrain ledger + meal service at several schools across more than one district so the
+	// PM-POSHAN coverage/days-of-cover roll-up aggregates many schools (and one can be driven low for signal).
+	schools := pilotSchools(4)
+	if len(schools) == 0 {
+		if only := tenancyLeafUnder(pilotDistrict()); only != "" {
+			schools = []string{only}
+		} else {
+			return
+		}
 	}
 	const enrolment = 320
-	// lift 200 kg of foodgrain for the fortnight.
-	s.Receive(mdm.LedgerEntry{ID: "MDM-RCV-2026-06-01", OrgUnit: school, Date: "2026-06-01", Kind: mdm.Receipt, GrainGrams: 200000, Note: "TPDS lifting (200kg)"})
-	// five serving days, ~93-95% coverage, 100g/child primary norm.
-	days := []struct {
-		date   string
-		served int
-	}{
-		{"2026-06-02", 300}, {"2026-06-03", 298}, {"2026-06-04", 305}, {"2026-06-05", 290}, {"2026-06-08", 302},
-	}
-	for _, d := range days {
-		grain := int64(d.served) * mdm.GramsPrimary
-		s.Serve(mdm.MealDay{
-			ID: "MDM-" + d.date, OrgUnit: school, Date: d.date,
-			MealsServed: d.served, Enrolment: enrolment, GrainGrams: grain,
-		})
+	for si, school := range schools {
+		// later schools lift a little less grain so days-of-cover varies across the estate.
+		lift := int64(200000 - si*30000)
+		s.Receive(mdm.LedgerEntry{ID: fmt.Sprintf("MDM-RCV-2026-06-01-%d", si), OrgUnit: school, Date: "2026-06-01", Kind: mdm.Receipt, GrainGrams: lift, Note: "TPDS lifting"})
+		days := []struct {
+			date   string
+			served int
+		}{
+			{"2026-06-02", 300 - si*8}, {"2026-06-03", 298 - si*8}, {"2026-06-04", 305 - si*8}, {"2026-06-05", 290 - si*8}, {"2026-06-08", 302 - si*8},
+		}
+		for _, d := range days {
+			grain := int64(d.served) * mdm.GramsPrimary
+			s.Serve(mdm.MealDay{
+				ID: fmt.Sprintf("MDM-%s-%d", d.date, si), OrgUnit: school, Date: d.date,
+				MealsServed: d.served, Enrolment: enrolment, GrainGrams: grain,
+			})
+		}
 	}
 }
 
