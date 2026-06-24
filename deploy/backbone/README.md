@@ -18,8 +18,9 @@ one-env-var step.
 
 ## Option 1 — Render blueprint (fastest path to a public HTTPS URL)
 
-1. Render dashboard → **New → Blueprint** → connect this repo. It reads [`render.yaml`](./render.yaml) and
-   provisions a free PostgreSQL + a Docker web service running `Dockerfile.platformd` with a `/healthz` check.
+1. Render dashboard → **New → Blueprint** → connect this repo. It reads [`render.yaml`](../../render.yaml) (kept at
+   the repo root so Render auto-detects it) and provisions a free PostgreSQL + a Docker web service running
+   `Dockerfile.platformd` with a `/healthz` check and an auto-generated `PLATFORM_API_TOKEN`.
 2. When it goes green, copy the service URL, e.g. `https://vasa-eos-platformd.onrender.com`.
    Verify: `curl https://vasa-eos-platformd.onrender.com/healthz` and
    `curl https://vasa-eos-platformd.onrender.com/audit?limit=1` (chain `intact: true`).
