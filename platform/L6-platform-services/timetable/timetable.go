@@ -40,9 +40,11 @@ func (s Slot) Validate() error {
 	return nil
 }
 
-// key uniquely identifies a class's slot (one subject per class per day+period).
-func key(class, day string, period int) string {
-	return class + "|" + day + "|" + string(rune('0'+period))
+// key uniquely identifies a class-slot WITHIN a school: a class name (e.g. "Grade 8-A") is not unique across the
+// estate, so the org_unit must be part of the key — otherwise two schools' identical class-slots collide and the
+// last writer silently wins. This mirrors the durable store's PRIMARY KEY (org_unit, class, day, period).
+func key(orgUnit, class, day string, period int) string {
+	return orgUnit + "|" + class + "|" + day + "|" + string(rune('0'+period))
 }
 
 // Filter narrows a listing.
@@ -98,24 +100,33 @@ func (s *Store) Set(slot Slot) (Slot, error) {
 	if c, clash := s.teacherClash(slot); clash {
 		return Slot{}, errors.New("timetable: teacher " + slot.TeacherID + " is already teaching " + c.Class + " at " + slot.Day + " period " + string(rune('0'+slot.Period)))
 	}
-	s.slots[key(slot.Class, slot.Day, slot.Period)] = slot
+	s.slots[key(slot.OrgUnit, slot.Class, slot.Day, slot.Period)] = slot
 	return slot, nil
 }
 
-// Get returns a class's slot.
+// Get returns the slot for a (class, day, period). The org_unit is not part of this signature (callers address a
+// class-slot directly), so it scans by the addressable fields — matching the durable adapter's lookup, which also
+// keys Get on (class, day, period).
 func (s *Store) Get(class, day string, period int) (Slot, bool) {
-	slot, ok := s.slots[key(class, day, period)]
-	return slot, ok
+	for _, slot := range s.slots {
+		if slot.Class == class && slot.Day == day && slot.Period == period {
+			return slot, true
+		}
+	}
+	return Slot{}, false
 }
 
-// Clear removes a class-slot. Returns false if it does not exist.
+// Clear removes the slot(s) for a (class, day, period) across schools and reports whether any existed — matching
+// the durable adapter's DELETE on (class, day, period).
 func (s *Store) Clear(class, day string, period int) bool {
-	k := key(class, day, period)
-	if _, ok := s.slots[k]; !ok {
-		return false
+	found := false
+	for k, slot := range s.slots {
+		if slot.Class == class && slot.Day == day && slot.Period == period {
+			delete(s.slots, k)
+			found = true
+		}
 	}
-	delete(s.slots, k)
-	return true
+	return found
 }
 
 // List returns the filtered slots, ordered by day then period then class.
