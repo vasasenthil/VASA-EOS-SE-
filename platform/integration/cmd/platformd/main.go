@@ -403,14 +403,14 @@ func (s *server) routes() http.Handler {
 			census[rec.Effect]++
 		}
 		s.writeJSON(w, map[string]any{
-			"length":       s.p.Audit.Len(),
-			"head":         s.p.Audit.Head(),
-			"merkle_root":  s.p.Audit.MerkleRoot(),
-			"intact":       verr == nil,
-			"bad_index":    badIndex,
+			"length":        s.p.Audit.Len(),
+			"head":          s.p.Audit.Head(),
+			"merkle_root":   s.p.Audit.MerkleRoot(),
+			"intact":        verr == nil,
+			"bad_index":     badIndex,
 			"effect_census": census,
-			"matched":      len(out),
-			"records":      out,
+			"matched":       len(out),
+			"records":       out,
 		}, nil)
 	}))
 	mux.HandleFunc("/access-explain", s.count(func(w http.ResponseWriter, r *http.Request) {
