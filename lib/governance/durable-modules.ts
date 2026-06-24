@@ -43,6 +43,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "audit-trail", label: "Audit Trail & Integrity Ledger", service: "/audit", invariant: "hash-chained, tamper-evident, verified intact" },
   { route: "school-inspection", label: "School Inspection & Monitoring", service: "/inspection", invariant: "no duplicate open inspection per type; close only after action" },
   { route: "transfer-certificate", label: "Transfer Certificates", service: "/tc", invariant: "one active TC per student; request → issue (serial) → cancel" },
+  { route: "employee-attendance", label: "Staff Attendance & Payable Days", service: "/staff-attendance", invariant: "(employee,date) upsert; payable-days + leave-without-pay computation" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

@@ -1735,3 +1735,61 @@ export async function platformCancelTC(
 ): Promise<{ ok: boolean; error: string; tc?: PlatformTC }> {
   return postJSON("/tc", { action: "cancel", id, note })
 }
+
+// ── Staff (Employee) Attendance: payroll-grade payable-days + LWP ─────────────────────────────────────────
+// One record per employee per day, keyed by (employee, date) so a re-mark corrects. Statuses: present | absent
+// (unauthorised → LWP) | half_day | leave (sanctioned, paid) | on_duty. The profile computes payable days and
+// flags leave-without-pay. Downward-governance scoped.
+
+export interface PlatformStaffAttendance {
+  employee_id: string
+  org_unit: string
+  date: string
+  status: string
+  marked_by?: string
+  marked_at?: string
+}
+
+export interface PlatformStaffMonthly {
+  employee_id: string
+  org_unit: string
+  days_marked: number
+  payable_days: number
+  lwp_days: number
+  present_pct: number
+}
+
+export interface PlatformStaffAttendanceDashboard {
+  scope: string
+  date: string
+  schools: number
+  employees: number
+  marked_today: number
+  present_rate: number
+  on_leave: number
+  lwp_staff?: string[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped staff-attendance dashboard for a date (null when not configured). */
+export async function platformStaffAttendanceDashboard(scope = "TN", date = "2026-06-01"): Promise<PlatformStaffAttendanceDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/staff-attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
+}
+
+/** An employee's payable-days + LWP profile. */
+export async function platformStaffAttendanceProfile(employee: string): Promise<PlatformStaffMonthly | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/staff-attendance?employee=${encodeURIComponent(employee)}`)
+}
+
+/** Mark (or correct) an employee's attendance for a date — keyed by (employee, date), so a re-mark upserts. */
+export async function platformMarkStaffAttendance(input: {
+  employee_id: string
+  org_unit: string
+  date: string
+  status: string
+  marked_by?: string
+}): Promise<{ ok: boolean; error: string; record?: PlatformStaffAttendance }> {
+  return postJSON("/staff-attendance", input)
+}

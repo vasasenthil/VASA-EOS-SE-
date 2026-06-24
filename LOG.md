@@ -2157,3 +2157,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   test verifies its actions.ts drives platform-client; brochure 'modules' note bumped 23→24 deep-transactional.
 - Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 24.
+
+## Rollout #30 (a): NEW durable vertical — Staff Attendance & Payable Days (deep module #25)
+- Third net-new durable backbone vertical (inline in integration): staffattendance.go (domain StaffAttendance +
+  payable-days/LWP computation + (employee,date) upsert + in-memory store + Platform methods + scoped dashboard +
+  multi-school seed) and staffattendance_pg.go (self-migrating PostgreSQL adapter, PK (employee_id,date)). New
+  platformd endpoint /staff-attendance (GET dashboard/employee-profile; POST mark). lib/platform-client.ts: staff
+  seam. app/employee-attendance/ (route /staff-attendance was a reference module): role-gated (manage:staff)
+  dashboard (schools/marked/present-rate/on-leave/LWP) + an LWP roster with per-employee payable/LWP + a Mark form.
+- PURPOSE distinct from student attendance (RTE retention): payroll-grade — present/on_duty/leave = 1 payable day,
+  half_day = 0.5, unauthorised absent = 0 and accrues toward leave-without-pay (LWP).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 24 employees across 4 schools / 2 districts with
+  one LWP employee per school; invalid status rejected; a 5-day mix computed payable_days=3.5 + lwp_days=1;
+  re-marking the absent day as present UPSERTED (still 5 days, lwp_days→0, payable→4.5). Postgres staff_attendance
+  durable. districts strict subsets.
+- Register: added employee-attendance to durable-modules.ts (now 25, test-verified backbone-wired); brochure
+  'modules' note 24→25.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 25.

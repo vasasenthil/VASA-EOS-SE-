@@ -447,6 +447,26 @@ func (s *server) routes() http.Handler {
 			"records":       out,
 		}, nil)
 	}))
+	mux.HandleFunc("/staff-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff (employee) Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped HR dashboard (present rate,
+		// on-leave, LWP roster); ?employee=<id> → an employee's payable-days + LWP profile. POST { employee_id,
+		// org_unit, date, status, marked_by } marks (or corrects) attendance — keyed by (employee, date).
+		if r.Method == http.MethodPost {
+			var rec integration.StaffAttendance
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.MarkStaffAttendance(rec)
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "record": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		if emp := q.Get("employee"); emp != "" {
+			s.writeJSON(w, s.p.StaffAttendanceProfile(emp), nil)
+			return
+		}
+		s.writeJSON(w, s.p.StaffAttendanceDashboard(orDefault(q.Get("scope"), "TN"), orDefault(q.Get("date"), "2026-06-01")), nil)
+	}))
 	mux.HandleFunc("/tc", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Transfer Certificate register. GET ?scope=<org> → scoped TC dashboard; ?list=1&status= → the scoped TC
 		// list; ?id= → one TC. POST { action, ... }: request { id,org_unit,student_id,reason,requested_on } raises
