@@ -2339,3 +2339,10 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Batch 1 (6 modules wired + viewable): establishment, fee-ledger, student-attendance, smc-meetings,
   bonafide-register, teacher-transfer. Remaining ~23 durable modules to follow in subsequent batches.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #39 (viewability): demo-data fallback batch 2/… (7 more modules viewable)
+- Same pattern as batch 1: lib/platform-demo.ts snapshots + platform-client getters return demo when
+  !platformConfigured() + pages gate on data presence with the DemoDataNote. Batch 2 modules now viewable on the
+  hosted demo: audit-trail (hash-chain intact + records), school-inspection, transfer-certificate,
+  employee-attendance, school-grants, lesson-plan, period-attendance. 13/31 modules now viewable.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -60,7 +61,7 @@ export default async function AuditTrailPage({
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected || !a ? (
+      {!a ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -73,6 +74,7 @@ export default async function AuditTrailPage({
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           {/* integrity banner */}
           <Alert variant={a.intact ? "default" : "destructive"}>
             {a.intact ? <ShieldCheck className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}

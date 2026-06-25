@@ -1572,7 +1572,7 @@ export async function platformAuditTrail(filter: {
   effect?: string
   limit?: number
 } = {}): Promise<PlatformAuditTrail | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoAuditTrail
   const qs = new URLSearchParams()
   if (filter.actor) qs.set("actor", filter.actor)
   if (filter.action) qs.set("action", filter.action)
@@ -1635,7 +1635,7 @@ export interface PlatformInspectionDashboard {
 
 /** Jurisdiction-scoped inspection oversight dashboard from the backbone (null when not configured). */
 export async function platformInspectionDashboard(scope = "TN"): Promise<PlatformInspectionDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoInspectionDashboard
   return getJSON(`/inspection?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1700,7 +1700,7 @@ export interface PlatformTCDashboard {
 
 /** Jurisdiction-scoped Transfer Certificate dashboard from the backbone (null when not configured). */
 export async function platformTCDashboard(scope = "TN"): Promise<PlatformTCDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoTCDashboard
   return getJSON(`/tc?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1775,7 +1775,7 @@ export interface PlatformStaffAttendanceDashboard {
 
 /** Jurisdiction-scoped staff-attendance dashboard for a date (null when not configured). */
 export async function platformStaffAttendanceDashboard(scope = "TN", date = "2026-06-01"): Promise<PlatformStaffAttendanceDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoStaffAttendanceDashboard
   return getJSON(`/staff-attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
 }
 
@@ -1825,7 +1825,7 @@ export interface PlatformGrantDashboard {
 
 /** Jurisdiction-scoped grant-utilisation dashboard from the backbone (null when not configured). */
 export async function platformGrantDashboard(scope = "TN"): Promise<PlatformGrantDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoGrantDashboard
   return getJSON(`/grant?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1893,7 +1893,7 @@ export interface PlatformLessonPlanDashboard {
 
 /** Jurisdiction-scoped lesson-plan dashboard from the backbone (null when not configured). */
 export async function platformLessonPlanDashboard(scope = "TN"): Promise<PlatformLessonPlanDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoLessonPlanDashboard
   return getJSON(`/lesson-plan?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1975,13 +1975,13 @@ export interface PlatformPeriodDashboard {
 
 /** Jurisdiction-scoped period-attendance dashboard (subject-wise + teacher engagement). */
 export async function platformPeriodDashboard(scope = "TN"): Promise<PlatformPeriodDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoPeriodDashboard
   return getJSON(`/period-attendance?scope=${encodeURIComponent(scope)}`)
 }
 
 /** A class-date period sheet (the periods recorded that day). */
 export async function platformPeriodSheet(scope = "TN", cls = "", date = "2026-06-01"): Promise<PlatformPeriodAttendance[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoPeriodSheetFor(cls || "Grade 8-A", date)
   return getJSON(`/period-attendance?scope=${encodeURIComponent(scope)}&sheet=1&class=${encodeURIComponent(cls)}&date=${encodeURIComponent(date)}`)
 }
 
