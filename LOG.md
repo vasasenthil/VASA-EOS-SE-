@@ -2470,3 +2470,23 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   POST w/o bearer → 401.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 35.
+
+## Rollout #47: Task-3 consolidation (zero-loss) — make durable modules canonical, de-dup the nav
+- Architecture audit found the components single-sourced (one sidebar/header/shell/nav) but ~12 domains existing
+  twice: a reference-UI page (lib/<m> + Supabase) and a durable module (Go platformd + Postgres). Consolidated
+  toward the durable layer WITHOUT deleting anything (reversible routing only).
+- REDIRECTS (next.config.mjs, files preserved) — 6 reference routes that are thin duplicates with NO unique
+  feature, now canonicalised to their durable twin: /fees→/fee-ledger, /cpd→/teacher-cpd,
+  /staff-attendance→/employee-attendance, /lesson-plans→/lesson-plan, /attendance→/student-attendance,
+  /hostel-allocation→/hostel-occupancy.
+- PRESERVED (NOT redirected — they carry unique features the durable twin lacks; redirecting would lose features):
+  /timetable (substitution), /postings (counselling), /hostel (mess checklist), /procurement (inventory),
+  /procurement-approvals (sanction workflow), /smc (DAO governance), /grievance (redressal), /governance/directory.
+  These are flagged for a feature-port-then-redirect follow-up.
+- NAV DE-DUP (config/dashboard-nav.ts): removed the 5 ADMIN reference entries whose domain now redirects to the
+  durable twin (Daily Attendance, Staff Attendance, Lesson Planning, Teacher CPD, Fee Management); kept Timetable &
+  Substitution and Teacher Posting & Transfer (unique features). Each domain now shows one canonical menu entry.
+- NOTHING DELETED: every reference page, lib/<m> store, Supabase migration and durable table is intact (zero loss
+  of features/modules/schemas). DB ownership: Postgres (42 durable tables) is canonical for the 35 modules;
+  Supabase remains for the non-durable reference surfaces.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
