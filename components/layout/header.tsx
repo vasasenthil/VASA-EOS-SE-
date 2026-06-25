@@ -20,6 +20,7 @@ interface HeaderUserData {
   name: string
   email: string
   avatarUrl?: string | null
+  isDemo?: boolean
 }
 
 interface HeaderProps {
@@ -38,6 +39,7 @@ export function Header({ userData }: HeaderProps) {
     name: "Guest User",
     email: "",
     avatarUrl: "/placeholder.svg?width=40&height=40&text=G",
+    isDemo: false,
   }
   const currentUser = userData || defaultUser
 
@@ -105,19 +107,26 @@ export function Header({ userData }: HeaderProps) {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium leading-none">{currentUser.name}</p>
+                    {currentUser.isDemo && (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                        Demo
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs leading-none text-muted-foreground">{currentUser.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild disabled>
-                <Link href="#">
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
                   <UserCircle className="mr-2 h-4 w-4" />
                   <span>View Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild disabled>
-                <Link href="#">
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
                   <SettingsIcon className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
