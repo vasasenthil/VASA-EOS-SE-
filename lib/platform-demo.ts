@@ -50,6 +50,8 @@ import type {
   PlatformExamSheet,
   PlatformDirectorySummary,
   PlatformDirectoryUser,
+  PlatformHostelDashboard,
+  PlatformHostel,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -637,3 +639,22 @@ export const demoDirectorySummary: PlatformDirectorySummary = {
 export function demoDirectoryScopedFor(scope: string): PlatformDirectoryUser[] {
   return DIR_SAMPLE
 }
+
+// ── Hostel Allocation & Occupancy ────────────────────────────────────────────────────────────────────────
+export const demoHostelDashboard: PlatformHostelDashboard = {
+  scope: SCOPE,
+  hostels: 4,
+  capacity: 200,
+  occupied: 170,
+  occupancy_pct: 85,
+  by_type: { boys: 2, girls: 2 },
+  near_full: [
+    { id: "HOS-CHN-boys", org_unit: "33030004181", name: "boys Welfare Hostel", type: "boys", capacity: 50, status: "open", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  ],
+  synthetic: true,
+}
+
+export const demoHostels: PlatformHostel[] = [
+  { id: "HOS-CHN-boys", org_unit: "33030004181", name: "boys Welfare Hostel", type: "boys", capacity: 50, status: "open", residents: Array.from({ length: 47 }, (_, i) => ({ student_id: `SYN-S-CHN-boys-${String(i + 1).padStart(3, "0")}`, allotted_on: "2026-06-02" })), created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "HOS-CHN-girls", org_unit: "33030004181", name: "girls Welfare Hostel", type: "girls", capacity: 50, status: "open", residents: Array.from({ length: 38 }, (_, i) => ({ student_id: `SYN-S-CHN-girls-${String(i + 1).padStart(3, "0")}`, allotted_on: "2026-06-02" })), created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+]

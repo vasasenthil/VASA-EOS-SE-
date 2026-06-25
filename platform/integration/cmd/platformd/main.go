@@ -845,6 +845,59 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.TeacherTransferDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/hostel", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Hostel Allocation & Occupancy (welfare). GET ?scope=<org> → scoped occupancy dashboard; ?list=1&status= →
+		// the scoped hostel list; ?id= → one hostel. POST { action, ... }: register { id,org_unit,name,type,
+		// capacity } opens a hostel; allot { id,student_id } places a student (rejecting over-allocation + a second
+		// statewide bed); vacate { id,student_id } removes a student; close { id } closes an empty hostel.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Name      string `json:"name"`
+				Type      string `json:"type"`
+				Capacity  int    `json:"capacity"`
+				StudentID string `json:"student_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "allot":
+				out, err := s.p.AllotBed(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			case "vacate":
+				out, err := s.p.VacateBed(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			case "close":
+				out, err := s.p.CloseHostel(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			default: // register
+				out, err := s.p.RegisterHostel(integration.Hostel{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Type: req.Type, Capacity: req.Capacity,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			h, ok := s.p.HostelRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown hostel"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, h, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedHostels(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.HostelDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,

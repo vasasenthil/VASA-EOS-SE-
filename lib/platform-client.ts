@@ -2219,3 +2219,73 @@ export async function platformPostTeacherTransfer(id: string): Promise<{ ok: boo
 export async function platformRejectTeacherTransfer(id: string, note: string): Promise<{ ok: boolean; error: string; transfer?: PlatformTeacherTransfer }> {
   return postJSON("/teacher-transfer", { action: "reject", id, note })
 }
+
+// ── Hostel Allocation & Occupancy: capacity + one-bed-per-student (statewide) invariants ─────────────────
+// Residential welfare hostels. A hostel's occupancy can never exceed capacity (no over-allocation), and a student
+// can hold at most one active bed across ALL hostels. Residents are embedded; allot→vacate lifecycle. Scoped.
+
+export interface PlatformResident {
+  student_id: string
+  allotted_on: string
+}
+
+export interface PlatformHostel {
+  id: string
+  org_unit: string
+  name: string
+  type: string // boys | girls | tribal
+  capacity: number
+  residents?: PlatformResident[]
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformHostelDashboard {
+  scope: string
+  hostels: number
+  capacity: number
+  occupied: number
+  occupancy_pct: number
+  by_type: Record<string, number>
+  near_full?: PlatformHostel[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped hostel-occupancy dashboard from the backbone (null when not configured). */
+export async function platformHostelDashboard(scope = "TN"): Promise<PlatformHostelDashboard | null> {
+  if (!platformConfigured()) return demo.demoHostelDashboard
+  return getJSON(`/hostel?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped hostel list (optionally filtered by status). */
+export async function platformScopedHostels(scope = "TN", status = ""): Promise<PlatformHostel[]> {
+  if (!platformConfigured()) return demo.demoHostels
+  return getJSON(`/hostel?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Register (open) a hostel. */
+export async function platformRegisterHostel(input: {
+  id: string
+  org_unit: string
+  name: string
+  type: string
+  capacity: number
+}): Promise<{ ok: boolean; error: string; hostel?: PlatformHostel }> {
+  return postJSON("/hostel", { action: "register", ...input })
+}
+
+/** Allot a bed — rejected on over-allocation or a second statewide placement. */
+export async function platformAllotBed(id: string, student_id: string): Promise<{ ok: boolean; error: string; hostel?: PlatformHostel }> {
+  return postJSON("/hostel", { action: "allot", id, student_id })
+}
+
+/** Vacate a student's bed. */
+export async function platformVacateBed(id: string, student_id: string): Promise<{ ok: boolean; error: string; hostel?: PlatformHostel }> {
+  return postJSON("/hostel", { action: "vacate", id, student_id })
+}
+
+/** Close an empty hostel. */
+export async function platformCloseHostel(id: string): Promise<{ ok: boolean; error: string; hostel?: PlatformHostel }> {
+  return postJSON("/hostel", { action: "close", id })
+}

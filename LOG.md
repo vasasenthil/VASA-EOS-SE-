@@ -2378,3 +2378,23 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   roles: ADMIN, PRINCIPAL, BEO, DEO, DIRECTOR, SECRETARY, MINISTER. Now every durable module is clickable from the
   sidebar; pages stay role-gated server-side.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #43: NEW durable vertical — Hostel Allocation & Occupancy (deep module #32) + sidebar to ALL roles
+- Built the durable Hostel Allocation & Occupancy welfare vertical inline in integration (hostel.go + _pg.go).
+  Domain Hostel with embedded Residents; allot→vacate lifecycle. TWO invariants: (1) CAPACITY — occupancy can never
+  exceed capacity (no over-allocation); (2) ONE BED PER STUDENT statewide — AllotBed scans every governed hostel and
+  rejects a second active placement. Scoped dashboard (hostels/capacity/occupied/occupancy_pct/by_type + near-full
+  ≥90% worklist); multi-school seed (a near-full boys + a girls hostel per school across 2 districts). Route is
+  /hostel-occupancy (both /hostel and /hostel-allocation are pre-existing reference pages).
+- New platformd endpoint /hostel (GET dashboard/list/id; POST register|allot|vacate|close). lib/platform-client.ts:
+  hostel seam (+ demo fallback). app/hostel-occupancy/ (manage:school/students gated). Register now 32; brochure
+  'modules' note 31→32.
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): register+allot+vacate durable;
+  CAPACITY — 3rd allotment into a cap-2 hostel rejected ("full"); ONE-BED — a student already placed cannot be
+  placed in a second hostel ("already holds an active bed"), but can after vacating; close-with-residents rejected;
+  downward-governance scope (Chennai+Coimbatore ⊆ TN). POST without bearer → 401.
+- SIDEBAR: config/dashboard-nav.ts now spreads durableModuleNav into ALL 17 roles (added the remaining TEACHER,
+  STUDENT, SUBJECT_INCHARGE, ACADEMIC_HEAD, INSTITUTION_HEAD, PARENT, CRCC, VENDOR, RESEARCHER, PUBLIC); pages stay
+  role-gated server-side. Hostel added to the durable-modules nav section.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 32.

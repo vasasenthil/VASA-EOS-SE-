@@ -129,6 +129,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "SMC Meetings & Resolutions", href: "/smc-meetings", icon: Vote },
   { title: "Bonafide Certificate Register", href: "/bonafide-register", icon: Stamp },
   { title: "Teacher Transfer & Posting", href: "/teacher-transfer", icon: UserCog },
+  { title: "Hostel Allocation & Occupancy", href: "/hostel-occupancy", icon: BedDouble },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {
@@ -285,6 +286,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
     { title: "My Courses", href: "/teacher/courses", icon: BookOpen },
     { title: "Create Course", href: "/teacher/courses/create", icon: BookMarked },
+    ...durableModuleNav,
   ],
   STUDENT: [
     { title: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
@@ -293,6 +295,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "My Grades", href: "/student/grades", icon: Award },
     { title: "Resources", href: "/student/resources", icon: Folder },
     { title: "Announcements", href: "/student/announcements", icon: Presentation },
+    ...durableModuleNav,
   ],
   PRINCIPAL: [
     { title: "Dashboard", href: "/principal/dashboard", icon: LayoutDashboard },
@@ -314,6 +317,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Resource Allocation", href: "/subject-incharge/resources", icon: Folder },
     { title: "Teacher Coordination", href: "/subject-incharge/teachers", icon: Users },
     { title: "Student Performance", href: "/subject-incharge/students/performance", icon: BarChart3 },
+    ...durableModuleNav,
   ],
   ACADEMIC_HEAD: [
     { title: "Dashboard", href: "/academic-head/dashboard", icon: LayoutDashboard },
@@ -321,6 +325,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Assessment & Evaluation", href: "/academic-head/assessment", icon: ClipboardList },
     { title: "Teacher PD", href: "/academic-head/teacher-dev", icon: GraduationCap },
     { title: "Academic Planning", href: "/academic-head/planning", icon: Target },
+    ...durableModuleNav,
   ],
   INSTITUTION_HEAD: [
     { title: "Dashboard", href: "/institution-head/dashboard", icon: LayoutDashboard },
@@ -328,6 +333,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Policy Management", href: "/institution-head/policies", icon: FileText },
     { title: "Stakeholder Management", href: "/institution-head/stakeholders", icon: Network },
     { title: "Resource Management", href: "/institution-head/resources", icon: Landmark },
+    ...durableModuleNav,
   ],
   PARENT: [
     { title: "Dashboard", href: "/parent/dashboard", icon: LayoutDashboard },
@@ -335,14 +341,15 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Performance", href: "/parent/performance", icon: TrendingUp },
     { title: "Fee Management", href: "/parent/fees", icon: IndianRupee },
     { title: "Communication", href: "/parent/communication", icon: MessageSquare },
+    ...durableModuleNav,
   ],
-  CRCC: [{ title: "Dashboard", href: "/crcc/dashboard", icon: LayoutDashboard }],
+  CRCC: [{ title: "Dashboard", href: "/crcc/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   BEO: [{ title: "Dashboard", href: "/beo/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   DEO: [{ title: "Dashboard", href: "/deo/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   DIRECTOR: [{ title: "Dashboard", href: "/director/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   SECRETARY: [{ title: "Dashboard", href: "/secretary/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   MINISTER: [{ title: "Dashboard", href: "/minister/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
-  VENDOR: [{ title: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard }],
-  RESEARCHER: [{ title: "Dashboard", href: "/researcher/dashboard", icon: LayoutDashboard }],
-  PUBLIC: [{ title: "Dashboard", href: "/public/dashboard", icon: LayoutDashboard }],
+  VENDOR: [{ title: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  RESEARCHER: [{ title: "Dashboard", href: "/researcher/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  PUBLIC: [{ title: "Dashboard", href: "/public/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
 }
