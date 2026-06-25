@@ -6,7 +6,7 @@ mode** (no database required), which is what you log into to review the platform
 | Stack | What it is | This guide |
 |---|---|---|
 | **Next.js reference app** | The web UI (governance, IAM, admission, leave, grievance boards, `/governance/brochure-coverage`, `/platform-status.html`) | ✅ deploys to Vercel below |
-| **Go `platformd` backbone** | The durable engine behind the 20 verticals (Postgres-backed HTTP) | runs locally / in CI; optional hosted setup at the bottom |
+| **Go `platformd` backbone** | The durable engine behind the 31 durable verticals (Postgres-backed HTTP) | runs locally / in CI; optional hosted setup at the bottom |
 
 ---
 

@@ -18,21 +18,27 @@ one-env-var step.
 
 ## Option 1 — Render blueprint (fastest path to a public HTTPS URL)
 
+**One-click:** [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/vasasenthil/VASA-EOS-SE-)
+— opens Render's Blueprint flow pre-pointed at this repo; it reads [`render.yaml`](../../render.yaml) and provisions
+the database + `platformd` automatically. (Or use the manual steps below.)
+
 1. Render dashboard → **New → Blueprint** → connect this repo. It reads [`render.yaml`](../../render.yaml) (kept at
-   the repo root so Render auto-detects it) and provisions a free PostgreSQL + a Docker web service running
-   `Dockerfile.platformd` with a `/healthz` check and an auto-generated `PLATFORM_API_TOKEN`.
-2. When it goes green, copy the service URL, e.g. `https://vasa-eos-platformd.onrender.com`.
-   Verify: `curl https://vasa-eos-platformd.onrender.com/healthz` and
-   `curl https://vasa-eos-platformd.onrender.com/audit?limit=1` (chain `intact: true`).
-3. Copy the auto-generated **`PLATFORM_API_TOKEN`** from the Render `vasa-eos-platformd` service
+   the repo root so Render auto-detects it) and provisions a free PostgreSQL (`vasa-eos-se-tn-db`) + a Docker web
+   service (`vasa-eos-se-tn-platformd`) running `Dockerfile.platformd` with a `/healthz` check and an auto-generated
+   `PLATFORM_API_TOKEN`.
+2. When it goes green, copy the service URL, e.g. `https://vasa-eos-se-tn-platformd.onrender.com`.
+   Verify: `curl https://vasa-eos-se-tn-platformd.onrender.com/healthz` and
+   `curl https://vasa-eos-se-tn-platformd.onrender.com/audit?limit=1` (chain `intact: true`).
+3. Copy the auto-generated **`PLATFORM_API_TOKEN`** from the Render `vasa-eos-se-tn-platformd` service
    (Environment tab) — the auth gateway requires it on every write.
 4. In **Vercel → Project → Settings → Environment Variables** (Production) add:
    | Key | Value |
    |-----|-------|
-   | `PLATFORM_URL` | `https://vasa-eos-platformd.onrender.com` |
+   | `PLATFORM_URL` | `https://vasa-eos-se-tn-platformd.onrender.com` |
    | `PLATFORM_DEFAULT_ORG` | `TN-DIST-Chennai` |
    | `PLATFORM_API_TOKEN` | *(the SAME value as Render's — so the console can write)* |
-5. **Redeploy** the Vercel project (Deployments → Redeploy). The 20 durable modules are now live and persistent.
+5. **Redeploy** the Vercel project (Deployments → Redeploy). The 31 durable modules are now live and persistent
+   (no longer "Backbone not connected"), and `/directory` links every one of them and all 17 portals.
 
 ## Option 2 — any Docker host / VM (full control)
 
@@ -69,7 +75,7 @@ project (`PLATFORM_API_TOKEN`) — the console's server actions send it automati
 exposed to the browser). When the var is unset the gate is a no-op (fully-open local demo). Verify:
 
 ```bash
-curl -X POST https://vasa-eos-platformd.onrender.com/attendance -d '{}'           # -> 401 unauthorized
+curl -X POST https://vasa-eos-se-tn-platformd.onrender.com/attendance -d '{}'           # -> 401 unauthorized
 curl -X POST -H "Authorization: Bearer $TOKEN" https://…/attendance -d '{...}'      # -> 200
 curl https://…/attendance?scope=TN&date=2026-06-10                                  # -> 200 (reads open)
 ```
