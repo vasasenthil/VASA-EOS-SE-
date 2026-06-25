@@ -788,6 +788,63 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.BonafideDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/teacher-transfer", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Teacher Transfer & Posting. GET ?scope=<org> → scoped HR dashboard (by destination school); ?list=1&
+		// status= → the scoped request list; ?id= → one request. POST { action, ... }: request { id,employee_id,
+		// name,cadre,from_org,to_org,reason } raises a request (rejecting a second active one); approve { id }
+		// approves it (rejected unless the destination has a sanctioned vacancy in the cadre — cross-module against
+		// the Establishment register); post { id } finalises an approved transfer; reject { id,note } rejects it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				EmployeeID string `json:"employee_id"`
+				Name       string `json:"name"`
+				Cadre      string `json:"cadre"`
+				FromOrg    string `json:"from_org"`
+				ToOrg      string `json:"to_org"`
+				Reason     string `json:"reason"`
+				Note       string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "approve":
+				out, err := s.p.ApproveTeacherTransfer(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			case "post":
+				out, err := s.p.PostTeacherTransfer(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			case "reject":
+				out, err := s.p.RejectTeacherTransfer(req.ID, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			default: // request
+				out, err := s.p.RequestTeacherTransfer(integration.TeacherTransfer{
+					ID: req.ID, EmployeeID: req.EmployeeID, Name: req.Name, Cadre: req.Cadre,
+					FromOrg: req.FromOrg, ToOrg: orDefault(req.ToOrg, "TN"), Reason: orDefault(req.Reason, "request"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.TeacherTransferRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown teacher transfer"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTeacherTransfers(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TeacherTransferDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,

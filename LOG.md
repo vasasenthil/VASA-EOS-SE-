@@ -2288,3 +2288,26 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   'modules' note 29→30.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 30.
+
+## Rollout #36 (a): NEW durable vertical — Teacher Transfer & Posting (deep module #31, cross-module)
+- Built the durable Teacher Transfer & Posting HR vertical inline in integration (teachertransfer.go + _pg.go).
+  Domain TeacherTransfer; lifecycle requested→approved→posted (or rejected). TWO invariants: (1) SINGLE ACTIVE
+  REQUEST — a teacher cannot hold two in-flight transfer requests; (2) CROSS-MODULE VACANCY GATE — ApproveTransfer
+  computes cadreVacancy(toOrg, cadre) from the LIVE Establishment register (sanctioned − filled over the school's
+  active establishments of that cadre) and REJECTS approval when there is no open post — you cannot post a teacher
+  where no sanctioned vacancy exists. Scoped dashboard by DESTINATION school (by_status/by_reason/posted + pending
+  worklist); multi-school seed across 2 districts (a posted transfer into a school with a BT vacancy + a pending
+  mutual request). Named TeacherTransfer/teacher-transfer to avoid colliding with transfer.go (student APAAR
+  portability — an unrelated concern).
+- New platformd endpoint /teacher-transfer (GET dashboard/list/id; POST request|approve|post|reject). lib/platform-
+  client.ts: teacher-transfer seam. app/teacher-transfer/ (manage:staff gated): live stat strip, the requests table
+  (by destination), and request/approve/post/reject forms.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, auth gate enforced): single-active-request reject;
+  CROSS-MODULE both ways — a BT transfer (8/7 sanctioned, 1 vacancy) approves+posts, a Secondary-Grade transfer
+  (6/6, full) is REJECTED ("no sanctioned vacancy"); post-before-approve rejected; reject only on a requested one,
+  durably listed; downward-governance scope by destination (Chennai + Coimbatore ⊆ TN). Auth gate: POST without
+  bearer → 401, GET open → 200.
+- Register: added teacher-transfer to durable-modules.ts (now 31, test-verified backbone-wired); brochure 'modules'
+  note 30→31.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 31.

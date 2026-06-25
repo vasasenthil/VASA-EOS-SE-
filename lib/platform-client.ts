@@ -2145,3 +2145,74 @@ export async function platformIssueBonafide(id: string): Promise<{ ok: boolean; 
 export async function platformRevokeBonafide(id: string): Promise<{ ok: boolean; error: string; certificate?: PlatformBonafide }> {
   return postJSON("/bonafide", { action: "revoke", id })
 }
+
+// ── Teacher Transfer & Posting: single-active-request + cross-module vacancy gate ─────────────────────────
+// A teacher requests a transfer to another school; the request is decided through requested → approved → posted
+// (or rejected). A teacher can hold only one active request; a transfer can only be APPROVED into a destination
+// that has a sanctioned vacancy in the teacher's cadre — validated against the live Establishment register.
+// Downward-governance scoped (by destination school).
+
+export interface PlatformTeacherTransfer {
+  id: string
+  employee_id: string
+  name: string
+  cadre: string
+  from_org: string
+  to_org: string
+  reason: string // request | mutual | administrative | promotion
+  status: string // requested | approved | posted | rejected
+  note?: string
+  requested_on: string
+  decided_on?: string
+  updated_at: string
+}
+
+export interface PlatformTeacherTransferDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_reason: Record<string, number>
+  posted: number
+  pending_work?: PlatformTeacherTransfer[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped teacher-transfer dashboard from the backbone (null when not configured). */
+export async function platformTeacherTransferDashboard(scope = "TN"): Promise<PlatformTeacherTransferDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped teacher-transfer list (optionally filtered by status). */
+export async function platformScopedTeacherTransfers(scope = "TN", status = ""): Promise<PlatformTeacherTransfer[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Raise a teacher transfer request (status requested) — rejected if the teacher already has an active one. */
+export async function platformRequestTeacherTransfer(input: {
+  id: string
+  employee_id: string
+  name?: string
+  cadre: string
+  from_org: string
+  to_org: string
+  reason?: string
+}): Promise<{ ok: boolean; error: string; transfer?: PlatformTeacherTransfer }> {
+  return postJSON("/teacher-transfer", { action: "request", ...input })
+}
+
+/** Approve a requested transfer — rejected unless the destination has a sanctioned vacancy in the cadre. */
+export async function platformApproveTeacherTransfer(id: string): Promise<{ ok: boolean; error: string; transfer?: PlatformTeacherTransfer }> {
+  return postJSON("/teacher-transfer", { action: "approve", id })
+}
+
+/** Finalise an approved transfer (the teacher is posted at the destination). */
+export async function platformPostTeacherTransfer(id: string): Promise<{ ok: boolean; error: string; transfer?: PlatformTeacherTransfer }> {
+  return postJSON("/teacher-transfer", { action: "post", id })
+}
+
+/** Reject a requested transfer with a note. */
+export async function platformRejectTeacherTransfer(id: string, note: string): Promise<{ ok: boolean; error: string; transfer?: PlatformTeacherTransfer }> {
+  return postJSON("/teacher-transfer", { action: "reject", id, note })
+}
