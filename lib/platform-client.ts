@@ -2482,3 +2482,74 @@ export async function platformPublishJob(id: string): Promise<{ ok: boolean; err
 export async function platformRejectJob(id: string, note: string): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
   return postJSON("/language-lab", { action: "reject", id, note })
 }
+
+// ── Procurement & GeM Purchase Orders: GFR no-over-receipt + no-over-payment controls (money in paise) ────
+// A school raises a GeM purchase order, receives goods against it, and pays the vendor. Goods received can never
+// exceed the ordered quantity, and payment can never exceed the value of goods actually received. Scoped.
+
+export interface PlatformPurchaseOrder {
+  id: string
+  org_unit: string
+  item: string
+  vendor: string
+  gem_contract?: string
+  ordered_qty: number
+  unit_price_paise: number
+  received_qty: number
+  paid_paise: number
+  status: string // ordered | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformProcurementDashboard {
+  scope: string
+  pos: number
+  by_status: Record<string, number>
+  ordered_value_paise: number
+  received_value_paise: number
+  paid_paise: number
+  outstanding_paise: number
+  pending_receipt?: PlatformPurchaseOrder[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped procurement dashboard from the backbone (null when not configured). */
+export async function platformProcurementDashboard(scope = "TN"): Promise<PlatformProcurementDashboard | null> {
+  if (!platformConfigured()) return demo.demoProcurementDashboard
+  return getOrDemo(`/procurement?scope=${encodeURIComponent(scope)}`, demo.demoProcurementDashboard)
+}
+
+/** The scoped purchase-order list (optionally filtered by status). */
+export async function platformScopedPurchaseOrders(scope = "TN", status = ""): Promise<PlatformPurchaseOrder[]> {
+  if (!platformConfigured()) return demo.demoPurchaseOrders
+  return getOrDemo(`/procurement?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoPurchaseOrders)
+}
+
+/** Create a GeM purchase order (status ordered). */
+export async function platformCreatePurchaseOrder(input: {
+  id: string
+  org_unit: string
+  item: string
+  vendor: string
+  gem_contract?: string
+  ordered_qty: number
+  unit_price_paise: number
+}): Promise<{ ok: boolean; error: string; po?: PlatformPurchaseOrder }> {
+  return postJSON("/procurement", { action: "create", ...input })
+}
+
+/** Book a goods receipt — rejected on an over-receipt beyond the ordered quantity. */
+export async function platformReceiveGoods(id: string, qty: number): Promise<{ ok: boolean; error: string; po?: PlatformPurchaseOrder }> {
+  return postJSON("/procurement", { action: "receive", id, qty })
+}
+
+/** Book a payment — rejected on an over-payment beyond the value of goods received. */
+export async function platformPayVendor(id: string, amount_paise: number): Promise<{ ok: boolean; error: string; po?: PlatformPurchaseOrder }> {
+  return postJSON("/procurement", { action: "pay", id, amount_paise })
+}
+
+/** Close a fully-received purchase order. */
+export async function platformClosePurchaseOrder(id: string): Promise<{ ok: boolean; error: string; po?: PlatformPurchaseOrder }> {
+  return postJSON("/procurement", { action: "close", id })
+}

@@ -961,6 +961,64 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.CifmDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/procurement", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Procurement & GeM Purchase Orders (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= →
+		// the scoped PO list; ?id= → one PO. POST { action, ... }: create { id,org_unit,item,vendor,gem_contract,
+		// ordered_qty,unit_price_paise } raises a PO; receive { id,qty } books a goods receipt (rejecting an
+		// over-receipt); pay { id,amount_paise } books a payment (rejecting an over-payment beyond goods received);
+		// close { id } closes a fully-received PO.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action         string `json:"action"`
+				ID             string `json:"id"`
+				OrgUnit        string `json:"org_unit"`
+				Item           string `json:"item"`
+				Vendor         string `json:"vendor"`
+				GemContract    string `json:"gem_contract"`
+				OrderedQty     int    `json:"ordered_qty"`
+				UnitPricePaise int64  `json:"unit_price_paise"`
+				Qty            int    `json:"qty"`
+				AmountPaise    int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "receive":
+				out, err := s.p.ReceiveGoods(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			case "pay":
+				out, err := s.p.PayVendor(req.ID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			case "close":
+				out, err := s.p.ClosePurchaseOrder(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			default: // create
+				out, err := s.p.CreatePurchaseOrder(integration.PurchaseOrder{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Item: req.Item, Vendor: req.Vendor,
+					GemContract: req.GemContract, OrderedQty: req.OrderedQty, UnitPricePaise: req.UnitPricePaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			po, ok := s.p.PurchaseOrderRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown purchase order"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, po, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedPurchaseOrders(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ProcurementDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

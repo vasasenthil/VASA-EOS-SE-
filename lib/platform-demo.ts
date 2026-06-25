@@ -54,6 +54,8 @@ import type {
   PlatformHostel,
   PlatformCifmDashboard,
   PlatformFacility,
+  PlatformProcurementDashboard,
+  PlatformPurchaseOrder,
   PlatformLanguageLabDashboard,
   PlatformTranslationJob,
 } from "@/lib/platform-client"
@@ -710,4 +712,25 @@ export const demoTranslationJobs: PlatformTranslationJob[] = [
   { id: "TJ-CHN-01", org_unit: "33030004181", title: "Mid-term PTM notice", domain: "parent-comms", source_lang: "en", target_lang: "ta", status: "published", machine_assisted: true, translator: "SYN-TR-CHN", reviewer: "SYN-RV-CHN", created_on: "2026-06-10", updated_at: "2026-06-25T00:00:00Z" },
   { id: "TJ-CHN-02", org_unit: "33030004181", title: "Scholarship circular", domain: "circular", source_lang: "en", target_lang: "te", status: "translated", machine_assisted: true, translator: "SYN-TR-CHN", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
   { id: "TJ-CHN-03", org_unit: "33030004181", title: "FLN worksheet pack", domain: "curriculum", source_lang: "en", target_lang: "hi", status: "requested", machine_assisted: false, created_on: "2026-06-22", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+// ── Procurement & GeM Purchase Orders (money in paise) ───────────────────────────────────────────────────
+export const demoProcurementDashboard: PlatformProcurementDashboard = {
+  scope: SCOPE,
+  pos: 12,
+  by_status: { ordered: 11, closed: 1 },
+  ordered_value_paise: 9_30_000_00,
+  received_value_paise: 6_30_000_00,
+  paid_paise: 4_00_000_00,
+  outstanding_paise: 2_30_000_00,
+  pending_receipt: [
+    { id: "PO-CHN-03", org_unit: "33030004181", item: "Library books", vendor: "SYN-VEN-BOOK", gem_contract: "GEMC-CHN-003", ordered_qty: 200, unit_price_paise: 350_00, received_qty: 0, paid_paise: 0, status: "ordered", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+  ],
+  synthetic: true,
+}
+
+export const demoPurchaseOrders: PlatformPurchaseOrder[] = [
+  { id: "PO-CHN-01", org_unit: "33030004181", item: "Dual-desk benches", vendor: "SYN-VEN-FURN", gem_contract: "GEMC-CHN-001", ordered_qty: 50, unit_price_paise: 2_500_00, received_qty: 30, paid_paise: 50_000_00, status: "ordered", created_on: "2026-06-05", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "PO-CHN-02", org_unit: "33030004181", item: "Smart-class tablets", vendor: "SYN-VEN-ICT", gem_contract: "GEMC-CHN-002", ordered_qty: 20, unit_price_paise: 9_000_00, received_qty: 20, paid_paise: 0, status: "ordered", created_on: "2026-06-12", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "PO-CHN-03", org_unit: "33030004181", item: "Library books", vendor: "SYN-VEN-BOOK", gem_contract: "GEMC-CHN-003", ordered_qty: 200, unit_price_paise: 350_00, received_qty: 0, paid_paise: 0, status: "ordered", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
 ]

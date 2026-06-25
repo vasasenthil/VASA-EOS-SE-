@@ -2452,3 +2452,21 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - components/demo-data-note.tsx reworded for the configured-but-waking case. Means future module additions no longer
   require a manual Render redeploy to avoid a scary error in the deploy window.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #46 (b): NEW durable vertical — Procurement & GeM Purchase Orders (deep module #35)
+- Built the durable GeM procurement finance vertical inline in integration (procurement.go + procurement_pg.go).
+  PurchaseOrder (item/vendor/GeM contract/ordered_qty/unit_price_paise + cumulative received_qty + paid_paise);
+  create → receive → pay → close. TWO GFR controls (money in paise): (1) NO OVER-RECEIPT — cumulative received can
+  never exceed ordered qty; (2) NO OVER-PAYMENT BEYOND GOODS RECEIVED — cumulative paid can never exceed
+  received_qty × unit_price (can't pay for undelivered goods). Scoped dashboard (ordered/received/paid value totals
+  + outstanding (received−paid) + pending-receipt worklist); multi-school seed (part-received/part-paid benches,
+  fully-received-unpaid tablets, awaiting-receipt books). Route /gem-procurement (/procurement is a reference page).
+- New platformd endpoint /procurement (create|receive|pay|close). lib/platform-client.ts: seam (uses getOrDemo
+  graceful fallback) + demo. app/gem-procurement/ (manage:school gated, rupee↔paise conversion). Register now 35;
+  brochure note 34→35. Added to the durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): create+receive+pay within limits
+  durable; NO OVER-RECEIPT — receiving 5 more into 6/10 (→11) REJECTED, 4 (→10) ok; NO OVER-PAYMENT — paying 50000
+  beyond received value 100000 (already 60000) REJECTED, 40000 ok; close requires full receipt; scope subset.
+  POST w/o bearer → 401.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 35.
