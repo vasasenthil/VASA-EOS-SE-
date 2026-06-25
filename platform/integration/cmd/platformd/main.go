@@ -961,6 +961,58 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.CifmDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,
+		// target_lang } opens a job; translate { id,actor,machine_assisted } records a (Bhashini-assisted) draft;
+		// review { id,actor } reviews it; publish { id } publishes (quality gate — must be reviewed); reject
+		// { id,note } rejects it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Title           string `json:"title"`
+				Domain          string `json:"domain"`
+				SourceLang      string `json:"source_lang"`
+				TargetLang      string `json:"target_lang"`
+				Actor           string `json:"actor"`
+				MachineAssisted bool   `json:"machine_assisted"`
+				Note            string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "translate", "review", "publish", "reject":
+				out, err := s.p.AdvanceTranslation(req.ID, req.Action, req.Actor, req.MachineAssisted, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "job": out}, nil)
+			default: // request
+				out, err := s.p.RequestTranslation(integration.TranslationJob{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Domain: req.Domain,
+					SourceLang: req.SourceLang, TargetLang: req.TargetLang,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "job": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			j, ok := s.p.TranslationRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown translation job"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, j, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTranslations(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LanguageLabDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,

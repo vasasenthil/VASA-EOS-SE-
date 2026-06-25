@@ -54,6 +54,8 @@ import type {
   PlatformHostel,
   PlatformCifmDashboard,
   PlatformFacility,
+  PlatformLanguageLabDashboard,
+  PlatformTranslationJob,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -687,4 +689,25 @@ export const demoFacilities: PlatformFacility[] = [
   { id: "FAC-CHN-02", org_unit: "33030004181", name: "Girls' Toilet Block", category: "toilet", condition: "poor", status: "under_maintenance", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", work_orders: [{ id: "FAC-CHN-02-WO01", title: "Sewage overflow — health hazard", priority: "critical", status: "open", raised_on: "2026-06-25" }], created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
   { id: "FAC-CHN-03", org_unit: "33030004181", name: "RO Drinking-Water Unit", category: "water", condition: "good", status: "operational", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
   { id: "FAC-CHN-04", org_unit: "33030004181", name: "Main Distribution Board", category: "electrical", condition: "good", status: "operational", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+// ── Native AI Language Lab ───────────────────────────────────────────────────────────────────────────────
+export const demoLanguageLabDashboard: PlatformLanguageLabDashboard = {
+  scope: SCOPE,
+  jobs: 6,
+  by_status: { published: 2, translated: 2, requested: 2 },
+  by_target_lang: { ta: 2, te: 2, hi: 2 },
+  published: 2,
+  machine_assisted: 4,
+  languages_covered: ["ta"],
+  review_worklist: [
+    { id: "TJ-CHN-02", org_unit: "33030004181", title: "Scholarship circular", domain: "circular", source_lang: "en", target_lang: "te", status: "translated", machine_assisted: true, translator: "SYN-TR-CHN", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+  ],
+  synthetic: true,
+}
+
+export const demoTranslationJobs: PlatformTranslationJob[] = [
+  { id: "TJ-CHN-01", org_unit: "33030004181", title: "Mid-term PTM notice", domain: "parent-comms", source_lang: "en", target_lang: "ta", status: "published", machine_assisted: true, translator: "SYN-TR-CHN", reviewer: "SYN-RV-CHN", created_on: "2026-06-10", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "TJ-CHN-02", org_unit: "33030004181", title: "Scholarship circular", domain: "circular", source_lang: "en", target_lang: "te", status: "translated", machine_assisted: true, translator: "SYN-TR-CHN", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "TJ-CHN-03", org_unit: "33030004181", title: "FLN worksheet pack", domain: "curriculum", source_lang: "en", target_lang: "hi", status: "requested", machine_assisted: false, created_on: "2026-06-22", updated_at: "2026-06-25T00:00:00Z" },
 ]

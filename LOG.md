@@ -2417,3 +2417,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   then succeeds; close-with-open-WO rejected; downward-governance scope (Chennai+Coimbatore ⊆ TN). POST w/o bearer → 401.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 33.
+
+## Rollout #45: NEW durable vertical — Native AI Language Lab (deep module #34)
+- Operationalises the language Native-AI pillar (Bhashini/i18n seam) as a durable translation-and-publishing
+  workflow. languagelab.go + languagelab_pg.go: TranslationJob (content title + domain + source/target lang +
+  machine-assisted flag); requested → translated → reviewed → published (+ reject). QUALITY GATE: a translation
+  cannot be PUBLISHED without being REVIEWED (so machine/Bhashini output never reaches parents unreviewed); target
+  must be a valid Eighth-Schedule language (en + the 22), source ≠ target. Scoped dashboard (by_status/by_target_lang
+  /published/machine_assisted/languages_covered + review worklist); multi-school seed (a published Tamil notice, a
+  machine-assisted Telugu circular awaiting review, a Hindi request). Route /language-lab.
+- New platformd endpoint /language-lab (request|translate|review|publish|reject). lib/platform-client.ts: seam +
+  demo fallback. app/language-lab/ (manage:school gated). Register now 34; brochure note 33→34. Added to the
+  durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): invalid target lang + same-lang
+  rejected; QUALITY GATE — publish-before-review REJECTED ("has not been reviewed"), then review→publish succeeds;
+  reject works; durable scoped read-back; downward-governance scope (Chennai+Coimbatore ⊆ TN). POST w/o bearer → 401.
+- Note: container had re-cloned stale to #12 at turn start; restored from origin (work safe), untracked new files
+  preserved. CIFM (#33) was already shipped the prior turn.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 34.

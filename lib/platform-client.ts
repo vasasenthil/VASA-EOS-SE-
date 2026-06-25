@@ -2375,3 +2375,80 @@ export async function platformSetFacilityOperational(id: string): Promise<{ ok: 
 export async function platformCloseFacility(id: string): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
   return postJSON("/cifm", { action: "close", id })
 }
+
+// ── Native AI Language Lab: review-before-publish quality gate (Bhashini / 22 languages) ─────────────────
+// Operationalises the language Native-AI pillar as a durable translation workflow: a content item is translated
+// into a target Eighth-Schedule language through requested → translated → reviewed → published, optionally with a
+// machine (Bhashini) first draft. A translation cannot be PUBLISHED without being REVIEWED. Downward-scoped.
+
+export interface PlatformTranslationJob {
+  id: string
+  org_unit: string
+  title: string
+  domain: string // curriculum | notice | circular | parent-comms | exam
+  source_lang: string
+  target_lang: string
+  status: string // requested | translated | reviewed | published | rejected
+  machine_assisted: boolean
+  translator?: string
+  reviewer?: string
+  note?: string
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformLanguageLabDashboard {
+  scope: string
+  jobs: number
+  by_status: Record<string, number>
+  by_target_lang: Record<string, number>
+  published: number
+  machine_assisted: number
+  languages_covered: string[]
+  review_worklist?: PlatformTranslationJob[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped Language Lab dashboard from the backbone (null when not configured). */
+export async function platformLanguageLabDashboard(scope = "TN"): Promise<PlatformLanguageLabDashboard | null> {
+  if (!platformConfigured()) return demo.demoLanguageLabDashboard
+  return getJSON(`/language-lab?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped translation-job list (optionally filtered by status). */
+export async function platformScopedTranslations(scope = "TN", status = ""): Promise<PlatformTranslationJob[]> {
+  if (!platformConfigured()) return demo.demoTranslationJobs
+  return getJSON(`/language-lab?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Request a translation job (status requested). */
+export async function platformRequestTranslation(input: {
+  id: string
+  org_unit: string
+  title: string
+  domain: string
+  source_lang: string
+  target_lang: string
+}): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
+  return postJSON("/language-lab", { action: "request", ...input })
+}
+
+/** Record a translation (optionally Bhashini machine-assisted). */
+export async function platformTranslateJob(id: string, actor: string, machine_assisted: boolean): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
+  return postJSON("/language-lab", { action: "translate", id, actor, machine_assisted })
+}
+
+/** Review a translated job (the human quality gate). */
+export async function platformReviewJob(id: string, actor: string): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
+  return postJSON("/language-lab", { action: "review", id, actor })
+}
+
+/** Publish a reviewed job — rejected if it has not been reviewed. */
+export async function platformPublishJob(id: string): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
+  return postJSON("/language-lab", { action: "publish", id })
+}
+
+/** Reject a job (not yet published). */
+export async function platformRejectJob(id: string, note: string): Promise<{ ok: boolean; error: string; job?: PlatformTranslationJob }> {
+  return postJSON("/language-lab", { action: "reject", id, note })
+}

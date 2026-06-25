@@ -52,6 +52,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "teacher-transfer", label: "Teacher Transfer & Posting", service: "/teacher-transfer", invariant: "single active request per teacher; cross-module — approve only into a destination with a sanctioned cadre vacancy" },
   { route: "hostel-occupancy", label: "Hostel Allocation & Occupancy", service: "/hostel", invariant: "occupancy never exceeds capacity (no over-allocation) + one active bed per student statewide" },
   { route: "campus-facilities", label: "Campus Infrastructure & Facilities (CIFM)", service: "/cifm", invariant: "safety gate — no return-to-operational with an open critical work order; critical WO auto-flips to under-maintenance" },
+  { route: "language-lab", label: "Native AI Language Lab", service: "/language-lab", invariant: "review-before-publish quality gate — machine (Bhashini) output cannot be published without human review; 22 Eighth-Schedule languages" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */
