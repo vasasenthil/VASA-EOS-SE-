@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { getDbtDashboard, getDisbursements, backboneConnected } from "./actions"
 import { FileForm, SanctionButtons, DisburseButton, ReconcileButtons } from "./dbt-scholarship-client"
 
@@ -49,7 +50,7 @@ export default async function DbtScholarshipPage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected || !d ? (
+      {!d ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -62,6 +63,7 @@ export default async function DbtScholarshipPage() {
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Cases" value={d.total} />
             <Stat label="Pending sanction" value={d.pending_sanction} />

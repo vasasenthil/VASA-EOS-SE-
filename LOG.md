@@ -2346,3 +2346,12 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   hosted demo: audit-trail (hash-chain intact + records), school-inspection, transfer-certificate,
   employee-attendance, school-grants, lesson-plan, period-attendance. 13/31 modules now viewable.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #40 (viewability): demo-data fallback batch 3/… (7 more modules viewable)
+- Batch 3 modules now viewable on the hosted demo: rte-admissions (RTE §12(1)(c) HITL applications),
+  grievance-cases (SLA escalation chain), dbt-scholarship, mid-day-meal, school-transport (incl. unserviceable
+  route), health-immunisation. grievance-approvals already renders (flow board, no backbone gate). 20/31 modules
+  now viewable. Remaining ~11: free-supply, class-timetable, school-library, estate-register,
+  parent-teacher-meetings, health-screening, teacher-cpd, events-calendar, exam-results, user-directory,
+  leave-approvals.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

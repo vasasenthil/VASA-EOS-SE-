@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { getGrievanceCases, backboneConnected } from "./actions"
 import { FileForm, ActButtons } from "./grievance-cases-client"
 
@@ -44,7 +45,7 @@ export default async function GrievanceCasesPage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected ? (
+      {cases.length === 0 ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -57,6 +58,7 @@ export default async function GrievanceCasesPage() {
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <Stat label="Cases" value={cases.length} />
             <Stat label="Open" value={(counts.open ?? 0) + (counts.escalated ?? 0)} />

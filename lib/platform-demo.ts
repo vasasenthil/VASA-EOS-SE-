@@ -25,6 +25,15 @@ import type {
   PlatformLessonPlanDashboard,
   PlatformPeriodDashboard,
   PlatformPeriodAttendance,
+  PlatformAdmissionDashboard,
+  PlatformGrievanceCase,
+  PlatformScholarshipDashboard,
+  PlatformDisbursement,
+  PlatformMdmDashboard,
+  PlatformTransportDashboard,
+  PlatformTransportAllotment,
+  PlatformImmunisationDashboard,
+  PlatformStudentImmunisation,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -288,4 +297,124 @@ export function demoPeriodSheetFor(cls = "Grade 8-A", date = "2026-06-01"): Plat
     { ...base, id: `PA-CHN-${date}-3`, period: 3, subject: "Science", teacher_id: "SYN-T-11", start: "10:30", end: "11:15", lesson_plan_id: "", status: "delivered", present_count: 27 },
     { ...base, id: `PA-CHN-${date}-4`, period: 4, subject: "Social Science", teacher_id: "SYN-T-15", start: "11:15", end: "12:00", lesson_plan_id: "", status: "not_held", present_count: 0 },
   ]
+}
+
+// ── RTE Admissions ───────────────────────────────────────────────────────────────────────────────────────
+export const demoAdmissionDashboard: PlatformAdmissionDashboard = {
+  tenant: SCOPE,
+  total: 10,
+  by_stage: { admitted: 6, "pending-review": 2, applied: 1, rejected: 1 },
+  by_category: { OC: 3, BC: 3, MBC: 2, SC: 1, EWS: 1 },
+  admitted: 6,
+  pending_review: 2,
+  applications: [
+    { id: "ADM-CHN-001", category: "EWS", age: 6, tenant: SCOPE, region: "Chennai", decision: "require-approval", stage: "pending-review", effect: "require-approval", reasons: "RTE §12(1)(c) EWS seat — HITL review", pii_sealed: true, decided_at: "2026-06-20" },
+    { id: "ADM-CHN-002", category: "BC", age: 6, tenant: SCOPE, region: "Chennai", decision: "permit", stage: "admitted", effect: "executed", reasons: "Age + documents valid", credential_id: "APAAR-CHN-002", pii_sealed: true, decided_at: "2026-06-18" },
+    { id: "ADM-CHN-003", category: "OC", age: 7, tenant: SCOPE, region: "Chennai", decision: "permit", stage: "admitted", effect: "executed", reasons: "Age + documents valid", credential_id: "APAAR-CHN-003", pii_sealed: true, decided_at: "2026-06-18" },
+  ],
+}
+
+// ── Grievance Cases ──────────────────────────────────────────────────────────────────────────────────────
+export const demoGrievanceCases: PlatformGrievanceCase[] = [
+  {
+    id: "GRV-CHN-001", complainant: "parent-aarthi", category: "infrastructure", subject: "Classroom roof leak in Block B",
+    org_unit: "33030004181", status: "escalated", current_tier: 2, filed_at: "2026-06-10", due_at: "2026-06-17",
+    escalation_chain: [
+      { role: "PRINCIPAL", decision: "escalated", decided_by: "principal-egmore", decided_at: "2026-06-12", note: "Beyond school budget — referred to BEO" },
+      { role: "BEO", decision: "", note: "" },
+    ],
+    updated_at: "2026-06-25T00:00:00Z",
+  },
+  {
+    id: "GRV-CHN-002", complainant: "parent-aarthi", category: "academic", subject: "Subject teacher vacancy (Maths)",
+    org_unit: "33030004181", status: "resolved", current_tier: 1, filed_at: "2026-06-05", due_at: "2026-06-12",
+    escalation_chain: [{ role: "PRINCIPAL", decision: "resolved", decided_by: "principal-egmore", decided_at: "2026-06-09", note: "Guest teacher engaged pending transfer" }],
+    resolution: "Guest teacher engaged; transfer requested.", updated_at: "2026-06-25T00:00:00Z",
+  },
+]
+
+// ── Scholarship / DBT ────────────────────────────────────────────────────────────────────────────────────
+export const demoScholarshipDashboard: PlatformScholarshipDashboard = {
+  scope: SCOPE,
+  total: 12,
+  by_status: { disbursed: 6, reconciled: 3, sanctioned: 1, pending: 1, flagged: 1 },
+  by_scheme: { "Pre-Matric SC": 4, "BC/MBC": 5, "Girl-Child Incentive": 3 },
+  pending_sanction: 1,
+  disbursed_rupees: 1_84_000,
+  flagged_leakage: 1,
+  pending: [
+    { id: "DBT-CHN-011", student_id: "SYN-S-CHN-011", scheme: "Pre-Matric SC", amount_paise: 12_000_00, org_unit: "33030004181", status: "pending", approval_chain: [{ role: "PRINCIPAL", decision: "" }], current_step: 0, filed_at: "2026-06-21", updated_at: "2026-06-25T00:00:00Z" },
+  ],
+  synthetic: true,
+}
+
+export const demoScholarshipList: PlatformDisbursement[] = [
+  { id: "DBT-CHN-001", student_id: "SYN-S-CHN-001", scheme: "BC/MBC", amount_paise: 8_000_00, org_unit: "33030004181", status: "disbursed", approval_chain: [{ role: "PRINCIPAL", decision: "approved", decided_by: "principal-egmore" }, { role: "BEO", decision: "approved", decided_by: "beo-egmore" }], current_step: 2, payment_ref: "PFMS-CHN-0001", filed_at: "2026-05-30", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "DBT-CHN-011", student_id: "SYN-S-CHN-011", scheme: "Pre-Matric SC", amount_paise: 12_000_00, org_unit: "33030004181", status: "pending", approval_chain: [{ role: "PRINCIPAL", decision: "" }], current_step: 0, filed_at: "2026-06-21", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+// ── Mid-Day Meal (PM-POSHAN) ─────────────────────────────────────────────────────────────────────────────
+export const demoMdmDashboard: PlatformMdmDashboard = {
+  scope: SCOPE,
+  schools: 4,
+  meal_days: 20,
+  meals_served: 2_180,
+  enrolment_days: 2_360,
+  coverage_pct: 92.4,
+  consumed_grams: 2_18_000,
+  low_stock_schools: [
+    { org_unit: "33040006272", balance_grams: 18_000, consumed_grams: 52_000, meal_days: 20, avg_daily_grams: 2_600, days_of_cover: 6.9, low_stock: true },
+  ],
+  stock_rollup: [
+    { org_unit: "33030004181", balance_grams: 84_000, consumed_grams: 60_000, meal_days: 20, avg_daily_grams: 3_000, days_of_cover: 28, low_stock: false },
+    { org_unit: "33040006272", balance_grams: 18_000, consumed_grams: 52_000, meal_days: 20, avg_daily_grams: 2_600, days_of_cover: 6.9, low_stock: true },
+  ],
+  synthetic: true,
+}
+
+// ── School Transport ─────────────────────────────────────────────────────────────────────────────────────
+export const demoTransportDashboard: PlatformTransportDashboard = {
+  scope: SCOPE,
+  as_of: "2026-06-25",
+  routes: 3,
+  total_capacity: 150,
+  total_seated: 122,
+  utilisation_pct: 81.3,
+  unserviceable_routes: [
+    { route_id: "RT-CHN-03", name: "Egmore – Perambur", vehicle_no: "TN-01-AB-3003", capacity: 50, seated: 40, serviceable: false, safety_reason: "Fitness certificate expired 2026-06-15" },
+  ],
+  routes_rollup: [
+    { route_id: "RT-CHN-01", name: "Egmore – Anna Nagar", vehicle_no: "TN-01-AB-1001", capacity: 50, seated: 46, serviceable: true },
+    { route_id: "RT-CHN-02", name: "Egmore – T Nagar", vehicle_no: "TN-01-AB-2002", capacity: 50, seated: 36, serviceable: true },
+    { route_id: "RT-CHN-03", name: "Egmore – Perambur", vehicle_no: "TN-01-AB-3003", capacity: 50, seated: 40, serviceable: false, safety_reason: "Fitness certificate expired 2026-06-15" },
+  ],
+  synthetic: true,
+}
+
+export function demoRouteRosterFor(routeId: string): PlatformTransportAllotment[] {
+  return [
+    { id: `${routeId}-A01`, route_id: routeId, org_unit: "33030004181", student_id: "SYN-S-CHN-001", stop: "Anna Nagar", status: "allotted" },
+    { id: `${routeId}-A02`, route_id: routeId, org_unit: "33030004181", student_id: "SYN-S-CHN-002", stop: "Shenoy Nagar", status: "allotted" },
+  ]
+}
+
+// ── Health Immunisation ──────────────────────────────────────────────────────────────────────────────────
+export const demoImmunisationDashboard: PlatformImmunisationDashboard = {
+  scope: SCOPE,
+  students: 40,
+  doses_recorded: 188,
+  coverage: [
+    { vaccine: "DPT-B", name: "DPT Booster", complete: 34, partial: 4, due: 2, coverage_pct: 85 },
+    { vaccine: "MR2", name: "Measles-Rubella 2", complete: 36, partial: 2, due: 2, coverage_pct: 90 },
+    { vaccine: "TD", name: "Td (10y)", complete: 30, partial: 6, due: 4, coverage_pct: 75 },
+  ],
+  worklist: [
+    { student_id: "SYN-S-CHN-021", vaccine: "TD", status: "due" },
+    { student_id: "SYN-S-CHN-022", vaccine: "DPT-B", status: "partial" },
+  ],
+  synthetic: true,
+}
+
+export function demoStudentImmunisationCardFor(student: string): PlatformStudentImmunisation {
+  return { student_id: student || "SYN-S-CHN-001", status: { "DPT-B": "complete", MR2: "complete", TD: "due" }, doses_recorded: 5 }
 }

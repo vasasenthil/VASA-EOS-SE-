@@ -185,6 +185,7 @@ export async function platformActGrievance(
 
 /** List grievance cases a tenant node governs (downward-governance scoped), from the Go backend. */
 export async function platformListGrievance(scope = "TN", status = ""): Promise<PlatformGrievanceCase[]> {
+  if (!platformConfigured()) return status ? demo.demoGrievanceCases.filter((g) => g.status === status) : demo.demoGrievanceCases
   const url = `${BASE}/grievance-case?list=1&scope=${encodeURIComponent(scope)}${status ? `&status=${encodeURIComponent(status)}` : ""}`
   const res = await fetch(url, { cache: "no-store" })
   if (!res.ok) throw new Error(`platformd /grievance-case: HTTP ${res.status}`)
@@ -440,7 +441,7 @@ export interface PlatformAdmissionDashboard {
 
 /** The durable admissions register (by stage/category + the application list) from the backbone. */
 export async function platformAdmissionDashboard(tenant = "TN"): Promise<PlatformAdmissionDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoAdmissionDashboard
   return getJSON(`/admissions?tenant=${encodeURIComponent(tenant)}`)
 }
 
@@ -516,13 +517,13 @@ export interface PlatformScholarshipDashboard {
 
 /** Jurisdiction-scoped DBT dashboard from the backbone (null when not configured). */
 export async function platformScholarshipDashboard(scope = "TN"): Promise<PlatformScholarshipDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoScholarshipDashboard
   return getJSON(`/scholarship?scope=${encodeURIComponent(scope)}`)
 }
 
 /** The disbursements a tenant node governs, optionally filtered by status. */
 export async function platformScholarshipList(scope = "TN", status = ""): Promise<PlatformDisbursement[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return status ? demo.demoScholarshipList.filter((d) => d.status === status) : demo.demoScholarshipList
   return getJSON(`/scholarship?list=1&scope=${encodeURIComponent(scope)}${status ? `&status=${encodeURIComponent(status)}` : ""}`)
 }
 
@@ -584,7 +585,7 @@ export interface PlatformMdmDashboard {
 
 /** Jurisdiction-scoped PM-POSHAN dashboard from the backbone (null when not configured). */
 export async function platformMdmDashboard(scope = "TN"): Promise<PlatformMdmDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoMdmDashboard
   return getJSON(`/mdm?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -648,13 +649,13 @@ export interface PlatformTransportAllotment {
 
 /** Jurisdiction-scoped transport-safety dashboard from the backbone (null when not configured). */
 export async function platformTransportDashboard(scope = "TN"): Promise<PlatformTransportDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoTransportDashboard
   return getJSON(`/transport?scope=${encodeURIComponent(scope)}`)
 }
 
 /** A route's seat manifest (active allotments). */
 export async function platformRouteRoster(routeId: string): Promise<PlatformTransportAllotment[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoRouteRosterFor(routeId)
   return getJSON(`/transport?roster=${encodeURIComponent(routeId)}`)
 }
 
@@ -731,7 +732,7 @@ export interface PlatformStudentImmunisation {
 
 /** Jurisdiction-scoped immunisation coverage dashboard from the backbone (null when not configured). */
 export async function platformImmunisationDashboard(scope = "TN"): Promise<PlatformImmunisationDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoImmunisationDashboard
   return getJSON(`/immunisation?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -743,7 +744,7 @@ export async function platformImmunisationSchedule(): Promise<PlatformVaccine[]>
 
 /** A student's immunisation card (per-vaccine status). */
 export async function platformStudentImmunisationCard(student: string): Promise<PlatformStudentImmunisation | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoStudentImmunisationCardFor(student)
   return getJSON(`/immunisation?student=${encodeURIComponent(student)}`)
 }
 
