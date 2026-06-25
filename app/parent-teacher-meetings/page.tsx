@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { getPtmDashboard, getSessionSheet, backboneConnected } from "./actions"
 import { ScheduleForm, BookForm, AttendanceActions } from "./ptm-client"
 
@@ -39,7 +40,7 @@ export default async function ParentTeacherMeetingsPage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected || !d ? (
+      {!d ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -52,6 +53,7 @@ export default async function ParentTeacherMeetingsPage() {
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Sessions" value={d.sessions} />
             <Stat label="Total slots" value={d.total_slots} />

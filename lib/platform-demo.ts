@@ -34,6 +34,16 @@ import type {
   PlatformTransportAllotment,
   PlatformImmunisationDashboard,
   PlatformStudentImmunisation,
+  PlatformEntitlementDashboard,
+  PlatformTimetableDashboard,
+  PlatformSlot,
+  PlatformLibraryDashboard,
+  PlatformInfraDashboard,
+  PlatformTicket,
+  PlatformPtmDashboard,
+  PlatformPtmBooking,
+  PlatformRbskDashboard,
+  PlatformCpdDashboard,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -417,4 +427,131 @@ export const demoImmunisationDashboard: PlatformImmunisationDashboard = {
 
 export function demoStudentImmunisationCardFor(student: string): PlatformStudentImmunisation {
   return { student_id: student || "SYN-S-CHN-001", status: { "DPT-B": "complete", MR2: "complete", TD: "due" }, doses_recorded: 5 }
+}
+
+// ── Free-Supply Entitlement ──────────────────────────────────────────────────────────────────────────────
+export const demoEntitlementDashboard: PlatformEntitlementDashboard = {
+  scope: SCOPE,
+  students: 120,
+  items: [
+    { item: "Textbooks (set)", entitled_qty: 120, issued_qty: 116, fulfilled_students: 116, pending_students: 4, fulfilment_pct: 96.7 },
+    { item: "Uniform (2 sets)", entitled_qty: 240, issued_qty: 220, fulfilled_students: 110, pending_students: 10, fulfilment_pct: 91.7 },
+    { item: "Shoes (pair)", entitled_qty: 120, issued_qty: 104, fulfilled_students: 104, pending_students: 16, fulfilment_pct: 86.7 },
+  ],
+  shortfall: [
+    { entitlement_id: "ENT-CHN-shoes", student_id: "SYN-S-CHN-031", item: "Shoes (pair)", remaining: 1 },
+    { entitlement_id: "ENT-CHN-uniform", student_id: "SYN-S-CHN-044", item: "Uniform (2 sets)", remaining: 1 },
+  ],
+  synthetic: true,
+}
+
+// ── Class Timetable ──────────────────────────────────────────────────────────────────────────────────────
+export const demoTimetableDashboard: PlatformTimetableDashboard = {
+  scope: SCOPE,
+  slots: 30,
+  classes: 1,
+  teachers: 5,
+  teacher_load: { "SYN-T-03": 8, "SYN-T-07": 7, "SYN-T-11": 6, "SYN-T-15": 6, "SYN-T-19": 3 },
+  overloaded_teachers: [],
+  synthetic: true,
+}
+
+const DEMO_SLOTS: PlatformSlot[] = [
+  { org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 1, subject: "Mathematics", teacher_id: "SYN-T-03" },
+  { org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 2, subject: "Tamil", teacher_id: "SYN-T-07" },
+  { org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 3, subject: "Science", teacher_id: "SYN-T-11" },
+  { org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 4, subject: "Social Science", teacher_id: "SYN-T-15" },
+  { org_unit: "33030004181", class: "Grade 8-A", day: "tuesday", period: 1, subject: "English", teacher_id: "SYN-T-19" },
+]
+export function demoClassTimetable(org: string, klass: string): PlatformSlot[] {
+  return DEMO_SLOTS.map((s) => ({ ...s, org_unit: org || s.org_unit, class: klass || s.class }))
+}
+export function demoTeacherTimetable(teacher: string): PlatformSlot[] {
+  return DEMO_SLOTS.filter((s) => s.teacher_id === teacher || teacher === "SYN-T-03").slice(0, 3)
+}
+
+// ── School Library ───────────────────────────────────────────────────────────────────────────────────────
+export const demoLibraryDashboard: PlatformLibraryDashboard = {
+  scope: SCOPE,
+  as_of: "2026-06-25",
+  active_loans: 38,
+  overdue: 3,
+  overdue_loans: [
+    { id: "LN-CHN-014", org_unit: "33030004181", book_id: "BK-022", title: "Ponniyin Selvan Vol. 1", copy_id: "BK-022-C2", member_id: "SYN-S-CHN-014", issued_on: "2026-05-20", due_on: "2026-06-10", status: "on_loan", renewals: 1 },
+  ],
+  lost: 1,
+  members: 120,
+  titles: 540,
+  synthetic: true,
+}
+
+// ── Estate & Asset Register ──────────────────────────────────────────────────────────────────────────────
+export const demoInfraDashboard: PlatformInfraDashboard = {
+  scope: SCOPE,
+  assets: 48,
+  by_condition: { good: 30, fair: 12, poor: 5, unusable: 1 },
+  under_maintenance: 3,
+  decommissioned: 1,
+  open_tickets: 4,
+  open_by_severity: { critical: 1, high: 1, medium: 1, low: 1 },
+  needs_attention: [
+    { id: "AST-CHN-Block-B-roof", org_unit: "33030004181", name: "Block B Roof", category: "room", condition: "poor", status: "under_maintenance", acquired_on: "2012-04-01" },
+    { id: "AST-CHN-toilet-girls", org_unit: "33030004181", name: "Girls' Toilet Block", category: "sanitation", condition: "fair", status: "in_service", acquired_on: "2018-06-01" },
+  ],
+  synthetic: true,
+}
+export function demoAssetTicketsFor(assetID: string): PlatformTicket[] {
+  return [
+    { id: `${assetID}-T1`, asset_id: assetID, org_unit: "33030004181", issue: "Water seepage during monsoon", severity: "high", status: "in_progress", raised_on: "2026-06-12", assignee: "SYN-MAINT-02" },
+  ]
+}
+
+// ── Parent–Teacher Meetings ──────────────────────────────────────────────────────────────────────────────
+export const demoPtmDashboard: PlatformPtmDashboard = {
+  scope: SCOPE,
+  sessions: 3,
+  total_slots: 90,
+  occupied: 64,
+  attended: 52,
+  turnout_pct: 81.3,
+  sessions_rollup: [
+    { session_id: "PTM-CHN-01", title: "Term-1 Progress PTM", date: "2026-06-14", slots: 30, booked: 26, attended: 22, no_show: 4, fill_pct: 86.7, turnout_pct: 84.6 },
+    { session_id: "PTM-CHN-02", title: "FLN Parents' Circle", date: "2026-06-21", slots: 30, booked: 20, attended: 16, no_show: 4, fill_pct: 66.7, turnout_pct: 80.0 },
+  ],
+  low_turnout: [
+    { session_id: "PTM-CHN-03", title: "Grade-10 Board Prep", date: "2026-06-28", slots: 30, booked: 18, attended: 14, no_show: 4, fill_pct: 60.0, turnout_pct: 77.8 },
+  ],
+  synthetic: true,
+}
+export function demoSessionSheetFor(sessionID: string): PlatformPtmBooking[] {
+  return [
+    { id: `${sessionID}-B1`, session_id: sessionID, org_unit: "33030004181", student_id: "SYN-S-CHN-001", guardian: "Guardian of SYN-S-CHN-001", status: "attended", slot: "10:00" },
+    { id: `${sessionID}-B2`, session_id: sessionID, org_unit: "33030004181", student_id: "SYN-S-CHN-002", guardian: "Guardian of SYN-S-CHN-002", status: "booked", slot: "10:15" },
+    { id: `${sessionID}-B3`, session_id: sessionID, org_unit: "33030004181", student_id: "SYN-S-CHN-003", guardian: "Guardian of SYN-S-CHN-003", status: "no_show", slot: "10:30" },
+  ]
+}
+
+// ── RBSK Health Screening ────────────────────────────────────────────────────────────────────────────────
+export const demoRbskDashboard: PlatformRbskDashboard = {
+  scope: SCOPE,
+  screened: 116,
+  healthy: 98,
+  with_findings: 18,
+  by_finding: { dental: 7, vision: 5, anaemia: 4, "skin/ENT": 2 },
+  active_referrals: 6,
+  closed: 12,
+  referral_closure_rate: 66.7,
+  synthetic: true,
+}
+
+// ── Teacher CPD (NEP-2020) ───────────────────────────────────────────────────────────────────────────────
+export const demoCpdDashboard: PlatformCpdDashboard = {
+  scope: SCOPE,
+  year: 2026,
+  teachers: 15,
+  compliant: 9,
+  compliance_rate: 60,
+  total_hours: 612,
+  deficient_teachers: ["SYN-T-11", "SYN-T-15", "SYN-T-19"],
+  synthetic: true,
 }

@@ -791,7 +791,7 @@ export interface PlatformEntitlementDashboard {
 
 /** Jurisdiction-scoped free-supply distribution dashboard from the backbone (null when not configured). */
 export async function platformEntitlementDashboard(scope = "TN"): Promise<PlatformEntitlementDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoEntitlementDashboard
   return getJSON(`/entitlement?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -843,19 +843,19 @@ export interface PlatformTimetableDashboard {
 
 /** Jurisdiction-scoped timetabling dashboard (teacher loads, overloads) from the backbone (null when not configured). */
 export async function platformTimetableDashboard(scope = "TN"): Promise<PlatformTimetableDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoTimetableDashboard
   return getJSON(`/timetable?scope=${encodeURIComponent(scope)}`)
 }
 
 /** A class's weekly grid (org + class). */
 export async function platformClassTimetable(org: string, klass: string): Promise<PlatformSlot[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoClassTimetable(org, klass)
   return getJSON(`/timetable?org=${encodeURIComponent(org)}&class=${encodeURIComponent(klass)}`)
 }
 
 /** A teacher's assigned periods. */
 export async function platformTeacherTimetable(teacher: string): Promise<PlatformSlot[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoTeacherTimetable(teacher)
   return getJSON(`/timetable?teacher=${encodeURIComponent(teacher)}`)
 }
 
@@ -896,7 +896,7 @@ export interface PlatformLibraryDashboard {
 
 /** Jurisdiction-scoped library circulation dashboard from the backbone (null when not configured). */
 export async function platformLibraryDashboard(scope = "TN"): Promise<PlatformLibraryDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoLibraryDashboard
   return getJSON(`/library?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -969,13 +969,13 @@ export interface PlatformInfraDashboard {
 
 /** Jurisdiction-scoped infrastructure dashboard from the backbone (null when not configured). */
 export async function platformInfraDashboard(scope = "TN"): Promise<PlatformInfraDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoInfraDashboard
   return getJSON(`/infra?scope=${encodeURIComponent(scope)}`)
 }
 
 /** An asset's maintenance ticket history (newest-relevant first as ordered by the backbone). */
 export async function platformAssetTickets(assetID: string): Promise<PlatformTicket[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoAssetTicketsFor(assetID)
   return getJSON(`/infra?tickets=${encodeURIComponent(assetID)}`)
 }
 
@@ -1080,13 +1080,13 @@ export interface PlatformPtmDashboard {
 
 /** Jurisdiction-scoped parent-engagement dashboard from the backbone (null when not configured). */
 export async function platformPtmDashboard(scope = "TN"): Promise<PlatformPtmDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoPtmDashboard
   return getJSON(`/ptm?scope=${encodeURIComponent(scope)}`)
 }
 
 /** A session's attendance sheet (its bookings). */
 export async function platformSessionSheet(sessionID: string): Promise<PlatformPtmBooking[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoSessionSheetFor(sessionID)
   return getJSON(`/ptm?sheet=${encodeURIComponent(sessionID)}`)
 }
 
@@ -1153,7 +1153,7 @@ export interface PlatformRbskDashboard {
 
 /** Jurisdiction-scoped RBSK screening dashboard from the backbone (null when not configured). */
 export async function platformRbskDashboard(scope = "TN"): Promise<PlatformRbskDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoRbskDashboard
   return getJSON(`/rbsk?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1224,7 +1224,7 @@ export interface PlatformCpdDashboard {
 
 /** Jurisdiction-scoped CPD compliance dashboard from the backbone (null when not configured). */
 export async function platformCpdDashboard(scope = "TN", year = 2026): Promise<PlatformCpdDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoCpdDashboard
   return getJSON(`/cpd?scope=${encodeURIComponent(scope)}&year=${year}`)
 }
 

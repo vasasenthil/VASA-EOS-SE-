@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { getInfraDashboard, getAssetTickets, backboneConnected } from "./actions"
 import { RegisterAssetForm, RaiseTicketForm, TicketActions, AssetActions } from "./estate-register-client"
 import type { PlatformTicket } from "@/lib/platform-client"
@@ -69,7 +70,7 @@ export default async function EstateRegisterPage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected || !d ? (
+      {!d ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -82,6 +83,7 @@ export default async function EstateRegisterPage() {
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Assets" value={d.assets} />
             <Stat label="Under maintenance" value={d.under_maintenance} />

@@ -2355,3 +2355,9 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   parent-teacher-meetings, health-screening, teacher-cpd, events-calendar, exam-results, user-directory,
   leave-approvals.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #41 (viewability): demo-data fallback batch 4/… (7 more modules viewable)
+- Batch 4 now viewable: free-supply, class-timetable, school-library, estate-register (with open tickets),
+  parent-teacher-meetings, health-screening (RBSK), teacher-cpd. 27/31 modules now viewable. Remaining 4:
+  events-calendar, exam-results, user-directory, leave-approvals.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
