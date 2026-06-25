@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformEstablishmentDashboard,
   platformEstablishmentRoster,
   platformSanctionPosts,
@@ -24,7 +25,7 @@ export interface ActionResult {
 
 /** True when the durable Go backbone is wired (PLATFORM_URL set) — i.e. this console drives real persistence. */
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 /** Read the jurisdiction-scoped staffing dashboard from the durable backbone. */

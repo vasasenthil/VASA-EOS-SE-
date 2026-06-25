@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformDirectorySummary,
   platformDirectoryScoped,
   platformUpsertUser,
@@ -31,7 +32,7 @@ export interface ExplainResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 export async function getDirectorySummary(): Promise<PlatformDirectorySummary | null> {

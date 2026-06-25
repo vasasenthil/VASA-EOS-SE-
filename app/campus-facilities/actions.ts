@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformCifmDashboard,
   platformScopedFacilities,
   platformRegisterFacility,
@@ -24,7 +25,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 export async function getCifmDashboard(): Promise<PlatformCifmDashboard | null> {

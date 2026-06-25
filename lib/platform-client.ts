@@ -71,9 +71,39 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getJSON<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { cache: "no-store" })
+  // Bounded timeout so a sleeping/redeploying backbone (e.g. Render free-tier cold start) fails fast and lets
+  // callers fall back gracefully, rather than hanging until the serverless function times out.
+  const res = await fetch(`${BASE}${path}`, { cache: "no-store", signal: AbortSignal.timeout(8000) })
   if (!res.ok) throw new Error(`platformd ${path}: HTTP ${res.status}`)
   return (await res.json()) as T
+}
+
+/**
+ * GET that gracefully returns a demo fallback when the backbone is configured but the call fails (cold start,
+ * mid-redeploy, or an endpoint not yet deployed). The page then renders representative data instead of a hard
+ * "Backbone not connected" error; the demo banner (driven by platformReachable) signals it isn't live.
+ */
+async function getOrDemo<T>(path: string, fallback: T): Promise<T> {
+  try {
+    return await getJSON<T>(path)
+  } catch {
+    return fallback
+  }
+}
+
+/**
+ * True only when the backbone is configured AND actually answering (a quick /healthz probe). Pages use this to
+ * decide whether to show the "demo data" banner: a configured-but-unreachable backbone reads as not-live, so the
+ * page shows sample data with a clear note instead of pretending the demo data is live.
+ */
+export async function platformReachable(): Promise<boolean> {
+  if (!platformConfigured()) return false
+  try {
+    const res = await fetch(`${BASE}/healthz`, { cache: "no-store", signal: AbortSignal.timeout(6000) })
+    return res.ok
+  } catch {
+    return false
+  }
 }
 
 /** File a leave request on the Go backend (persists to PostgreSQL, opens the dynamic approval chain). */
@@ -265,7 +295,7 @@ export interface PlatformAppointment {
 /** Jurisdiction-scoped staffing dashboard from the Go backbone (null when the backbone is not configured). */
 export async function platformEstablishmentDashboard(scope = "TN"): Promise<PlatformEstablishmentDashboard | null> {
   if (!platformConfigured()) return demo.demoEstablishmentDashboard
-  return getJSON(`/establishment?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/establishment?scope=${encodeURIComponent(scope)}`, demo.demoEstablishmentDashboard)
 }
 
 /** The appointments against one sanctioned-post line (the roster). Empty when the backbone is not configured. */
@@ -353,7 +383,7 @@ export interface PlatformFeePayment {
 /** Jurisdiction-scoped fee-collection dashboard from the backbone (null when not configured). */
 export async function platformFeeDashboard(scope = "TN"): Promise<PlatformFeeDashboard | null> {
   if (!platformConfigured()) return demo.demoFeeDashboard
-  return getJSON(`/fees?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/fees?scope=${encodeURIComponent(scope)}`, demo.demoFeeDashboard)
 }
 
 /** A student's fee ledger (demands + payments) from the backbone. */
@@ -442,7 +472,7 @@ export interface PlatformAdmissionDashboard {
 /** The durable admissions register (by stage/category + the application list) from the backbone. */
 export async function platformAdmissionDashboard(tenant = "TN"): Promise<PlatformAdmissionDashboard | null> {
   if (!platformConfigured()) return demo.demoAdmissionDashboard
-  return getJSON(`/admissions?tenant=${encodeURIComponent(tenant)}`)
+  return getOrDemo(`/admissions?tenant=${encodeURIComponent(tenant)}`, demo.demoAdmissionDashboard)
 }
 
 /** Submit an admission application. A quota-full RTE application returns Stage="pending-approval" + a RequestID. */
@@ -518,7 +548,7 @@ export interface PlatformScholarshipDashboard {
 /** Jurisdiction-scoped DBT dashboard from the backbone (null when not configured). */
 export async function platformScholarshipDashboard(scope = "TN"): Promise<PlatformScholarshipDashboard | null> {
   if (!platformConfigured()) return demo.demoScholarshipDashboard
-  return getJSON(`/scholarship?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/scholarship?scope=${encodeURIComponent(scope)}`, demo.demoScholarshipDashboard)
 }
 
 /** The disbursements a tenant node governs, optionally filtered by status. */
@@ -586,7 +616,7 @@ export interface PlatformMdmDashboard {
 /** Jurisdiction-scoped PM-POSHAN dashboard from the backbone (null when not configured). */
 export async function platformMdmDashboard(scope = "TN"): Promise<PlatformMdmDashboard | null> {
   if (!platformConfigured()) return demo.demoMdmDashboard
-  return getJSON(`/mdm?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/mdm?scope=${encodeURIComponent(scope)}`, demo.demoMdmDashboard)
 }
 
 /** Record a foodgrain receipt at a school (increases stock). */
@@ -650,7 +680,7 @@ export interface PlatformTransportAllotment {
 /** Jurisdiction-scoped transport-safety dashboard from the backbone (null when not configured). */
 export async function platformTransportDashboard(scope = "TN"): Promise<PlatformTransportDashboard | null> {
   if (!platformConfigured()) return demo.demoTransportDashboard
-  return getJSON(`/transport?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/transport?scope=${encodeURIComponent(scope)}`, demo.demoTransportDashboard)
 }
 
 /** A route's seat manifest (active allotments). */
@@ -733,7 +763,7 @@ export interface PlatformStudentImmunisation {
 /** Jurisdiction-scoped immunisation coverage dashboard from the backbone (null when not configured). */
 export async function platformImmunisationDashboard(scope = "TN"): Promise<PlatformImmunisationDashboard | null> {
   if (!platformConfigured()) return demo.demoImmunisationDashboard
-  return getJSON(`/immunisation?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/immunisation?scope=${encodeURIComponent(scope)}`, demo.demoImmunisationDashboard)
 }
 
 /** The school-health immunisation schedule (UIP/RBSK vaccines + required dose counts). */
@@ -792,7 +822,7 @@ export interface PlatformEntitlementDashboard {
 /** Jurisdiction-scoped free-supply distribution dashboard from the backbone (null when not configured). */
 export async function platformEntitlementDashboard(scope = "TN"): Promise<PlatformEntitlementDashboard | null> {
   if (!platformConfigured()) return demo.demoEntitlementDashboard
-  return getJSON(`/entitlement?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/entitlement?scope=${encodeURIComponent(scope)}`, demo.demoEntitlementDashboard)
 }
 
 /** Grant a student's free-supply entitlement on the backbone. */
@@ -844,7 +874,7 @@ export interface PlatformTimetableDashboard {
 /** Jurisdiction-scoped timetabling dashboard (teacher loads, overloads) from the backbone (null when not configured). */
 export async function platformTimetableDashboard(scope = "TN"): Promise<PlatformTimetableDashboard | null> {
   if (!platformConfigured()) return demo.demoTimetableDashboard
-  return getJSON(`/timetable?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/timetable?scope=${encodeURIComponent(scope)}`, demo.demoTimetableDashboard)
 }
 
 /** A class's weekly grid (org + class). */
@@ -897,7 +927,7 @@ export interface PlatformLibraryDashboard {
 /** Jurisdiction-scoped library circulation dashboard from the backbone (null when not configured). */
 export async function platformLibraryDashboard(scope = "TN"): Promise<PlatformLibraryDashboard | null> {
   if (!platformConfigured()) return demo.demoLibraryDashboard
-  return getJSON(`/library?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/library?scope=${encodeURIComponent(scope)}`, demo.demoLibraryDashboard)
 }
 
 /** A member's loan history. */
@@ -970,7 +1000,7 @@ export interface PlatformInfraDashboard {
 /** Jurisdiction-scoped infrastructure dashboard from the backbone (null when not configured). */
 export async function platformInfraDashboard(scope = "TN"): Promise<PlatformInfraDashboard | null> {
   if (!platformConfigured()) return demo.demoInfraDashboard
-  return getJSON(`/infra?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/infra?scope=${encodeURIComponent(scope)}`, demo.demoInfraDashboard)
 }
 
 /** An asset's maintenance ticket history (newest-relevant first as ordered by the backbone). */
@@ -1081,7 +1111,7 @@ export interface PlatformPtmDashboard {
 /** Jurisdiction-scoped parent-engagement dashboard from the backbone (null when not configured). */
 export async function platformPtmDashboard(scope = "TN"): Promise<PlatformPtmDashboard | null> {
   if (!platformConfigured()) return demo.demoPtmDashboard
-  return getJSON(`/ptm?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/ptm?scope=${encodeURIComponent(scope)}`, demo.demoPtmDashboard)
 }
 
 /** A session's attendance sheet (its bookings). */
@@ -1154,7 +1184,7 @@ export interface PlatformRbskDashboard {
 /** Jurisdiction-scoped RBSK screening dashboard from the backbone (null when not configured). */
 export async function platformRbskDashboard(scope = "TN"): Promise<PlatformRbskDashboard | null> {
   if (!platformConfigured()) return demo.demoRbskDashboard
-  return getJSON(`/rbsk?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/rbsk?scope=${encodeURIComponent(scope)}`, demo.demoRbskDashboard)
 }
 
 /** The active-referral worklist (referred + under-treatment), scoped. */
@@ -1225,7 +1255,7 @@ export interface PlatformCpdDashboard {
 /** Jurisdiction-scoped CPD compliance dashboard from the backbone (null when not configured). */
 export async function platformCpdDashboard(scope = "TN", year = 2026): Promise<PlatformCpdDashboard | null> {
   if (!platformConfigured()) return demo.demoCpdDashboard
-  return getJSON(`/cpd?scope=${encodeURIComponent(scope)}&year=${year}`)
+  return getOrDemo(`/cpd?scope=${encodeURIComponent(scope)}&year=${year}`, demo.demoCpdDashboard)
 }
 
 /** A teacher's CPD picture for a year (hours, target, compliance, courses). */
@@ -1297,7 +1327,7 @@ export interface PlatformAttendanceDashboard {
 /** Jurisdiction-scoped daily attendance dashboard + chronic-absentee roll-up (null when not configured). */
 export async function platformAttendanceDashboard(scope = "TN", date = "2026-06-10"): Promise<PlatformAttendanceDashboard | null> {
   if (!platformConfigured()) return demo.demoAttendanceDashboard
-  return getJSON(`/attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
+  return getOrDemo(`/attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`, demo.demoAttendanceDashboard)
 }
 
 /** A learner's attendance picture: rate, chronic flag, days recorded, recent marks. */
@@ -1367,7 +1397,7 @@ export interface PlatformCalendarDashboard {
 /** Jurisdiction-scoped calendar dashboard for a viewing role (its approval inbox + upcoming feed). */
 export async function platformCalendarDashboard(scope = "TN", asRole = "DEO", from = "2026-06-15"): Promise<PlatformCalendarDashboard | null> {
   if (!platformConfigured()) return demo.demoCalendarDashboard
-  return getJSON(`/calendar?scope=${encodeURIComponent(scope)}&as=${encodeURIComponent(asRole)}&from=${encodeURIComponent(from)}`)
+  return getOrDemo(`/calendar?scope=${encodeURIComponent(scope)}&as=${encodeURIComponent(asRole)}&from=${encodeURIComponent(from)}`, demo.demoCalendarDashboard)
 }
 
 /** The scoped, date-ordered entry list (optionally filtered by type/year). */
@@ -1456,7 +1486,7 @@ export interface PlatformExamDashboard {
 /** Jurisdiction-scoped exam-results dashboard from the backbone (null when not configured). */
 export async function platformExamDashboard(scope = "TN"): Promise<PlatformExamDashboard | null> {
   if (!platformConfigured()) return demo.demoExamDashboard
-  return getJSON(`/exams?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/exams?scope=${encodeURIComponent(scope)}`, demo.demoExamDashboard)
 }
 
 /** A single marks sheet with its results + analytics. */
@@ -1527,7 +1557,7 @@ export interface PlatformAccessExplain {
 /** Directory & IAM roll-up: user count, role census, the role catalogue and the five access models. */
 export async function platformDirectorySummary(): Promise<PlatformDirectorySummary | null> {
   if (!platformConfigured()) return demo.demoDirectorySummary
-  return getJSON(`/directory`)
+  return getOrDemo(`/directory`, demo.demoDirectorySummary)
 }
 
 /** The users a subject org governs (downward-governance scoped; fail-closed). */
@@ -1637,7 +1667,7 @@ export interface PlatformInspectionDashboard {
 /** Jurisdiction-scoped inspection oversight dashboard from the backbone (null when not configured). */
 export async function platformInspectionDashboard(scope = "TN"): Promise<PlatformInspectionDashboard | null> {
   if (!platformConfigured()) return demo.demoInspectionDashboard
-  return getJSON(`/inspection?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/inspection?scope=${encodeURIComponent(scope)}`, demo.demoInspectionDashboard)
 }
 
 /** The scoped inspection list (optionally filtered by status). */
@@ -1702,7 +1732,7 @@ export interface PlatformTCDashboard {
 /** Jurisdiction-scoped Transfer Certificate dashboard from the backbone (null when not configured). */
 export async function platformTCDashboard(scope = "TN"): Promise<PlatformTCDashboard | null> {
   if (!platformConfigured()) return demo.demoTCDashboard
-  return getJSON(`/tc?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/tc?scope=${encodeURIComponent(scope)}`, demo.demoTCDashboard)
 }
 
 /** The scoped TC list (optionally filtered by status). */
@@ -1777,7 +1807,7 @@ export interface PlatformStaffAttendanceDashboard {
 /** Jurisdiction-scoped staff-attendance dashboard for a date (null when not configured). */
 export async function platformStaffAttendanceDashboard(scope = "TN", date = "2026-06-01"): Promise<PlatformStaffAttendanceDashboard | null> {
   if (!platformConfigured()) return demo.demoStaffAttendanceDashboard
-  return getJSON(`/staff-attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
+  return getOrDemo(`/staff-attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`, demo.demoStaffAttendanceDashboard)
 }
 
 /** An employee's payable-days + LWP profile. */
@@ -1827,7 +1857,7 @@ export interface PlatformGrantDashboard {
 /** Jurisdiction-scoped grant-utilisation dashboard from the backbone (null when not configured). */
 export async function platformGrantDashboard(scope = "TN"): Promise<PlatformGrantDashboard | null> {
   if (!platformConfigured()) return demo.demoGrantDashboard
-  return getJSON(`/grant?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/grant?scope=${encodeURIComponent(scope)}`, demo.demoGrantDashboard)
 }
 
 /** The scoped grant list (optionally filtered by status). */
@@ -1895,7 +1925,7 @@ export interface PlatformLessonPlanDashboard {
 /** Jurisdiction-scoped lesson-plan dashboard from the backbone (null when not configured). */
 export async function platformLessonPlanDashboard(scope = "TN"): Promise<PlatformLessonPlanDashboard | null> {
   if (!platformConfigured()) return demo.demoLessonPlanDashboard
-  return getJSON(`/lesson-plan?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/lesson-plan?scope=${encodeURIComponent(scope)}`, demo.demoLessonPlanDashboard)
 }
 
 /** The scoped lesson-plan list (optionally filtered by status). */
@@ -1977,7 +2007,7 @@ export interface PlatformPeriodDashboard {
 /** Jurisdiction-scoped period-attendance dashboard (subject-wise + teacher engagement). */
 export async function platformPeriodDashboard(scope = "TN"): Promise<PlatformPeriodDashboard | null> {
   if (!platformConfigured()) return demo.demoPeriodDashboard
-  return getJSON(`/period-attendance?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/period-attendance?scope=${encodeURIComponent(scope)}`, demo.demoPeriodDashboard)
 }
 
 /** A class-date period sheet (the periods recorded that day). */
@@ -2042,13 +2072,13 @@ export interface PlatformSMCDashboard {
 /** Jurisdiction-scoped SMC governance dashboard from the backbone (null when not configured). */
 export async function platformSMCDashboard(scope = "TN"): Promise<PlatformSMCDashboard | null> {
   if (!platformConfigured()) return demo.demoSMCDashboard
-  return getJSON(`/smc?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/smc?scope=${encodeURIComponent(scope)}`, demo.demoSMCDashboard)
 }
 
 /** The scoped SMC meeting list (optionally filtered by status). */
 export async function platformScopedSMCMeetings(scope = "TN", status = ""): Promise<PlatformSMCMeeting[]> {
   if (!platformConfigured()) return demo.demoSMCMeetings
-  return getJSON(`/smc?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/smc?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoSMCMeetings)
 }
 
 /** Schedule/constitute an SMC meeting — rejected unless ≥75% of members are parents (RTE §21(2)). */
@@ -2119,13 +2149,13 @@ export interface PlatformBonafideDashboard {
 /** Jurisdiction-scoped bonafide-register dashboard from the backbone (null when not configured). */
 export async function platformBonafideDashboard(scope = "TN"): Promise<PlatformBonafideDashboard | null> {
   if (!platformConfigured()) return demo.demoBonafideDashboard
-  return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/bonafide?scope=${encodeURIComponent(scope)}`, demo.demoBonafideDashboard)
 }
 
 /** The scoped bonafide certificate list (optionally filtered by status). */
 export async function platformScopedBonafide(scope = "TN", status = ""): Promise<PlatformBonafide[]> {
   if (!platformConfigured()) return demo.demoBonafideList
-  return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/bonafide?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoBonafideList)
 }
 
 /** Raise a bonafide certificate request (status requested). */
@@ -2183,13 +2213,13 @@ export interface PlatformTeacherTransferDashboard {
 /** Jurisdiction-scoped teacher-transfer dashboard from the backbone (null when not configured). */
 export async function platformTeacherTransferDashboard(scope = "TN"): Promise<PlatformTeacherTransferDashboard | null> {
   if (!platformConfigured()) return demo.demoTeacherTransferDashboard
-  return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/teacher-transfer?scope=${encodeURIComponent(scope)}`, demo.demoTeacherTransferDashboard)
 }
 
 /** The scoped teacher-transfer list (optionally filtered by status). */
 export async function platformScopedTeacherTransfers(scope = "TN", status = ""): Promise<PlatformTeacherTransfer[]> {
   if (!platformConfigured()) return demo.demoTeacherTransferList
-  return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/teacher-transfer?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoTeacherTransferList)
 }
 
 /** Raise a teacher transfer request (status requested) — rejected if the teacher already has an active one. */
@@ -2255,13 +2285,13 @@ export interface PlatformHostelDashboard {
 /** Jurisdiction-scoped hostel-occupancy dashboard from the backbone (null when not configured). */
 export async function platformHostelDashboard(scope = "TN"): Promise<PlatformHostelDashboard | null> {
   if (!platformConfigured()) return demo.demoHostelDashboard
-  return getJSON(`/hostel?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/hostel?scope=${encodeURIComponent(scope)}`, demo.demoHostelDashboard)
 }
 
 /** The scoped hostel list (optionally filtered by status). */
 export async function platformScopedHostels(scope = "TN", status = ""): Promise<PlatformHostel[]> {
   if (!platformConfigured()) return demo.demoHostels
-  return getJSON(`/hostel?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/hostel?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoHostels)
 }
 
 /** Register (open) a hostel. */
@@ -2334,13 +2364,13 @@ export interface PlatformCifmDashboard {
 /** Jurisdiction-scoped CIFM facilities dashboard from the backbone (null when not configured). */
 export async function platformCifmDashboard(scope = "TN"): Promise<PlatformCifmDashboard | null> {
   if (!platformConfigured()) return demo.demoCifmDashboard
-  return getJSON(`/cifm?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/cifm?scope=${encodeURIComponent(scope)}`, demo.demoCifmDashboard)
 }
 
 /** The scoped facility list (optionally filtered by status). */
 export async function platformScopedFacilities(scope = "TN", status = ""): Promise<PlatformFacility[]> {
   if (!platformConfigured()) return demo.demoFacilities
-  return getJSON(`/cifm?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/cifm?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoFacilities)
 }
 
 /** Register a facility (status operational). */
@@ -2412,13 +2442,13 @@ export interface PlatformLanguageLabDashboard {
 /** Jurisdiction-scoped Language Lab dashboard from the backbone (null when not configured). */
 export async function platformLanguageLabDashboard(scope = "TN"): Promise<PlatformLanguageLabDashboard | null> {
   if (!platformConfigured()) return demo.demoLanguageLabDashboard
-  return getJSON(`/language-lab?scope=${encodeURIComponent(scope)}`)
+  return getOrDemo(`/language-lab?scope=${encodeURIComponent(scope)}`, demo.demoLanguageLabDashboard)
 }
 
 /** The scoped translation-job list (optionally filtered by status). */
 export async function platformScopedTranslations(scope = "TN", status = ""): Promise<PlatformTranslationJob[]> {
   if (!platformConfigured()) return demo.demoTranslationJobs
-  return getJSON(`/language-lab?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+  return getOrDemo(`/language-lab?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoTranslationJobs)
 }
 
 /** Request a translation job (status requested). */

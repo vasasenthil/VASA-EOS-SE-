@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformAdmissionDashboard,
   platformApplyAdmission,
   platformFinaliseAdmission,
@@ -19,7 +20,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 /** The durable admissions register (by stage/category + application list) from the backbone. */

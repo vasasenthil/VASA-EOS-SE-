@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformMdmDashboard,
   platformReceiveFoodgrain,
   platformServeMeal,
@@ -19,7 +20,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 export async function getMdmDashboard(): Promise<PlatformMdmDashboard | null> {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformFeeDashboard,
   platformRaiseDemand,
   platformCollectPayment,
@@ -21,7 +22,7 @@ export interface ActionResult {
 
 /** True when the durable Go backbone is wired (PLATFORM_URL set). */
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 /** Read the jurisdiction-scoped fee-collection dashboard from the durable backbone. */

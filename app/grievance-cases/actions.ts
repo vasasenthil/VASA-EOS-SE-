@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformListGrievance,
   platformFileGrievance,
   platformActGrievance,
@@ -19,7 +20,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 /** List the grievance cases the scope governs (durable, SLA-tracked) from the backbone. */

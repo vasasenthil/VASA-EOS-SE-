@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformGrantDashboard,
   platformAllocateGrant,
   platformBookExpenditure,
@@ -21,7 +22,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 export async function getGrantDashboard(): Promise<PlatformGrantDashboard | null> {

@@ -2436,3 +2436,19 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   preserved. CIFM (#33) was already shipped the prior turn.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 34.
+
+## Rollout #46 (a): graceful backbone degradation — no more bare "Backbone not connected" red error
+- Problem: when the hosted backbone is configured (PLATFORM_URL set) but momentarily unreachable (Render free-tier
+  cold start / mid-redeploy / an endpoint not yet deployed after shipping a new module), module pages showed a
+  blocking red "Backbone not connected" alert. Reported on /hostel-occupancy after #32 shipped but Render hadn't
+  redeployed.
+- Fix (lib/platform-client.ts): (1) getJSON now has an 8s AbortSignal timeout (fail fast instead of hanging);
+  (2) new getOrDemo(path, fallback) — dashboard getters fall back to their demo snapshot on any fetch failure, so
+  the page renders sample data instead of erroring; (3) new platformReachable() — a quick /healthz probe; the 32
+  module backboneConnected() now return platformReachable() (configured AND answering) instead of just
+  platformConfigured(). Pages already gate on !d and show DemoDataNote when !connected, so: backend healthy → live
+  data, no note; backend unreachable → sample data + an honest "Sample data — live backbone isn't responding,
+  reload in a minute" note; reloads to live automatically once it answers. Write guards keep using platformConfigured.
+- components/demo-data-note.tsx reworded for the configured-but-waking case. Means future module additions no longer
+  require a manual Render redeploy to avoid a scary error in the deploy window.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

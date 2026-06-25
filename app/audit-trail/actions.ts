@@ -2,6 +2,7 @@
 
 import {
   platformConfigured,
+  platformReachable,
   platformAuditTrail,
   type PlatformAuditTrail,
 } from "@/lib/platform-client"
@@ -16,7 +17,7 @@ export interface AuditQuery {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 /** Read the durable hash-chained audit trail with a live integrity check. */

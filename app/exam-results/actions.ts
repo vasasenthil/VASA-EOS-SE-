@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import {
   platformConfigured,
+  platformReachable,
   platformExamDashboard,
   platformExamSheet,
   platformEnterMarks,
@@ -25,7 +26,7 @@ export interface ActionResult {
 }
 
 export async function backboneConnected(): Promise<boolean> {
-  return platformConfigured()
+  return platformReachable()
 }
 
 export async function getExamDashboard(): Promise<PlatformExamDashboard | null> {
