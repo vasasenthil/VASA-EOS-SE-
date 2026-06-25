@@ -52,6 +52,8 @@ import type {
   PlatformDirectoryUser,
   PlatformHostelDashboard,
   PlatformHostel,
+  PlatformCifmDashboard,
+  PlatformFacility,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -657,4 +659,32 @@ export const demoHostelDashboard: PlatformHostelDashboard = {
 export const demoHostels: PlatformHostel[] = [
   { id: "HOS-CHN-boys", org_unit: "33030004181", name: "boys Welfare Hostel", type: "boys", capacity: 50, status: "open", residents: Array.from({ length: 47 }, (_, i) => ({ student_id: `SYN-S-CHN-boys-${String(i + 1).padStart(3, "0")}`, allotted_on: "2026-06-02" })), created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
   { id: "HOS-CHN-girls", org_unit: "33030004181", name: "girls Welfare Hostel", type: "girls", capacity: 50, status: "open", residents: Array.from({ length: 38 }, (_, i) => ({ student_id: `SYN-S-CHN-girls-${String(i + 1).padStart(3, "0")}`, allotted_on: "2026-06-02" })), created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+// ── CIFM — Campus Infrastructure & Facilities Management ─────────────────────────────────────────────────
+export const demoCifmDashboard: PlatformCifmDashboard = {
+  scope: SCOPE,
+  facilities: 16,
+  by_category: { building: 4, toilet: 4, water: 4, electrical: 4 },
+  by_status: { operational: 12, under_maintenance: 4 },
+  by_condition: { good: 8, fair: 4, poor: 4 },
+  open_work_orders: 6,
+  critical_open: 2,
+  under_maintenance: 4,
+  needs_attention: [
+    {
+      id: "FAC-CHN-02", org_unit: "33030004181", name: "Girls' Toilet Block", category: "toilet", condition: "poor",
+      status: "under_maintenance", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31",
+      work_orders: [{ id: "FAC-CHN-02-WO01", title: "Sewage overflow — health hazard", priority: "critical", status: "open", raised_on: "2026-06-25" }],
+      created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z",
+    },
+  ],
+  synthetic: true,
+}
+
+export const demoFacilities: PlatformFacility[] = [
+  { id: "FAC-CHN-01", org_unit: "33030004181", name: "Main Block", category: "building", condition: "fair", status: "operational", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", work_orders: [{ id: "FAC-CHN-01-WO01", title: "Repaint corridor", priority: "low", status: "open", raised_on: "2026-06-25" }], created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "FAC-CHN-02", org_unit: "33030004181", name: "Girls' Toilet Block", category: "toilet", condition: "poor", status: "under_maintenance", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", work_orders: [{ id: "FAC-CHN-02-WO01", title: "Sewage overflow — health hazard", priority: "critical", status: "open", raised_on: "2026-06-25" }], created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "FAC-CHN-03", org_unit: "33030004181", name: "RO Drinking-Water Unit", category: "water", condition: "good", status: "operational", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "FAC-CHN-04", org_unit: "33030004181", name: "Main Distribution Board", category: "electrical", condition: "good", status: "operational", amc_vendor: "SYN-AMC-CHN", amc_expiry: "2027-03-31", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
 ]

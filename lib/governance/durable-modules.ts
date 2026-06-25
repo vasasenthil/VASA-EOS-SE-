@@ -51,6 +51,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "bonafide-register", label: "Bonafide Certificate Register", service: "/bonafide", invariant: "cross-module — cannot issue for a student with an active transfer certificate; monotonic per-school serial" },
   { route: "teacher-transfer", label: "Teacher Transfer & Posting", service: "/teacher-transfer", invariant: "single active request per teacher; cross-module — approve only into a destination with a sanctioned cadre vacancy" },
   { route: "hostel-occupancy", label: "Hostel Allocation & Occupancy", service: "/hostel", invariant: "occupancy never exceeds capacity (no over-allocation) + one active bed per student statewide" },
+  { route: "campus-facilities", label: "Campus Infrastructure & Facilities (CIFM)", service: "/cifm", invariant: "safety gate — no return-to-operational with an open critical work order; critical WO auto-flips to under-maintenance" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

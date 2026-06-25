@@ -2289,3 +2289,89 @@ export async function platformVacateBed(id: string, student_id: string): Promise
 export async function platformCloseHostel(id: string): Promise<{ ok: boolean; error: string; hostel?: PlatformHostel }> {
   return postJSON("/hostel", { action: "close", id })
 }
+
+// ── CIFM — Campus Infrastructure & Facilities Management: safety gate on open critical work orders ───────
+// Facilities (building/lab/toilet/water/electrical/ground) with an embedded work-order lifecycle. A facility
+// cannot return to operational while an open CRITICAL work order remains, and raising a critical work order
+// auto-flips it to under_maintenance. Distinct from the Estate & Asset Register. Downward-governance scoped.
+
+export interface PlatformWorkOrder {
+  id: string
+  title: string
+  priority: string // low | medium | high | critical
+  status: string // open | in_progress | done
+  raised_on: string
+  closed_on?: string
+}
+
+export interface PlatformFacility {
+  id: string
+  org_unit: string
+  name: string
+  category: string // building | lab | toilet | water | electrical | ground
+  condition: string // good | fair | poor | critical
+  status: string // operational | under_maintenance | closed
+  amc_vendor?: string
+  amc_expiry?: string
+  work_orders?: PlatformWorkOrder[]
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformCifmDashboard {
+  scope: string
+  facilities: number
+  by_category: Record<string, number>
+  by_status: Record<string, number>
+  by_condition: Record<string, number>
+  open_work_orders: number
+  critical_open: number
+  under_maintenance: number
+  needs_attention?: PlatformFacility[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped CIFM facilities dashboard from the backbone (null when not configured). */
+export async function platformCifmDashboard(scope = "TN"): Promise<PlatformCifmDashboard | null> {
+  if (!platformConfigured()) return demo.demoCifmDashboard
+  return getJSON(`/cifm?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped facility list (optionally filtered by status). */
+export async function platformScopedFacilities(scope = "TN", status = ""): Promise<PlatformFacility[]> {
+  if (!platformConfigured()) return demo.demoFacilities
+  return getJSON(`/cifm?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Register a facility (status operational). */
+export async function platformRegisterFacility(input: {
+  id: string
+  org_unit: string
+  name: string
+  category: string
+  condition?: string
+  amc_vendor?: string
+  amc_expiry?: string
+}): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
+  return postJSON("/cifm", { action: "register", ...input })
+}
+
+/** Raise a work order — a critical one auto-flips the facility to under_maintenance. */
+export async function platformRaiseWorkOrder(id: string, wo_title: string, wo_priority: string): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
+  return postJSON("/cifm", { action: "raise", id, wo_title, wo_priority })
+}
+
+/** Complete a work order. */
+export async function platformCompleteWorkOrder(id: string, wo_id: string): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
+  return postJSON("/cifm", { action: "complete", id, wo_id })
+}
+
+/** Return a facility to operational — rejected while an open critical work order remains. */
+export async function platformSetFacilityOperational(id: string): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
+  return postJSON("/cifm", { action: "operational", id })
+}
+
+/** Close a facility (no open work orders). */
+export async function platformCloseFacility(id: string): Promise<{ ok: boolean; error: string; facility?: PlatformFacility }> {
+  return postJSON("/cifm", { action: "close", id })
+}

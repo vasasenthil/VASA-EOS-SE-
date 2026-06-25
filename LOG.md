@@ -2398,3 +2398,22 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   role-gated server-side. Hostel added to the durable-modules nav section.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 32.
+
+## Rollout #44: NEW durable vertical — CIFM Campus Infrastructure & Facilities Management (deep module #33)
+- User asked whether "Native AI Language Lab" + "Native AI CIFM" are in the catalogue/repo. Honest answer: CIFM
+  was absent (only the Estate & Asset Register existed); Language Lab partial (Bhashini/i18n/multilingual + the
+  language Native-AI pillar) but no dedicated module. Built CIFM this turn; Language Lab queued next.
+- Built the durable CIFM facilities-operations vertical inline in integration (cifm.go + cifm_pg.go). Domain
+  Facility (building/lab/toilet/water/electrical/ground) + AMC + embedded WorkOrders; register → raise → complete →
+  set-operational / close. SAFETY invariant: a facility cannot return to operational while an OPEN CRITICAL work
+  order remains, and raising a critical WO auto-flips it to under_maintenance. Distinct from estate-register (asset
+  register + decommission gate). Scoped dashboard (by category/status/condition + open WOs + critical-open +
+  needs-attention worklist); multi-school seed (one critical toilet WO per school). Route /campus-facilities.
+- New platformd endpoint /cifm (register|raise|complete|operational|close). lib/platform-client.ts: cifm seam +
+  demo fallback. app/campus-facilities/ (manage:school gated). Register now 33; brochure note 32→33. Added to the
+  durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): register + WO lifecycle durable;
+  SAFETY GATE — critical WO auto-flips to under_maintenance, set-operational REJECTED until the WO is completed,
+  then succeeds; close-with-open-WO rejected; downward-governance scope (Chennai+Coimbatore ⊆ TN). POST w/o bearer → 401.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 33.

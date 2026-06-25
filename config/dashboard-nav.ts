@@ -130,6 +130,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "Bonafide Certificate Register", href: "/bonafide-register", icon: Stamp },
   { title: "Teacher Transfer & Posting", href: "/teacher-transfer", icon: UserCog },
   { title: "Hostel Allocation & Occupancy", href: "/hostel-occupancy", icon: BedDouble },
+  { title: "Campus Facilities (CIFM)", href: "/campus-facilities", icon: Hammer },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

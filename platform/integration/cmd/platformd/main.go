@@ -898,6 +898,69 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.HostelDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/cifm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// CIFM — Campus Infrastructure & Facilities Management. GET ?scope=<org> → scoped facilities dashboard;
+		// ?list=1&status= → the scoped facility list; ?id= → one facility. POST { action, ... }: register { id,
+		// org_unit,name,category,condition,amc_vendor,amc_expiry } registers a facility; raise { id,wo_title,
+		// wo_priority } raises a work order (a critical one auto-flips to under_maintenance); complete { id,wo_id }
+		// completes a work order; operational { id } returns it to operational (rejected with an open critical WO);
+		// close { id } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Category   string `json:"category"`
+				Condition  string `json:"condition"`
+				AMCVendor  string `json:"amc_vendor"`
+				AMCExpiry  string `json:"amc_expiry"`
+				WOTitle    string `json:"wo_title"`
+				WOPriority string `json:"wo_priority"`
+				WOID       string `json:"wo_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "raise":
+				out, err := s.p.RaiseWorkOrder(req.ID, integration.WorkOrder{Title: req.WOTitle, Priority: req.WOPriority})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "complete":
+				out, err := s.p.CompleteWorkOrder(req.ID, req.WOID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "operational":
+				out, err := s.p.SetFacilityOperational(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "close":
+				out, err := s.p.CloseFacility(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			default: // register
+				out, err := s.p.RegisterFacility(integration.Facility{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Condition: req.Condition, AMCVendor: req.AMCVendor, AMCExpiry: req.AMCExpiry,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			f, ok := s.p.FacilityRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown facility"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, f, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedFacilities(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CifmDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,
