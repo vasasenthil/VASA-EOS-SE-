@@ -61,6 +61,8 @@ import type {
   PlatformTranslationJob,
   PlatformWashDashboard,
   PlatformWashRegister,
+  PlatformCompetitionDashboard,
+  PlatformCompetition,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -771,5 +773,39 @@ export const demoWashDashboard: PlatformWashDashboard = {
   functional_pct: 86,
   by_category_functional: { girls_toilet: 22, boys_toilet: 20, cwsn_toilet: 8, drinking_water: 8, handwash_station: 28 },
   pending: [demoWashRegisters[1]],
+  synthetic: true,
+}
+
+// ── Co-curricular & Sports Competitions ──────────────────────────────────────────────────────────────────
+export const demoCompetitions: PlatformCompetition[] = [
+  { id: "COMP-CHN-ATH", org_unit: "33030004181", name: "100m Sprint", discipline: "athletics", level: "school", event_date: "2026-07-10", status: "open", created_on: "2026-06-15", updated_at: "2026-06-25T00:00:00Z", entries: [
+    { student_id: "SYN-S-CHN-A01", class: "Grade 9", position: 1, advanced: true, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A02", class: "Grade 9", position: 2, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A03", class: "Grade 9", position: 3, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A04", class: "Grade 9", position: 0, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A05", class: "Grade 9", position: 0, advanced: false, entered_on: "2026-06-25" },
+  ] },
+  { id: "COMP-CHN-CHESS", org_unit: "33030004181", name: "Chess Open", discipline: "chess", level: "school", event_date: "2026-07-20", status: "open", created_on: "2026-06-18", updated_at: "2026-06-25T00:00:00Z", entries: [
+    { student_id: "SYN-S-CHN-C01", class: "Grade 8", position: 0, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-C02", class: "Grade 8", position: 0, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-C03", class: "Grade 8", position: 0, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-C04", class: "Grade 8", position: 0, advanced: false, entered_on: "2026-06-25" },
+  ] },
+  { id: "COMP-CHN-DEB", org_unit: "33030004181", name: "Inter-class Debate", discipline: "debate", level: "school", event_date: "2026-06-05", status: "closed", created_on: "2026-05-25", updated_at: "2026-06-25T00:00:00Z", entries: [
+    { student_id: "SYN-S-CHN-D01", class: "Grade 10", position: 1, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-D02", class: "Grade 10", position: 0, advanced: false, entered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-D03", class: "Grade 10", position: 0, advanced: false, entered_on: "2026-06-25" },
+  ] },
+]
+
+export const demoCompetitionDashboard: PlatformCompetitionDashboard = {
+  scope: SCOPE,
+  total: 12,
+  by_level: { school: 12 },
+  by_status: { open: 8, closed: 4 },
+  entries: 48,
+  podium: 16,
+  advanced: 4,
+  open_meets: [demoCompetitions[0], demoCompetitions[1]],
   synthetic: true,
 }

@@ -55,6 +55,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "language-lab", label: "Native AI Language Lab", service: "/language-lab", invariant: "review-before-publish quality gate — machine (Bhashini) output cannot be published without human review; 22 Eighth-Schedule languages" },
   { route: "gem-procurement", label: "Procurement & GeM Purchase Orders", service: "/procurement", invariant: "GFR controls — no over-receipt beyond ordered qty + no over-payment beyond goods received (paise)" },
   { route: "wash-register", label: "School Sanitation & WASH Register", service: "/wash", invariant: "no over-report (functional units ≤ sanctioned) + Swachh/ODF certification gate — cannot certify while any critical facility is not fully functional; critical regression auto-revokes" },
+  { route: "sports-competitions", label: "Co-curricular & Sports Competitions", service: "/competitions", invariant: "unique entry per student + podium-position uniqueness (one gold/silver/bronze) + advancement gate (only podium finishers advance; national is terminal)" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

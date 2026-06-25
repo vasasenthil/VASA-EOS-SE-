@@ -2671,3 +2671,93 @@ export async function platformRecordWashFacility(input: {
 export async function platformCertifySwachh(id: string): Promise<{ ok: boolean; error: string; register?: PlatformWashRegister }> {
   return postJSON("/wash", { action: "certify", id })
 }
+
+// ── Co-curricular & Sports Competitions: unique entry + podium uniqueness + advancement gate ─────────────
+// Schools run competitions on the school-games ladder (school→block→district→state→national). A student enters
+// once per competition, each podium position is awarded once, and only podium finishers advance (national is
+// terminal). Embedded entries. Scoped.
+
+export interface PlatformCompEntry {
+  student_id: string
+  class: string
+  position: number // 0 unplaced; 1/2/3 podium
+  advanced: boolean
+  entered_on: string
+}
+
+export interface PlatformCompetition {
+  id: string
+  org_unit: string
+  name: string
+  discipline: string
+  level: string // school | block | district | state | national
+  event_date: string
+  entries?: PlatformCompEntry[]
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformCompetitionDashboard {
+  scope: string
+  total: number
+  by_level: Record<string, number>
+  by_status: Record<string, number>
+  entries: number
+  podium: number
+  advanced: number
+  open_meets?: PlatformCompetition[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped competitions dashboard from the backbone (null when not configured). */
+export async function platformCompetitionDashboard(scope = "TN"): Promise<PlatformCompetitionDashboard | null> {
+  if (!platformConfigured()) return demo.demoCompetitionDashboard
+  return getOrDemo(`/competitions?scope=${encodeURIComponent(scope)}`, demo.demoCompetitionDashboard)
+}
+
+/** The scoped competition list (optionally filtered by status). */
+export async function platformScopedCompetitions(scope = "TN", status = ""): Promise<PlatformCompetition[]> {
+  if (!platformConfigured()) return demo.demoCompetitions
+  return getOrDemo(`/competitions?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoCompetitions)
+}
+
+/** Open a competition (status open). */
+export async function platformCreateCompetition(input: {
+  id: string
+  org_unit: string
+  name: string
+  discipline: string
+  level: string
+  event_date: string
+}): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
+  return postJSON("/competitions", { action: "create", ...input })
+}
+
+/** Enter a student — rejected on a duplicate entry. */
+export async function platformEnterCompetition(input: {
+  id: string
+  student_id: string
+  class: string
+}): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
+  return postJSON("/competitions", { action: "enter", ...input })
+}
+
+/** Record a podium result (position 1..3) — rejected on an out-of-range or duplicate position. */
+export async function platformRecordResult(input: {
+  id: string
+  student_id: string
+  position: number
+}): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
+  return postJSON("/competitions", { action: "result", ...input })
+}
+
+/** Advance a podium finisher to the next level — rejected for a non-finisher or a national (terminal) result. */
+export async function platformAdvanceWinner(id: string, student_id: string): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
+  return postJSON("/competitions", { action: "advance", id, student_id })
+}
+
+/** Close a competition. */
+export async function platformCloseCompetition(id: string): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
+  return postJSON("/competitions", { action: "close", id })
+}

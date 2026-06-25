@@ -1072,6 +1072,67 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.WashDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/competitions", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Co-curricular & Sports Competitions. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// competition list; ?id= → one competition. POST { action, ... }: create { id,org_unit,name,discipline,
+		// level,event_date } opens a competition; enter { id,student_id,class } enters a student (unique entry);
+		// result { id,student_id,position } records a podium result (1..3, position unique); advance { id,
+		// student_id } advances a podium finisher to the next level (terminal at national); close { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Discipline string `json:"discipline"`
+				Level      string `json:"level"`
+				EventDate  string `json:"event_date"`
+				StudentID  string `json:"student_id"`
+				Class      string `json:"class"`
+				Position   int    `json:"position"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "enter":
+				out, err := s.p.EnterCompetition(req.ID, req.StudentID, req.Class)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "result":
+				out, err := s.p.RecordResult(req.ID, req.StudentID, req.Position)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "advance":
+				out, err := s.p.AdvanceWinner(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "close":
+				out, err := s.p.CloseCompetition(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			default: // create
+				out, err := s.p.CreateCompetition(integration.Competition{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Discipline: req.Discipline,
+					Level: req.Level, EventDate: req.EventDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.CompetitionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown competition"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedCompetitions(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CompetitionDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,
