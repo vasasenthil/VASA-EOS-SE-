@@ -5,6 +5,8 @@
 // the Go backend (which persists to Postgres) — not an in-memory/Supabase-only path. When PLATFORM_URL is
 // unset, callers fall back to their existing store, so the credential-free demo is unaffected.
 
+import * as demo from "@/lib/platform-demo"
+
 const BASE = process.env.PLATFORM_URL ?? ""
 
 // When the backbone is protected by its auth gateway, mutating requests must carry this bearer token. Set the
@@ -261,13 +263,13 @@ export interface PlatformAppointment {
 
 /** Jurisdiction-scoped staffing dashboard from the Go backbone (null when the backbone is not configured). */
 export async function platformEstablishmentDashboard(scope = "TN"): Promise<PlatformEstablishmentDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoEstablishmentDashboard
   return getJSON(`/establishment?scope=${encodeURIComponent(scope)}`)
 }
 
 /** The appointments against one sanctioned-post line (the roster). Empty when the backbone is not configured. */
 export async function platformEstablishmentRoster(establishmentId: string): Promise<PlatformAppointment[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoEstablishmentRoster(establishmentId)
   return getJSON(`/establishment?roster=${encodeURIComponent(establishmentId)}`)
 }
 
@@ -349,7 +351,7 @@ export interface PlatformFeePayment {
 
 /** Jurisdiction-scoped fee-collection dashboard from the backbone (null when not configured). */
 export async function platformFeeDashboard(scope = "TN"): Promise<PlatformFeeDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoFeeDashboard
   return getJSON(`/fees?scope=${encodeURIComponent(scope)}`)
 }
 
@@ -1293,7 +1295,7 @@ export interface PlatformAttendanceDashboard {
 
 /** Jurisdiction-scoped daily attendance dashboard + chronic-absentee roll-up (null when not configured). */
 export async function platformAttendanceDashboard(scope = "TN", date = "2026-06-10"): Promise<PlatformAttendanceDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoAttendanceDashboard
   return getJSON(`/attendance?scope=${encodeURIComponent(scope)}&date=${encodeURIComponent(date)}`)
 }
 
@@ -2038,13 +2040,13 @@ export interface PlatformSMCDashboard {
 
 /** Jurisdiction-scoped SMC governance dashboard from the backbone (null when not configured). */
 export async function platformSMCDashboard(scope = "TN"): Promise<PlatformSMCDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoSMCDashboard
   return getJSON(`/smc?scope=${encodeURIComponent(scope)}`)
 }
 
 /** The scoped SMC meeting list (optionally filtered by status). */
 export async function platformScopedSMCMeetings(scope = "TN", status = ""): Promise<PlatformSMCMeeting[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoSMCMeetings
   return getJSON(`/smc?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
 }
 
@@ -2115,13 +2117,13 @@ export interface PlatformBonafideDashboard {
 
 /** Jurisdiction-scoped bonafide-register dashboard from the backbone (null when not configured). */
 export async function platformBonafideDashboard(scope = "TN"): Promise<PlatformBonafideDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoBonafideDashboard
   return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}`)
 }
 
 /** The scoped bonafide certificate list (optionally filtered by status). */
 export async function platformScopedBonafide(scope = "TN", status = ""): Promise<PlatformBonafide[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoBonafideList
   return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
 }
 
@@ -2179,13 +2181,13 @@ export interface PlatformTeacherTransferDashboard {
 
 /** Jurisdiction-scoped teacher-transfer dashboard from the backbone (null when not configured). */
 export async function platformTeacherTransferDashboard(scope = "TN"): Promise<PlatformTeacherTransferDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoTeacherTransferDashboard
   return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}`)
 }
 
 /** The scoped teacher-transfer list (optionally filtered by status). */
 export async function platformScopedTeacherTransfers(scope = "TN", status = ""): Promise<PlatformTeacherTransfer[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoTeacherTransferList
   return getJSON(`/teacher-transfer?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
 }
 

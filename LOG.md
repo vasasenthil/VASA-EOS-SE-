@@ -2327,3 +2327,15 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   itself create a live URL — that still needs the user to import to Vercel (or hand a token) and, for the 31 modules
   to be fully functional rather than demo, deploy the backbone (render.yaml) + set PLATFORM_URL in Vercel.
 - Green: tsc 0, lint clean, next build success (/directory route added), 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #38 (viewability): demo-data fallback so modules are VIEWABLE without a backend (batch 1/…)
+- Requirement: view the 31 deep modules + 17 portals on the hosted Vercel demo (no backend deploy, no tokens). The
+  portals already work (demo auth). The modules showed a blocking "Backbone not connected" alert — not viewable.
+- Fix pattern: lib/platform-demo.ts holds representative snapshots (TN-DIST-Chennai, synthetic SYN- ids mirroring
+  the Go seeds). Each platform-client getter returns the demo snapshot when !platformConfigured() (instead of
+  null/[]). Each module page now gates on data presence (!d) not connectivity, and shows components/demo-data-note
+  (DemoDataNote) when !connected — so the real dashboard/lists/forms render, marked "Demo data". Writes still no-op
+  in this mode; deploying the backbone (deploy/backbone) makes them persist.
+- Batch 1 (6 modules wired + viewable): establishment, fee-ledger, student-attendance, smc-meetings,
+  bonafide-register, teacher-transfer. Remaining ~23 durable modules to follow in subsequent batches.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

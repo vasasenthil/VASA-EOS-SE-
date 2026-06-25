@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
+import { DemoDataNote } from "@/components/demo-data-note"
 import { getAttendanceDashboard, getStudentAttendance, backboneConnected } from "./actions"
 import { MarkForm } from "./student-attendance-client"
 
@@ -40,7 +41,7 @@ export default async function StudentAttendancePage() {
         </PageHeaderDescription>
       </PageHeader>
 
-      {!connected || !d ? (
+      {!d ? (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Backbone not connected</AlertTitle>
@@ -53,6 +54,7 @@ export default async function StudentAttendancePage() {
         </Alert>
       ) : (
         <div className="space-y-6">
+          {!connected && <DemoDataNote />}
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Stat label="Schools" value={d.schools} />
             <Stat label={`Marked (${d.date})`} value={d.marked} />
