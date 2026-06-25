@@ -2369,3 +2369,12 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   (DemoDataNote marks it), with zero backend deploy and zero tokens. Writes persist once the backbone is deployed
   (deploy/backbone). The /directory page links every portal + module.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #42: wire all 31 durable modules into the sidebar navigation
+- The left-nav was a curated list pointing at the older reference routes (/fees, /timetable, …), so the 31 deep
+  durable modules (SMC, bonafide, teacher-transfer, …) were only reachable via /directory or direct URL.
+- config/dashboard-nav.ts: added a shared durableModuleNav[] (a "▸ Durable Modules" link to /directory + all 31
+  module links with icons, kept in sync with lib/governance/durable-modules.ts) and spread it into the operational
+  roles: ADMIN, PRINCIPAL, BEO, DEO, DIRECTOR, SECRETARY, MINISTER. Now every durable module is clickable from the
+  sidebar; pages stay role-gated server-side.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

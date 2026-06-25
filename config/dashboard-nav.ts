@@ -94,6 +94,43 @@ export interface NavItem {
   isHeader?: boolean
 }
 
+// The 31 deep / durable modules (driven by the Go backbone + PostgreSQL). Surfaced as a single navigable section
+// so they are reachable from the sidebar, not only via /directory. Kept in sync with lib/governance/durable-modules.ts.
+export const durableModuleNav: NavItem[] = [
+  { title: "▸ Durable Modules", href: "/directory", icon: Layers },
+  { title: "Establishment & Posts", href: "/establishment", icon: Building },
+  { title: "Fee & Finance Ledger", href: "/fee-ledger", icon: IndianRupee },
+  { title: "RTE Admissions", href: "/rte-admissions", icon: GraduationCap },
+  { title: "Grievance Cases", href: "/grievance-cases", icon: MessageSquare },
+  { title: "Grievance Approvals", href: "/grievance-approvals", icon: CheckSquare },
+  { title: "Scholarship / DBT", href: "/dbt-scholarship", icon: Banknote },
+  { title: "Mid-Day Meal", href: "/mid-day-meal", icon: Utensils },
+  { title: "School Transport", href: "/school-transport", icon: Bus },
+  { title: "Health Immunisation", href: "/health-immunisation", icon: HeartPulse },
+  { title: "Free-Supply Entitlement", href: "/free-supply", icon: Package },
+  { title: "Class Timetable", href: "/class-timetable", icon: CalendarDays },
+  { title: "School Library", href: "/school-library", icon: Library },
+  { title: "Estate & Asset Register", href: "/estate-register", icon: Wrench },
+  { title: "Parent–Teacher Meetings", href: "/parent-teacher-meetings", icon: Users2 },
+  { title: "RBSK Health Screening", href: "/health-screening", icon: Stethoscope },
+  { title: "Teacher CPD", href: "/teacher-cpd", icon: GraduationCap },
+  { title: "Student Attendance", href: "/student-attendance", icon: CalendarCheck },
+  { title: "Academic Calendar", href: "/events-calendar", icon: CalendarDays },
+  { title: "Examinations & Results", href: "/exam-results", icon: FileBarChart },
+  { title: "User Directory & IAM", href: "/user-directory", icon: Users },
+  { title: "Staff Leave", href: "/leave-approvals", icon: FileCheck2 },
+  { title: "Audit Trail & Ledger", href: "/audit-trail", icon: FileLock },
+  { title: "School Inspection", href: "/school-inspection", icon: ClipboardList },
+  { title: "Transfer Certificates", href: "/transfer-certificate", icon: Stamp },
+  { title: "Staff Attendance & Payable Days", href: "/employee-attendance", icon: CalendarCheck },
+  { title: "School Grant Utilisation", href: "/school-grants", icon: Banknote },
+  { title: "Lesson Plans", href: "/lesson-plan", icon: BookOpen },
+  { title: "Period Attendance & Delivery", href: "/period-attendance", icon: CalendarCheck },
+  { title: "SMC Meetings & Resolutions", href: "/smc-meetings", icon: Vote },
+  { title: "Bonafide Certificate Register", href: "/bonafide-register", icon: Stamp },
+  { title: "Teacher Transfer & Posting", href: "/teacher-transfer", icon: UserCog },
+]
+
 export const dashboardNavConfig: Record<string, NavItem[]> = {
   ADMIN: [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -242,6 +279,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "System Self-Test", href: "/health", icon: HeartPulse },
     { title: "Operations & Health", href: "/ops", icon: Activity },
     { title: "Abbreviations & Glossary", href: "/glossary", icon: BookA },
+    ...durableModuleNav,
   ],
   TEACHER: [
     { title: "Dashboard", href: "/teacher/dashboard", icon: LayoutDashboard },
@@ -268,6 +306,7 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Schemes", href: "/schemes", icon: Layers },
     { title: "NEP Tracking", href: "/tracking/dashboard", icon: Target },
     { title: "Announcements", href: "/principal/announcements", icon: Presentation },
+    ...durableModuleNav,
   ],
   SUBJECT_INCHARGE: [
     { title: "Dashboard", href: "/subject-incharge/dashboard", icon: LayoutDashboard },
@@ -298,11 +337,11 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
     { title: "Communication", href: "/parent/communication", icon: MessageSquare },
   ],
   CRCC: [{ title: "Dashboard", href: "/crcc/dashboard", icon: LayoutDashboard }],
-  BEO: [{ title: "Dashboard", href: "/beo/dashboard", icon: LayoutDashboard }],
-  DEO: [{ title: "Dashboard", href: "/deo/dashboard", icon: LayoutDashboard }],
-  DIRECTOR: [{ title: "Dashboard", href: "/director/dashboard", icon: LayoutDashboard }],
-  SECRETARY: [{ title: "Dashboard", href: "/secretary/dashboard", icon: LayoutDashboard }],
-  MINISTER: [{ title: "Dashboard", href: "/minister/dashboard", icon: LayoutDashboard }],
+  BEO: [{ title: "Dashboard", href: "/beo/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  DEO: [{ title: "Dashboard", href: "/deo/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  DIRECTOR: [{ title: "Dashboard", href: "/director/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  SECRETARY: [{ title: "Dashboard", href: "/secretary/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
+  MINISTER: [{ title: "Dashboard", href: "/minister/dashboard", icon: LayoutDashboard }, ...durableModuleNav],
   VENDOR: [{ title: "Dashboard", href: "/vendor/dashboard", icon: LayoutDashboard }],
   RESEARCHER: [{ title: "Dashboard", href: "/researcher/dashboard", icon: LayoutDashboard }],
   PUBLIC: [{ title: "Dashboard", href: "/public/dashboard", icon: LayoutDashboard }],
