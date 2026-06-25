@@ -1,0 +1,271 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — teacher-lifecycle events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for teacher-lifecycle. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  teacher-recruitment.events:
+    address: "vasa.teacher-lifecycle.teacher-recruitment"
+    description: "Domain events for Teacher Recruitment"
+    messages:
+      changed: { name: M0109Changed, contentType: application/json }
+  teacher-placement.events:
+    address: "vasa.teacher-lifecycle.teacher-placement"
+    description: "Domain events for Teacher Placement"
+    messages:
+      changed: { name: M0110Changed, contentType: application/json }
+  teacher-transfer-counselling.events:
+    address: "vasa.teacher-lifecycle.teacher-transfer-counselling"
+    description: "Domain events for Teacher Transfer (counselling)"
+    messages:
+      changed: { name: M0111Changed, contentType: application/json }
+  cadre-rationalisation.events:
+    address: "vasa.teacher-lifecycle.cadre-rationalisation"
+    description: "Domain events for Cadre Rationalisation"
+    messages:
+      changed: { name: M0112Changed, contentType: application/json }
+  ptr-compliance-rte.events:
+    address: "vasa.teacher-lifecycle.ptr-compliance-rte"
+    description: "Domain events for PTR Compliance (RTE)"
+    messages:
+      changed: { name: M0113Changed, contentType: application/json }
+  vacancy-register.events:
+    address: "vasa.teacher-lifecycle.vacancy-register"
+    description: "Domain events for Vacancy Register"
+    messages:
+      changed: { name: M0114Changed, contentType: application/json }
+  hrms-integration-hrms-tn.events:
+    address: "vasa.teacher-lifecycle.hrms-integration-hrms-tn"
+    description: "Domain events for HRMS Integration (HRMS-TN)"
+    messages:
+      changed: { name: M0115Changed, contentType: application/json }
+  payroll-linkage-ifms-treasury.events:
+    address: "vasa.teacher-lifecycle.payroll-linkage-ifms-treasury"
+    description: "Domain events for Payroll Linkage (IFMS/Treasury)"
+    messages:
+      changed: { name: M0116Changed, contentType: application/json }
+  service-book-digital.events:
+    address: "vasa.teacher-lifecycle.service-book-digital"
+    description: "Domain events for Service Book (digital)"
+    messages:
+      changed: { name: M0117Changed, contentType: application/json }
+  leave-management.events:
+    address: "vasa.teacher-lifecycle.leave-management"
+    description: "Domain events for Leave Management"
+    messages:
+      changed: { name: M0118Changed, contentType: application/json }
+  substitute-cover-arrangement.events:
+    address: "vasa.teacher-lifecycle.substitute-cover-arrangement"
+    description: "Domain events for Substitute / Cover Arrangement"
+    messages:
+      changed: { name: M0119Changed, contentType: application/json }
+  staff-attendance.events:
+    address: "vasa.teacher-lifecycle.staff-attendance"
+    description: "Domain events for Staff Attendance"
+    messages:
+      changed: { name: M0120Changed, contentType: application/json }
+  cpd-catalogue.events:
+    address: "vasa.teacher-lifecycle.cpd-catalogue"
+    description: "Domain events for CPD Catalogue"
+    messages:
+      changed: { name: M0121Changed, contentType: application/json }
+  cpd-recommendation-teacher-agent.events:
+    address: "vasa.teacher-lifecycle.cpd-recommendation-teacher-agent"
+    description: "Domain events for CPD Recommendation (Teacher Agent)"
+    messages:
+      changed: { name: M0122Changed, contentType: application/json }
+  training-calendar.events:
+    address: "vasa.teacher-lifecycle.training-calendar"
+    description: "Domain events for Training Calendar"
+    messages:
+      changed: { name: M0123Changed, contentType: application/json }
+  diksha-teacher-cpd.events:
+    address: "vasa.teacher-lifecycle.diksha-teacher-cpd"
+    description: "Domain events for DIKSHA Teacher CPD"
+    messages:
+      changed: { name: M0124Changed, contentType: application/json }
+  performance-support-not-evaluation.events:
+    address: "vasa.teacher-lifecycle.performance-support-not-evaluation"
+    description: "Domain events for Performance SUPPORT (not evaluation)"
+    messages:
+      changed: { name: M0125Changed, contentType: application/json }
+  mentoring-brc-crc.events:
+    address: "vasa.teacher-lifecycle.mentoring-brc-crc"
+    description: "Domain events for Mentoring (BRC/CRC)"
+    messages:
+      changed: { name: M0126Changed, contentType: application/json }
+  lesson-plan-assist.events:
+    address: "vasa.teacher-lifecycle.lesson-plan-assist"
+    description: "Domain events for Lesson-Plan Assist"
+    messages:
+      changed: { name: M0127Changed, contentType: application/json }
+  marking-assist.events:
+    address: "vasa.teacher-lifecycle.marking-assist"
+    description: "Domain events for Marking Assist"
+    messages:
+      changed: { name: M0128Changed, contentType: application/json }
+  grievance-teacher.events:
+    address: "vasa.teacher-lifecycle.grievance-teacher"
+    description: "Domain events for Grievance (teacher)"
+    messages:
+      changed: { name: M0129Changed, contentType: application/json }
+  background-verification-pocso.events:
+    address: "vasa.teacher-lifecycle.background-verification-pocso"
+    description: "Domain events for Background Verification (POCSO)"
+    messages:
+      changed: { name: M0130Changed, contentType: application/json }
+  non-teaching-staff-register.events:
+    address: "vasa.teacher-lifecycle.non-teaching-staff-register"
+    description: "Domain events for Non-Teaching Staff Register"
+    messages:
+      changed: { name: M0131Changed, contentType: application/json }
+  cook-cum-helper-mdm.events:
+    address: "vasa.teacher-lifecycle.cook-cum-helper-mdm"
+    description: "Domain events for Cook-cum-Helper (MDM)"
+    messages:
+      changed: { name: M0132Changed, contentType: application/json }
+  guest-lecture-management.events:
+    address: "vasa.teacher-lifecycle.guest-lecture-management"
+    description: "Domain events for Guest Lecture Management"
+    messages:
+      changed: { name: M0133Changed, contentType: application/json }
+  teacher-workload-analytics.events:
+    address: "vasa.teacher-lifecycle.teacher-workload-analytics"
+    description: "Domain events for Teacher Workload Analytics"
+    messages:
+      changed: { name: M0134Changed, contentType: application/json }
+  subject-allocation.events:
+    address: "vasa.teacher-lifecycle.subject-allocation"
+    description: "Domain events for Subject-Allocation"
+    messages:
+      changed: { name: M0135Changed, contentType: application/json }
+  timetable-manager.events:
+    address: "vasa.teacher-lifecycle.timetable-manager"
+    description: "Domain events for Timetable Manager"
+    messages:
+      changed: { name: M0136Changed, contentType: application/json }
+  transfer-counselling-audit.events:
+    address: "vasa.teacher-lifecycle.transfer-counselling-audit"
+    description: "Domain events for Transfer Counselling Audit"
+    messages:
+      changed: { name: M0137Changed, contentType: application/json }
+  award-recognition.events:
+    address: "vasa.teacher-lifecycle.award-recognition"
+    description: "Domain events for Award & Recognition"
+    messages:
+      changed: { name: M0138Changed, contentType: application/json }
+  naan-mudhalvan-mentor-pool.events:
+    address: "vasa.teacher-lifecycle.naan-mudhalvan-mentor-pool"
+    description: "Domain events for Naan Mudhalvan Mentor Pool"
+    messages:
+      changed: { name: M0139Changed, contentType: application/json }
+  internship-mentor-mmsn.events:
+    address: "vasa.teacher-lifecycle.internship-mentor-mmsn"
+    description: "Domain events for Internship Mentor (MMSN)"
+    messages:
+      changed: { name: M0140Changed, contentType: application/json }
+  teacher-wellbeing.events:
+    address: "vasa.teacher-lifecycle.teacher-wellbeing"
+    description: "Domain events for Teacher Wellbeing"
+    messages:
+      changed: { name: M0141Changed, contentType: application/json }
+operations:
+  onM0109Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-recruitment.events' }
+  onM0110Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-placement.events' }
+  onM0111Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-transfer-counselling.events' }
+  onM0112Changed:
+    action: receive
+    channel: { $ref: '#/channels/cadre-rationalisation.events' }
+  onM0113Changed:
+    action: receive
+    channel: { $ref: '#/channels/ptr-compliance-rte.events' }
+  onM0114Changed:
+    action: receive
+    channel: { $ref: '#/channels/vacancy-register.events' }
+  onM0115Changed:
+    action: receive
+    channel: { $ref: '#/channels/hrms-integration-hrms-tn.events' }
+  onM0116Changed:
+    action: receive
+    channel: { $ref: '#/channels/payroll-linkage-ifms-treasury.events' }
+  onM0117Changed:
+    action: receive
+    channel: { $ref: '#/channels/service-book-digital.events' }
+  onM0118Changed:
+    action: receive
+    channel: { $ref: '#/channels/leave-management.events' }
+  onM0119Changed:
+    action: receive
+    channel: { $ref: '#/channels/substitute-cover-arrangement.events' }
+  onM0120Changed:
+    action: receive
+    channel: { $ref: '#/channels/staff-attendance.events' }
+  onM0121Changed:
+    action: receive
+    channel: { $ref: '#/channels/cpd-catalogue.events' }
+  onM0122Changed:
+    action: receive
+    channel: { $ref: '#/channels/cpd-recommendation-teacher-agent.events' }
+  onM0123Changed:
+    action: receive
+    channel: { $ref: '#/channels/training-calendar.events' }
+  onM0124Changed:
+    action: receive
+    channel: { $ref: '#/channels/diksha-teacher-cpd.events' }
+  onM0125Changed:
+    action: receive
+    channel: { $ref: '#/channels/performance-support-not-evaluation.events' }
+  onM0126Changed:
+    action: receive
+    channel: { $ref: '#/channels/mentoring-brc-crc.events' }
+  onM0127Changed:
+    action: receive
+    channel: { $ref: '#/channels/lesson-plan-assist.events' }
+  onM0128Changed:
+    action: receive
+    channel: { $ref: '#/channels/marking-assist.events' }
+  onM0129Changed:
+    action: receive
+    channel: { $ref: '#/channels/grievance-teacher.events' }
+  onM0130Changed:
+    action: receive
+    channel: { $ref: '#/channels/background-verification-pocso.events' }
+  onM0131Changed:
+    action: receive
+    channel: { $ref: '#/channels/non-teaching-staff-register.events' }
+  onM0132Changed:
+    action: receive
+    channel: { $ref: '#/channels/cook-cum-helper-mdm.events' }
+  onM0133Changed:
+    action: receive
+    channel: { $ref: '#/channels/guest-lecture-management.events' }
+  onM0134Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-workload-analytics.events' }
+  onM0135Changed:
+    action: receive
+    channel: { $ref: '#/channels/subject-allocation.events' }
+  onM0136Changed:
+    action: receive
+    channel: { $ref: '#/channels/timetable-manager.events' }
+  onM0137Changed:
+    action: receive
+    channel: { $ref: '#/channels/transfer-counselling-audit.events' }
+  onM0138Changed:
+    action: receive
+    channel: { $ref: '#/channels/award-recognition.events' }
+  onM0139Changed:
+    action: receive
+    channel: { $ref: '#/channels/naan-mudhalvan-mentor-pool.events' }
+  onM0140Changed:
+    action: receive
+    channel: { $ref: '#/channels/internship-mentor-mmsn.events' }
+  onM0141Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-wellbeing.events' }

@@ -1,0 +1,41 @@
+# VASA-EOS(SE) TN — Kubernetes Deployment skeleton (sovereign cluster / TN SDC).
+# Secrets are mounted from a Kubernetes Secret (never inline). Probes wire the
+# app's /api/live and /api/ready endpoints to the cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vasa-eos-se
+  labels: { app: vasa-eos-se }
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: vasa-eos-se }
+  template:
+    metadata:
+      labels: { app: vasa-eos-se }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+        - name: app
+          image: registry.tn.gov.in/vasa-eos-se:1.0.0 # replace with the sovereign registry tag
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef: { name: vasa-eos-secrets } # NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, INTEGRATION_*, *_API_KEY ...
+          resources:
+            requests: { cpu: "250m", memory: "512Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
+          livenessProbe:
+            httpGet: { path: /api/live, port: 3000 }
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /api/ready, port: 3000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }

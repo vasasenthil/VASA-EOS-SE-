@@ -1,6 +1,8 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled, isDbUnreachable } from "@/lib/supabase/server"
+import { demoOrganizationalUnits, demoTiers } from "@/lib/governance/demo"
+import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation" // Import redirect
 import type { OrganizationalUnit, OrganizationalUnitInput, GovernanceTier } from "../types"
@@ -48,6 +50,9 @@ const mapDbOUToType = (dbOu: any): OrganizationalUnit => ({
 export async function createOrganizationalUnitAction(
   ouData: OrganizationalUnitInput,
 ): Promise<OUActionState<OrganizationalUnit>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -120,7 +125,8 @@ export async function getOrganizationalUnitsAction(params?: {
   includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
   if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+    // Demo walkthrough (no database): show the representative demo hierarchy so the page renders.
+    return { success: true, message: "No database configured — showing demo units.", data: demoOrganizationalUnits() }
   }
 
   try {
@@ -148,13 +154,24 @@ export async function getOrganizationalUnitsAction(params?: {
 
     if (error) {
       console.error("Error fetching OUs:", error)
+      // a configured-but-unreachable database should not blank the form — fall back to the demo units.
+      if (isDbUnreachable(error)) {
+        return { success: true, message: "Database unreachable — showing demo units.", data: demoOrganizationalUnits() }
+      }
       return { success: false, message: `Failed to fetch OUs: ${error.message}`, data: [] }
     }
 
     const ous = data ? data.map(mapDbOUToType) : []
+    if (ous.length === 0 && isDemoModeEnabled()) {
+      return { success: true, message: "Showing demo units (none in the database yet).", data: demoOrganizationalUnits() }
+    }
     return { success: true, message: "Organizational Units fetched successfully.", data: ous }
   } catch (e: any) {
     console.error("Unexpected error fetching OUs:", e)
+    // a thrown network failure (TypeError: fetch failed) degrades to demo units instead of a hard error.
+    if (isDbUnreachable(e)) {
+      return { success: true, message: "Database unreachable — showing demo units.", data: demoOrganizationalUnits() }
+    }
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
   }
 }
@@ -214,6 +231,9 @@ export async function updateOrganizationalUnitAction(
   id: string,
   ouData: Partial<OrganizationalUnitInput>,
 ): Promise<OUActionState<OrganizationalUnit>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG, errors: { _general: CRITICAL_DB_ERROR_MSG } }
   }
@@ -284,6 +304,9 @@ export async function updateOrganizationalUnitAction(
 }
 
 export async function deleteOrganizationalUnitAction(id: string): Promise<OUActionState<null>> {
+  if (!(await canDo("manage:ous"))) {
+    return { success: false, message: "You do not have permission to manage organizational units." }
+  }
   if (!isSupabaseAdminConfigured()) {
     return { success: false, message: CRITICAL_DB_ERROR_MSG }
   }
@@ -359,7 +382,8 @@ export async function deleteOrganizationalUnitAction(id: string): Promise<OUActi
 
 export async function getGovernanceTiersAction(): Promise<OUActionState<GovernanceTier[]>> {
   if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+    // Demo walkthrough (no database): show the representative demo tiers so the page renders.
+    return { success: true, message: "No database configured — showing demo tiers.", data: demoTiers() }
   }
   try {
     const { data, error } = await supabaseAdmin!
@@ -369,11 +393,23 @@ export async function getGovernanceTiersAction(): Promise<OUActionState<Governan
 
     if (error) {
       console.error("Error fetching governance tiers:", error)
+      // a configured-but-unreachable database should not blank the form — fall back to the demo tiers.
+      if (isDbUnreachable(error)) {
+        return { success: true, message: "Database unreachable — showing demo tiers.", data: demoTiers() }
+      }
       return { success: false, message: `Failed to fetch governance tiers: ${error.message}`, data: [] }
     }
-    return { success: true, message: "Governance tiers fetched successfully.", data: data || [] }
+    const tiers = (data as GovernanceTier[] | null) ?? []
+    if (tiers.length === 0 && isDemoModeEnabled()) {
+      return { success: true, message: "Showing demo tiers (none in the database yet).", data: demoTiers() }
+    }
+    return { success: true, message: "Governance tiers fetched successfully.", data: tiers }
   } catch (e: any) {
     console.error("Unexpected error fetching governance tiers:", e)
+    // a thrown network failure (TypeError: fetch failed) degrades to demo tiers instead of a hard error.
+    if (isDbUnreachable(e)) {
+      return { success: true, message: "Database unreachable — showing demo tiers.", data: demoTiers() }
+    }
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
   }
 }

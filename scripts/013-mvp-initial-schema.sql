@@ -1,95 +1,50 @@
-CREATE TYPE user_role AS ENUM ('STUDENT', 'TEACHER', 'SCHOOL_ADMIN', 'STATE_ADMIN');
+-- VASA-EOS(SE) — core identity schema.
+--
+-- IMPORTANT (production correction): this migration originally shipped a legacy LMS schema (users,
+-- schools, courses, enrolments, assignments, submissions) that (a) defined `users` with a shape the
+-- live app does not use and could not seed into, and (b) defined `courses`/`assignments` that CONFLICT
+-- with the real academic-module tables (scripts/046, scripts/048). It had never run against a real
+-- database. It is now trimmed to the identity tables the platform actually uses, defined correctly and
+-- idempotently; the academic modules own their own tables.
 
-CREATE TABLE schools (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    state TEXT NOT NULL,
-    city TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+-- ── Identity: the users table resolveSubject()/getUserRoleAndSchool() bind the access policy to ────
+create table if not exists public.users (
+  id          text primary key,
+  email       text not null unique,
+  full_name   text not null,
+  role        text not null,                 -- MINISTER / SECRETARY / ADMIN / DIRECTOR / PRINCIPAL / TEACHER / STUDENT / PARENT / …
+  school_id   text,                          -- UDISE code (or null for state-tier roles)
+  status      text not null default 'active',
+  created_at  timestamptz default current_timestamp,
+  updated_at  timestamptz default current_timestamp
 );
 
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Links to auth.users.id
-    email TEXT NOT NULL UNIQUE,
-    full_name TEXT NOT NULL,
-    role user_role NOT NULL, -- 'STUDENT', 'TEACHER', 'SCHOOL_ADMIN', 'STATE_ADMIN'
-    school_id UUID REFERENCES schools(id) ON DELETE SET NULL, -- Nullable for STATE_ADMIN
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+create index if not exists idx_users_email on public.users (email);
+create index if not exists idx_users_role  on public.users (role);
+
+create table if not exists public.schools (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  state       text not null,
+  city        text not null,
+  created_at  timestamptz default current_timestamp,
+  updated_at  timestamptz default current_timestamp
 );
 
-CREATE INDEX idx_users_email ON users (email);
-CREATE INDEX idx_users_role ON users (role);
+-- updated_at trigger (idempotent)
+create or replace function trigger_set_timestamp()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
 
-CREATE TABLE courses (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    description TEXT,
-    school_id UUID REFERENCES schools(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE enrollments (
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-    course_id UUID REFERENCES courses(id) ON DELETE CASCADE NOT NULL,
-    PRIMARY KEY (user_id, course_id),
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE assignments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    course_id UUID REFERENCES courses(id) ON DELETE CASCADE NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    due_date TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE submissions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-    assignment_id UUID REFERENCES assignments(id) ON DELETE CASCADE NOT NULL,
-    submission_text TEXT,
-    submission_file_url TEXT,
-    submitted_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    grade DECIMAL,
-    feedback TEXT,
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE OR REPLACE FUNCTION trigger_set_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON schools
-FOR EACH ROW
-EXECUTE PROCEDURE trigger_set_timestamp();
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON users
-FOR EACH ROW
-EXECUTE PROCEDURE trigger_set_timestamp();
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON courses
-FOR EACH ROW
-EXECUTE PROCEDURE trigger_set_timestamp();
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON assignments
-FOR EACH ROW
-EXECUTE PROCEDURE trigger_set_timestamp();
-
-CREATE TRIGGER set_timestamp
-BEFORE UPDATE ON submissions
-FOR EACH ROW
-EXECUTE PROCEDURE trigger_set_timestamp();
+do $$
+declare t text;
+begin
+  foreach t in array array['schools','users'] loop
+    execute format('drop trigger if exists set_timestamp on public.%I;', t);
+    execute format('create trigger set_timestamp before update on public.%I for each row execute procedure trigger_set_timestamp();', t);
+  end loop;
+end $$;

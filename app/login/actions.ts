@@ -2,7 +2,51 @@
 
 import { z } from "zod"
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
+import { PORTALS, type PortalRole } from "@/config/portals"
+import { demoAuthenticate, isUnreachableError, DEMO_COOKIE } from "@/lib/demo-auth"
+import { isDemoModeEnabled } from "@/lib/supabase/server"
+
+// Demo-login fallback: used only when Supabase Auth is unconfigured or unreachable
+// (the "fetch failed" case). A reachable Supabase always takes precedence. Returns a
+// success LoginState for valid demo credentials, or null so the caller can decide.
+async function tryDemo(email: string, password: string): Promise<LoginState | null> {
+  const role = demoAuthenticate(email, password)
+  if (!role || !PORTALS[role as PortalRole]) return null
+  const cookieStore = await cookies()
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" })
+  return {
+    success: true,
+    message: "Login successful! Redirecting...",
+    redirectPath: PORTALS[role as PortalRole].home,
+  }
+}
+
+// One-click demo sign-in for the walkthrough directory. SECURITY: only honoured when no
+// real database/auth is configured — when Supabase is present, real authentication is
+// required and this redirects to the password login instead of granting a session.
+export async function demoLoginAction(formData: FormData): Promise<void> {
+  const role = String(formData.get("role") ?? "").toUpperCase()
+  if (!isDemoModeEnabled()) redirect("/login?message=Use+your+credentials+to+sign+in.")
+  const portal = PORTALS[role as PortalRole]
+  if (!portal) redirect("/login?error=unknown_role")
+  const cookieStore = await cookies()
+  cookieStore.set(DEMO_COOKIE, role, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" })
+  redirect(portal.home)
+}
+
+const INVALID_CREDS: LoginState = {
+  success: false,
+  message: "Invalid login credentials.",
+  errors: { _general: "Invalid email or password." },
+}
+
+const SERVICE_UNAVAILABLE: LoginState = {
+  success: false,
+  message: "Unable to reach the sign-in service. Please try again.",
+  errors: { _general: "Unable to reach the sign-in service. Please try again." },
+}
 
 const createClient = async () => {
   console.log("--- Inside createClient for loginAction ---")
@@ -38,21 +82,12 @@ const createClient = async () => {
   })
 }
 
-const userRolesEnum = z.enum([
-  "STUDENT",
-  "TEACHER",
-  "ADMIN", // This will map to System Admin
-  "PRINCIPAL",
-  "SUBJECT_INCHARGE",
-  "ACADEMIC_HEAD",
-  "INSTITUTION_HEAD",
-  "PARENT",
-])
-
+// The form role is a UI hint only — the DB role is the source of truth. Accept any
+// of the registered portal roles (see config/portals).
 const loginSchema = z.object({
   email: z.string().email("Invalid email address."),
   password: z.string().min(1, "Password is required."),
-  role: userRolesEnum, // Role from form is for UI, DB role is source of truth
+  role: z.string().min(1, "Please select a role."),
 })
 
 export interface LoginState {
@@ -68,16 +103,6 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   console.log("Attempting to read NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "Exists" : "MISSING")
   console.log("Attempting to read NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "Exists" : "MISSING")
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return {
-      success: false,
-      message: "Server configuration error. Supabase credentials missing.",
-      errors: { _general: "Server configuration error. Please contact support." },
-    }
-  }
-
-  const supabase = await createClient()
 
   const validatedFields = loginSchema.safeParse({
     email: formData.get("email"),
@@ -99,69 +124,51 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
 
   const { email, password } = validatedFields.data
 
-  console.log(`Attempting login for email: ${email}`)
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-
-  if (authError || !authData?.user) {
-    console.error("Authentication error:", authError?.message)
-    return {
-      success: false,
-      message: authError?.message || "Invalid login credentials.",
-      errors: { _general: authError?.message || "Invalid email or password." },
-    }
+  // Demo mode (NEXT_PUBLIC_DEMO_MODE=true, or no real admin DB) OR Supabase not configured →
+  // demo-login fallback (walkthrough mode). This never touches Supabase, so a stale/paused
+  // Supabase URL on a demo deployment can't surface "unable to reach the sign-in service".
+  if (isDemoModeEnabled() || !supabaseUrl || !supabaseAnonKey) {
+    console.warn("Demo mode (or Supabase not configured); using demo-login fallback.")
+    return (await tryDemo(email, password)) ?? INVALID_CREDS
   }
 
-  console.log(`Authentication successful for user ID: ${authData.user.id}. Fetching profile...`)
-  const { data: userProfile, error: profileError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", authData.user.id)
-    .single()
+  try {
+    const supabase = await createClient()
+    console.log(`Attempting login for email: ${email}`)
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (profileError || !userProfile) {
-    console.error("Error fetching user profile from 'users' table:", profileError?.message)
-    console.error("Full profileError object:", JSON.stringify(profileError, null, 2))
-    await supabase.auth.signOut() // Sign out the user if profile fetch fails
-    return {
-      success: false,
-      message: "User profile not found or inaccessible. Please contact support.",
-      errors: { _general: "User profile error. Please contact support." },
+    // Supabase can RETURN a network error (AuthRetryableFetchError "fetch failed")
+    // rather than throwing it — treat that as unreachable and fall back to demo.
+    if (authError) {
+      if (isUnreachableError(authError)) {
+        console.error("Supabase unreachable (returned error); trying demo fallback:", authError.message)
+        return (await tryDemo(email, password)) ?? SERVICE_UNAVAILABLE
+      }
+      console.error("Authentication error:", authError.message)
+      return INVALID_CREDS
     }
-  }
+    if (!authData?.user) return INVALID_CREDS
 
-  console.log(`User profile fetched successfully. Role: ${userProfile.role}`)
-  const actualUserRole = userProfile.role.toUpperCase() as z.infer<typeof userRolesEnum>
+    console.log(`Authentication successful for user ID: ${authData.user.id}. Fetching profile...`)
+    const { data: userProfile, error: profileError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", authData.user.id)
+      .single()
 
-  let redirectPath = "/login?error=unknown_role"
-  switch (actualUserRole) {
-    case "ADMIN":
-      redirectPath = "/admin/dashboard"
-      break
-    case "TEACHER":
-      redirectPath = "/teacher/dashboard"
-      break
-    case "STUDENT":
-      redirectPath = "/student/dashboard"
-      break
-    case "PRINCIPAL":
-      redirectPath = "/principal/dashboard"
-      break
-    case "SUBJECT_INCHARGE":
-      redirectPath = "/subject-incharge/dashboard"
-      break
-    case "ACADEMIC_HEAD":
-      redirectPath = "/academic-head/dashboard"
-      break
-    case "INSTITUTION_HEAD":
-      redirectPath = "/institution-head/dashboard"
-      break
-    case "PARENT":
-      redirectPath = "/parent/dashboard"
-      break
-    default:
+    if (profileError || !userProfile) {
+      console.error("Error fetching user profile from 'users' table:", profileError?.message)
+      await supabase.auth.signOut()
+      return {
+        success: false,
+        message: "User profile not found or inaccessible. Please contact support.",
+        errors: { _general: "User profile error. Please contact support." },
+      }
+    }
+
+    const actualUserRole = userProfile.role.toUpperCase() as PortalRole
+    const portal = PORTALS[actualUserRole]
+    if (!portal) {
       console.warn(`Unknown role encountered after profile fetch: ${userProfile.role}`)
       await supabase.auth.signOut()
       return {
@@ -169,12 +176,14 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
         message: "Unknown user role. Access denied.",
         errors: { _general: "Your account has an unrecognized role." },
       }
-  }
+    }
 
-  console.log(`Login successful! Redirecting to: ${redirectPath}`)
-  return {
-    success: true,
-    message: "Login successful! Redirecting...",
-    redirectPath: redirectPath,
+    console.log(`Login successful! Redirecting to: ${portal.home}`)
+    return { success: true, message: "Login successful! Redirecting...", redirectPath: portal.home }
+  } catch (e) {
+    // Supabase threw (unreachable / "fetch failed") → demo fallback, else a friendly
+    // message — never surface the raw "fetch failed" to the user.
+    console.error("Sign-in failed; trying demo fallback:", e)
+    return (await tryDemo(email, password)) ?? SERVICE_UNAVAILABLE
   }
 }

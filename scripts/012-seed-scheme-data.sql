@@ -45,10 +45,10 @@ DECLARE
     state_gov_school_subtype_id UUID;
     private_aided_subtype_id UUID;
 
-    central_tier_id UUID;
-    state_tier_id UUID;
-    district_tier_id UUID;
-    institutional_tier_id UUID;
+    central_tier_id INTEGER; -- governance_tiers.id is SERIAL/int, not UUID
+    state_tier_id INTEGER;
+    district_tier_id INTEGER;
+    institutional_tier_id INTEGER;
 
     pm_shri_scheme_id UUID;
     nistha_scheme_id UUID;

@@ -71,3 +71,14 @@ export const supabaseAdmin = supabaseAdminInstance
 
 // Helper function to check if the admin client is configured.
 export const isSupabaseAdminConfigured = (): boolean => !!supabaseAdminInstance
+
+// Whether the platform runs in walkthrough/demo mode: the credential-free demo-login session is
+// honoured (and representative demo data is shown). True when there is no database (nothing to
+// secure) OR when the deployment explicitly opts in via NEXT_PUBLIC_DEMO_MODE=true — so a real
+// production deployment with a database stays fail-closed unless it deliberately enables the demo.
+export const isDemoModeEnabled = (): boolean =>
+  process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !isSupabaseAdminConfigured()
+
+// Re-exported from the pure connectivity module so existing `@/lib/supabase/server` imports keep working while
+// the detection logic stays dependency-free and unit-testable.
+export { isDbUnreachable } from "./connectivity"

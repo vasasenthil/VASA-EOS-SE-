@@ -21,7 +21,7 @@ import { DeletePolicyButton } from "./components/delete-policy-button"
 import { PolicyFilters } from "./components/policy-filters"
 import { PolicyPagination } from "./components/policy-pagination"
 import { HighlightedText } from "./components/highlighted-text"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 import { SeedDataButton } from "./components/seed-data-button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -155,6 +155,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
     totalPages,
     itemsPerPage: effectiveItemsPerPage,
     error: policiesError,
+    demo: isDemo,
   } = policiesResponse
 
   const currentFiltersSearchAndDateForHeader = {
@@ -191,6 +192,12 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
             </div>
           </CardHeader>
           <CardContent>
+            {isDemo ? (
+              <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                Showing representative <strong>demo policies</strong> — no database is configured. Provision Supabase and
+                seed to manage live policy drafts.
+              </div>
+            ) : null}
             <PolicyFilters />
             {policiesError ? (
               <div className="text-center py-10 px-4 bg-red-50 border border-red-200 rounded-md">
@@ -336,10 +343,10 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
                           </TableCell>
                           <TableCell className="hidden md:table-cell">{policy.version}</TableCell>
                           <TableCell className="hidden lg:table-cell">
-                            {policy.createdAt ? format(new Date(policy.createdAt), "dd MMM yyyy, HH:mm") : "N/A"}
+                            {safeDate(policy.createdAt, "dd MMM yyyy, HH:mm")}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            {policy.lastModified ? format(new Date(policy.lastModified), "dd MMM yyyy, HH:mm") : "N/A"}
+                            {safeDate(policy.lastModified, "dd MMM yyyy, HH:mm")}
                           </TableCell>
                           <TableCell className="text-right space-x-1">
                             <Tooltip>
@@ -386,7 +393,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
               Showing {policies.length} of {totalCount} polic{totalCount === 1 ? "y" : "ies"}.
               {totalPages > 1 && ` Page ${currentPage} of ${totalPages}.`} (Displaying {effectiveItemsPerPage} per page)
             </span>
-            <form action={async () => { await clearPoliciesAction() }} className="w-full sm:w-auto sm:ml-auto">
+            <form action={async () => { "use server"; await clearPoliciesAction() }} className="w-full sm:w-auto sm:ml-auto">
               <Button
                 type="submit"
                 variant="ghost"

@@ -1,6 +1,6 @@
 import type React from "react"
 import Link from "next/link"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -80,6 +80,7 @@ export default async function PolicyTrackerDashboardPage({ searchParams }: Polic
     distinctStatuses = [],
     distinctRegionTypes = [],
     error,
+    demo,
   } = await getTrackerDashboardData(currentFilters)
 
   if (error && !stats.length && !policyProgress.length) {
@@ -97,6 +98,12 @@ export default async function PolicyTrackerDashboardPage({ searchParams }: Polic
 
   return (
     <main className="container mx-auto p-4 md:p-8 space-y-6">
+      {demo ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          Showing representative <strong>demo data</strong> — no database is configured. Provision Supabase and seed to
+          see live NEP-implementation tracking.
+        </div>
+      ) : null}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <Breadcrumb>
           <BreadcrumbList>
@@ -224,7 +231,7 @@ export default async function PolicyTrackerDashboardPage({ searchParams }: Polic
                           </TableCell>
                           <TableCell className="text-center hidden md:table-cell">{policy.statesAffected}</TableCell>
                           <TableCell className="hidden sm:table-cell">
-                            {format(new Date(policy.lastUpdate), "dd MMM yyyy")}
+                            {safeDate(policy.lastUpdate, "dd MMM yyyy")}
                           </TableCell>
                           <TableCell className="text-right">
                             {policy.implementation_status_id ? (

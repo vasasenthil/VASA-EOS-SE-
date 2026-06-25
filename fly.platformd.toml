@@ -1,0 +1,33 @@
+# Fly.io config for the platformd demo harness — gives the merged platform a public URL.
+#   fly launch --copy-config --config fly.platformd.toml --dockerfile Dockerfile.platformd
+#   fly deploy --config fly.platformd.toml
+#
+# Set `app` to your Fly app name. `bom` (Mumbai) is the closest region; note it is NOT the sovereign TN State
+# Data Centre — this is a demo host only (residency caveat; production runs in TN-SDC, BLOCKERS B-001).
+
+app = "vasa-eos-se-tn-platformd"
+primary_region = "bom"
+
+[build]
+  dockerfile = "Dockerfile.platformd"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/healthz"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

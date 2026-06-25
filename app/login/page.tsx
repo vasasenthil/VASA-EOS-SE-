@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { loginAction, type LoginState } from "./actions"
 import { useToast } from "@/components/ui/use-toast"
+import { PORTALS } from "@/config/portals"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Terminal } from "lucide-react"
 import { useActionState } from "react"
@@ -25,16 +26,22 @@ function SubmitButton({ isPending }: { isPending: boolean }) {
   )
 }
 
-// Define roles for the dropdown
-const userRoles = [
-  { value: "STUDENT", label: "Student" },
-  { value: "TEACHER", label: "Teacher" },
-  { value: "PRINCIPAL", label: "Principal" },
-  { value: "SUBJECT_INCHARGE", label: "Subject Incharge" },
-  { value: "ACADEMIC_HEAD", label: "Academic Head" },
-  { value: "INSTITUTION_HEAD", label: "Institution Head" },
-  { value: "ADMIN", label: "System Admin" }, // Assuming 'ADMIN' maps to System Admin
-]
+// Roles for the dropdown — derived from the portal registry (single source of truth)
+// so every governance-hierarchy role is selectable, ordered by tier.
+const TIER_ORDER: Record<string, number> = {
+  state: 0,
+  national: 1,
+  directorate: 2,
+  district: 3,
+  block: 4,
+  cluster: 5,
+  school: 6,
+  public: 7,
+}
+const userRoles = Object.values(PORTALS)
+  .slice()
+  .sort((a, b) => (TIER_ORDER[a.tier] ?? 99) - (TIER_ORDER[b.tier] ?? 99))
+  .map((p) => ({ value: p.role, label: p.label }))
 
 export default function LoginPage() {
   const router = useRouter()
@@ -133,6 +140,9 @@ export default function LoginPage() {
           </form>
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2">
+          <Link href="/login/stakeholders" className="text-sm font-medium text-primary hover:underline">
+            Browse all stakeholder roles & one-click demo sign-in →
+          </Link>
           <Link href="#" className="text-sm text-muted-foreground hover:text-primary">
             Forgot your password?
           </Link>

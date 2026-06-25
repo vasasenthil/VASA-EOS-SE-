@@ -1,7 +1,7 @@
 import type React from "react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -141,28 +141,20 @@ export default async function ImplementationDetailPage({ params }: Implementatio
             </DetailItem>
             <DetailItem
               label="Target Completion"
-              value={
-                implementationStatus.target_completion_date
-                  ? format(new Date(implementationStatus.target_completion_date), "dd MMM yyyy")
-                  : "N/A"
-              }
+              value={safeDate(implementationStatus.target_completion_date, "dd MMM yyyy")}
               icon={CalendarCheck2}
             />
             {implementationStatus.actual_completion_date && (
               <DetailItem
                 label="Actual Completion"
-                value={format(new Date(implementationStatus.actual_completion_date), "dd MMM yyyy")}
+                value={safeDate(implementationStatus.actual_completion_date, "dd MMM yyyy")}
                 icon={CalendarCheck2}
               />
             )}
             <DetailItem label="Last Updated By" value={implementationStatus.last_updated_by || "N/A"} icon={Info} />
             <DetailItem
               label="Last Update On"
-              value={
-                implementationStatus.updated_at
-                  ? format(new Date(implementationStatus.updated_at), "dd MMM yyyy, HH:mm")
-                  : "N/A"
-              }
+              value={safeDate(implementationStatus.updated_at, "dd MMM yyyy, HH:mm")}
               icon={CalendarCheck2}
             />
           </div>

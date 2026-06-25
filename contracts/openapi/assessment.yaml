@@ -1,0 +1,328 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — assessment API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the assessment domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0142
+    description: "Formative Assessment"
+  - name: M0143
+    description: "Summative Assessment"
+  - name: M0144
+    description: "Diagnostic Assessment"
+  - name: M0145
+    description: "FLN Assessment (NIPUN)"
+  - name: M0146
+    description: "NAS Instrumentation"
+  - name: M0147
+    description: "Board-Equivalent Assessment"
+  - name: M0148
+    description: "PISA-Grade Item Engine"
+  - name: M0149
+    description: "Item-Response Theory (IRT)"
+  - name: M0150
+    description: "Item Bank"
+  - name: M0151
+    description: "Question-Paper Generation"
+  - name: M0152
+    description: "Auto-Marking (objective)"
+  - name: M0153
+    description: "Essay Grading (LLM + human override)"
+  - name: M0154
+    description: "Handwriting OCR (IndicConformer)"
+  - name: M0155
+    description: "OMR Scoring"
+  - name: M0156
+    description: "Rubric Engine"
+  - name: M0157
+    description: "Accessibility-Accommodated Assessment"
+  - name: M0158
+    description: "Extra-Time / Scribe Accommodation (RPwD)"
+  - name: M0159
+    description: "Result Computation"
+  - name: M0160
+    description: "Result Publication"
+  - name: M0161
+    description: "Re-Evaluation"
+  - name: M0162
+    description: "Grade-Card Generation"
+  - name: M0163
+    description: "Continuous Comprehensive Evaluation"
+  - name: M0164
+    description: "Practical / Lab Assessment"
+  - name: M0165
+    description: "Project Assessment"
+  - name: M0166
+    description: "Peer Assessment"
+  - name: M0167
+    description: "Self Assessment"
+  - name: M0168
+    description: "Assessment Calendar"
+  - name: M0169
+    description: "Seating-Plan Generation"
+  - name: M0170
+    description: "Exam-Integrity Monitor"
+  - name: M0171
+    description: "Malpractice Workflow"
+  - name: M0172
+    description: "Question-Paper Security"
+  - name: M0173
+    description: "Assessment Analytics"
+  - name: M0174
+    description: "Competency Mastery Tracking"
+  - name: M0175
+    description: "Adaptive Practice"
+  - name: M0176
+    description: "DGE Board Exam Integration"
+paths:
+  /formative-assessment:
+    get: { tags: [M0142], summary: "List Formative Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0142], summary: "Create Formative Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /formative-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0142], summary: "Get Formative Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0142], summary: "Update Formative Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /summative-assessment:
+    get: { tags: [M0143], summary: "List Summative Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0143], summary: "Create Summative Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /summative-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0143], summary: "Get Summative Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0143], summary: "Update Summative Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /diagnostic-assessment:
+    get: { tags: [M0144], summary: "List Diagnostic Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0144], summary: "Create Diagnostic Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /diagnostic-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0144], summary: "Get Diagnostic Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0144], summary: "Update Diagnostic Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /fln-assessment-nipun:
+    get: { tags: [M0145], summary: "List FLN Assessment (NIPUN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0145], summary: "Create FLN Assessment (NIPUN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /fln-assessment-nipun/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0145], summary: "Get FLN Assessment (NIPUN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0145], summary: "Update FLN Assessment (NIPUN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /nas-instrumentation:
+    get: { tags: [M0146], summary: "List NAS Instrumentation", responses: { '200': { description: ok } } }
+    post: { tags: [M0146], summary: "Create NAS Instrumentation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /nas-instrumentation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0146], summary: "Get NAS Instrumentation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0146], summary: "Update NAS Instrumentation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /board-equivalent-assessment:
+    get: { tags: [M0147], summary: "List Board-Equivalent Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0147], summary: "Create Board-Equivalent Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /board-equivalent-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0147], summary: "Get Board-Equivalent Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0147], summary: "Update Board-Equivalent Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pisa-grade-item-engine:
+    get: { tags: [M0148], summary: "List PISA-Grade Item Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0148], summary: "Create PISA-Grade Item Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pisa-grade-item-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0148], summary: "Get PISA-Grade Item Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0148], summary: "Update PISA-Grade Item Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /item-response-theory-irt:
+    get: { tags: [M0149], summary: "List Item-Response Theory (IRT)", responses: { '200': { description: ok } } }
+    post: { tags: [M0149], summary: "Create Item-Response Theory (IRT)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /item-response-theory-irt/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0149], summary: "Get Item-Response Theory (IRT)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0149], summary: "Update Item-Response Theory (IRT)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /item-bank:
+    get: { tags: [M0150], summary: "List Item Bank", responses: { '200': { description: ok } } }
+    post: { tags: [M0150], summary: "Create Item Bank", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /item-bank/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0150], summary: "Get Item Bank", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0150], summary: "Update Item Bank", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /question-paper-generation:
+    get: { tags: [M0151], summary: "List Question-Paper Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0151], summary: "Create Question-Paper Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /question-paper-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0151], summary: "Get Question-Paper Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0151], summary: "Update Question-Paper Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /auto-marking-objective:
+    get: { tags: [M0152], summary: "List Auto-Marking (objective)", responses: { '200': { description: ok } } }
+    post: { tags: [M0152], summary: "Create Auto-Marking (objective)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /auto-marking-objective/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0152], summary: "Get Auto-Marking (objective)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0152], summary: "Update Auto-Marking (objective)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /essay-grading-llm-human-override:
+    get: { tags: [M0153], summary: "List Essay Grading (LLM + human override)", responses: { '200': { description: ok } } }
+    post: { tags: [M0153], summary: "Create Essay Grading (LLM + human override)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /essay-grading-llm-human-override/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0153], summary: "Get Essay Grading (LLM + human override)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0153], summary: "Update Essay Grading (LLM + human override)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /handwriting-ocr-indicconformer:
+    get: { tags: [M0154], summary: "List Handwriting OCR (IndicConformer)", responses: { '200': { description: ok } } }
+    post: { tags: [M0154], summary: "Create Handwriting OCR (IndicConformer)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /handwriting-ocr-indicconformer/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0154], summary: "Get Handwriting OCR (IndicConformer)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0154], summary: "Update Handwriting OCR (IndicConformer)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /omr-scoring:
+    get: { tags: [M0155], summary: "List OMR Scoring", responses: { '200': { description: ok } } }
+    post: { tags: [M0155], summary: "Create OMR Scoring", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /omr-scoring/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0155], summary: "Get OMR Scoring", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0155], summary: "Update OMR Scoring", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rubric-engine:
+    get: { tags: [M0156], summary: "List Rubric Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0156], summary: "Create Rubric Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rubric-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0156], summary: "Get Rubric Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0156], summary: "Update Rubric Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /accessibility-accommodated-assessment:
+    get: { tags: [M0157], summary: "List Accessibility-Accommodated Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0157], summary: "Create Accessibility-Accommodated Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /accessibility-accommodated-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0157], summary: "Get Accessibility-Accommodated Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0157], summary: "Update Accessibility-Accommodated Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /extra-time-scribe-accommodation-rpwd:
+    get: { tags: [M0158], summary: "List Extra-Time / Scribe Accommodation (RPwD)", responses: { '200': { description: ok } } }
+    post: { tags: [M0158], summary: "Create Extra-Time / Scribe Accommodation (RPwD)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /extra-time-scribe-accommodation-rpwd/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0158], summary: "Get Extra-Time / Scribe Accommodation (RPwD)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0158], summary: "Update Extra-Time / Scribe Accommodation (RPwD)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /result-computation:
+    get: { tags: [M0159], summary: "List Result Computation", responses: { '200': { description: ok } } }
+    post: { tags: [M0159], summary: "Create Result Computation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /result-computation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0159], summary: "Get Result Computation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0159], summary: "Update Result Computation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /result-publication:
+    get: { tags: [M0160], summary: "List Result Publication", responses: { '200': { description: ok } } }
+    post: { tags: [M0160], summary: "Create Result Publication", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /result-publication/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0160], summary: "Get Result Publication", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0160], summary: "Update Result Publication", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /re-evaluation:
+    get: { tags: [M0161], summary: "List Re-Evaluation", responses: { '200': { description: ok } } }
+    post: { tags: [M0161], summary: "Create Re-Evaluation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /re-evaluation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0161], summary: "Get Re-Evaluation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0161], summary: "Update Re-Evaluation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grade-card-generation:
+    get: { tags: [M0162], summary: "List Grade-Card Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0162], summary: "Create Grade-Card Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grade-card-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0162], summary: "Get Grade-Card Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0162], summary: "Update Grade-Card Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /continuous-comprehensive-evaluation:
+    get: { tags: [M0163], summary: "List Continuous Comprehensive Evaluation", responses: { '200': { description: ok } } }
+    post: { tags: [M0163], summary: "Create Continuous Comprehensive Evaluation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /continuous-comprehensive-evaluation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0163], summary: "Get Continuous Comprehensive Evaluation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0163], summary: "Update Continuous Comprehensive Evaluation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /practical-lab-assessment:
+    get: { tags: [M0164], summary: "List Practical / Lab Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0164], summary: "Create Practical / Lab Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /practical-lab-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0164], summary: "Get Practical / Lab Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0164], summary: "Update Practical / Lab Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /project-assessment:
+    get: { tags: [M0165], summary: "List Project Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0165], summary: "Create Project Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /project-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0165], summary: "Get Project Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0165], summary: "Update Project Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /peer-assessment:
+    get: { tags: [M0166], summary: "List Peer Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0166], summary: "Create Peer Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /peer-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0166], summary: "Get Peer Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0166], summary: "Update Peer Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /self-assessment:
+    get: { tags: [M0167], summary: "List Self Assessment", responses: { '200': { description: ok } } }
+    post: { tags: [M0167], summary: "Create Self Assessment", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /self-assessment/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0167], summary: "Get Self Assessment", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0167], summary: "Update Self Assessment", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /assessment-calendar:
+    get: { tags: [M0168], summary: "List Assessment Calendar", responses: { '200': { description: ok } } }
+    post: { tags: [M0168], summary: "Create Assessment Calendar", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /assessment-calendar/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0168], summary: "Get Assessment Calendar", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0168], summary: "Update Assessment Calendar", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /seating-plan-generation:
+    get: { tags: [M0169], summary: "List Seating-Plan Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0169], summary: "Create Seating-Plan Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /seating-plan-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0169], summary: "Get Seating-Plan Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0169], summary: "Update Seating-Plan Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /exam-integrity-monitor:
+    get: { tags: [M0170], summary: "List Exam-Integrity Monitor", responses: { '200': { description: ok } } }
+    post: { tags: [M0170], summary: "Create Exam-Integrity Monitor", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /exam-integrity-monitor/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0170], summary: "Get Exam-Integrity Monitor", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0170], summary: "Update Exam-Integrity Monitor", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /malpractice-workflow:
+    get: { tags: [M0171], summary: "List Malpractice Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0171], summary: "Create Malpractice Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /malpractice-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0171], summary: "Get Malpractice Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0171], summary: "Update Malpractice Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /question-paper-security:
+    get: { tags: [M0172], summary: "List Question-Paper Security", responses: { '200': { description: ok } } }
+    post: { tags: [M0172], summary: "Create Question-Paper Security", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /question-paper-security/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0172], summary: "Get Question-Paper Security", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0172], summary: "Update Question-Paper Security", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /assessment-analytics:
+    get: { tags: [M0173], summary: "List Assessment Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0173], summary: "Create Assessment Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /assessment-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0173], summary: "Get Assessment Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0173], summary: "Update Assessment Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /competency-mastery-tracking:
+    get: { tags: [M0174], summary: "List Competency Mastery Tracking", responses: { '200': { description: ok } } }
+    post: { tags: [M0174], summary: "Create Competency Mastery Tracking", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /competency-mastery-tracking/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0174], summary: "Get Competency Mastery Tracking", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0174], summary: "Update Competency Mastery Tracking", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /adaptive-practice:
+    get: { tags: [M0175], summary: "List Adaptive Practice", responses: { '200': { description: ok } } }
+    post: { tags: [M0175], summary: "Create Adaptive Practice", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /adaptive-practice/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0175], summary: "Get Adaptive Practice", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0175], summary: "Update Adaptive Practice", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dge-board-exam-integration:
+    get: { tags: [M0176], summary: "List DGE Board Exam Integration", responses: { '200': { description: ok } } }
+    post: { tags: [M0176], summary: "Create DGE Board Exam Integration", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dge-board-exam-integration/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0176], summary: "Get DGE Board Exam Integration", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0176], summary: "Update DGE Board Exam Integration", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

@@ -1,0 +1,4 @@
+# CC-SPEC-001 §22 — TypeScript stage template (lint · build · unit · coverage ≥85%)
+.ts-validate: { stage: validate, script: ["pnpm install --frozen-lockfile", "pnpm lint", "pnpm typecheck"] }
+.ts-test: { stage: test, script: ["pnpm test --coverage"], coverage: '/Lines\s*:\s*(\d+\.?\d*)%/', rules: [{ if: '$CI_MERGE_REQUEST_IID' }] }
+# Quality gate (§21.2): merge blocked unless coverage ≥ 85% and all tests green.

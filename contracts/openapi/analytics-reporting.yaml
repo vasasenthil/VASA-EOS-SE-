@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — analytics-reporting API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the analytics-reporting domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0270
+    description: "District Scorecard"
+  - name: M0271
+    description: "Block Scorecard"
+  - name: M0272
+    description: "School Scorecard"
+  - name: M0273
+    description: "TN Quality Index"
+  - name: M0274
+    description: "Opportunity-Gap Index"
+  - name: M0275
+    description: "Equity-Weighted Resource Allocation"
+  - name: M0276
+    description: "Equity Index"
+  - name: M0277
+    description: "Enrolment Dashboard"
+  - name: M0278
+    description: "Attendance Analytics"
+  - name: M0279
+    description: "Dropout Early-Warning"
+  - name: M0280
+    description: "Learning-Outcome Analytics"
+  - name: M0281
+    description: "FLN Analytics"
+  - name: M0282
+    description: "NAS Dashboard"
+  - name: M0283
+    description: "Gender-Parity Index"
+  - name: M0284
+    description: "Social-Category Disaggregation"
+  - name: M0285
+    description: "RPwD Inclusion Dashboard"
+  - name: M0286
+    description: "SDG 4/5/10/16 Dashboards"
+  - name: M0287
+    description: "Scheme-Delivery Analytics"
+  - name: M0288
+    description: "Fund-Utilisation Analytics"
+  - name: M0289
+    description: "Teacher-Deployment Analytics"
+  - name: M0290
+    description: "Infrastructure Telemetry Analytics"
+  - name: M0291
+    description: "Predictive Outcome Model"
+  - name: M0292
+    description: "Causal Impact (DoWhy)"
+  - name: M0293
+    description: "Time-Series Forecast (NeuralProphet)"
+  - name: M0294
+    description: "Anomaly Detection"
+  - name: M0295
+    description: "VSK / Vidya Samiksha Kendra"
+  - name: M0296
+    description: "Open-Data Aggregation (suppressed)"
+  - name: M0297
+    description: "Press / Researcher API"
+  - name: M0298
+    description: "ESG Indicators"
+  - name: M0299
+    description: "STARS / GovTech Reporting Hooks"
+paths:
+  /district-scorecard:
+    get: { tags: [M0270], summary: "List District Scorecard", responses: { '200': { description: ok } } }
+    post: { tags: [M0270], summary: "Create District Scorecard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /district-scorecard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0270], summary: "Get District Scorecard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0270], summary: "Update District Scorecard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /block-scorecard:
+    get: { tags: [M0271], summary: "List Block Scorecard", responses: { '200': { description: ok } } }
+    post: { tags: [M0271], summary: "Create Block Scorecard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /block-scorecard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0271], summary: "Get Block Scorecard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0271], summary: "Update Block Scorecard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /school-scorecard:
+    get: { tags: [M0272], summary: "List School Scorecard", responses: { '200': { description: ok } } }
+    post: { tags: [M0272], summary: "Create School Scorecard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /school-scorecard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0272], summary: "Get School Scorecard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0272], summary: "Update School Scorecard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /tn-quality-index:
+    get: { tags: [M0273], summary: "List TN Quality Index", responses: { '200': { description: ok } } }
+    post: { tags: [M0273], summary: "Create TN Quality Index", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /tn-quality-index/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0273], summary: "Get TN Quality Index", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0273], summary: "Update TN Quality Index", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /opportunity-gap-index:
+    get: { tags: [M0274], summary: "List Opportunity-Gap Index", responses: { '200': { description: ok } } }
+    post: { tags: [M0274], summary: "Create Opportunity-Gap Index", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /opportunity-gap-index/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0274], summary: "Get Opportunity-Gap Index", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0274], summary: "Update Opportunity-Gap Index", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /equity-weighted-resource-allocation:
+    get: { tags: [M0275], summary: "List Equity-Weighted Resource Allocation", responses: { '200': { description: ok } } }
+    post: { tags: [M0275], summary: "Create Equity-Weighted Resource Allocation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /equity-weighted-resource-allocation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0275], summary: "Get Equity-Weighted Resource Allocation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0275], summary: "Update Equity-Weighted Resource Allocation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /equity-index:
+    get: { tags: [M0276], summary: "List Equity Index", responses: { '200': { description: ok } } }
+    post: { tags: [M0276], summary: "Create Equity Index", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /equity-index/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0276], summary: "Get Equity Index", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0276], summary: "Update Equity Index", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /enrolment-dashboard:
+    get: { tags: [M0277], summary: "List Enrolment Dashboard", responses: { '200': { description: ok } } }
+    post: { tags: [M0277], summary: "Create Enrolment Dashboard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /enrolment-dashboard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0277], summary: "Get Enrolment Dashboard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0277], summary: "Update Enrolment Dashboard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /attendance-analytics:
+    get: { tags: [M0278], summary: "List Attendance Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0278], summary: "Create Attendance Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /attendance-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0278], summary: "Get Attendance Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0278], summary: "Update Attendance Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dropout-early-warning:
+    get: { tags: [M0279], summary: "List Dropout Early-Warning", responses: { '200': { description: ok } } }
+    post: { tags: [M0279], summary: "Create Dropout Early-Warning", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dropout-early-warning/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0279], summary: "Get Dropout Early-Warning", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0279], summary: "Update Dropout Early-Warning", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /learning-outcome-analytics:
+    get: { tags: [M0280], summary: "List Learning-Outcome Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0280], summary: "Create Learning-Outcome Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /learning-outcome-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0280], summary: "Get Learning-Outcome Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0280], summary: "Update Learning-Outcome Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /fln-analytics:
+    get: { tags: [M0281], summary: "List FLN Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0281], summary: "Create FLN Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /fln-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0281], summary: "Get FLN Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0281], summary: "Update FLN Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /nas-dashboard:
+    get: { tags: [M0282], summary: "List NAS Dashboard", responses: { '200': { description: ok } } }
+    post: { tags: [M0282], summary: "Create NAS Dashboard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /nas-dashboard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0282], summary: "Get NAS Dashboard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0282], summary: "Update NAS Dashboard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /gender-parity-index:
+    get: { tags: [M0283], summary: "List Gender-Parity Index", responses: { '200': { description: ok } } }
+    post: { tags: [M0283], summary: "Create Gender-Parity Index", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /gender-parity-index/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0283], summary: "Get Gender-Parity Index", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0283], summary: "Update Gender-Parity Index", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /social-category-disaggregation:
+    get: { tags: [M0284], summary: "List Social-Category Disaggregation", responses: { '200': { description: ok } } }
+    post: { tags: [M0284], summary: "Create Social-Category Disaggregation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /social-category-disaggregation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0284], summary: "Get Social-Category Disaggregation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0284], summary: "Update Social-Category Disaggregation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rpwd-inclusion-dashboard:
+    get: { tags: [M0285], summary: "List RPwD Inclusion Dashboard", responses: { '200': { description: ok } } }
+    post: { tags: [M0285], summary: "Create RPwD Inclusion Dashboard", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rpwd-inclusion-dashboard/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0285], summary: "Get RPwD Inclusion Dashboard", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0285], summary: "Update RPwD Inclusion Dashboard", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /sdg-4-5-10-16-dashboards:
+    get: { tags: [M0286], summary: "List SDG 4/5/10/16 Dashboards", responses: { '200': { description: ok } } }
+    post: { tags: [M0286], summary: "Create SDG 4/5/10/16 Dashboards", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /sdg-4-5-10-16-dashboards/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0286], summary: "Get SDG 4/5/10/16 Dashboards", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0286], summary: "Update SDG 4/5/10/16 Dashboards", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scheme-delivery-analytics:
+    get: { tags: [M0287], summary: "List Scheme-Delivery Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0287], summary: "Create Scheme-Delivery Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scheme-delivery-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0287], summary: "Get Scheme-Delivery Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0287], summary: "Update Scheme-Delivery Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /fund-utilisation-analytics:
+    get: { tags: [M0288], summary: "List Fund-Utilisation Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0288], summary: "Create Fund-Utilisation Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /fund-utilisation-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0288], summary: "Get Fund-Utilisation Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0288], summary: "Update Fund-Utilisation Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-deployment-analytics:
+    get: { tags: [M0289], summary: "List Teacher-Deployment Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0289], summary: "Create Teacher-Deployment Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-deployment-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0289], summary: "Get Teacher-Deployment Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0289], summary: "Update Teacher-Deployment Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /infrastructure-telemetry-analytics:
+    get: { tags: [M0290], summary: "List Infrastructure Telemetry Analytics", responses: { '200': { description: ok } } }
+    post: { tags: [M0290], summary: "Create Infrastructure Telemetry Analytics", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /infrastructure-telemetry-analytics/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0290], summary: "Get Infrastructure Telemetry Analytics", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0290], summary: "Update Infrastructure Telemetry Analytics", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /predictive-outcome-model:
+    get: { tags: [M0291], summary: "List Predictive Outcome Model", responses: { '200': { description: ok } } }
+    post: { tags: [M0291], summary: "Create Predictive Outcome Model", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /predictive-outcome-model/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0291], summary: "Get Predictive Outcome Model", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0291], summary: "Update Predictive Outcome Model", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /causal-impact-dowhy:
+    get: { tags: [M0292], summary: "List Causal Impact (DoWhy)", responses: { '200': { description: ok } } }
+    post: { tags: [M0292], summary: "Create Causal Impact (DoWhy)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /causal-impact-dowhy/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0292], summary: "Get Causal Impact (DoWhy)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0292], summary: "Update Causal Impact (DoWhy)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /time-series-forecast-neuralprophet:
+    get: { tags: [M0293], summary: "List Time-Series Forecast (NeuralProphet)", responses: { '200': { description: ok } } }
+    post: { tags: [M0293], summary: "Create Time-Series Forecast (NeuralProphet)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /time-series-forecast-neuralprophet/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0293], summary: "Get Time-Series Forecast (NeuralProphet)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0293], summary: "Update Time-Series Forecast (NeuralProphet)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /anomaly-detection:
+    get: { tags: [M0294], summary: "List Anomaly Detection", responses: { '200': { description: ok } } }
+    post: { tags: [M0294], summary: "Create Anomaly Detection", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /anomaly-detection/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0294], summary: "Get Anomaly Detection", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0294], summary: "Update Anomaly Detection", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /vsk-vidya-samiksha-kendra:
+    get: { tags: [M0295], summary: "List VSK / Vidya Samiksha Kendra", responses: { '200': { description: ok } } }
+    post: { tags: [M0295], summary: "Create VSK / Vidya Samiksha Kendra", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /vsk-vidya-samiksha-kendra/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0295], summary: "Get VSK / Vidya Samiksha Kendra", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0295], summary: "Update VSK / Vidya Samiksha Kendra", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /open-data-aggregation-suppressed:
+    get: { tags: [M0296], summary: "List Open-Data Aggregation (suppressed)", responses: { '200': { description: ok } } }
+    post: { tags: [M0296], summary: "Create Open-Data Aggregation (suppressed)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /open-data-aggregation-suppressed/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0296], summary: "Get Open-Data Aggregation (suppressed)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0296], summary: "Update Open-Data Aggregation (suppressed)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /press-researcher-api:
+    get: { tags: [M0297], summary: "List Press / Researcher API", responses: { '200': { description: ok } } }
+    post: { tags: [M0297], summary: "Create Press / Researcher API", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /press-researcher-api/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0297], summary: "Get Press / Researcher API", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0297], summary: "Update Press / Researcher API", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /esg-indicators:
+    get: { tags: [M0298], summary: "List ESG Indicators", responses: { '200': { description: ok } } }
+    post: { tags: [M0298], summary: "Create ESG Indicators", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /esg-indicators/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0298], summary: "Get ESG Indicators", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0298], summary: "Update ESG Indicators", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /stars-govtech-reporting-hooks:
+    get: { tags: [M0299], summary: "List STARS / GovTech Reporting Hooks", responses: { '200': { description: ok } } }
+    post: { tags: [M0299], summary: "Create STARS / GovTech Reporting Hooks", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /stars-govtech-reporting-hooks/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0299], summary: "Get STARS / GovTech Reporting Hooks", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0299], summary: "Update STARS / GovTech Reporting Hooks", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

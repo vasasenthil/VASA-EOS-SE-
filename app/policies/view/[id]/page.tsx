@@ -32,7 +32,7 @@ import { Separator } from "@/components/ui/separator"
 import { getPolicyByIdAction } from "@/app/policies/create/actions" // CORRECTED/VERIFIED IMPORT
 import type { PolicyDraft, FileMetadata, PolicyStatus } from "@/app/policies/create/policy-form-constants"
 import PolicyStatusUpdater from "@/app/policies/components/policy-status-updater"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 
 // Helper to get status icon and color
 const getStatusVisuals = (
@@ -191,7 +191,7 @@ export default function ViewPolicyPage() {
               <CardTitle className="text-3xl font-bold text-gray-800">{policy.title}</CardTitle>
               <CardDescription className="text-md text-gray-600 mt-1">
                 Version: {policy.version} &bull; Last Modified:{" "}
-                {policy.lastModified ? format(new Date(policy.lastModified), "PPP p") : "N/A"}
+                {safeDate(policy.lastModified, "PPP p")}
               </CardDescription>
             </div>
             <div className="flex flex-col items-end space-y-2">
@@ -257,7 +257,7 @@ export default function ViewPolicyPage() {
                   : "N/A"}
               </DetailItem>
               <DetailItem label="Created At" icon={CalendarDays}>
-                {policy.createdAt ? format(new Date(policy.createdAt), "PPP p") : "N/A"}
+                {safeDate(policy.createdAt, "PPP p")}
               </DetailItem>
             </div>
           </section>
@@ -310,7 +310,7 @@ export default function ViewPolicyPage() {
                                 </Badge>
                               </p>
                               <p className="text-xs text-gray-500 mt-0.5">
-                                {format(new Date(entry.modified_at), "MMM d, yyyy, h:mm a")}
+                                {safeDate(entry.modified_at, "MMM d, yyyy, h:mm a")}
                               </p>
                             </div>
                           </div>

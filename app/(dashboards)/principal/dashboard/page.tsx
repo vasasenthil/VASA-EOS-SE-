@@ -16,6 +16,9 @@ import {
   Wrench,
   Bell,
   ArrowUpRight,
+  Vote,
+  Stamp,
+  FilePlus,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -25,74 +28,44 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
 import { RadarChart } from "@/components/charts/radar-chart"
 import { CHART_COLORS } from "@/components/charts/chart-colors"
+import { listTicketFlowsAction } from "@/app/maintenance-approvals/actions"
+import { listResolutionsAction } from "@/app/smc-approvals/actions"
+import { listClassAttendanceAction } from "@/app/attendance/actions"
+import { latestFeeCollectionAction } from "@/app/fees/actions"
+import { latestTeacherPresenceAction } from "@/app/staff-attendance/actions"
+import { latestEnrolmentAction } from "@/app/enrolment/actions"
+import { listDropoutRiskAction } from "@/app/dropout/actions"
+import { listComplianceAction } from "@/app/compliance/actions"
+import { listSyllabusAction } from "@/app/syllabus/actions"
+import { listAssessmentsAction } from "@/app/assessment-schedule/actions"
+import { listNoticesAction } from "@/app/notices/actions"
+import { sortNotices } from "@/lib/notices"
+import { rollup } from "@/lib/attendance/class-day"
+import { viewFor, inrLakh } from "@/lib/fees/collection"
+import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
+import { summarise as summariseSyllabus } from "@/lib/syllabus"
+import { currentStep } from "@/lib/workflow"
+import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
 
-// --- Mock School Operational Data (Module 70.4) ---
-const schoolStats = [
-  { label: "Total Students", value: "1,248", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
-  { label: "Teachers Present", value: "38 / 42", icon: Users, color: "text-green-600", bg: "bg-green-50" },
-  { label: "Student Attendance", value: "91.4%", icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
-  { label: "Fee Collection (Apr)", value: "₹8.4L", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
-]
+// --- School Operational Data (Module 70.4) ---
+// Note: every data block on this dashboard — the four headline KPIs, class attendance,
+// fees, dropout risk, compliance, syllabus, assessments and notices — is now LIVE from
+// durable stores.
 
-// --- Today's Class-wise Student Attendance ---
-const classAttendance = [
-  { class: "Class VI", enrolled: 180, present: 168, pct: 93.3 },
-  { class: "Class VII", enrolled: 195, present: 178, pct: 91.3 },
-  { class: "Class VIII", enrolled: 210, present: 188, pct: 89.5 },
-  { class: "Class IX", enrolled: 225, present: 205, pct: 91.1 },
-  { class: "Class X", enrolled: 238, present: 224, pct: 94.1 },
-  { class: "Class XI", enrolled: 115, present: 102, pct: 88.7 },
-  { class: "Class XII", enrolled: 85, present: 78, pct: 91.8 },
-]
-
-// --- AI-Generated Dropout Risk Alerts ---
-const dropoutRiskStudents = [
-  { name: "Meena Kumari", class: "IX-B", absences: 14, risk: "High", trigger: "Chronic absenteeism + fee default" },
-  { name: "Raju Prasad", class: "VIII-A", absences: 11, risk: "High", trigger: "Repeated absence after Diwali" },
-  { name: "Fatima Begum", class: "X-C", absences: 8, risk: "Medium", trigger: "Declining scores + absences" },
-  { name: "Arjun Singh", class: "VII-B", absences: 7, risk: "Medium", trigger: "Sibling dropout pattern" },
-]
-
-// --- Upcoming Assessments ---
-const upcomingAssessments = [
-  { subject: "Mathematics", class: "Class X", type: "Unit Test", date: "Apr 2", status: "Scheduled" },
-  { subject: "Science", class: "Class IX", type: "Practical", date: "Apr 4", status: "Scheduled" },
-  { subject: "English", class: "All Classes", type: "FA-2", date: "Apr 8–12", status: "Preparation" },
-  { subject: "Social Studies", class: "Class VIII", type: "Project Eval", date: "Apr 10", status: "Scheduled" },
-]
-
-// --- Syllabus Completion ---
-const syllabusCompletion = [
-  { subject: "Mathematics", teacher: "Mr. Sharma", pct: 78 },
-  { subject: "Science", teacher: "Ms. Rao", pct: 82 },
-  { subject: "English", teacher: "Ms. Verma", pct: 91 },
-  { subject: "Social Studies", teacher: "Mr. Khan", pct: 74 },
-  { subject: "Hindi", teacher: "Mrs. Gupta", pct: 88 },
-]
-
-// --- Compliance Checklist ---
-const complianceItems = [
-  { item: "SMC Meeting (March)", status: "Done" },
-  { item: "UDISE+ Data Submission", status: "Done" },
-  { item: "Mid-Day Meal Register (today)", status: "Done" },
-  { item: "Fire Safety Drill (Q1)", status: "Overdue" },
-  { item: "Annual Health Screening", status: "Pending" },
-  { item: "Teacher CPD Hours (Q1)", status: "In Progress" },
-]
-
-// --- Infrastructure Issues ---
-const infraIssues = [
-  { item: "Girls' toilet — tap broken", raised: "3 days ago", severity: "High" },
-  { item: "Lab projector not working", raised: "1 week ago", severity: "Medium" },
-  { item: "Classroom 12 — roof leak", raised: "2 weeks ago", severity: "High" },
-]
-
-// --- Announcements ---
-const announcements = [
-  { text: "Board Exam Date Sheet released — Class X & XII", date: "Today", type: "important" },
-  { text: "Parent-Teacher Meeting scheduled for April 15", date: "Yesterday", type: "normal" },
-  { text: "Annual Sports Day — April 22. Volunteers needed.", date: "2 days ago", type: "normal" },
-  { text: "NIPUN Bharat assessment: Grade III & V — April 10", date: "3 days ago", type: "important" },
+// --- Workflow create entry points the school head initiates ---
+// Each routes to a rich, validated create form that enters a real multi-tier
+// approval workflow with a tamper-evident audit trail.
+const workflowActions = [
+  { label: "Raise Maintenance Ticket", href: "/maintenance-approvals/new", icon: Wrench, color: "bg-orange-100 text-orange-700" },
+  { label: "Propose SMC Resolution", href: "/smc-approvals/new", icon: Vote, color: "bg-purple-100 text-purple-700" },
+  { label: "File Recognition / Renewal", href: "/recognition-approvals/new", icon: Stamp, color: "bg-indigo-100 text-indigo-700" },
+  { label: "New RTE Admission", href: "/admissions-approvals/new", icon: GraduationCap, color: "bg-green-100 text-green-700" },
+  { label: "Issue Transfer Certificate", href: "/tc-approvals/new", icon: Stamp, color: "bg-cyan-100 text-cyan-700" },
+  { label: "Apply for Leave", href: "/leave-approvals/new", icon: CalendarDays, color: "bg-blue-100 text-blue-700" },
+  { label: "RBSK Health Referral", href: "/health-referrals/new", icon: ShieldAlert, color: "bg-rose-100 text-rose-700" },
+  { label: "Infrastructure Works", href: "/works-approvals/new", icon: Wrench, color: "bg-amber-100 text-amber-700" },
+  { label: "Report Safety Incident", href: "/safety-incidents/new", icon: ShieldAlert, color: "bg-red-100 text-red-700" },
+  { label: "Procurement Indent (GeM)", href: "/procurement-approvals/new", icon: IndianRupee, color: "bg-emerald-100 text-emerald-700" },
 ]
 
 function RiskBadge({ risk }: { risk: string }) {
@@ -112,13 +85,46 @@ function RiskBadge({ risk }: { risk: string }) {
   )
 }
 
-export default function PrincipalDashboardPage() {
+export default async function PrincipalDashboardPage() {
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   })
+
+  // Live: open maintenance tickets raised through the workflow (the same ones
+  // the "Raise Maintenance Ticket" / "Report New Issue" actions create), and the
+  // class-wise attendance roll-up from the durable attendance store.
+  const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion, upcomingAssessments, notices] = await Promise.all([
+    listTicketFlowsAction(),
+    listResolutionsAction(),
+    listClassAttendanceAction(),
+    latestFeeCollectionAction(),
+    latestTeacherPresenceAction(),
+    latestEnrolmentAction(),
+    listDropoutRiskAction(),
+    listComplianceAction(),
+    listSyllabusAction(),
+    listAssessmentsAction(),
+    listNoticesAction(),
+  ])
+  const complianceSummary = summariseCompliance(complianceItems)
+  const syllabusSummary = summariseSyllabus(syllabusCompletion)
+  const announcements = sortNotices(notices).slice(0, 4)
+  const openTickets = tickets.filter((t) => t.instance.status === "in_progress")
+  const pendingResolutions = resolutions.filter((r) => r.instance.status === "in_progress").length
+  const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
+  const att = rollup(attendanceRows)
+  const fee = feeSnapshot ? viewFor(feeSnapshot) : null
+
+  // KPI cards: all four headline figures are live from durable stores.
+  const kpiStats = [
+    { label: "Total Students", value: enrolment ? enrolment.total.toLocaleString("en-IN") : "—", icon: GraduationCap, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Teachers Present", value: presence ? `${presence.present} / ${presence.total}` : "—", icon: Users, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Student Attendance", value: `${att.pct}%`, icon: Activity, color: "text-teal-600", bg: "bg-teal-50" },
+    { label: `Fee Collection${fee ? ` (${fee.month.split(" ")[0].slice(0, 3)})` : ""}`, value: fee ? inrLakh(fee.collected) : "—", icon: IndianRupee, color: "text-purple-600", bg: "bg-purple-50" },
+  ]
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-8 space-y-6">
@@ -127,7 +133,7 @@ export default function PrincipalDashboardPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Principal&apos;s Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Govt. Senior Secondary School, Delhi · {today}
+            Govt. Higher Secondary School, Chennai · {today}
           </p>
         </div>
         <div className="flex gap-2">
@@ -142,7 +148,7 @@ export default function PrincipalDashboardPage() {
 
       {/* School KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {schoolStats.map((s) => (
+        {kpiStats.map((s) => (
           <Card key={s.label}>
             <CardContent className="pt-4 pb-3 px-4">
               <div className={`inline-flex items-center justify-center w-9 h-9 rounded-lg ${s.bg} mb-2`}>
@@ -155,6 +161,34 @@ export default function PrincipalDashboardPage() {
         ))}
       </div>
 
+      {/* Quick Actions — initiate a real, audited workflow */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <FilePlus className="h-4 w-4 text-blue-600" /> Quick Actions
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Initiate a workflow — each opens a validated form that enters a multi-tier approval with a full audit trail.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            {workflowActions.map((a) => (
+              <Link
+                key={a.label}
+                href={a.href}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-lg border hover:shadow-sm transition-shadow text-center"
+              >
+                <div className={`w-9 h-9 flex items-center justify-center rounded-lg ${a.color}`}>
+                  <a.icon className="h-4 w-4" />
+                </div>
+                <span className="text-xs font-medium text-gray-700 leading-tight">{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Class-wise Attendance */}
         <Card className="lg:col-span-2">
@@ -163,7 +197,7 @@ export default function PrincipalDashboardPage() {
               <div>
                 <CardTitle className="text-base font-semibold">Today&apos;s Attendance — Class-wise</CardTitle>
                 <CardDescription className="text-xs">
-                  Total present: 1,143 / 1,248 · School avg: 91.6%
+                  Total present: {att.present.toLocaleString("en-IN")} / {att.enrolled.toLocaleString("en-IN")} · School avg: {att.pct}%
                 </CardDescription>
               </div>
               <Badge className="bg-green-100 text-green-700 border-0 text-xs">
@@ -173,10 +207,10 @@ export default function PrincipalDashboardPage() {
           </CardHeader>
           <CardContent>
             <HorizontalBarChart
-              data={classAttendance.map((c) => ({
-                label: c.class,
+              data={att.classes.map((c) => ({
+                label: c.cls,
                 value: c.pct,
-                color: c.pct >= 90 ? CHART_COLORS.green : CHART_COLORS.orange,
+                color: c.status === "Good" ? CHART_COLORS.green : CHART_COLORS.orange,
               }))}
               height={240}
               yAxisWidth={80}
@@ -193,14 +227,14 @@ export default function PrincipalDashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {classAttendance.map((c) => (
-                  <TableRow key={c.class} className="text-xs">
-                    <TableCell className="font-medium">{c.class}</TableCell>
+                {att.classes.map((c) => (
+                  <TableRow key={c.cls} className="text-xs">
+                    <TableCell className="font-medium">{c.cls}</TableCell>
                     <TableCell className="text-center">{c.enrolled}</TableCell>
                     <TableCell className="text-center">{c.present}</TableCell>
                     <TableCell className="text-center font-semibold">{c.pct}%</TableCell>
                     <TableCell>
-                      {c.pct >= 90 ? (
+                      {c.status === "Good" ? (
                         <span className="flex items-center gap-1 text-green-600">
                           <TrendingUp className="h-3 w-3" /> Good
                         </span>
@@ -224,25 +258,36 @@ export default function PrincipalDashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-red-500" /> AI Dropout Risk Alerts
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
               </CardTitle>
-              <CardDescription className="text-xs">Students requiring immediate attention</CardDescription>
+              <CardDescription className="text-xs">Advisory · explainable triggers · human authority</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {dropoutRiskStudents.map((s) => (
-                <div
-                  key={s.name}
-                  className={`p-2.5 rounded-lg border text-xs ${
-                    s.risk === "High" ? "bg-red-50 border-red-200" : "bg-yellow-50 border-yellow-200"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="font-semibold text-gray-800">{s.name}</span>
-                    <RiskBadge risk={s.risk} />
+              {dropoutRisk.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">No learners currently flagged at risk.</p>
+              ) : (
+                dropoutRisk.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`p-2.5 rounded-lg border text-xs ${
+                      s.assessment.band === "High"
+                        ? "bg-red-50 border-red-200"
+                        : s.assessment.band === "Medium"
+                          ? "bg-yellow-50 border-yellow-200"
+                          : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="font-semibold text-gray-800">{s.name}</span>
+                      <RiskBadge risk={s.assessment.band} />
+                    </div>
+                    <p className="text-muted-foreground">{s.cls} · {s.absences} absences</p>
+                    <p className="text-gray-600 mt-0.5 truncate">{s.assessment.triggers.join(" · ")}</p>
                   </div>
-                  <p className="text-muted-foreground">{s.class} · {s.absences} absences</p>
-                  <p className="text-gray-600 mt-0.5 truncate">{s.trigger}</p>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
 
@@ -251,24 +296,31 @@ export default function PrincipalDashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Bell className="h-4 w-4 text-blue-500" /> School Notices
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {announcements.map((a, i) => (
-                <div
-                  key={i}
-                  className={`flex gap-2 p-2 rounded-lg text-xs border ${
-                    a.type === "important" ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800 leading-snug">{a.text}</p>
-                    <p className="text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <Clock className="h-3 w-3" /> {a.date}
-                    </p>
+              {announcements.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">No notices published.</p>
+              ) : (
+                announcements.map((a) => (
+                  <div
+                    key={a.id}
+                    className={`flex gap-2 p-2 rounded-lg text-xs border ${
+                      a.pinned ? "bg-blue-50 border-blue-200" : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-800 leading-snug">{a.title}</p>
+                      <p className="text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Clock className="h-3 w-3" /> {a.date} · {a.category}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </div>
@@ -280,8 +332,14 @@ export default function PrincipalDashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <BookMarked className="h-4 w-4 text-teal-600" /> Syllabus Completion
+              <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                <Activity className="h-3 w-3 mr-1" /> Live
+              </Badge>
             </CardTitle>
-            <CardDescription className="text-xs">Subject-wise teaching portion status</CardDescription>
+            <CardDescription className="text-xs">
+              Avg {syllabusSummary.avgPct}% across {syllabusSummary.subjects} subjects
+              {syllabusSummary.behind > 0 ? ` · ${syllabusSummary.behind} behind` : ""}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RadarChart
@@ -297,19 +355,25 @@ export default function PrincipalDashboardPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-indigo-600" /> Upcoming Assessments
+              <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                <Activity className="h-3 w-3 mr-1" /> Live
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {upcomingAssessments.map((a, i) => (
-              <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-gray-50 border text-xs">
+            {upcomingAssessments.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">No assessments scheduled.</p>
+            ) : (
+              upcomingAssessments.map((a) => (
+              <div key={a.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-gray-50 border text-xs">
                 <div>
                   <p className="font-semibold text-gray-800">{a.subject}</p>
-                  <p className="text-muted-foreground">{a.class} · {a.type}</p>
+                  <p className="text-muted-foreground">{a.cls} · {a.type}</p>
                   <p className="text-blue-600 font-medium mt-0.5">{a.date}</p>
                 </div>
                 <RiskBadge risk={a.status} />
               </div>
-            ))}
+            )))}
           </CardContent>
         </Card>
 
@@ -317,13 +381,22 @@ export default function PrincipalDashboardPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-600" /> Compliance Checklist
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" /> Compliance Checklist
+                  <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                    <Activity className="h-3 w-3 mr-1" /> Live
+                  </Badge>
+                </CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                {complianceSummary.done}/{complianceSummary.total} done ({complianceSummary.pct}%)
+                {complianceSummary.overdue > 0 ? ` · ${complianceSummary.overdue} overdue` : ""}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {complianceItems.map((c, i) => (
-                <div key={i} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
+              {complianceItems.map((c) => (
+                <div key={c.id} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
                   <span className="text-gray-700">{c.item}</span>
                   <RiskBadge risk={c.status} />
                 </div>
@@ -333,64 +406,90 @@ export default function PrincipalDashboardPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Wrench className="h-4 w-4 text-orange-600" /> Infrastructure Issues
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <Wrench className="h-4 w-4 text-orange-600" /> Infrastructure Issues
+                </CardTitle>
+                <Badge className="bg-green-100 text-green-700 border-0 text-xs">
+                  <Activity className="h-3 w-3 mr-1" /> Live
+                </Badge>
+              </div>
+              <CardDescription className="text-xs">
+                {openTickets.length} open maintenance ticket{openTickets.length === 1 ? "" : "s"} in the workflow
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {infraIssues.map((issue, i) => (
-                <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg border bg-orange-50 text-xs">
-                  <div>
-                    <p className="font-medium text-gray-800">{issue.item}</p>
-                    <p className="text-muted-foreground">Raised: {issue.raised}</p>
-                  </div>
-                  <RiskBadge risk={issue.severity} />
-                </div>
-              ))}
-              <Button variant="outline" size="sm" className="w-full text-xs mt-1">
-                <ArrowUpRight className="h-3 w-3 mr-1" /> Report New Issue
+              {openTickets.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">
+                  No open tickets. Raise one below and it will appear here, in the workflow inbox, and in the audit trail.
+                </p>
+              ) : (
+                openTickets.slice(0, 5).map((t) => {
+                  const step = currentStep(MAINTENANCE_WORKFLOW, t.instance)
+                  const where = t.details?.location ? `${t.details.location} · ` : ""
+                  return (
+                    <div key={t.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg border bg-orange-50 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800 truncate">{where}{t.category}</p>
+                        <p className="text-muted-foreground truncate">{t.description}</p>
+                        <p className="text-orange-700 mt-0.5">Awaiting: {step?.name ?? "—"}</p>
+                      </div>
+                      <RiskBadge risk={t.priority.charAt(0).toUpperCase() + t.priority.slice(1)} />
+                    </div>
+                  )
+                })
+              )}
+              <Button asChild variant="outline" size="sm" className="w-full text-xs mt-1">
+                <Link href="/maintenance-approvals/new">
+                  <ArrowUpRight className="h-3 w-3 mr-1" /> Report New Issue
+                </Link>
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Fee Collection Summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <IndianRupee className="h-4 w-4 text-purple-600" /> Fee Collection — April 2025
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Total billed: ₹12.4L · Collected: ₹8.4L · Defaulters: 87 students
-              </CardDescription>
+      {/* Fee Collection Summary — live from the durable fee-collection store */}
+      {fee ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <IndianRupee className="h-4 w-4 text-purple-600" /> Fee Collection — {fee.month}
+                  <Badge className="bg-green-100 text-green-700 border-0 text-xs ml-1">
+                    <Activity className="h-3 w-3 mr-1" /> Live
+                  </Badge>
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Total billed: {inrLakh(fee.billed)} · Collected: {inrLakh(fee.collected)} · Defaulters: {fee.defaulters} students
+                </CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-purple-600">{fee.collectedPct}%</div>
+                <div className="text-xs text-muted-foreground">Collection rate</div>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-purple-600">67.7%</div>
-              <div className="text-xs text-muted-foreground">Collection rate</div>
+          </CardHeader>
+          <CardContent>
+            <Progress value={fee.collectedPct} className="h-2 mb-3" />
+            <div className="grid grid-cols-3 gap-4 text-center text-xs">
+              <div className="bg-green-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-green-600">{inrLakh(fee.collected)}</div>
+                <div className="text-muted-foreground">Collected</div>
+              </div>
+              <div className="bg-yellow-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-yellow-600">{inrLakh(fee.outstanding)}</div>
+                <div className="text-muted-foreground">Outstanding</div>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <div className="text-xl font-bold text-blue-600">{fee.rteStudents}</div>
+                <div className="text-muted-foreground">RTE Students (Free)</div>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Progress value={67.7} className="h-2 mb-3" />
-          <div className="grid grid-cols-3 gap-4 text-center text-xs">
-            <div className="bg-green-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-green-600">₹8.4L</div>
-              <div className="text-muted-foreground">Collected</div>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-yellow-600">₹4.0L</div>
-              <div className="text-muted-foreground">Outstanding</div>
-            </div>
-            <div className="bg-blue-50 rounded-lg p-3">
-              <div className="text-xl font-bold text-blue-600">213</div>
-              <div className="text-muted-foreground">RTE Students (Free)</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* RTE Compliance Footer */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -422,20 +521,22 @@ export default function PrincipalDashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-teal-600 to-teal-800 text-white border-0">
-          <CardContent className="pt-5 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <Users className="h-5 w-5 text-white" />
+        <Link href="/smc-approvals" className="block transition-transform hover:-translate-y-0.5">
+          <Card className="bg-gradient-to-br from-teal-600 to-teal-800 text-white border-0">
+            <CardContent className="pt-5 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Vote className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-medium text-teal-200">SMC Resolutions · Live</div>
+                  <div className="text-2xl font-bold">{pendingResolutions} pending</div>
+                  <div className="text-xs text-teal-100">{adoptedResolutions} adopted · tap to open the inbox</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-medium text-teal-200">SMC Members</div>
-                <div className="text-2xl font-bold">12 / 15</div>
-                <div className="text-xs text-teal-100">Active · Last meeting: 15 Mar</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   )

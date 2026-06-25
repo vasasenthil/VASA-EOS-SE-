@@ -1,0 +1,72 @@
+name: deploy
+
+# Deploys the Next.js reference app (demo mode) to Vercel production on every push to the
+# integration branches. This workflow is OPT-IN: it only runs once the three Vercel secrets
+# below are present in the repo settings, so merging it changes nothing until you enable it.
+#
+# To enable (one-time):
+#   1. In Vercel: import this repo as a project (Framework: Next.js — vercel.json already
+#      sets the build + NEXT_PUBLIC_DEMO_MODE=true). Vercel's native Git integration alone
+#      already gives you preview + production URLs; this workflow is only needed if you want
+#      CI to drive the deploys instead.
+#   2. Create a Vercel token (Account Settings -> Tokens) and add repo secrets:
+#        VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+#      (ORG_ID/PROJECT_ID are in the project's .vercel/project.json after `vercel link`).
+#
+# The job prints the resulting production URL in its summary.
+
+on:
+  push:
+    branches:
+      - claude/platform-foundation
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Vercel secrets are configured
+        id: gate
+        run: |
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ] && [ -n "${{ secrets.VERCEL_ORG_ID }}" ] && [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Vercel deploy skipped::Add VERCEL_TOKEN, VERCEL_ORG_ID and VERCEL_PROJECT_ID repo secrets to enable production deploys (or just use Vercel's native Git integration)."
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.configured == 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        if: steps.gate.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Deploy to Vercel (production, demo mode)
+        if: steps.gate.outputs.configured == 'true'
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          npm i -g vercel@latest
+          vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          # NEXT_PUBLIC_DEMO_MODE is baked by vercel.json's build.env, so the public demo login works.
+          vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          URL=$(vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}")
+          echo "Production URL: $URL"
+          {
+            echo "### ✅ Deployed to Vercel (demo mode)"
+            echo ""
+            echo "**$URL**"
+            echo ""
+            echo "Log in with a demo identity — e.g. \`admin@vasa-eos.tn.gov.in\` / \`Vasa@Edu#2026\`."
+          } >> "$GITHUB_STEP_SUMMARY"

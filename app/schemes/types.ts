@@ -117,4 +117,6 @@ export interface GetSchemesResult {
   totalPages: number
   currentPage: number
   totalCount: number
+  /** True when the no-database demo dataset is being shown. */
+  demo?: boolean
 }

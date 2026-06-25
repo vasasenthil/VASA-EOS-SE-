@@ -1,0 +1,287 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — assessment events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for assessment. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  formative-assessment.events:
+    address: "vasa.assessment.formative-assessment"
+    description: "Domain events for Formative Assessment"
+    messages:
+      changed: { name: M0142Changed, contentType: application/json }
+  summative-assessment.events:
+    address: "vasa.assessment.summative-assessment"
+    description: "Domain events for Summative Assessment"
+    messages:
+      changed: { name: M0143Changed, contentType: application/json }
+  diagnostic-assessment.events:
+    address: "vasa.assessment.diagnostic-assessment"
+    description: "Domain events for Diagnostic Assessment"
+    messages:
+      changed: { name: M0144Changed, contentType: application/json }
+  fln-assessment-nipun.events:
+    address: "vasa.assessment.fln-assessment-nipun"
+    description: "Domain events for FLN Assessment (NIPUN)"
+    messages:
+      changed: { name: M0145Changed, contentType: application/json }
+  nas-instrumentation.events:
+    address: "vasa.assessment.nas-instrumentation"
+    description: "Domain events for NAS Instrumentation"
+    messages:
+      changed: { name: M0146Changed, contentType: application/json }
+  board-equivalent-assessment.events:
+    address: "vasa.assessment.board-equivalent-assessment"
+    description: "Domain events for Board-Equivalent Assessment"
+    messages:
+      changed: { name: M0147Changed, contentType: application/json }
+  pisa-grade-item-engine.events:
+    address: "vasa.assessment.pisa-grade-item-engine"
+    description: "Domain events for PISA-Grade Item Engine"
+    messages:
+      changed: { name: M0148Changed, contentType: application/json }
+  item-response-theory-irt.events:
+    address: "vasa.assessment.item-response-theory-irt"
+    description: "Domain events for Item-Response Theory (IRT)"
+    messages:
+      changed: { name: M0149Changed, contentType: application/json }
+  item-bank.events:
+    address: "vasa.assessment.item-bank"
+    description: "Domain events for Item Bank"
+    messages:
+      changed: { name: M0150Changed, contentType: application/json }
+  question-paper-generation.events:
+    address: "vasa.assessment.question-paper-generation"
+    description: "Domain events for Question-Paper Generation"
+    messages:
+      changed: { name: M0151Changed, contentType: application/json }
+  auto-marking-objective.events:
+    address: "vasa.assessment.auto-marking-objective"
+    description: "Domain events for Auto-Marking (objective)"
+    messages:
+      changed: { name: M0152Changed, contentType: application/json }
+  essay-grading-llm-human-override.events:
+    address: "vasa.assessment.essay-grading-llm-human-override"
+    description: "Domain events for Essay Grading (LLM + human override)"
+    messages:
+      changed: { name: M0153Changed, contentType: application/json }
+  handwriting-ocr-indicconformer.events:
+    address: "vasa.assessment.handwriting-ocr-indicconformer"
+    description: "Domain events for Handwriting OCR (IndicConformer)"
+    messages:
+      changed: { name: M0154Changed, contentType: application/json }
+  omr-scoring.events:
+    address: "vasa.assessment.omr-scoring"
+    description: "Domain events for OMR Scoring"
+    messages:
+      changed: { name: M0155Changed, contentType: application/json }
+  rubric-engine.events:
+    address: "vasa.assessment.rubric-engine"
+    description: "Domain events for Rubric Engine"
+    messages:
+      changed: { name: M0156Changed, contentType: application/json }
+  accessibility-accommodated-assessment.events:
+    address: "vasa.assessment.accessibility-accommodated-assessment"
+    description: "Domain events for Accessibility-Accommodated Assessment"
+    messages:
+      changed: { name: M0157Changed, contentType: application/json }
+  extra-time-scribe-accommodation-rpwd.events:
+    address: "vasa.assessment.extra-time-scribe-accommodation-rpwd"
+    description: "Domain events for Extra-Time / Scribe Accommodation (RPwD)"
+    messages:
+      changed: { name: M0158Changed, contentType: application/json }
+  result-computation.events:
+    address: "vasa.assessment.result-computation"
+    description: "Domain events for Result Computation"
+    messages:
+      changed: { name: M0159Changed, contentType: application/json }
+  result-publication.events:
+    address: "vasa.assessment.result-publication"
+    description: "Domain events for Result Publication"
+    messages:
+      changed: { name: M0160Changed, contentType: application/json }
+  re-evaluation.events:
+    address: "vasa.assessment.re-evaluation"
+    description: "Domain events for Re-Evaluation"
+    messages:
+      changed: { name: M0161Changed, contentType: application/json }
+  grade-card-generation.events:
+    address: "vasa.assessment.grade-card-generation"
+    description: "Domain events for Grade-Card Generation"
+    messages:
+      changed: { name: M0162Changed, contentType: application/json }
+  continuous-comprehensive-evaluation.events:
+    address: "vasa.assessment.continuous-comprehensive-evaluation"
+    description: "Domain events for Continuous Comprehensive Evaluation"
+    messages:
+      changed: { name: M0163Changed, contentType: application/json }
+  practical-lab-assessment.events:
+    address: "vasa.assessment.practical-lab-assessment"
+    description: "Domain events for Practical / Lab Assessment"
+    messages:
+      changed: { name: M0164Changed, contentType: application/json }
+  project-assessment.events:
+    address: "vasa.assessment.project-assessment"
+    description: "Domain events for Project Assessment"
+    messages:
+      changed: { name: M0165Changed, contentType: application/json }
+  peer-assessment.events:
+    address: "vasa.assessment.peer-assessment"
+    description: "Domain events for Peer Assessment"
+    messages:
+      changed: { name: M0166Changed, contentType: application/json }
+  self-assessment.events:
+    address: "vasa.assessment.self-assessment"
+    description: "Domain events for Self Assessment"
+    messages:
+      changed: { name: M0167Changed, contentType: application/json }
+  assessment-calendar.events:
+    address: "vasa.assessment.assessment-calendar"
+    description: "Domain events for Assessment Calendar"
+    messages:
+      changed: { name: M0168Changed, contentType: application/json }
+  seating-plan-generation.events:
+    address: "vasa.assessment.seating-plan-generation"
+    description: "Domain events for Seating-Plan Generation"
+    messages:
+      changed: { name: M0169Changed, contentType: application/json }
+  exam-integrity-monitor.events:
+    address: "vasa.assessment.exam-integrity-monitor"
+    description: "Domain events for Exam-Integrity Monitor"
+    messages:
+      changed: { name: M0170Changed, contentType: application/json }
+  malpractice-workflow.events:
+    address: "vasa.assessment.malpractice-workflow"
+    description: "Domain events for Malpractice Workflow"
+    messages:
+      changed: { name: M0171Changed, contentType: application/json }
+  question-paper-security.events:
+    address: "vasa.assessment.question-paper-security"
+    description: "Domain events for Question-Paper Security"
+    messages:
+      changed: { name: M0172Changed, contentType: application/json }
+  assessment-analytics.events:
+    address: "vasa.assessment.assessment-analytics"
+    description: "Domain events for Assessment Analytics"
+    messages:
+      changed: { name: M0173Changed, contentType: application/json }
+  competency-mastery-tracking.events:
+    address: "vasa.assessment.competency-mastery-tracking"
+    description: "Domain events for Competency Mastery Tracking"
+    messages:
+      changed: { name: M0174Changed, contentType: application/json }
+  adaptive-practice.events:
+    address: "vasa.assessment.adaptive-practice"
+    description: "Domain events for Adaptive Practice"
+    messages:
+      changed: { name: M0175Changed, contentType: application/json }
+  dge-board-exam-integration.events:
+    address: "vasa.assessment.dge-board-exam-integration"
+    description: "Domain events for DGE Board Exam Integration"
+    messages:
+      changed: { name: M0176Changed, contentType: application/json }
+operations:
+  onM0142Changed:
+    action: receive
+    channel: { $ref: '#/channels/formative-assessment.events' }
+  onM0143Changed:
+    action: receive
+    channel: { $ref: '#/channels/summative-assessment.events' }
+  onM0144Changed:
+    action: receive
+    channel: { $ref: '#/channels/diagnostic-assessment.events' }
+  onM0145Changed:
+    action: receive
+    channel: { $ref: '#/channels/fln-assessment-nipun.events' }
+  onM0146Changed:
+    action: receive
+    channel: { $ref: '#/channels/nas-instrumentation.events' }
+  onM0147Changed:
+    action: receive
+    channel: { $ref: '#/channels/board-equivalent-assessment.events' }
+  onM0148Changed:
+    action: receive
+    channel: { $ref: '#/channels/pisa-grade-item-engine.events' }
+  onM0149Changed:
+    action: receive
+    channel: { $ref: '#/channels/item-response-theory-irt.events' }
+  onM0150Changed:
+    action: receive
+    channel: { $ref: '#/channels/item-bank.events' }
+  onM0151Changed:
+    action: receive
+    channel: { $ref: '#/channels/question-paper-generation.events' }
+  onM0152Changed:
+    action: receive
+    channel: { $ref: '#/channels/auto-marking-objective.events' }
+  onM0153Changed:
+    action: receive
+    channel: { $ref: '#/channels/essay-grading-llm-human-override.events' }
+  onM0154Changed:
+    action: receive
+    channel: { $ref: '#/channels/handwriting-ocr-indicconformer.events' }
+  onM0155Changed:
+    action: receive
+    channel: { $ref: '#/channels/omr-scoring.events' }
+  onM0156Changed:
+    action: receive
+    channel: { $ref: '#/channels/rubric-engine.events' }
+  onM0157Changed:
+    action: receive
+    channel: { $ref: '#/channels/accessibility-accommodated-assessment.events' }
+  onM0158Changed:
+    action: receive
+    channel: { $ref: '#/channels/extra-time-scribe-accommodation-rpwd.events' }
+  onM0159Changed:
+    action: receive
+    channel: { $ref: '#/channels/result-computation.events' }
+  onM0160Changed:
+    action: receive
+    channel: { $ref: '#/channels/result-publication.events' }
+  onM0161Changed:
+    action: receive
+    channel: { $ref: '#/channels/re-evaluation.events' }
+  onM0162Changed:
+    action: receive
+    channel: { $ref: '#/channels/grade-card-generation.events' }
+  onM0163Changed:
+    action: receive
+    channel: { $ref: '#/channels/continuous-comprehensive-evaluation.events' }
+  onM0164Changed:
+    action: receive
+    channel: { $ref: '#/channels/practical-lab-assessment.events' }
+  onM0165Changed:
+    action: receive
+    channel: { $ref: '#/channels/project-assessment.events' }
+  onM0166Changed:
+    action: receive
+    channel: { $ref: '#/channels/peer-assessment.events' }
+  onM0167Changed:
+    action: receive
+    channel: { $ref: '#/channels/self-assessment.events' }
+  onM0168Changed:
+    action: receive
+    channel: { $ref: '#/channels/assessment-calendar.events' }
+  onM0169Changed:
+    action: receive
+    channel: { $ref: '#/channels/seating-plan-generation.events' }
+  onM0170Changed:
+    action: receive
+    channel: { $ref: '#/channels/exam-integrity-monitor.events' }
+  onM0171Changed:
+    action: receive
+    channel: { $ref: '#/channels/malpractice-workflow.events' }
+  onM0172Changed:
+    action: receive
+    channel: { $ref: '#/channels/question-paper-security.events' }
+  onM0173Changed:
+    action: receive
+    channel: { $ref: '#/channels/assessment-analytics.events' }
+  onM0174Changed:
+    action: receive
+    channel: { $ref: '#/channels/competency-mastery-tracking.events' }
+  onM0175Changed:
+    action: receive
+    channel: { $ref: '#/channels/adaptive-practice.events' }
+  onM0176Changed:
+    action: receive
+    channel: { $ref: '#/channels/dge-board-exam-integration.events' }

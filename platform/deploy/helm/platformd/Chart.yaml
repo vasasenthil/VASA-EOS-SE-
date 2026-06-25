@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platformd
+description: VASA-EOS(SE) TN — the merged CC-SPEC-001 platformd reference service
+type: application
+version: 0.1.0
+appVersion: "latest"

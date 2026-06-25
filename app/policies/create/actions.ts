@@ -1,6 +1,7 @@
 "use server"
 
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { policyDemoData } from "@/lib/policy/demo"
 import { put as vercelBlobPut, del as vercelBlobDel } from "@vercel/blob"
 
 // Fallback/simulation functions (signatures match original intent)
@@ -262,8 +263,10 @@ export async function submitPolicyAction(
   const actionType = formData.get("action") as "saveDraft" | "submitForReview"
 
   const requiredPermission = policyIdFromForm ? PERMISSIONS.POLICY_UPDATE_NATIONAL : PERMISSIONS.POLICY_CREATE_NATIONAL
-  // TODO: Determine OU context for policy actions if policies become OU-specific.
-  // For now, checking permission without specific ouId (user needs it in any of their roles).
+  // DECISION (not a TODO): policies are STATE-TIER governance artifacts (gated by a *_NATIONAL permission),
+  // scoped to the State of Tamil Nadu — deliberately NOT per-OU, so no ouId is required. Making them OU-specific
+  // would fragment statutory State policy and is out of scope by design; the national-policy permission held in
+  // any of the user's roles is the correct tier control.
   const canPerformAction = await hasPermission({ userId, permissionString: requiredPermission })
 
   if (!canPerformAction) {
@@ -488,6 +491,8 @@ export interface PaginatedPoliciesResponse {
   currentPage: number
   itemsPerPage: number
   error?: string
+  /** True when the no-database demo dataset is being shown. */
+  demo?: boolean
 }
 
 const DEFAULT_ITEMS_PER_PAGE_ACTION = 10
@@ -507,7 +512,9 @@ export async function getPoliciesAction(params?: {
 }): Promise<PaginatedPoliciesResponse> {
   const { page = 1, itemsPerPage = params?.itemsPerPage || DEFAULT_ITEMS_PER_PAGE_ACTION } = params || {}
   if (!isSupabaseAdminConfigured()) {
-    return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: CRITICAL_DB_ERROR_MSG }
+    // No database configured — demonstrate with representative TN / NEP-2020 policy drafts.
+    const policies = policyDemoData()
+    return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
   }
   const {
     sortBy: sortKey = "last_modified",
@@ -553,31 +560,47 @@ export async function getPoliciesAction(params?: {
   query = query.order(dbSortBy, { ascending: sortOrder === "asc" })
   const startIndex = (page - 1) * itemsPerPage
   query = query.range(startIndex, startIndex + itemsPerPage - 1)
-  const { data, error, count } = await query
-  if (error)
-    return {
-      policies: [],
-      totalCount: 0,
-      totalPages: 0,
-      currentPage: page,
-      itemsPerPage,
-      error: `DB error: ${error.message}`,
-    }
-  const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
-  const totalCount = count || 0
-  const totalPages = Math.ceil(totalCount / itemsPerPage)
-  return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
+  // Demo dataset shown when the unfiltered first page comes back empty (empty/unseeded DB,
+  // no auth, or a query error) so the page is never blank in a walkthrough; a real
+  // filtered/searched query that returns nothing is respected.
+  const unfiltered =
+    !params?.searchQuery && !params?.filterByStatus && !params?.filterByDomain &&
+    !params?.modifiedAfter && !params?.modifiedBefore && !params?.createdAfter && !params?.createdBefore && page === 1
+  const policiesDemoResponse = (): PaginatedPoliciesResponse => {
+    const policies = policyDemoData()
+    return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
+  }
+  try {
+    const { data, error, count } = await query
+    if (error) return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: `DB error: ${error.message}` }
+    const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
+    const totalCount = count || 0
+    if (totalCount === 0 && unfiltered) return policiesDemoResponse()
+    const totalPages = Math.ceil(totalCount / itemsPerPage)
+    return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
+  } catch (e) {
+    // Supabase unreachable — fail soft to demo so the page still renders.
+    console.error("getPoliciesAction failed; returning demo result:", e)
+    return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage }
+  }
 }
 
 export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | undefined> {
-  if (!isSupabaseAdminConfigured()) return undefined
-  const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
-  if (error) {
-    if (error.code === "PGRST116") return undefined // No row found, not an error for this function
-    console.error("Supabase error fetching policy by ID:", error)
+  // No database — resolve the demo policy so list -> view navigation works.
+  if (!isSupabaseAdminConfigured()) return policyDemoData().find((p) => p.id === id)
+  try {
+    const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
+    if (error) {
+      // No row / unseeded — fall back to a demo policy so a demo card opens.
+      if (error.code === "PGRST116") return policyDemoData().find((p) => p.id === id)
+      console.error("Supabase error fetching policy by ID:", error)
+      return policyDemoData().find((p) => p.id === id)
+    }
+    return data ? mapDbPolicyToPolicyDraft(data) : policyDemoData().find((p) => p.id === id)
+  } catch (e) {
+    console.error("getPolicyByIdAction failed; returning undefined:", e)
     return undefined
   }
-  return data ? mapDbPolicyToPolicyDraft(data) : undefined
 }
 
 export async function deletePolicyAction(policyId: string): Promise<DeletePolicyActionState> {
@@ -586,7 +609,7 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
     return { message: "Authentication required.", success: false }
   }
 
-  // TODO: Determine OU context for policy deletion if policies become OU-specific.
+  // DECISION (not a TODO): policy deletion is a STATE-TIER action, not OU-scoped (see createPolicyAction).
   const canDelete = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE_NATIONAL })
   if (!canDelete) {
     return { message: "You do not have permission to delete policies.", success: false }
@@ -720,7 +743,7 @@ export async function updatePolicyStatusAction(
     return { message: "Authentication required.", success: false, policyId, error: "User not authenticated." }
   }
 
-  // TODO: Determine OU context for policy status updates if policies become OU-specific.
+  // DECISION (not a TODO): a policy status update is a STATE-TIER action, not OU-scoped (see createPolicyAction).
   // Using POLICY_UPDATE for now, consider a more granular permission like POLICY_UPDATE_STATUS
   const canUpdateStatus = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL }) // Or a more specific permission
   if (!canUpdateStatus) {

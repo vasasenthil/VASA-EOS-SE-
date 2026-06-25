@@ -1,0 +1,247 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — analytics-reporting events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for analytics-reporting. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  district-scorecard.events:
+    address: "vasa.analytics-reporting.district-scorecard"
+    description: "Domain events for District Scorecard"
+    messages:
+      changed: { name: M0270Changed, contentType: application/json }
+  block-scorecard.events:
+    address: "vasa.analytics-reporting.block-scorecard"
+    description: "Domain events for Block Scorecard"
+    messages:
+      changed: { name: M0271Changed, contentType: application/json }
+  school-scorecard.events:
+    address: "vasa.analytics-reporting.school-scorecard"
+    description: "Domain events for School Scorecard"
+    messages:
+      changed: { name: M0272Changed, contentType: application/json }
+  tn-quality-index.events:
+    address: "vasa.analytics-reporting.tn-quality-index"
+    description: "Domain events for TN Quality Index"
+    messages:
+      changed: { name: M0273Changed, contentType: application/json }
+  opportunity-gap-index.events:
+    address: "vasa.analytics-reporting.opportunity-gap-index"
+    description: "Domain events for Opportunity-Gap Index"
+    messages:
+      changed: { name: M0274Changed, contentType: application/json }
+  equity-weighted-resource-allocation.events:
+    address: "vasa.analytics-reporting.equity-weighted-resource-allocation"
+    description: "Domain events for Equity-Weighted Resource Allocation"
+    messages:
+      changed: { name: M0275Changed, contentType: application/json }
+  equity-index.events:
+    address: "vasa.analytics-reporting.equity-index"
+    description: "Domain events for Equity Index"
+    messages:
+      changed: { name: M0276Changed, contentType: application/json }
+  enrolment-dashboard.events:
+    address: "vasa.analytics-reporting.enrolment-dashboard"
+    description: "Domain events for Enrolment Dashboard"
+    messages:
+      changed: { name: M0277Changed, contentType: application/json }
+  attendance-analytics.events:
+    address: "vasa.analytics-reporting.attendance-analytics"
+    description: "Domain events for Attendance Analytics"
+    messages:
+      changed: { name: M0278Changed, contentType: application/json }
+  dropout-early-warning.events:
+    address: "vasa.analytics-reporting.dropout-early-warning"
+    description: "Domain events for Dropout Early-Warning"
+    messages:
+      changed: { name: M0279Changed, contentType: application/json }
+  learning-outcome-analytics.events:
+    address: "vasa.analytics-reporting.learning-outcome-analytics"
+    description: "Domain events for Learning-Outcome Analytics"
+    messages:
+      changed: { name: M0280Changed, contentType: application/json }
+  fln-analytics.events:
+    address: "vasa.analytics-reporting.fln-analytics"
+    description: "Domain events for FLN Analytics"
+    messages:
+      changed: { name: M0281Changed, contentType: application/json }
+  nas-dashboard.events:
+    address: "vasa.analytics-reporting.nas-dashboard"
+    description: "Domain events for NAS Dashboard"
+    messages:
+      changed: { name: M0282Changed, contentType: application/json }
+  gender-parity-index.events:
+    address: "vasa.analytics-reporting.gender-parity-index"
+    description: "Domain events for Gender-Parity Index"
+    messages:
+      changed: { name: M0283Changed, contentType: application/json }
+  social-category-disaggregation.events:
+    address: "vasa.analytics-reporting.social-category-disaggregation"
+    description: "Domain events for Social-Category Disaggregation"
+    messages:
+      changed: { name: M0284Changed, contentType: application/json }
+  rpwd-inclusion-dashboard.events:
+    address: "vasa.analytics-reporting.rpwd-inclusion-dashboard"
+    description: "Domain events for RPwD Inclusion Dashboard"
+    messages:
+      changed: { name: M0285Changed, contentType: application/json }
+  sdg-4-5-10-16-dashboards.events:
+    address: "vasa.analytics-reporting.sdg-4-5-10-16-dashboards"
+    description: "Domain events for SDG 4/5/10/16 Dashboards"
+    messages:
+      changed: { name: M0286Changed, contentType: application/json }
+  scheme-delivery-analytics.events:
+    address: "vasa.analytics-reporting.scheme-delivery-analytics"
+    description: "Domain events for Scheme-Delivery Analytics"
+    messages:
+      changed: { name: M0287Changed, contentType: application/json }
+  fund-utilisation-analytics.events:
+    address: "vasa.analytics-reporting.fund-utilisation-analytics"
+    description: "Domain events for Fund-Utilisation Analytics"
+    messages:
+      changed: { name: M0288Changed, contentType: application/json }
+  teacher-deployment-analytics.events:
+    address: "vasa.analytics-reporting.teacher-deployment-analytics"
+    description: "Domain events for Teacher-Deployment Analytics"
+    messages:
+      changed: { name: M0289Changed, contentType: application/json }
+  infrastructure-telemetry-analytics.events:
+    address: "vasa.analytics-reporting.infrastructure-telemetry-analytics"
+    description: "Domain events for Infrastructure Telemetry Analytics"
+    messages:
+      changed: { name: M0290Changed, contentType: application/json }
+  predictive-outcome-model.events:
+    address: "vasa.analytics-reporting.predictive-outcome-model"
+    description: "Domain events for Predictive Outcome Model"
+    messages:
+      changed: { name: M0291Changed, contentType: application/json }
+  causal-impact-dowhy.events:
+    address: "vasa.analytics-reporting.causal-impact-dowhy"
+    description: "Domain events for Causal Impact (DoWhy)"
+    messages:
+      changed: { name: M0292Changed, contentType: application/json }
+  time-series-forecast-neuralprophet.events:
+    address: "vasa.analytics-reporting.time-series-forecast-neuralprophet"
+    description: "Domain events for Time-Series Forecast (NeuralProphet)"
+    messages:
+      changed: { name: M0293Changed, contentType: application/json }
+  anomaly-detection.events:
+    address: "vasa.analytics-reporting.anomaly-detection"
+    description: "Domain events for Anomaly Detection"
+    messages:
+      changed: { name: M0294Changed, contentType: application/json }
+  vsk-vidya-samiksha-kendra.events:
+    address: "vasa.analytics-reporting.vsk-vidya-samiksha-kendra"
+    description: "Domain events for VSK / Vidya Samiksha Kendra"
+    messages:
+      changed: { name: M0295Changed, contentType: application/json }
+  open-data-aggregation-suppressed.events:
+    address: "vasa.analytics-reporting.open-data-aggregation-suppressed"
+    description: "Domain events for Open-Data Aggregation (suppressed)"
+    messages:
+      changed: { name: M0296Changed, contentType: application/json }
+  press-researcher-api.events:
+    address: "vasa.analytics-reporting.press-researcher-api"
+    description: "Domain events for Press / Researcher API"
+    messages:
+      changed: { name: M0297Changed, contentType: application/json }
+  esg-indicators.events:
+    address: "vasa.analytics-reporting.esg-indicators"
+    description: "Domain events for ESG Indicators"
+    messages:
+      changed: { name: M0298Changed, contentType: application/json }
+  stars-govtech-reporting-hooks.events:
+    address: "vasa.analytics-reporting.stars-govtech-reporting-hooks"
+    description: "Domain events for STARS / GovTech Reporting Hooks"
+    messages:
+      changed: { name: M0299Changed, contentType: application/json }
+operations:
+  onM0270Changed:
+    action: receive
+    channel: { $ref: '#/channels/district-scorecard.events' }
+  onM0271Changed:
+    action: receive
+    channel: { $ref: '#/channels/block-scorecard.events' }
+  onM0272Changed:
+    action: receive
+    channel: { $ref: '#/channels/school-scorecard.events' }
+  onM0273Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-quality-index.events' }
+  onM0274Changed:
+    action: receive
+    channel: { $ref: '#/channels/opportunity-gap-index.events' }
+  onM0275Changed:
+    action: receive
+    channel: { $ref: '#/channels/equity-weighted-resource-allocation.events' }
+  onM0276Changed:
+    action: receive
+    channel: { $ref: '#/channels/equity-index.events' }
+  onM0277Changed:
+    action: receive
+    channel: { $ref: '#/channels/enrolment-dashboard.events' }
+  onM0278Changed:
+    action: receive
+    channel: { $ref: '#/channels/attendance-analytics.events' }
+  onM0279Changed:
+    action: receive
+    channel: { $ref: '#/channels/dropout-early-warning.events' }
+  onM0280Changed:
+    action: receive
+    channel: { $ref: '#/channels/learning-outcome-analytics.events' }
+  onM0281Changed:
+    action: receive
+    channel: { $ref: '#/channels/fln-analytics.events' }
+  onM0282Changed:
+    action: receive
+    channel: { $ref: '#/channels/nas-dashboard.events' }
+  onM0283Changed:
+    action: receive
+    channel: { $ref: '#/channels/gender-parity-index.events' }
+  onM0284Changed:
+    action: receive
+    channel: { $ref: '#/channels/social-category-disaggregation.events' }
+  onM0285Changed:
+    action: receive
+    channel: { $ref: '#/channels/rpwd-inclusion-dashboard.events' }
+  onM0286Changed:
+    action: receive
+    channel: { $ref: '#/channels/sdg-4-5-10-16-dashboards.events' }
+  onM0287Changed:
+    action: receive
+    channel: { $ref: '#/channels/scheme-delivery-analytics.events' }
+  onM0288Changed:
+    action: receive
+    channel: { $ref: '#/channels/fund-utilisation-analytics.events' }
+  onM0289Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-deployment-analytics.events' }
+  onM0290Changed:
+    action: receive
+    channel: { $ref: '#/channels/infrastructure-telemetry-analytics.events' }
+  onM0291Changed:
+    action: receive
+    channel: { $ref: '#/channels/predictive-outcome-model.events' }
+  onM0292Changed:
+    action: receive
+    channel: { $ref: '#/channels/causal-impact-dowhy.events' }
+  onM0293Changed:
+    action: receive
+    channel: { $ref: '#/channels/time-series-forecast-neuralprophet.events' }
+  onM0294Changed:
+    action: receive
+    channel: { $ref: '#/channels/anomaly-detection.events' }
+  onM0295Changed:
+    action: receive
+    channel: { $ref: '#/channels/vsk-vidya-samiksha-kendra.events' }
+  onM0296Changed:
+    action: receive
+    channel: { $ref: '#/channels/open-data-aggregation-suppressed.events' }
+  onM0297Changed:
+    action: receive
+    channel: { $ref: '#/channels/press-researcher-api.events' }
+  onM0298Changed:
+    action: receive
+    channel: { $ref: '#/channels/esg-indicators.events' }
+  onM0299Changed:
+    action: receive
+    channel: { $ref: '#/channels/stars-govtech-reporting-hooks.events' }

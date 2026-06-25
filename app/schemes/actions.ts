@@ -1,7 +1,8 @@
 "use server" // This directive is crucial
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { schemeDemoData } from "@/lib/schemes/demo"
 import { hasPermission } from "@/app/governance/rbac" // Ensure this file is correct
 import { PERMISSIONS } from "@/app/governance/types" // Ensure this file is correct (no "use server")
 import { getSupabaseAuthUser } from "@/lib/auth/server"
@@ -25,9 +26,27 @@ import {
 
 const ITEMS_PER_PAGE = 10
 
+// Representative demo result + an "unfiltered first page" test: the demo dataset is shown
+// whenever the live, unfiltered first page comes back empty (no DB, no auth, empty/unseeded
+// DB, or a query error) so the flagship page is never blank in a walkthrough. A genuine
+// filtered/searched query that returns nothing is respected (no demo).
+function schemesDemoResult(): GetSchemesResult {
+  const schemes = schemeDemoData()
+  return { schemes, totalPages: 1, currentPage: 1, totalCount: schemes.length, demo: true }
+}
+
+function isUnfilteredSchemes(p: GetSchemesParams): boolean {
+  return !p.query && !(p.categoryIds?.length) && !(p.status?.length) && !(p.issuingAuthorityOuIds?.length) && (p.page ?? 1) === 1
+}
+
 // Ensure ALL functions exported from this file are async
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
+  // No database configured — demonstrate with representative TN welfare schemes.
+  if (!isSupabaseAdminConfigured()) {
+    return schemesDemoResult()
+  }
+  try {
   const supabase = await createClient()
   const {
     page = 1,
@@ -46,7 +65,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
   if (!canView) {
-    return { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
   }
 
   let queryBuilder = supabase.from("schemes").select(
@@ -77,11 +96,12 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
   const { data, error, count } = await queryBuilder
 
   if (error) {
-    console.error("Error fetching schemes:", error)
-    throw new Error(`Failed to fetch schemes: ${error.message}`)
+    console.error("Error fetching schemes (returning empty):", error)
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 
   const totalCount = count ?? 0
+  if (totalCount === 0 && isUnfilteredSchemes(params)) return schemesDemoResult()
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const schemes =
@@ -95,17 +115,27 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
     })) as Scheme[]) || []
 
   return { schemes, totalPages, currentPage: page, totalCount }
+  } catch (e) {
+    // Network/DB unreachable (e.g. Supabase paused on a preview) — fail soft to demo.
+    console.error("getSchemesAction failed; returning demo result:", e)
+    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+  }
 }
 
 export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
+  // No database — resolve the demo scheme so list -> detail navigation works.
+  if (!isSupabaseAdminConfigured()) {
+    return schemeDemoData().find((s) => s.id === id) ?? null
+  }
+  try {
   const supabase = await createClient()
 
   const user = await getSupabaseAuthUser()
   const canView = user
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
-  if (!canView) return null
+  if (!canView) return schemeDemoData().find((s) => s.id === id) ?? null
 
   const { data, error } = await supabase
     .from("schemes")
@@ -132,10 +162,10 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
     .maybeSingle()
 
   if (error) {
-    console.error(`Error fetching scheme by ID (${id}):`, error)
-    throw new Error(`Failed to fetch scheme: ${error.message}`)
+    console.error(`Error fetching scheme by ID (${id}) — falling back to demo:`, error)
+    return schemeDemoData().find((s) => s.id === id) ?? null
   }
-  if (!data) return null
+  if (!data) return schemeDemoData().find((s) => s.id === id) ?? null
 
   // Process joins correctly
   const applicable_ou_subtypes =
@@ -165,54 +195,78 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
     target_governance_tiers,
   }
   return scheme
+  } catch (e) {
+    console.error(`getSchemeByIdAction failed (${id}); returning null:`, e)
+    return null
+  }
 }
 
+// These three feed the (client) scheme filters. They must NEVER throw or return a non-array:
+// a null/undefined result makes `categories.map(...)` / `authorities.map(...)` crash after
+// hydration, surfacing as "Something went wrong". So each is fully guarded and array-safe.
 export async function getSchemeCategoriesAction(): Promise<SchemeCategory[]> {
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase.from("scheme_categories").select("*").order("name", { ascending: true })
-  if (error) {
-    console.error("Error fetching scheme categories:", error)
-    return [] // Or throw error
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from("scheme_categories").select("*").order("name", { ascending: true })
+    if (error) {
+      console.error("Error fetching scheme categories:", error)
+      return []
+    }
+    return (data as SchemeCategory[] | null) ?? []
+  } catch (e) {
+    console.error("getSchemeCategoriesAction failed:", e)
+    return []
   }
-  return data as SchemeCategory[]
 }
 
 export async function getOrganizationalUnitSubtypesAction(): Promise<OrganizationalUnitSubtype[]> {
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("organizational_unit_subtypes")
-    .select("id, name, description, governance_tier:governance_tiers(id, name)")
-    .order("name", { ascending: true })
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("organizational_unit_subtypes")
+      .select("id, name, description, governance_tier:governance_tiers(id, name)")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error fetching OU subtypes:", error)
+    if (error) {
+      console.error("Error fetching OU subtypes:", error)
+      return []
+    }
+    return ((data ?? []) as any[]).map((st: any) => ({
+      ...st,
+      governance_tier: st.governance_tier as GovernanceTier | null,
+    })) as OrganizationalUnitSubtype[]
+  } catch (e) {
+    console.error("getOrganizationalUnitSubtypesAction failed:", e)
     return []
   }
-  return data.map((st: any) => ({
-    ...st,
-    governance_tier: st.governance_tier as GovernanceTier | null,
-  })) as OrganizationalUnitSubtype[]
 }
 
 export async function getIssuingAuthoritiesAction(): Promise<OrganizationalUnit[]> {
-  // This function might need to be more specific, e.g., filter OUs that can be issuing authorities
   noStore()
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from("organizational_units")
-    .select("id, name, region_code, tier:governance_tiers(id, name)")
-    .order("name", { ascending: true })
+  if (!isSupabaseAdminConfigured()) return []
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("organizational_units")
+      .select("id, name, region_code, tier:governance_tiers(id, name)")
+      .order("name", { ascending: true })
 
-  if (error) {
-    console.error("Error fetching issuing authorities:", error)
+    if (error) {
+      console.error("Error fetching issuing authorities:", error)
+      return []
+    }
+    return ((data ?? []) as any[]).map((ou: any) => ({
+      ...ou,
+      tier: ou.tier as GovernanceTier | null,
+    })) as OrganizationalUnit[]
+  } catch (e) {
+    console.error("getIssuingAuthoritiesAction failed:", e)
     return []
   }
-  return data.map((ou: any) => ({
-    ...ou,
-    tier: ou.tier as GovernanceTier | null, // Ensure correct casting
-  })) as OrganizationalUnit[]
 }
 
 export async function createSchemeAction(

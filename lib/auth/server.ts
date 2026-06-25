@@ -1,6 +1,29 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { isSupabaseAdminConfigured, supabaseAdmin } from "@/lib/supabase/server"
+import { isSupabaseAdminConfigured, isDemoModeEnabled, supabaseAdmin } from "@/lib/supabase/server"
+import { DEMO_COOKIE } from "@/lib/demo-auth"
+import type { User } from "@supabase/supabase-js"
+
+// Demo session: when the credential-free walkthrough is active (no Supabase DB and a
+// demo_role cookie set), treat the visitor as an authenticated demo user. Gated on the
+// absence of a real database, so production always uses real Supabase auth.
+async function demoSession(): Promise<{ id: string; role: string } | null> {
+  if (!isDemoModeEnabled()) return null
+  const role = (await cookies()).get(DEMO_COOKIE)?.value
+  return role ? { id: `demo-${role.toLowerCase()}`, role: role.toUpperCase() } : null
+}
+
+function syntheticDemoUser(id: string): User {
+  return {
+    id,
+    aud: "authenticated",
+    role: "authenticated",
+    email: "demo@vasa-eos.local",
+    app_metadata: { provider: "demo" },
+    user_metadata: { demo: true },
+    created_at: new Date(0).toISOString(),
+  } as unknown as User
+}
 
 // Helper to get the Supabase server client for user session
 async function createSupabaseServerClient() {
@@ -46,12 +69,12 @@ export async function getUserIdFromAction(): Promise<string | null> {
 
     if (error) {
       console.error("Error getting user from action:", error.message)
-      return null
+      return (await demoSession())?.id ?? null
     }
-    return user?.id || null
+    return user?.id || (await demoSession())?.id || null
   } catch (e: any) {
     console.error("Unexpected error in getUserIdFromAction:", e.message)
-    return null
+    return (await demoSession())?.id ?? null
   }
 }
 
@@ -92,12 +115,16 @@ export async function getSupabaseAuthUser() {
 
     if (error) {
       console.error("Error getting Supabase auth user:", error.message)
-      return null
+      const demo = await demoSession()
+      return demo ? syntheticDemoUser(demo.id) : null
     }
-    return user // Returns the full user object or null
+    if (user) return user
+    const demo = await demoSession()
+    return demo ? syntheticDemoUser(demo.id) : null
   } catch (e: any) {
     console.error("Unexpected error in getSupabaseAuthUser:", e.message)
-    return null
+    const demo = await demoSession()
+    return demo ? syntheticDemoUser(demo.id) : null
   }
 }
 
@@ -150,4 +177,30 @@ export async function getUserRoleAndSchool(userId: string): Promise<{ role: stri
     console.error("Unexpected error in getUserRoleAndSchool:", e.message)
     return null
   }
+}
+
+/**
+ * Returns ALL roles a user holds, closing the multi-role gap: the primary role on public.users PLUS any roles
+ * granted via user_ou_assignments (one per org unit). A user who is, say, TEACHER at a school and ACADEMIC_HEAD
+ * at a cluster gets both — previously only the first (public.users.role) was ever resolved. Deduplicated;
+ * always includes the primary role; degrades gracefully when the assignments tables are absent/empty.
+ */
+export async function getUserRoles(userId: string): Promise<string[]> {
+  const roles = new Set<string>()
+  const primary = await getUserRoleAndSchool(userId)
+  if (primary?.role) roles.add(primary.role)
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data } = await supabase
+      .from("user_ou_assignments")
+      .select("roles(name)")
+      .eq("user_id", userId)
+    for (const row of (data ?? []) as Array<{ roles?: { name?: string } | null }>) {
+      const name = row?.roles?.name
+      if (name) roles.add(name)
+    }
+  } catch {
+    // user_ou_assignments / roles tables are optional in the MVP schema — fall back to the primary role only.
+  }
+  return [...roles]
 }

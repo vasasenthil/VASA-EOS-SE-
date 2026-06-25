@@ -1,0 +1,287 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — curriculum-content events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for curriculum-content. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  ncert-content-ingest.events:
+    address: "vasa.curriculum-content.ncert-content-ingest"
+    description: "Domain events for NCERT Content Ingest"
+    messages:
+      changed: { name: M0036Changed, contentType: application/json }
+  scert-content-ingest.events:
+    address: "vasa.curriculum-content.scert-content-ingest"
+    description: "Domain events for SCERT Content Ingest"
+    messages:
+      changed: { name: M0037Changed, contentType: application/json }
+  ncf-framework-map.events:
+    address: "vasa.curriculum-content.ncf-framework-map"
+    description: "Domain events for NCF Framework Map"
+    messages:
+      changed: { name: M0038Changed, contentType: application/json }
+  tn-textbook-ingest-tntbc.events:
+    address: "vasa.curriculum-content.tn-textbook-ingest-tntbc"
+    description: "Domain events for TN Textbook Ingest (TNTBC)"
+    messages:
+      changed: { name: M0039Changed, contentType: application/json }
+  curriculum-graph-neo4j.events:
+    address: "vasa.curriculum-content.curriculum-graph-neo4j"
+    description: "Domain events for Curriculum Graph (Neo4j)"
+    messages:
+      changed: { name: M0040Changed, contentType: application/json }
+  concept-prerequisite-graph.events:
+    address: "vasa.curriculum-content.concept-prerequisite-graph"
+    description: "Domain events for Concept Prerequisite Graph"
+    messages:
+      changed: { name: M0041Changed, contentType: application/json }
+  learning-outcome-map.events:
+    address: "vasa.curriculum-content.learning-outcome-map"
+    description: "Domain events for Learning-Outcome Map"
+    messages:
+      changed: { name: M0042Changed, contentType: application/json }
+  competency-framework.events:
+    address: "vasa.curriculum-content.competency-framework"
+    description: "Domain events for Competency Framework"
+    messages:
+      changed: { name: M0043Changed, contentType: application/json }
+  content-authoring-studio.events:
+    address: "vasa.curriculum-content.content-authoring-studio"
+    description: "Domain events for Content Authoring Studio"
+    messages:
+      changed: { name: M0044Changed, contentType: application/json }
+  content-review-workflow.events:
+    address: "vasa.curriculum-content.content-review-workflow"
+    description: "Domain events for Content Review Workflow"
+    messages:
+      changed: { name: M0045Changed, contentType: application/json }
+  content-versioning.events:
+    address: "vasa.curriculum-content.content-versioning"
+    description: "Domain events for Content Versioning"
+    messages:
+      changed: { name: M0046Changed, contentType: application/json }
+  content-tagging-future-skills.events:
+    address: "vasa.curriculum-content.content-tagging-future-skills"
+    description: "Domain events for Content Tagging (future-skills)"
+    messages:
+      changed: { name: M0047Changed, contentType: application/json }
+  multilingual-translation-pipeline-indictrans2.events:
+    address: "vasa.curriculum-content.multilingual-translation-pipeline-indictrans2"
+    description: "Domain events for Multilingual Translation Pipeline (IndicTrans2)"
+    messages:
+      changed: { name: M0048Changed, contentType: application/json }
+  translation-memory.events:
+    address: "vasa.curriculum-content.translation-memory"
+    description: "Domain events for Translation Memory"
+    messages:
+      changed: { name: M0049Changed, contentType: application/json }
+  language-qa-lqa.events:
+    address: "vasa.curriculum-content.language-qa-lqa"
+    description: "Domain events for Language QA (LQA)"
+    messages:
+      changed: { name: M0050Changed, contentType: application/json }
+  transliteration.events:
+    address: "vasa.curriculum-content.transliteration"
+    description: "Domain events for Transliteration"
+    messages:
+      changed: { name: M0051Changed, contentType: application/json }
+  accessibility-transform-aaa.events:
+    address: "vasa.curriculum-content.accessibility-transform-aaa"
+    description: "Domain events for Accessibility Transform (AAA)"
+    messages:
+      changed: { name: M0052Changed, contentType: application/json }
+  alt-text-generation.events:
+    address: "vasa.curriculum-content.alt-text-generation"
+    description: "Domain events for Alt-Text Generation"
+    messages:
+      changed: { name: M0053Changed, contentType: application/json }
+  audio-description.events:
+    address: "vasa.curriculum-content.audio-description"
+    description: "Domain events for Audio Description"
+    messages:
+      changed: { name: M0054Changed, contentType: application/json }
+  sign-language-isl-overlay.events:
+    address: "vasa.curriculum-content.sign-language-isl-overlay"
+    description: "Domain events for Sign-Language (ISL) Overlay"
+    messages:
+      changed: { name: M0055Changed, contentType: application/json }
+  captions-transcripts.events:
+    address: "vasa.curriculum-content.captions-transcripts"
+    description: "Domain events for Captions & Transcripts"
+    messages:
+      changed: { name: M0056Changed, contentType: application/json }
+  dyslexia-friendly-rendering.events:
+    address: "vasa.curriculum-content.dyslexia-friendly-rendering"
+    description: "Domain events for Dyslexia-Friendly Rendering"
+    messages:
+      changed: { name: M0057Changed, contentType: application/json }
+  diksha-content-read.events:
+    address: "vasa.curriculum-content.diksha-content-read"
+    description: "Domain events for DIKSHA Content Read"
+    messages:
+      changed: { name: M0058Changed, contentType: application/json }
+  diksha-content-contribute.events:
+    address: "vasa.curriculum-content.diksha-content-contribute"
+    description: "Domain events for DIKSHA Content Contribute"
+    messages:
+      changed: { name: M0059Changed, contentType: application/json }
+  content-discovery-search-opensearch.events:
+    address: "vasa.curriculum-content.content-discovery-search-opensearch"
+    description: "Domain events for Content Discovery & Search (OpenSearch)"
+    messages:
+      changed: { name: M0060Changed, contentType: application/json }
+  content-recommendation.events:
+    address: "vasa.curriculum-content.content-recommendation"
+    description: "Domain events for Content Recommendation"
+    messages:
+      changed: { name: M0061Changed, contentType: application/json }
+  lesson-plan-library.events:
+    address: "vasa.curriculum-content.lesson-plan-library"
+    description: "Domain events for Lesson-Plan Library"
+    messages:
+      changed: { name: M0062Changed, contentType: application/json }
+  question-bank.events:
+    address: "vasa.curriculum-content.question-bank"
+    description: "Domain events for Question Bank"
+    messages:
+      changed: { name: M0063Changed, contentType: application/json }
+  oer-repository.events:
+    address: "vasa.curriculum-content.oer-repository"
+    description: "Domain events for OER Repository"
+    messages:
+      changed: { name: M0064Changed, contentType: application/json }
+  print-ready-pdf-generation.events:
+    address: "vasa.curriculum-content.print-ready-pdf-generation"
+    description: "Domain events for Print-Ready PDF Generation"
+    messages:
+      changed: { name: M0065Changed, contentType: application/json }
+  qr-verifier-on-content.events:
+    address: "vasa.curriculum-content.qr-verifier-on-content"
+    description: "Domain events for QR Verifier on Content"
+    messages:
+      changed: { name: M0066Changed, contentType: application/json }
+  content-licensing-rights.events:
+    address: "vasa.curriculum-content.content-licensing-rights"
+    description: "Domain events for Content Licensing & Rights"
+    messages:
+      changed: { name: M0067Changed, contentType: application/json }
+  offline-content-pack.events:
+    address: "vasa.curriculum-content.offline-content-pack"
+    description: "Domain events for Offline Content Pack"
+    messages:
+      changed: { name: M0068Changed, contentType: application/json }
+  bagless-day-activity-bank.events:
+    address: "vasa.curriculum-content.bagless-day-activity-bank"
+    description: "Domain events for Bagless-Day Activity Bank"
+    messages:
+      changed: { name: M0069Changed, contentType: application/json }
+  reading-campaign-content-ennum-ezhuthum.events:
+    address: "vasa.curriculum-content.reading-campaign-content-ennum-ezhuthum"
+    description: "Domain events for Reading Campaign Content (Ennum Ezhuthum)"
+    messages:
+      changed: { name: M0070Changed, contentType: application/json }
+operations:
+  onM0036Changed:
+    action: receive
+    channel: { $ref: '#/channels/ncert-content-ingest.events' }
+  onM0037Changed:
+    action: receive
+    channel: { $ref: '#/channels/scert-content-ingest.events' }
+  onM0038Changed:
+    action: receive
+    channel: { $ref: '#/channels/ncf-framework-map.events' }
+  onM0039Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-textbook-ingest-tntbc.events' }
+  onM0040Changed:
+    action: receive
+    channel: { $ref: '#/channels/curriculum-graph-neo4j.events' }
+  onM0041Changed:
+    action: receive
+    channel: { $ref: '#/channels/concept-prerequisite-graph.events' }
+  onM0042Changed:
+    action: receive
+    channel: { $ref: '#/channels/learning-outcome-map.events' }
+  onM0043Changed:
+    action: receive
+    channel: { $ref: '#/channels/competency-framework.events' }
+  onM0044Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-authoring-studio.events' }
+  onM0045Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-review-workflow.events' }
+  onM0046Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-versioning.events' }
+  onM0047Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-tagging-future-skills.events' }
+  onM0048Changed:
+    action: receive
+    channel: { $ref: '#/channels/multilingual-translation-pipeline-indictrans2.events' }
+  onM0049Changed:
+    action: receive
+    channel: { $ref: '#/channels/translation-memory.events' }
+  onM0050Changed:
+    action: receive
+    channel: { $ref: '#/channels/language-qa-lqa.events' }
+  onM0051Changed:
+    action: receive
+    channel: { $ref: '#/channels/transliteration.events' }
+  onM0052Changed:
+    action: receive
+    channel: { $ref: '#/channels/accessibility-transform-aaa.events' }
+  onM0053Changed:
+    action: receive
+    channel: { $ref: '#/channels/alt-text-generation.events' }
+  onM0054Changed:
+    action: receive
+    channel: { $ref: '#/channels/audio-description.events' }
+  onM0055Changed:
+    action: receive
+    channel: { $ref: '#/channels/sign-language-isl-overlay.events' }
+  onM0056Changed:
+    action: receive
+    channel: { $ref: '#/channels/captions-transcripts.events' }
+  onM0057Changed:
+    action: receive
+    channel: { $ref: '#/channels/dyslexia-friendly-rendering.events' }
+  onM0058Changed:
+    action: receive
+    channel: { $ref: '#/channels/diksha-content-read.events' }
+  onM0059Changed:
+    action: receive
+    channel: { $ref: '#/channels/diksha-content-contribute.events' }
+  onM0060Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-discovery-search-opensearch.events' }
+  onM0061Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-recommendation.events' }
+  onM0062Changed:
+    action: receive
+    channel: { $ref: '#/channels/lesson-plan-library.events' }
+  onM0063Changed:
+    action: receive
+    channel: { $ref: '#/channels/question-bank.events' }
+  onM0064Changed:
+    action: receive
+    channel: { $ref: '#/channels/oer-repository.events' }
+  onM0065Changed:
+    action: receive
+    channel: { $ref: '#/channels/print-ready-pdf-generation.events' }
+  onM0066Changed:
+    action: receive
+    channel: { $ref: '#/channels/qr-verifier-on-content.events' }
+  onM0067Changed:
+    action: receive
+    channel: { $ref: '#/channels/content-licensing-rights.events' }
+  onM0068Changed:
+    action: receive
+    channel: { $ref: '#/channels/offline-content-pack.events' }
+  onM0069Changed:
+    action: receive
+    channel: { $ref: '#/channels/bagless-day-activity-bank.events' }
+  onM0070Changed:
+    action: receive
+    channel: { $ref: '#/channels/reading-campaign-content-ennum-ezhuthum.events' }

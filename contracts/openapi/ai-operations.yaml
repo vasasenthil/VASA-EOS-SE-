@@ -1,0 +1,283 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — ai-operations API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the ai-operations domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0300
+    description: "Model Registry (MLflow)"
+  - name: M0301
+    description: "Feature Store (Feast)"
+  - name: M0302
+    description: "Model-Card Service"
+  - name: M0303
+    description: "Bias Audit (AIF360/FairLearn)"
+  - name: M0304
+    description: "Drift Detector (PSI/KL)"
+  - name: M0305
+    description: "Canary & Rollback"
+  - name: M0306
+    description: "Red-Team Gate"
+  - name: M0307
+    description: "Prompt-Injection Defence"
+  - name: M0308
+    description: "Jailbreak Classifier"
+  - name: M0309
+    description: "Refusal Taxonomy"
+  - name: M0310
+    description: "Hallucination Control (citation enforcement)"
+  - name: M0311
+    description: "RAG Orchestrator (LangGraph)"
+  - name: M0312
+    description: "MCP Tool Catalogue"
+  - name: M0313
+    description: "Retrieval — Milvus (vector)"
+  - name: M0314
+    description: "Retrieval — OpenSearch (BM25)"
+  - name: M0315
+    description: "Reranker"
+  - name: M0316
+    description: "Reasoning Engine"
+  - name: M0317
+    description: "Personalisation Engine"
+  - name: M0318
+    description: "Assessment Engine"
+  - name: M0319
+    description: "Policy Engine (interpretation)"
+  - name: M0320
+    description: "Analytics Engine"
+  - name: M0321
+    description: "Conversational Engine"
+  - name: M0322
+    description: "Policy Agent"
+  - name: M0323
+    description: "Teacher Agent"
+  - name: M0324
+    description: "Student Agent"
+  - name: M0325
+    description: "Governance Agent"
+  - name: M0326
+    description: "Grievance Agent"
+  - name: M0327
+    description: "Compliance Agent"
+  - name: M0328
+    description: "Eval Harness (held-out benchmarks)"
+  - name: M0329
+    description: "Inference Observability (OpenLLMetry)"
+paths:
+  /model-registry-mlflow:
+    get: { tags: [M0300], summary: "List Model Registry (MLflow)", responses: { '200': { description: ok } } }
+    post: { tags: [M0300], summary: "Create Model Registry (MLflow)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /model-registry-mlflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0300], summary: "Get Model Registry (MLflow)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0300], summary: "Update Model Registry (MLflow)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /feature-store-feast:
+    get: { tags: [M0301], summary: "List Feature Store (Feast)", responses: { '200': { description: ok } } }
+    post: { tags: [M0301], summary: "Create Feature Store (Feast)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /feature-store-feast/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0301], summary: "Get Feature Store (Feast)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0301], summary: "Update Feature Store (Feast)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /model-card-service:
+    get: { tags: [M0302], summary: "List Model-Card Service", responses: { '200': { description: ok } } }
+    post: { tags: [M0302], summary: "Create Model-Card Service", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /model-card-service/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0302], summary: "Get Model-Card Service", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0302], summary: "Update Model-Card Service", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /bias-audit-aif360-fairlearn:
+    get: { tags: [M0303], summary: "List Bias Audit (AIF360/FairLearn)", responses: { '200': { description: ok } } }
+    post: { tags: [M0303], summary: "Create Bias Audit (AIF360/FairLearn)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /bias-audit-aif360-fairlearn/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0303], summary: "Get Bias Audit (AIF360/FairLearn)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0303], summary: "Update Bias Audit (AIF360/FairLearn)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /drift-detector-psi-kl:
+    get: { tags: [M0304], summary: "List Drift Detector (PSI/KL)", responses: { '200': { description: ok } } }
+    post: { tags: [M0304], summary: "Create Drift Detector (PSI/KL)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /drift-detector-psi-kl/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0304], summary: "Get Drift Detector (PSI/KL)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0304], summary: "Update Drift Detector (PSI/KL)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /canary-rollback:
+    get: { tags: [M0305], summary: "List Canary & Rollback", responses: { '200': { description: ok } } }
+    post: { tags: [M0305], summary: "Create Canary & Rollback", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /canary-rollback/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0305], summary: "Get Canary & Rollback", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0305], summary: "Update Canary & Rollback", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /red-team-gate:
+    get: { tags: [M0306], summary: "List Red-Team Gate", responses: { '200': { description: ok } } }
+    post: { tags: [M0306], summary: "Create Red-Team Gate", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /red-team-gate/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0306], summary: "Get Red-Team Gate", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0306], summary: "Update Red-Team Gate", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /prompt-injection-defence:
+    get: { tags: [M0307], summary: "List Prompt-Injection Defence", responses: { '200': { description: ok } } }
+    post: { tags: [M0307], summary: "Create Prompt-Injection Defence", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /prompt-injection-defence/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0307], summary: "Get Prompt-Injection Defence", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0307], summary: "Update Prompt-Injection Defence", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /jailbreak-classifier:
+    get: { tags: [M0308], summary: "List Jailbreak Classifier", responses: { '200': { description: ok } } }
+    post: { tags: [M0308], summary: "Create Jailbreak Classifier", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /jailbreak-classifier/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0308], summary: "Get Jailbreak Classifier", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0308], summary: "Update Jailbreak Classifier", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /refusal-taxonomy:
+    get: { tags: [M0309], summary: "List Refusal Taxonomy", responses: { '200': { description: ok } } }
+    post: { tags: [M0309], summary: "Create Refusal Taxonomy", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /refusal-taxonomy/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0309], summary: "Get Refusal Taxonomy", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0309], summary: "Update Refusal Taxonomy", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /hallucination-control-citation-enforcement:
+    get: { tags: [M0310], summary: "List Hallucination Control (citation enforcement)", responses: { '200': { description: ok } } }
+    post: { tags: [M0310], summary: "Create Hallucination Control (citation enforcement)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /hallucination-control-citation-enforcement/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0310], summary: "Get Hallucination Control (citation enforcement)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0310], summary: "Update Hallucination Control (citation enforcement)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /rag-orchestrator-langgraph:
+    get: { tags: [M0311], summary: "List RAG Orchestrator (LangGraph)", responses: { '200': { description: ok } } }
+    post: { tags: [M0311], summary: "Create RAG Orchestrator (LangGraph)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /rag-orchestrator-langgraph/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0311], summary: "Get RAG Orchestrator (LangGraph)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0311], summary: "Update RAG Orchestrator (LangGraph)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mcp-tool-catalogue:
+    get: { tags: [M0312], summary: "List MCP Tool Catalogue", responses: { '200': { description: ok } } }
+    post: { tags: [M0312], summary: "Create MCP Tool Catalogue", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mcp-tool-catalogue/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0312], summary: "Get MCP Tool Catalogue", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0312], summary: "Update MCP Tool Catalogue", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /retrieval-milvus-vector:
+    get: { tags: [M0313], summary: "List Retrieval — Milvus (vector)", responses: { '200': { description: ok } } }
+    post: { tags: [M0313], summary: "Create Retrieval — Milvus (vector)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /retrieval-milvus-vector/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0313], summary: "Get Retrieval — Milvus (vector)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0313], summary: "Update Retrieval — Milvus (vector)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /retrieval-opensearch-bm25:
+    get: { tags: [M0314], summary: "List Retrieval — OpenSearch (BM25)", responses: { '200': { description: ok } } }
+    post: { tags: [M0314], summary: "Create Retrieval — OpenSearch (BM25)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /retrieval-opensearch-bm25/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0314], summary: "Get Retrieval — OpenSearch (BM25)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0314], summary: "Update Retrieval — OpenSearch (BM25)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /reranker:
+    get: { tags: [M0315], summary: "List Reranker", responses: { '200': { description: ok } } }
+    post: { tags: [M0315], summary: "Create Reranker", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /reranker/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0315], summary: "Get Reranker", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0315], summary: "Update Reranker", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /reasoning-engine:
+    get: { tags: [M0316], summary: "List Reasoning Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0316], summary: "Create Reasoning Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /reasoning-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0316], summary: "Get Reasoning Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0316], summary: "Update Reasoning Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /personalisation-engine:
+    get: { tags: [M0317], summary: "List Personalisation Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0317], summary: "Create Personalisation Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /personalisation-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0317], summary: "Get Personalisation Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0317], summary: "Update Personalisation Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /assessment-engine:
+    get: { tags: [M0318], summary: "List Assessment Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0318], summary: "Create Assessment Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /assessment-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0318], summary: "Get Assessment Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0318], summary: "Update Assessment Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /policy-engine-interpretation:
+    get: { tags: [M0319], summary: "List Policy Engine (interpretation)", responses: { '200': { description: ok } } }
+    post: { tags: [M0319], summary: "Create Policy Engine (interpretation)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /policy-engine-interpretation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0319], summary: "Get Policy Engine (interpretation)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0319], summary: "Update Policy Engine (interpretation)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /analytics-engine:
+    get: { tags: [M0320], summary: "List Analytics Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0320], summary: "Create Analytics Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /analytics-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0320], summary: "Get Analytics Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0320], summary: "Update Analytics Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /conversational-engine:
+    get: { tags: [M0321], summary: "List Conversational Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0321], summary: "Create Conversational Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /conversational-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0321], summary: "Get Conversational Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0321], summary: "Update Conversational Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /policy-agent:
+    get: { tags: [M0322], summary: "List Policy Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0322], summary: "Create Policy Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /policy-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0322], summary: "Get Policy Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0322], summary: "Update Policy Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /teacher-agent:
+    get: { tags: [M0323], summary: "List Teacher Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0323], summary: "Create Teacher Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /teacher-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0323], summary: "Get Teacher Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0323], summary: "Update Teacher Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /student-agent:
+    get: { tags: [M0324], summary: "List Student Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0324], summary: "Create Student Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /student-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0324], summary: "Get Student Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0324], summary: "Update Student Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /governance-agent:
+    get: { tags: [M0325], summary: "List Governance Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0325], summary: "Create Governance Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /governance-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0325], summary: "Get Governance Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0325], summary: "Update Governance Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /grievance-agent:
+    get: { tags: [M0326], summary: "List Grievance Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0326], summary: "Create Grievance Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /grievance-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0326], summary: "Get Grievance Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0326], summary: "Update Grievance Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /compliance-agent:
+    get: { tags: [M0327], summary: "List Compliance Agent", responses: { '200': { description: ok } } }
+    post: { tags: [M0327], summary: "Create Compliance Agent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /compliance-agent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0327], summary: "Get Compliance Agent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0327], summary: "Update Compliance Agent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /eval-harness-held-out-benchmarks:
+    get: { tags: [M0328], summary: "List Eval Harness (held-out benchmarks)", responses: { '200': { description: ok } } }
+    post: { tags: [M0328], summary: "Create Eval Harness (held-out benchmarks)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /eval-harness-held-out-benchmarks/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0328], summary: "Get Eval Harness (held-out benchmarks)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0328], summary: "Update Eval Harness (held-out benchmarks)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /inference-observability-openllmetry:
+    get: { tags: [M0329], summary: "List Inference Observability (OpenLLMetry)", responses: { '200': { description: ok } } }
+    post: { tags: [M0329], summary: "Create Inference Observability (OpenLLMetry)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /inference-observability-openllmetry/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0329], summary: "Get Inference Observability (OpenLLMetry)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0329], summary: "Update Inference Observability (OpenLLMetry)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

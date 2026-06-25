@@ -1,0 +1,503 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — tn-specific events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for tn-specific. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  tn-go-catalogue.events:
+    address: "vasa.tn-specific.tn-go-catalogue"
+    description: "Domain events for TN GO Catalogue"
+    messages:
+      changed: { name: M0330Changed, contentType: application/json }
+  tn-reservation-rules-bc-mbc-sc-st-dnt.events:
+    address: "vasa.tn-specific.tn-reservation-rules-bc-mbc-sc-st-dnt"
+    description: "Domain events for TN Reservation Rules (BC/MBC/SC/ST/DNT)"
+    messages:
+      changed: { name: M0331Changed, contentType: application/json }
+  tn-state-board-dge-exam.events:
+    address: "vasa.tn-specific.tn-state-board-dge-exam"
+    description: "Domain events for TN State Board (DGE) Exam"
+    messages:
+      changed: { name: M0332Changed, contentType: application/json }
+  tn-textbook-corporation.events:
+    address: "vasa.tn-specific.tn-textbook-corporation"
+    description: "Domain events for TN Textbook Corporation"
+    messages:
+      changed: { name: M0333Changed, contentType: application/json }
+  pudhumai-penn-scheme.events:
+    address: "vasa.tn-specific.pudhumai-penn-scheme"
+    description: "Domain events for Pudhumai Penn Scheme"
+    messages:
+      changed: { name: M0334Changed, contentType: application/json }
+  naan-mudhalvan-skill-pipeline.events:
+    address: "vasa.tn-specific.naan-mudhalvan-skill-pipeline"
+    description: "Domain events for Naan Mudhalvan Skill Pipeline"
+    messages:
+      changed: { name: M0335Changed, contentType: application/json }
+  mudhalvar-makkal-sevai-nanbar-internship.events:
+    address: "vasa.tn-specific.mudhalvar-makkal-sevai-nanbar-internship"
+    description: "Domain events for Mudhalvar Makkal Sevai Nanbar Internship"
+    messages:
+      changed: { name: M0336Changed, contentType: application/json }
+  illam-thedi-kalvi-education-at-doorstep.events:
+    address: "vasa.tn-specific.illam-thedi-kalvi-education-at-doorstep"
+    description: "Domain events for Illam Thedi Kalvi (Education at Doorstep)"
+    messages:
+      changed: { name: M0337Changed, contentType: application/json }
+  ennum-ezhuthum-fln-mission.events:
+    address: "vasa.tn-specific.ennum-ezhuthum-fln-mission"
+    description: "Domain events for Ennum Ezhuthum (FLN Mission)"
+    messages:
+      changed: { name: M0338Changed, contentType: application/json }
+  100-kamarajar-schools-register.events:
+    address: "vasa.tn-specific.100-kamarajar-schools-register"
+    description: "Domain events for 100 Kamarajar Schools Register"
+    messages:
+      changed: { name: M0339Changed, contentType: application/json }
+  500-creative-schools-register.events:
+    address: "vasa.tn-specific.500-creative-schools-register"
+    description: "Domain events for 500 Creative Schools Register"
+    messages:
+      changed: { name: M0340Changed, contentType: application/json }
+  breakfast-scheme-cm.events:
+    address: "vasa.tn-specific.breakfast-scheme-cm"
+    description: "Domain events for Breakfast Scheme (CM)"
+    messages:
+      changed: { name: M0341Changed, contentType: application/json }
+  chief-minister-s-trophy.events:
+    address: "vasa.tn-specific.chief-minister-s-trophy"
+    description: "Domain events for Chief Minister's Trophy"
+    messages:
+      changed: { name: M0342Changed, contentType: application/json }
+  kalvi-tv-integration.events:
+    address: "vasa.tn-specific.kalvi-tv-integration"
+    description: "Domain events for Kalvi TV Integration"
+    messages:
+      changed: { name: M0343Changed, contentType: application/json }
+  manjappai-awareness-eco-school.events:
+    address: "vasa.tn-specific.manjappai-awareness-eco-school"
+    description: "Domain events for Manjappai Awareness (eco-school)"
+    messages:
+      changed: { name: M0344Changed, contentType: application/json }
+  tn-school-education-rules.events:
+    address: "vasa.tn-specific.tn-school-education-rules"
+    description: "Domain events for TN School Education Rules"
+    messages:
+      changed: { name: M0345Changed, contentType: application/json }
+  tn-private-schools-dpse-recognition.events:
+    address: "vasa.tn-specific.tn-private-schools-dpse-recognition"
+    description: "Domain events for TN Private Schools (DPSE) Recognition"
+    messages:
+      changed: { name: M0346Changed, contentType: application/json }
+  matriculation-schools-dms.events:
+    address: "vasa.tn-specific.matriculation-schools-dms"
+    description: "Domain events for Matriculation Schools (DMS)"
+    messages:
+      changed: { name: M0347Changed, contentType: application/json }
+  non-formal-education-dnfe.events:
+    address: "vasa.tn-specific.non-formal-education-dnfe"
+    description: "Domain events for Non-Formal Education (DNFE)"
+    messages:
+      changed: { name: M0348Changed, contentType: application/json }
+  teacher-education-dtert-scert.events:
+    address: "vasa.tn-specific.teacher-education-dtert-scert"
+    description: "Domain events for Teacher Education (DTERT/SCERT)"
+    messages:
+      changed: { name: M0349Changed, contentType: application/json }
+  elementary-education-dee.events:
+    address: "vasa.tn-specific.elementary-education-dee"
+    description: "Domain events for Elementary Education (DEE)"
+    messages:
+      changed: { name: M0350Changed, contentType: application/json }
+  school-education-dse.events:
+    address: "vasa.tn-specific.school-education-dse"
+    description: "Domain events for School Education (DSE)"
+    messages:
+      changed: { name: M0351Changed, contentType: application/json }
+  tn-udise-reconciliation.events:
+    address: "vasa.tn-specific.tn-udise-reconciliation"
+    description: "Domain events for TN UDISE+ Reconciliation"
+    messages:
+      changed: { name: M0352Changed, contentType: application/json }
+  tn-apaar-rollout.events:
+    address: "vasa.tn-specific.tn-apaar-rollout"
+    description: "Domain events for TN APAAR Rollout"
+    messages:
+      changed: { name: M0353Changed, contentType: application/json }
+  tn-treasury-ifms.events:
+    address: "vasa.tn-specific.tn-treasury-ifms"
+    description: "Domain events for TN Treasury / IFMS"
+    messages:
+      changed: { name: M0354Changed, contentType: application/json }
+  tn-pension-salary.events:
+    address: "vasa.tn-specific.tn-pension-salary"
+    description: "Domain events for TN Pension & Salary"
+    messages:
+      changed: { name: M0355Changed, contentType: application/json }
+  tn-epf-staff.events:
+    address: "vasa.tn-specific.tn-epf-staff"
+    description: "Domain events for TN EPF (staff)"
+    messages:
+      changed: { name: M0356Changed, contentType: application/json }
+  tn-hostel-adi-dravidar-bc-welfare.events:
+    address: "vasa.tn-specific.tn-hostel-adi-dravidar-bc-welfare"
+    description: "Domain events for TN Hostel (Adi Dravidar/BC welfare)"
+    messages:
+      changed: { name: M0357Changed, contentType: application/json }
+  tn-free-bicycle.events:
+    address: "vasa.tn-specific.tn-free-bicycle"
+    description: "Domain events for TN Free Bicycle"
+    messages:
+      changed: { name: M0358Changed, contentType: application/json }
+  tn-free-laptop.events:
+    address: "vasa.tn-specific.tn-free-laptop"
+    description: "Domain events for TN Free Laptop"
+    messages:
+      changed: { name: M0359Changed, contentType: application/json }
+  tn-bus-pass.events:
+    address: "vasa.tn-specific.tn-bus-pass"
+    description: "Domain events for TN Bus Pass"
+    messages:
+      changed: { name: M0360Changed, contentType: application/json }
+  tn-girl-child-protection-scheme.events:
+    address: "vasa.tn-specific.tn-girl-child-protection-scheme"
+    description: "Domain events for TN Girl-Child Protection Scheme"
+    messages:
+      changed: { name: M0361Changed, contentType: application/json }
+  tn-differently-abled-welfare.events:
+    address: "vasa.tn-specific.tn-differently-abled-welfare"
+    description: "Domain events for TN Differently-Abled Welfare"
+    messages:
+      changed: { name: M0362Changed, contentType: application/json }
+  tn-migrant-children-education.events:
+    address: "vasa.tn-specific.tn-migrant-children-education"
+    description: "Domain events for TN Migrant-Children Education"
+    messages:
+      changed: { name: M0363Changed, contentType: application/json }
+  tn-tribal-residential-schools.events:
+    address: "vasa.tn-specific.tn-tribal-residential-schools"
+    description: "Domain events for TN Tribal-Residential Schools"
+    messages:
+      changed: { name: M0364Changed, contentType: application/json }
+  tn-adi-dravidar-welfare-schools.events:
+    address: "vasa.tn-specific.tn-adi-dravidar-welfare-schools"
+    description: "Domain events for TN Adi Dravidar Welfare Schools"
+    messages:
+      changed: { name: M0365Changed, contentType: application/json }
+  tn-model-schools.events:
+    address: "vasa.tn-specific.tn-model-schools"
+    description: "Domain events for TN Model Schools"
+    messages:
+      changed: { name: M0366Changed, contentType: application/json }
+  tn-aided-school-management.events:
+    address: "vasa.tn-specific.tn-aided-school-management"
+    description: "Domain events for TN Aided-School Management"
+    messages:
+      changed: { name: M0367Changed, contentType: application/json }
+  tn-anganwadi-icds-bridge.events:
+    address: "vasa.tn-specific.tn-anganwadi-icds-bridge"
+    description: "Domain events for TN Anganwadi (ICDS) Bridge"
+    messages:
+      changed: { name: M0368Changed, contentType: application/json }
+  tn-mid-day-meal-variety-meal.events:
+    address: "vasa.tn-specific.tn-mid-day-meal-variety-meal"
+    description: "Domain events for TN Mid-Day-Meal (Variety Meal)"
+    messages:
+      changed: { name: M0369Changed, contentType: application/json }
+  tn-egg-nutrition-programme.events:
+    address: "vasa.tn-specific.tn-egg-nutrition-programme"
+    description: "Domain events for TN Egg/Nutrition Programme"
+    messages:
+      changed: { name: M0370Changed, contentType: application/json }
+  tn-sports-games-cm-trophy.events:
+    address: "vasa.tn-specific.tn-sports-games-cm-trophy"
+    description: "Domain events for TN Sports & Games (CM Trophy)"
+    messages:
+      changed: { name: M0371Changed, contentType: application/json }
+  tn-career-guidance-naan-mudhalvan.events:
+    address: "vasa.tn-specific.tn-career-guidance-naan-mudhalvan"
+    description: "Domain events for TN Career Guidance (Naan Mudhalvan)"
+    messages:
+      changed: { name: M0372Changed, contentType: application/json }
+  tn-digital-classroom.events:
+    address: "vasa.tn-specific.tn-digital-classroom"
+    description: "Domain events for TN Digital Classroom"
+    messages:
+      changed: { name: M0373Changed, contentType: application/json }
+  tn-smart-classroom-rollout.events:
+    address: "vasa.tn-specific.tn-smart-classroom-rollout"
+    description: "Domain events for TN Smart Classroom Rollout"
+    messages:
+      changed: { name: M0374Changed, contentType: application/json }
+  tn-library-movement.events:
+    address: "vasa.tn-specific.tn-library-movement"
+    description: "Domain events for TN Library Movement"
+    messages:
+      changed: { name: M0375Changed, contentType: application/json }
+  tn-reading-movement.events:
+    address: "vasa.tn-specific.tn-reading-movement"
+    description: "Domain events for TN Reading Movement"
+    messages:
+      changed: { name: M0376Changed, contentType: application/json }
+  tn-science-centre-linkage.events:
+    address: "vasa.tn-specific.tn-science-centre-linkage"
+    description: "Domain events for TN Science Centre Linkage"
+    messages:
+      changed: { name: M0377Changed, contentType: application/json }
+  tn-cultural-education.events:
+    address: "vasa.tn-specific.tn-cultural-education"
+    description: "Domain events for TN Cultural Education"
+    messages:
+      changed: { name: M0378Changed, contentType: application/json }
+  tn-tamil-language-promotion.events:
+    address: "vasa.tn-specific.tn-tamil-language-promotion"
+    description: "Domain events for TN Tamil-Language Promotion"
+    messages:
+      changed: { name: M0379Changed, contentType: application/json }
+  tn-heritage-curriculum.events:
+    address: "vasa.tn-specific.tn-heritage-curriculum"
+    description: "Domain events for TN Heritage Curriculum"
+    messages:
+      changed: { name: M0380Changed, contentType: application/json }
+  tn-flood-disaster-school-continuity.events:
+    address: "vasa.tn-specific.tn-flood-disaster-school-continuity"
+    description: "Domain events for TN Flood/Disaster School Continuity"
+    messages:
+      changed: { name: M0381Changed, contentType: application/json }
+  tn-covid-learning-recovery.events:
+    address: "vasa.tn-specific.tn-covid-learning-recovery"
+    description: "Domain events for TN COVID Learning-Recovery"
+    messages:
+      changed: { name: M0382Changed, contentType: application/json }
+  tn-bridge-course-learning-loss.events:
+    address: "vasa.tn-specific.tn-bridge-course-learning-loss"
+    description: "Domain events for TN Bridge-Course (learning loss)"
+    messages:
+      changed: { name: M0383Changed, contentType: application/json }
+  tn-special-coaching-neet-board.events:
+    address: "vasa.tn-specific.tn-special-coaching-neet-board"
+    description: "Domain events for TN Special Coaching (NEET/board)"
+    messages:
+      changed: { name: M0384Changed, contentType: application/json }
+  tn-vocational-education-nsqf.events:
+    address: "vasa.tn-specific.tn-vocational-education-nsqf"
+    description: "Domain events for TN Vocational Education (NSQF)"
+    messages:
+      changed: { name: M0385Changed, contentType: application/json }
+  tn-apprenticeship-linkage.events:
+    address: "vasa.tn-specific.tn-apprenticeship-linkage"
+    description: "Domain events for TN Apprenticeship Linkage"
+    messages:
+      changed: { name: M0386Changed, contentType: application/json }
+  tn-alumni-mentorship.events:
+    address: "vasa.tn-specific.tn-alumni-mentorship"
+    description: "Domain events for TN Alumni Mentorship"
+    messages:
+      changed: { name: M0387Changed, contentType: application/json }
+  tn-public-school-branding.events:
+    address: "vasa.tn-specific.tn-public-school-branding"
+    description: "Domain events for TN Public-School Branding"
+    messages:
+      changed: { name: M0388Changed, contentType: application/json }
+  tn-community-participation-pta-smc.events:
+    address: "vasa.tn-specific.tn-community-participation-pta-smc"
+    description: "Domain events for TN Community Participation (PTA/SMC)"
+    messages:
+      changed: { name: M0389Changed, contentType: application/json }
+  tn-school-infrastructure-upgrade.events:
+    address: "vasa.tn-specific.tn-school-infrastructure-upgrade"
+    description: "Domain events for TN School-Infrastructure Upgrade"
+    messages:
+      changed: { name: M0390Changed, contentType: application/json }
+  tn-specific-module-62.events:
+    address: "vasa.tn-specific.tn-specific-module-62"
+    description: "Domain events for Tn Specific — Module 62"
+    messages:
+      changed: { name: M0391Changed, contentType: application/json }
+operations:
+  onM0330Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-go-catalogue.events' }
+  onM0331Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-reservation-rules-bc-mbc-sc-st-dnt.events' }
+  onM0332Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-state-board-dge-exam.events' }
+  onM0333Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-textbook-corporation.events' }
+  onM0334Changed:
+    action: receive
+    channel: { $ref: '#/channels/pudhumai-penn-scheme.events' }
+  onM0335Changed:
+    action: receive
+    channel: { $ref: '#/channels/naan-mudhalvan-skill-pipeline.events' }
+  onM0336Changed:
+    action: receive
+    channel: { $ref: '#/channels/mudhalvar-makkal-sevai-nanbar-internship.events' }
+  onM0337Changed:
+    action: receive
+    channel: { $ref: '#/channels/illam-thedi-kalvi-education-at-doorstep.events' }
+  onM0338Changed:
+    action: receive
+    channel: { $ref: '#/channels/ennum-ezhuthum-fln-mission.events' }
+  onM0339Changed:
+    action: receive
+    channel: { $ref: '#/channels/100-kamarajar-schools-register.events' }
+  onM0340Changed:
+    action: receive
+    channel: { $ref: '#/channels/500-creative-schools-register.events' }
+  onM0341Changed:
+    action: receive
+    channel: { $ref: '#/channels/breakfast-scheme-cm.events' }
+  onM0342Changed:
+    action: receive
+    channel: { $ref: '#/channels/chief-minister-s-trophy.events' }
+  onM0343Changed:
+    action: receive
+    channel: { $ref: '#/channels/kalvi-tv-integration.events' }
+  onM0344Changed:
+    action: receive
+    channel: { $ref: '#/channels/manjappai-awareness-eco-school.events' }
+  onM0345Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-school-education-rules.events' }
+  onM0346Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-private-schools-dpse-recognition.events' }
+  onM0347Changed:
+    action: receive
+    channel: { $ref: '#/channels/matriculation-schools-dms.events' }
+  onM0348Changed:
+    action: receive
+    channel: { $ref: '#/channels/non-formal-education-dnfe.events' }
+  onM0349Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-education-dtert-scert.events' }
+  onM0350Changed:
+    action: receive
+    channel: { $ref: '#/channels/elementary-education-dee.events' }
+  onM0351Changed:
+    action: receive
+    channel: { $ref: '#/channels/school-education-dse.events' }
+  onM0352Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-udise-reconciliation.events' }
+  onM0353Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-apaar-rollout.events' }
+  onM0354Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-treasury-ifms.events' }
+  onM0355Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-pension-salary.events' }
+  onM0356Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-epf-staff.events' }
+  onM0357Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-hostel-adi-dravidar-bc-welfare.events' }
+  onM0358Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-free-bicycle.events' }
+  onM0359Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-free-laptop.events' }
+  onM0360Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-bus-pass.events' }
+  onM0361Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-girl-child-protection-scheme.events' }
+  onM0362Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-differently-abled-welfare.events' }
+  onM0363Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-migrant-children-education.events' }
+  onM0364Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-tribal-residential-schools.events' }
+  onM0365Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-adi-dravidar-welfare-schools.events' }
+  onM0366Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-model-schools.events' }
+  onM0367Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-aided-school-management.events' }
+  onM0368Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-anganwadi-icds-bridge.events' }
+  onM0369Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-mid-day-meal-variety-meal.events' }
+  onM0370Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-egg-nutrition-programme.events' }
+  onM0371Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-sports-games-cm-trophy.events' }
+  onM0372Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-career-guidance-naan-mudhalvan.events' }
+  onM0373Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-digital-classroom.events' }
+  onM0374Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-smart-classroom-rollout.events' }
+  onM0375Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-library-movement.events' }
+  onM0376Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-reading-movement.events' }
+  onM0377Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-science-centre-linkage.events' }
+  onM0378Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-cultural-education.events' }
+  onM0379Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-tamil-language-promotion.events' }
+  onM0380Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-heritage-curriculum.events' }
+  onM0381Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-flood-disaster-school-continuity.events' }
+  onM0382Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-covid-learning-recovery.events' }
+  onM0383Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-bridge-course-learning-loss.events' }
+  onM0384Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-special-coaching-neet-board.events' }
+  onM0385Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-vocational-education-nsqf.events' }
+  onM0386Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-apprenticeship-linkage.events' }
+  onM0387Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-alumni-mentorship.events' }
+  onM0388Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-public-school-branding.events' }
+  onM0389Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-community-participation-pta-smc.events' }
+  onM0390Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-school-infrastructure-upgrade.events' }
+  onM0391Changed:
+    action: receive
+    channel: { $ref: '#/channels/tn-specific-module-62.events' }

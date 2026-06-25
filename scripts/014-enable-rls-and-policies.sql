@@ -2,10 +2,8 @@
 -- This will block all access by default until we create policies
 ALTER TABLE public.schools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.enrollments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
+-- courses / enrollments / assignments / submissions: the legacy LMS tables are gone; the real
+-- academic modules (scripts/046 courses, scripts/048 assignments) own and RLS-enable their own tables.
 
 -- Add other tables from your error list here:
 ALTER TABLE public.policies ENABLE ROW LEVEL SECURITY;
@@ -19,67 +17,24 @@ ALTER TABLE public.implementation_stakeholders ENABLE ROW LEVEL SECURITY;
 -- Policy: Allow users to see their own profile information.
 CREATE POLICY "Users can view their own data"
 ON public.users FOR SELECT
-USING (auth.uid() = id);
+USING (auth.uid()::text = id);
 
 -- Policy: Allow users to update their own profile information.
 CREATE POLICY "Users can update their own data"
 ON public.users FOR UPDATE
-USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
+USING (auth.uid()::text = id)
+WITH CHECK (auth.uid()::text = id);
 
 -- Policy: Allow authenticated users to insert their own user record
 -- (This is often needed if user creation involves inserting into public.users after auth.users creation)
 -- Ensure the ID matches the authenticated user's ID.
 CREATE POLICY "Users can insert their own user record"
 ON public.users FOR INSERT
-WITH CHECK (auth.uid() = id);
+WITH CHECK (auth.uid()::text = id);
 
 
--- 3. Create Policies for the 'courses' table
--- Policy: Allow any authenticated user to view all courses.
-CREATE POLICY "Authenticated users can view courses"
-ON public.courses FOR SELECT
-USING (auth.role() = 'authenticated');
--- Add policies for INSERT, UPDATE, DELETE for courses as needed, likely restricted to specific roles (e.g., admin, teacher)
-
-
--- 4. Create Policies for 'enrollments'
--- Policy: Allow users to see their own enrollments.
-CREATE POLICY "Users can see their own enrollments"
-ON public.enrollments FOR SELECT
-USING (auth.uid() = user_id);
-
--- Policy: Allow students to enroll themselves in a course.
-CREATE POLICY "Students can create their own enrollments"
-ON public.enrollments FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
-
--- 5. Create Policies for 'assignments'
--- Policy: Allow authenticated users to view assignments (e.g., for enrolled courses).
--- This might need to be more specific, e.g., join with enrollments.
-CREATE POLICY "Authenticated users can view assignments"
-ON public.assignments FOR SELECT
-USING (auth.role() = 'authenticated');
-
-
--- 6. Create Policies for 'submissions'
--- Policy: Allow users to see their own submissions.
-CREATE POLICY "Users can see their own submissions"
-ON public.submissions FOR SELECT
-USING (auth.uid() = user_id);
-
--- Policy: Allow users to create their own submissions.
-CREATE POLICY "Users can create their own submissions"
-ON public.submissions FOR INSERT
-WITH CHECK (auth.uid() = user_id);
-
--- Policy: Allow users to update their own submissions (e.g., before grading).
-CREATE POLICY "Users can update their own submissions"
-ON public.submissions FOR UPDATE
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
-
+-- Policies for the legacy LMS tables (courses/enrollments/assignments/submissions) were removed —
+-- those tables are owned by the real academic-module migrations, which define their own policies.
 
 -- 7. Create Policies for 'schools'
 -- Policy: Allow any authenticated user to view all schools.

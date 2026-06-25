@@ -2,6 +2,15 @@ export const runtime = "nodejs"
 
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
+import { timingSafeEqual } from "node:crypto"
+
+/** Constant-time secret comparison (avoids timing oracles); rejects empty/mismatched. */
+function secretMatches(provided: string | null, expected: string | undefined): boolean {
+  if (!provided || !expected) return false
+  const a = new TextEncoder().encode(provided)
+  const b = new TextEncoder().encode(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
 
 // Define UserRole type locally if not exported from another file
 type UserRole = "STUDENT" | "TEACHER" | "SCHOOL_ADMIN" | "STATE_ADMIN"
@@ -81,9 +90,11 @@ const usersToSeed = [
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const secret = searchParams.get("secret")
+  // Prefer the secret in a header (the query string leaks into access logs, browser
+  // history and referrer headers); fall back to the query param for back-compatibility.
+  const provided = request.headers.get("x-seed-secret") ?? searchParams.get("secret")
 
-  if (secret !== process.env.SEED_SECRET) {
+  if (!secretMatches(provided, process.env.SEED_SECRET)) {
     return NextResponse.json({ error: "Unauthorized. Invalid or missing secret." }, { status: 401 })
   }
 

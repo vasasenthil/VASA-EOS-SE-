@@ -1,0 +1,15 @@
+// Live (real HTTP-backed) integration adapters. Each is selected by the registry
+// only when its INTEGRATION_* flag is set to "live"; otherwise the mock is used.
+export { liveDiksha } from "./diksha"
+export { liveUdise } from "./udise"
+export { liveAgents } from "./agents"
+export { liveLanguage } from "./bhashini"
+export { liveDigiLocker } from "./digilocker"
+export { liveDbt } from "./dbt"
+export { liveAadhaar } from "./aadhaar"
+export { liveIdentity } from "./apaar"
+export { liveEmis } from "./emis"
+export { livePortal } from "./portal"
+export { liveExams } from "./exams"
+export { liveRetrieval } from "./retrieval"
+export { livePfms } from "./pfms"

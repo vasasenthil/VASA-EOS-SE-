@@ -1,0 +1,37 @@
+# VASA-EOS(SE) TN — local / on-prem stack: the app + a Postgres data store.
+# For a real deployment the DB is the sovereign Postgres (TN SDC); this compose
+# brings up an equivalent locally so the platform runs durably without a managed
+# provider. Secrets are read from a local .env (never commit real values).
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Persistence + auth (point at the sovereign Postgres/Supabase-compatible API)
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      # Observability: point at an OTLP collector to ship traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: vasa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme-local-only}
+      POSTGRES_DB: vasa_eos
+    volumes:
+      - vasa_db:/var/lib/postgresql/data
+      # Migrations 001..018 run on first boot (idempotent).
+      - ./scripts:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  vasa_db:

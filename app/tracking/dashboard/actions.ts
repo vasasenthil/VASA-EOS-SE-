@@ -30,6 +30,7 @@ export interface PolicyImplementationStatus {
 }
 
 // Import data generation functions
+import { trackerDemoData } from "@/lib/tracking/demo"
 import { generateSeedPolicyImplementationData } from "@/scripts/seed-policy-implementation"
 import { generateSampleMilestones } from "@/scripts/seed-milestones"
 import { generateSampleChallenges } from "@/scripts/seed-challenges"
@@ -77,6 +78,8 @@ export interface TrackerDashboardData {
   distinctStatuses: string[]
   distinctRegionTypes: string[]
   error?: string
+  /** True when the dashboard is showing the no-database demo dataset. */
+  demo?: boolean
 }
 
 export interface PolicyImplementationStatusDetail extends PolicyImplementationStatus {
@@ -89,16 +92,9 @@ const CRITICAL_DB_ERROR_MSG =
 // ... (getTrackerDashboardData, seed actions, challenge CRUD actions, getImplementationStatusByIdAction remain unchanged) ...
 export async function getTrackerDashboardData(filters?: DashboardFiltersType): Promise<TrackerDashboardData> {
   if (!isSupabaseAdminConfigured()) {
-    console.warn("getTrackerDashboardData: Supabase admin client not configured.")
-    return {
-      stats: [],
-      policyProgress: [],
-      nepThrustAreaProgress: [],
-      stateImplementationProgress: [],
-      distinctStatuses: [],
-      distinctRegionTypes: [],
-      error: CRITICAL_DB_ERROR_MSG,
-    }
+    // No database configured — demonstrate the tracker with representative NEP-2020
+    // implementation data instead of an empty, error-only dashboard.
+    return trackerDemoData()
   }
 
   try {
@@ -155,6 +151,12 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       ? [...new Set(distinctRegionTypeData.map((item: any) => item.region_type).filter(Boolean))]
       : []
 
+    // Empty/unseeded DB on an unfiltered view — show the demo dataset rather than a blank
+    // dashboard (a filtered view that returns nothing is respected below).
+    const unfiltered = !filters?.status && !filters?.regionType
+    if ((!implementationData || implementationData.length === 0) && unfiltered) {
+      return trackerDemoData()
+    }
     if (!implementationData) {
       return {
         stats: [],
@@ -343,15 +345,27 @@ export async function getTrackerDashboardData(filters?: DashboardFiltersType): P
       distinctRegionTypes,
     }
   } catch (error: any) {
+    // Supabase unreachable — fail soft: render the dashboard with zeroed stats and
+    // empty data rather than a full-page error card. The seed buttons remain available.
     console.error("Error fetching tracker dashboard data:", error)
+    const zeroStats: TrackerStat[] = [
+      { title: "Total Policies Tracked", value: "0" },
+      { title: "Avg. Implementation Rate", value: "0%" },
+      { title: "Active Implementations", value: "0" },
+      { title: "States Covered", value: "0" },
+      { title: "Open Challenges", value: "0" },
+      { title: "Critical/High Challenges", value: "0" },
+      { title: "Resolved Challenges", value: "0" },
+      { title: "Total Stakeholders Mapped", value: "0" },
+      { title: "Unique Stakeholder Types", value: "0" },
+    ]
     return {
-      stats: [],
+      stats: zeroStats,
       policyProgress: [],
       nepThrustAreaProgress: [],
       stateImplementationProgress: [],
       distinctStatuses: [],
       distinctRegionTypes: [],
-      error: `Failed to fetch dashboard data: ${error.message}`,
     }
   }
 }

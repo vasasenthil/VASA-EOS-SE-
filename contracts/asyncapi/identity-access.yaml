@@ -1,0 +1,287 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — identity-access events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for identity-access. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  apaar-learner-identity.events:
+    address: "vasa.identity-access.apaar-learner-identity"
+    description: "Domain events for APAAR Learner Identity"
+    messages:
+      changed: { name: M0001Changed, contentType: application/json }
+  citizen-identity-official-id.events:
+    address: "vasa.identity-access.citizen-identity-official-id"
+    description: "Domain events for Citizen Identity (official ID)"
+    messages:
+      changed: { name: M0002Changed, contentType: application/json }
+  teacher-institutional-identity.events:
+    address: "vasa.identity-access.teacher-institutional-identity"
+    description: "Domain events for Teacher Institutional Identity"
+    messages:
+      changed: { name: M0003Changed, contentType: application/json }
+  keycloak-realm-t0-sovereign.events:
+    address: "vasa.identity-access.keycloak-realm-t0-sovereign"
+    description: "Domain events for Keycloak Realm — T0 Sovereign"
+    messages:
+      changed: { name: M0004Changed, contentType: application/json }
+  keycloak-realm-secretariat.events:
+    address: "vasa.identity-access.keycloak-realm-secretariat"
+    description: "Domain events for Keycloak Realm — Secretariat"
+    messages:
+      changed: { name: M0005Changed, contentType: application/json }
+  keycloak-realm-directorate.events:
+    address: "vasa.identity-access.keycloak-realm-directorate"
+    description: "Domain events for Keycloak Realm — Directorate"
+    messages:
+      changed: { name: M0006Changed, contentType: application/json }
+  keycloak-realm-district.events:
+    address: "vasa.identity-access.keycloak-realm-district"
+    description: "Domain events for Keycloak Realm — District"
+    messages:
+      changed: { name: M0007Changed, contentType: application/json }
+  keycloak-realm-block.events:
+    address: "vasa.identity-access.keycloak-realm-block"
+    description: "Domain events for Keycloak Realm — Block"
+    messages:
+      changed: { name: M0008Changed, contentType: application/json }
+  keycloak-realm-cluster.events:
+    address: "vasa.identity-access.keycloak-realm-cluster"
+    description: "Domain events for Keycloak Realm — Cluster"
+    messages:
+      changed: { name: M0009Changed, contentType: application/json }
+  keycloak-realm-school.events:
+    address: "vasa.identity-access.keycloak-realm-school"
+    description: "Domain events for Keycloak Realm — School"
+    messages:
+      changed: { name: M0010Changed, contentType: application/json }
+  mfa-totp.events:
+    address: "vasa.identity-access.mfa-totp"
+    description: "Domain events for MFA — TOTP"
+    messages:
+      changed: { name: M0011Changed, contentType: application/json }
+  mfa-webauthn-fido2.events:
+    address: "vasa.identity-access.mfa-webauthn-fido2"
+    description: "Domain events for MFA — WebAuthn/FIDO2"
+    messages:
+      changed: { name: M0012Changed, contentType: application/json }
+  mfa-sms-otp-fallback.events:
+    address: "vasa.identity-access.mfa-sms-otp-fallback"
+    description: "Domain events for MFA — SMS-OTP Fallback"
+    messages:
+      changed: { name: M0013Changed, contentType: application/json }
+  aal3-step-up-governance-finance.events:
+    address: "vasa.identity-access.aal3-step-up-governance-finance"
+    description: "Domain events for AAL3 Step-Up (governance/finance)"
+    messages:
+      changed: { name: M0014Changed, contentType: application/json }
+  oidc-federation.events:
+    address: "vasa.identity-access.oidc-federation"
+    description: "Domain events for OIDC Federation"
+    messages:
+      changed: { name: M0015Changed, contentType: application/json }
+  saml-2-0-federation.events:
+    address: "vasa.identity-access.saml-2-0-federation"
+    description: "Domain events for SAML 2.0 Federation"
+    messages:
+      changed: { name: M0016Changed, contentType: application/json }
+  ldap-federation.events:
+    address: "vasa.identity-access.ldap-federation"
+    description: "Domain events for LDAP Federation"
+    messages:
+      changed: { name: M0017Changed, contentType: application/json }
+  digilocker-sso.events:
+    address: "vasa.identity-access.digilocker-sso"
+    description: "Domain events for DigiLocker SSO"
+    messages:
+      changed: { name: M0018Changed, contentType: application/json }
+  consent-manager-dpdp.events:
+    address: "vasa.identity-access.consent-manager-dpdp"
+    description: "Domain events for Consent Manager (DPDP)"
+    messages:
+      changed: { name: M0019Changed, contentType: application/json }
+  data-principal-portal.events:
+    address: "vasa.identity-access.data-principal-portal"
+    description: "Domain events for Data-Principal Portal"
+    messages:
+      changed: { name: M0020Changed, contentType: application/json }
+  dpo-endpoint.events:
+    address: "vasa.identity-access.dpo-endpoint"
+    description: "Domain events for DPO Endpoint"
+    messages:
+      changed: { name: M0021Changed, contentType: application/json }
+  consent-receipt-vc.events:
+    address: "vasa.identity-access.consent-receipt-vc"
+    description: "Domain events for Consent Receipt (VC)"
+    messages:
+      changed: { name: M0022Changed, contentType: application/json }
+  session-management.events:
+    address: "vasa.identity-access.session-management"
+    description: "Domain events for Session Management"
+    messages:
+      changed: { name: M0023Changed, contentType: application/json }
+  refresh-token-rotation.events:
+    address: "vasa.identity-access.refresh-token-rotation"
+    description: "Domain events for Refresh-Token Rotation"
+    messages:
+      changed: { name: M0024Changed, contentType: application/json }
+  profile-service.events:
+    address: "vasa.identity-access.profile-service"
+    description: "Domain events for Profile Service"
+    messages:
+      changed: { name: M0025Changed, contentType: application/json }
+  profile-photo-pii-redacted.events:
+    address: "vasa.identity-access.profile-photo-pii-redacted"
+    description: "Domain events for Profile Photo (PII-redacted)"
+    messages:
+      changed: { name: M0026Changed, contentType: application/json }
+  role-assignment.events:
+    address: "vasa.identity-access.role-assignment"
+    description: "Domain events for Role Assignment"
+    messages:
+      changed: { name: M0027Changed, contentType: application/json }
+  rebac-relationship-store-spicedb.events:
+    address: "vasa.identity-access.rebac-relationship-store-spicedb"
+    description: "Domain events for ReBAC Relationship Store (SpiceDB)"
+    messages:
+      changed: { name: M0028Changed, contentType: application/json }
+  workload-identity-spire.events:
+    address: "vasa.identity-access.workload-identity-spire"
+    description: "Domain events for Workload Identity (SPIRE)"
+    messages:
+      changed: { name: M0029Changed, contentType: application/json }
+  service-account-registry.events:
+    address: "vasa.identity-access.service-account-registry"
+    description: "Domain events for Service-Account Registry"
+    messages:
+      changed: { name: M0030Changed, contentType: application/json }
+  aadhaar-e-kyc-wrapper-consent-bound.events:
+    address: "vasa.identity-access.aadhaar-e-kyc-wrapper-consent-bound"
+    description: "Domain events for Aadhaar e-KYC Wrapper (consent-bound)"
+    messages:
+      changed: { name: M0031Changed, contentType: application/json }
+  account-lockout-anomaly.events:
+    address: "vasa.identity-access.account-lockout-anomaly"
+    description: "Domain events for Account Lockout & Anomaly"
+    messages:
+      changed: { name: M0032Changed, contentType: application/json }
+  device-binding.events:
+    address: "vasa.identity-access.device-binding"
+    description: "Domain events for Device Binding"
+    messages:
+      changed: { name: M0033Changed, contentType: application/json }
+  impersonation-audit.events:
+    address: "vasa.identity-access.impersonation-audit"
+    description: "Domain events for Impersonation Audit"
+    messages:
+      changed: { name: M0034Changed, contentType: application/json }
+  identity-reconciliation-udise-apaar.events:
+    address: "vasa.identity-access.identity-reconciliation-udise-apaar"
+    description: "Domain events for Identity Reconciliation (UDISE+/APAAR)"
+    messages:
+      changed: { name: M0035Changed, contentType: application/json }
+operations:
+  onM0001Changed:
+    action: receive
+    channel: { $ref: '#/channels/apaar-learner-identity.events' }
+  onM0002Changed:
+    action: receive
+    channel: { $ref: '#/channels/citizen-identity-official-id.events' }
+  onM0003Changed:
+    action: receive
+    channel: { $ref: '#/channels/teacher-institutional-identity.events' }
+  onM0004Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-t0-sovereign.events' }
+  onM0005Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-secretariat.events' }
+  onM0006Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-directorate.events' }
+  onM0007Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-district.events' }
+  onM0008Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-block.events' }
+  onM0009Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-cluster.events' }
+  onM0010Changed:
+    action: receive
+    channel: { $ref: '#/channels/keycloak-realm-school.events' }
+  onM0011Changed:
+    action: receive
+    channel: { $ref: '#/channels/mfa-totp.events' }
+  onM0012Changed:
+    action: receive
+    channel: { $ref: '#/channels/mfa-webauthn-fido2.events' }
+  onM0013Changed:
+    action: receive
+    channel: { $ref: '#/channels/mfa-sms-otp-fallback.events' }
+  onM0014Changed:
+    action: receive
+    channel: { $ref: '#/channels/aal3-step-up-governance-finance.events' }
+  onM0015Changed:
+    action: receive
+    channel: { $ref: '#/channels/oidc-federation.events' }
+  onM0016Changed:
+    action: receive
+    channel: { $ref: '#/channels/saml-2-0-federation.events' }
+  onM0017Changed:
+    action: receive
+    channel: { $ref: '#/channels/ldap-federation.events' }
+  onM0018Changed:
+    action: receive
+    channel: { $ref: '#/channels/digilocker-sso.events' }
+  onM0019Changed:
+    action: receive
+    channel: { $ref: '#/channels/consent-manager-dpdp.events' }
+  onM0020Changed:
+    action: receive
+    channel: { $ref: '#/channels/data-principal-portal.events' }
+  onM0021Changed:
+    action: receive
+    channel: { $ref: '#/channels/dpo-endpoint.events' }
+  onM0022Changed:
+    action: receive
+    channel: { $ref: '#/channels/consent-receipt-vc.events' }
+  onM0023Changed:
+    action: receive
+    channel: { $ref: '#/channels/session-management.events' }
+  onM0024Changed:
+    action: receive
+    channel: { $ref: '#/channels/refresh-token-rotation.events' }
+  onM0025Changed:
+    action: receive
+    channel: { $ref: '#/channels/profile-service.events' }
+  onM0026Changed:
+    action: receive
+    channel: { $ref: '#/channels/profile-photo-pii-redacted.events' }
+  onM0027Changed:
+    action: receive
+    channel: { $ref: '#/channels/role-assignment.events' }
+  onM0028Changed:
+    action: receive
+    channel: { $ref: '#/channels/rebac-relationship-store-spicedb.events' }
+  onM0029Changed:
+    action: receive
+    channel: { $ref: '#/channels/workload-identity-spire.events' }
+  onM0030Changed:
+    action: receive
+    channel: { $ref: '#/channels/service-account-registry.events' }
+  onM0031Changed:
+    action: receive
+    channel: { $ref: '#/channels/aadhaar-e-kyc-wrapper-consent-bound.events' }
+  onM0032Changed:
+    action: receive
+    channel: { $ref: '#/channels/account-lockout-anomaly.events' }
+  onM0033Changed:
+    action: receive
+    channel: { $ref: '#/channels/device-binding.events' }
+  onM0034Changed:
+    action: receive
+    channel: { $ref: '#/channels/impersonation-audit.events' }
+  onM0035Changed:
+    action: receive
+    channel: { $ref: '#/channels/identity-reconciliation-udise-apaar.events' }

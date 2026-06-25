@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "vasa-eos-se-tn",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,12 +8,25 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:seed:users": "tsx scripts/seed-users.ts"
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs --test tests/*.test.ts",
+    "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --experimental-test-coverage --test-coverage-exclude='tests/**' --test-coverage-exclude='scripts/**' --test-coverage-exclude='lib/supabase/**' --test-coverage-lines=95 --test-coverage-branches=80 --test-coverage-functions=88 --import ./scripts/test-register.mjs --test tests/*.test.ts",
+    "db:seed:users": "tsx scripts/seed-users.ts",
+    "db:seed:auth": "tsx scripts/seed-auth-users.ts",
+    "db:verify": "tsx scripts/verify-schema.ts"
   },
   "pnpm": {
     "allowed-build-scripts": [
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "minimatch": ">=9.0.7",
+      "picomatch": ">=2.3.2",
+      "glob": ">=10.5.0",
+      "d3-color": ">=3.1.0",
+      "yaml": ">=2.8.3",
+      "postcss": ">=8.5.10",
+      "brace-expansion": ">=2.0.3"
+    }
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.0",
@@ -54,15 +67,18 @@
     "cmdk": "latest",
     "date-fns": "latest",
     "embla-carousel-react": "latest",
+    "i18next": "^26.3.1",
+    "i18next-resources-to-backend": "^1.2.1",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
-    "next": "15.2.8",
+    "next": "15.5.18",
     "next-themes": "latest",
     "prop-types": "latest",
     "react": "^19",
     "react-day-picker": "^8.10.1",
     "react-dom": "^19",
     "react-hook-form": "latest",
+    "react-i18next": "^17.0.8",
     "react-resizable-panels": "latest",
     "react-simple-maps": "latest",
     "react-tooltip": "latest",
@@ -79,7 +95,7 @@
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "eslint": "^8.57.1",
-    "eslint-config-next": "15.2.8",
+    "eslint-config-next": "15.5.18",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3"

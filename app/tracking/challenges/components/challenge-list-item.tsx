@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { format } from "date-fns"
+import { safeDate } from "@/lib/format-date"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -90,7 +90,7 @@ export function ChallengeListItem({ challenge, onEdit, onDeleted }: ChallengeLis
           {challenge.reported_date && (
             <div className="flex items-center">
               <CalendarDays className="w-3.5 h-3.5 mr-1 text-gray-500" />
-              <strong>Reported:</strong> {format(new Date(challenge.reported_date), "dd MMM yyyy")}
+              <strong>Reported:</strong> {safeDate(challenge.reported_date, "dd MMM yyyy")}
             </div>
           )}
           {challenge.reported_by && (
@@ -108,7 +108,7 @@ export function ChallengeListItem({ challenge, onEdit, onDeleted }: ChallengeLis
           {(challenge.status === "Resolved" || challenge.status === "Closed") && challenge.resolved_date && (
             <div className="flex items-center col-span-2">
               <CheckCircle className="w-3.5 h-3.5 mr-1 text-green-600" />
-              <strong>Resolved:</strong> {format(new Date(challenge.resolved_date), "dd MMM yyyy")}
+              <strong>Resolved:</strong> {safeDate(challenge.resolved_date, "dd MMM yyyy")}
             </div>
           )}
         </div>

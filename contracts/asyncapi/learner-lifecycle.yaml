@@ -1,0 +1,311 @@
+asyncapi: 3.0.0
+info:
+  title: "VASA-EOS(SE) TN — learner-lifecycle events"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated AsyncAPI for learner-lifecycle. Kafka backbone; AVRO/Protobuf via schema registry; every consequential event is notarised to the audit ledger."
+channels:
+  admission-application.events:
+    address: "vasa.learner-lifecycle.admission-application"
+    description: "Domain events for Admission Application"
+    messages:
+      changed: { name: M0071Changed, contentType: application/json }
+  admission-rte-25-ews-dg-lottery.events:
+    address: "vasa.learner-lifecycle.admission-rte-25-ews-dg-lottery"
+    description: "Domain events for Admission — RTE 25% EWS/DG Lottery"
+    messages:
+      changed: { name: M0072Changed, contentType: application/json }
+  admission-screening-guard-rte-13.events:
+    address: "vasa.learner-lifecycle.admission-screening-guard-rte-13"
+    description: "Domain events for Admission Screening Guard (RTE §13)"
+    messages:
+      changed: { name: M0073Changed, contentType: application/json }
+  enrolment.events:
+    address: "vasa.learner-lifecycle.enrolment"
+    description: "Domain events for Enrolment"
+    messages:
+      changed: { name: M0074Changed, contentType: application/json }
+  student-information-system-sis.events:
+    address: "vasa.learner-lifecycle.student-information-system-sis"
+    description: "Domain events for Student Information System (SIS)"
+    messages:
+      changed: { name: M0075Changed, contentType: application/json }
+  class-section-allocation.events:
+    address: "vasa.learner-lifecycle.class-section-allocation"
+    description: "Domain events for Class & Section Allocation"
+    messages:
+      changed: { name: M0076Changed, contentType: application/json }
+  roll-number-issuance.events:
+    address: "vasa.learner-lifecycle.roll-number-issuance"
+    description: "Domain events for Roll-Number Issuance"
+    messages:
+      changed: { name: M0077Changed, contentType: application/json }
+  attendance-daily.events:
+    address: "vasa.learner-lifecycle.attendance-daily"
+    description: "Domain events for Attendance — Daily"
+    messages:
+      changed: { name: M0078Changed, contentType: application/json }
+  attendance-biometric.events:
+    address: "vasa.learner-lifecycle.attendance-biometric"
+    description: "Domain events for Attendance — Biometric"
+    messages:
+      changed: { name: M0079Changed, contentType: application/json }
+  attendance-period-wise.events:
+    address: "vasa.learner-lifecycle.attendance-period-wise"
+    description: "Domain events for Attendance — Period-wise"
+    messages:
+      changed: { name: M0080Changed, contentType: application/json }
+  promotion-no-detention.events:
+    address: "vasa.learner-lifecycle.promotion-no-detention"
+    description: "Domain events for Promotion (no-detention)"
+    messages:
+      changed: { name: M0081Changed, contentType: application/json }
+  transfer-certificate-tc.events:
+    address: "vasa.learner-lifecycle.transfer-certificate-tc"
+    description: "Domain events for Transfer Certificate (TC)"
+    messages:
+      changed: { name: M0082Changed, contentType: application/json }
+  inter-school-transfer-apaar-portability.events:
+    address: "vasa.learner-lifecycle.inter-school-transfer-apaar-portability"
+    description: "Domain events for Inter-School Transfer (APAAR portability)"
+    messages:
+      changed: { name: M0083Changed, contentType: application/json }
+  migration-tracking.events:
+    address: "vasa.learner-lifecycle.migration-tracking"
+    description: "Domain events for Migration Tracking"
+    messages:
+      changed: { name: M0084Changed, contentType: application/json }
+  retention-dropout-risk-early-warning.events:
+    address: "vasa.learner-lifecycle.retention-dropout-risk-early-warning"
+    description: "Domain events for Retention & Dropout Risk (early-warning)"
+    messages:
+      changed: { name: M0085Changed, contentType: application/json }
+  dropout-intervention.events:
+    address: "vasa.learner-lifecycle.dropout-intervention"
+    description: "Domain events for Dropout Intervention"
+    messages:
+      changed: { name: M0086Changed, contentType: application/json }
+  out-of-school-children-oosc-register.events:
+    address: "vasa.learner-lifecycle.out-of-school-children-oosc-register"
+    description: "Domain events for Out-of-School Children (OOSC) Register"
+    messages:
+      changed: { name: M0087Changed, contentType: application/json }
+  re-enrolment.events:
+    address: "vasa.learner-lifecycle.re-enrolment"
+    description: "Domain events for Re-Enrolment"
+    messages:
+      changed: { name: M0088Changed, contentType: application/json }
+  age-grade-mapping.events:
+    address: "vasa.learner-lifecycle.age-grade-mapping"
+    description: "Domain events for Age-Grade Mapping"
+    messages:
+      changed: { name: M0089Changed, contentType: application/json }
+  cohort-tracking.events:
+    address: "vasa.learner-lifecycle.cohort-tracking"
+    description: "Domain events for Cohort Tracking"
+    messages:
+      changed: { name: M0090Changed, contentType: application/json }
+  pre-kg-foundational-stage-icds-link.events:
+    address: "vasa.learner-lifecycle.pre-kg-foundational-stage-icds-link"
+    description: "Domain events for Pre-KG / Foundational Stage (ICDS link)"
+    messages:
+      changed: { name: M0091Changed, contentType: application/json }
+  health-screening-rbsk.events:
+    address: "vasa.learner-lifecycle.health-screening-rbsk"
+    description: "Domain events for Health Screening (RBSK)"
+    messages:
+      changed: { name: M0092Changed, contentType: application/json }
+  health-register.events:
+    address: "vasa.learner-lifecycle.health-register"
+    description: "Domain events for Health Register"
+    messages:
+      changed: { name: M0093Changed, contentType: application/json }
+  immunisation-tracking.events:
+    address: "vasa.learner-lifecycle.immunisation-tracking"
+    description: "Domain events for Immunisation Tracking"
+    messages:
+      changed: { name: M0094Changed, contentType: application/json }
+  nutrition-mdm-linkage.events:
+    address: "vasa.learner-lifecycle.nutrition-mdm-linkage"
+    description: "Domain events for Nutrition (MDM) Linkage"
+    messages:
+      changed: { name: M0095Changed, contentType: application/json }
+  cwsn-special-needs-iep.events:
+    address: "vasa.learner-lifecycle.cwsn-special-needs-iep"
+    description: "Domain events for CWSN / Special-Needs IEP"
+    messages:
+      changed: { name: M0096Changed, contentType: application/json }
+  girl-child-equity-tracker.events:
+    address: "vasa.learner-lifecycle.girl-child-equity-tracker"
+    description: "Domain events for Girl-Child Equity Tracker"
+    messages:
+      changed: { name: M0097Changed, contentType: application/json }
+  first-generation-learner-tracker.events:
+    address: "vasa.learner-lifecycle.first-generation-learner-tracker"
+    description: "Domain events for First-Generation Learner Tracker"
+    messages:
+      changed: { name: M0098Changed, contentType: application/json }
+  scholarship-eligibility-learner.events:
+    address: "vasa.learner-lifecycle.scholarship-eligibility-learner"
+    description: "Domain events for Scholarship Eligibility (learner)"
+    messages:
+      changed: { name: M0099Changed, contentType: application/json }
+  credential-wallet.events:
+    address: "vasa.learner-lifecycle.credential-wallet"
+    description: "Domain events for Credential Wallet"
+    messages:
+      changed: { name: M0100Changed, contentType: application/json }
+  marksheet-issuance.events:
+    address: "vasa.learner-lifecycle.marksheet-issuance"
+    description: "Domain events for Marksheet Issuance"
+    messages:
+      changed: { name: M0101Changed, contentType: application/json }
+  school-leaving-certificate.events:
+    address: "vasa.learner-lifecycle.school-leaving-certificate"
+    description: "Domain events for School-Leaving Certificate"
+    messages:
+      changed: { name: M0102Changed, contentType: application/json }
+  student-council-elections.events:
+    address: "vasa.learner-lifecycle.student-council-elections"
+    description: "Domain events for Student Council Elections"
+    messages:
+      changed: { name: M0103Changed, contentType: application/json }
+  co-curricular-registration.events:
+    address: "vasa.learner-lifecycle.co-curricular-registration"
+    description: "Domain events for Co-curricular Registration"
+    messages:
+      changed: { name: M0104Changed, contentType: application/json }
+  alumni-registry.events:
+    address: "vasa.learner-lifecycle.alumni-registry"
+    description: "Domain events for Alumni Registry"
+    messages:
+      changed: { name: M0105Changed, contentType: application/json }
+  career-guidance.events:
+    address: "vasa.learner-lifecycle.career-guidance"
+    description: "Domain events for Career Guidance"
+    messages:
+      changed: { name: M0106Changed, contentType: application/json }
+  parent-linkage-rebac.events:
+    address: "vasa.learner-lifecycle.parent-linkage-rebac"
+    description: "Domain events for Parent-Linkage (ReBAC)"
+    messages:
+      changed: { name: M0107Changed, contentType: application/json }
+  guardian-consent-minor.events:
+    address: "vasa.learner-lifecycle.guardian-consent-minor"
+    description: "Domain events for Guardian Consent (minor)"
+    messages:
+      changed: { name: M0108Changed, contentType: application/json }
+operations:
+  onM0071Changed:
+    action: receive
+    channel: { $ref: '#/channels/admission-application.events' }
+  onM0072Changed:
+    action: receive
+    channel: { $ref: '#/channels/admission-rte-25-ews-dg-lottery.events' }
+  onM0073Changed:
+    action: receive
+    channel: { $ref: '#/channels/admission-screening-guard-rte-13.events' }
+  onM0074Changed:
+    action: receive
+    channel: { $ref: '#/channels/enrolment.events' }
+  onM0075Changed:
+    action: receive
+    channel: { $ref: '#/channels/student-information-system-sis.events' }
+  onM0076Changed:
+    action: receive
+    channel: { $ref: '#/channels/class-section-allocation.events' }
+  onM0077Changed:
+    action: receive
+    channel: { $ref: '#/channels/roll-number-issuance.events' }
+  onM0078Changed:
+    action: receive
+    channel: { $ref: '#/channels/attendance-daily.events' }
+  onM0079Changed:
+    action: receive
+    channel: { $ref: '#/channels/attendance-biometric.events' }
+  onM0080Changed:
+    action: receive
+    channel: { $ref: '#/channels/attendance-period-wise.events' }
+  onM0081Changed:
+    action: receive
+    channel: { $ref: '#/channels/promotion-no-detention.events' }
+  onM0082Changed:
+    action: receive
+    channel: { $ref: '#/channels/transfer-certificate-tc.events' }
+  onM0083Changed:
+    action: receive
+    channel: { $ref: '#/channels/inter-school-transfer-apaar-portability.events' }
+  onM0084Changed:
+    action: receive
+    channel: { $ref: '#/channels/migration-tracking.events' }
+  onM0085Changed:
+    action: receive
+    channel: { $ref: '#/channels/retention-dropout-risk-early-warning.events' }
+  onM0086Changed:
+    action: receive
+    channel: { $ref: '#/channels/dropout-intervention.events' }
+  onM0087Changed:
+    action: receive
+    channel: { $ref: '#/channels/out-of-school-children-oosc-register.events' }
+  onM0088Changed:
+    action: receive
+    channel: { $ref: '#/channels/re-enrolment.events' }
+  onM0089Changed:
+    action: receive
+    channel: { $ref: '#/channels/age-grade-mapping.events' }
+  onM0090Changed:
+    action: receive
+    channel: { $ref: '#/channels/cohort-tracking.events' }
+  onM0091Changed:
+    action: receive
+    channel: { $ref: '#/channels/pre-kg-foundational-stage-icds-link.events' }
+  onM0092Changed:
+    action: receive
+    channel: { $ref: '#/channels/health-screening-rbsk.events' }
+  onM0093Changed:
+    action: receive
+    channel: { $ref: '#/channels/health-register.events' }
+  onM0094Changed:
+    action: receive
+    channel: { $ref: '#/channels/immunisation-tracking.events' }
+  onM0095Changed:
+    action: receive
+    channel: { $ref: '#/channels/nutrition-mdm-linkage.events' }
+  onM0096Changed:
+    action: receive
+    channel: { $ref: '#/channels/cwsn-special-needs-iep.events' }
+  onM0097Changed:
+    action: receive
+    channel: { $ref: '#/channels/girl-child-equity-tracker.events' }
+  onM0098Changed:
+    action: receive
+    channel: { $ref: '#/channels/first-generation-learner-tracker.events' }
+  onM0099Changed:
+    action: receive
+    channel: { $ref: '#/channels/scholarship-eligibility-learner.events' }
+  onM0100Changed:
+    action: receive
+    channel: { $ref: '#/channels/credential-wallet.events' }
+  onM0101Changed:
+    action: receive
+    channel: { $ref: '#/channels/marksheet-issuance.events' }
+  onM0102Changed:
+    action: receive
+    channel: { $ref: '#/channels/school-leaving-certificate.events' }
+  onM0103Changed:
+    action: receive
+    channel: { $ref: '#/channels/student-council-elections.events' }
+  onM0104Changed:
+    action: receive
+    channel: { $ref: '#/channels/co-curricular-registration.events' }
+  onM0105Changed:
+    action: receive
+    channel: { $ref: '#/channels/alumni-registry.events' }
+  onM0106Changed:
+    action: receive
+    channel: { $ref: '#/channels/career-guidance.events' }
+  onM0107Changed:
+    action: receive
+    channel: { $ref: '#/channels/parent-linkage-rebac.events' }
+  onM0108Changed:
+    action: receive
+    channel: { $ref: '#/channels/guardian-consent-minor.events' }

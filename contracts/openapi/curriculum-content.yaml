@@ -1,0 +1,328 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — curriculum-content API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the curriculum-content domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0036
+    description: "NCERT Content Ingest"
+  - name: M0037
+    description: "SCERT Content Ingest"
+  - name: M0038
+    description: "NCF Framework Map"
+  - name: M0039
+    description: "TN Textbook Ingest (TNTBC)"
+  - name: M0040
+    description: "Curriculum Graph (Neo4j)"
+  - name: M0041
+    description: "Concept Prerequisite Graph"
+  - name: M0042
+    description: "Learning-Outcome Map"
+  - name: M0043
+    description: "Competency Framework"
+  - name: M0044
+    description: "Content Authoring Studio"
+  - name: M0045
+    description: "Content Review Workflow"
+  - name: M0046
+    description: "Content Versioning"
+  - name: M0047
+    description: "Content Tagging (future-skills)"
+  - name: M0048
+    description: "Multilingual Translation Pipeline (IndicTrans2)"
+  - name: M0049
+    description: "Translation Memory"
+  - name: M0050
+    description: "Language QA (LQA)"
+  - name: M0051
+    description: "Transliteration"
+  - name: M0052
+    description: "Accessibility Transform (AAA)"
+  - name: M0053
+    description: "Alt-Text Generation"
+  - name: M0054
+    description: "Audio Description"
+  - name: M0055
+    description: "Sign-Language (ISL) Overlay"
+  - name: M0056
+    description: "Captions & Transcripts"
+  - name: M0057
+    description: "Dyslexia-Friendly Rendering"
+  - name: M0058
+    description: "DIKSHA Content Read"
+  - name: M0059
+    description: "DIKSHA Content Contribute"
+  - name: M0060
+    description: "Content Discovery & Search (OpenSearch)"
+  - name: M0061
+    description: "Content Recommendation"
+  - name: M0062
+    description: "Lesson-Plan Library"
+  - name: M0063
+    description: "Question Bank"
+  - name: M0064
+    description: "OER Repository"
+  - name: M0065
+    description: "Print-Ready PDF Generation"
+  - name: M0066
+    description: "QR Verifier on Content"
+  - name: M0067
+    description: "Content Licensing & Rights"
+  - name: M0068
+    description: "Offline Content Pack"
+  - name: M0069
+    description: "Bagless-Day Activity Bank"
+  - name: M0070
+    description: "Reading Campaign Content (Ennum Ezhuthum)"
+paths:
+  /ncert-content-ingest:
+    get: { tags: [M0036], summary: "List NCERT Content Ingest", responses: { '200': { description: ok } } }
+    post: { tags: [M0036], summary: "Create NCERT Content Ingest", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ncert-content-ingest/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0036], summary: "Get NCERT Content Ingest", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0036], summary: "Update NCERT Content Ingest", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scert-content-ingest:
+    get: { tags: [M0037], summary: "List SCERT Content Ingest", responses: { '200': { description: ok } } }
+    post: { tags: [M0037], summary: "Create SCERT Content Ingest", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scert-content-ingest/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0037], summary: "Get SCERT Content Ingest", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0037], summary: "Update SCERT Content Ingest", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /ncf-framework-map:
+    get: { tags: [M0038], summary: "List NCF Framework Map", responses: { '200': { description: ok } } }
+    post: { tags: [M0038], summary: "Create NCF Framework Map", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /ncf-framework-map/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0038], summary: "Get NCF Framework Map", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0038], summary: "Update NCF Framework Map", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /tn-textbook-ingest-tntbc:
+    get: { tags: [M0039], summary: "List TN Textbook Ingest (TNTBC)", responses: { '200': { description: ok } } }
+    post: { tags: [M0039], summary: "Create TN Textbook Ingest (TNTBC)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /tn-textbook-ingest-tntbc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0039], summary: "Get TN Textbook Ingest (TNTBC)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0039], summary: "Update TN Textbook Ingest (TNTBC)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /curriculum-graph-neo4j:
+    get: { tags: [M0040], summary: "List Curriculum Graph (Neo4j)", responses: { '200': { description: ok } } }
+    post: { tags: [M0040], summary: "Create Curriculum Graph (Neo4j)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /curriculum-graph-neo4j/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0040], summary: "Get Curriculum Graph (Neo4j)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0040], summary: "Update Curriculum Graph (Neo4j)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /concept-prerequisite-graph:
+    get: { tags: [M0041], summary: "List Concept Prerequisite Graph", responses: { '200': { description: ok } } }
+    post: { tags: [M0041], summary: "Create Concept Prerequisite Graph", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /concept-prerequisite-graph/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0041], summary: "Get Concept Prerequisite Graph", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0041], summary: "Update Concept Prerequisite Graph", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /learning-outcome-map:
+    get: { tags: [M0042], summary: "List Learning-Outcome Map", responses: { '200': { description: ok } } }
+    post: { tags: [M0042], summary: "Create Learning-Outcome Map", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /learning-outcome-map/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0042], summary: "Get Learning-Outcome Map", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0042], summary: "Update Learning-Outcome Map", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /competency-framework:
+    get: { tags: [M0043], summary: "List Competency Framework", responses: { '200': { description: ok } } }
+    post: { tags: [M0043], summary: "Create Competency Framework", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /competency-framework/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0043], summary: "Get Competency Framework", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0043], summary: "Update Competency Framework", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-authoring-studio:
+    get: { tags: [M0044], summary: "List Content Authoring Studio", responses: { '200': { description: ok } } }
+    post: { tags: [M0044], summary: "Create Content Authoring Studio", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-authoring-studio/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0044], summary: "Get Content Authoring Studio", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0044], summary: "Update Content Authoring Studio", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-review-workflow:
+    get: { tags: [M0045], summary: "List Content Review Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0045], summary: "Create Content Review Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-review-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0045], summary: "Get Content Review Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0045], summary: "Update Content Review Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-versioning:
+    get: { tags: [M0046], summary: "List Content Versioning", responses: { '200': { description: ok } } }
+    post: { tags: [M0046], summary: "Create Content Versioning", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-versioning/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0046], summary: "Get Content Versioning", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0046], summary: "Update Content Versioning", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-tagging-future-skills:
+    get: { tags: [M0047], summary: "List Content Tagging (future-skills)", responses: { '200': { description: ok } } }
+    post: { tags: [M0047], summary: "Create Content Tagging (future-skills)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-tagging-future-skills/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0047], summary: "Get Content Tagging (future-skills)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0047], summary: "Update Content Tagging (future-skills)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /multilingual-translation-pipeline-indictrans2:
+    get: { tags: [M0048], summary: "List Multilingual Translation Pipeline (IndicTrans2)", responses: { '200': { description: ok } } }
+    post: { tags: [M0048], summary: "Create Multilingual Translation Pipeline (IndicTrans2)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /multilingual-translation-pipeline-indictrans2/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0048], summary: "Get Multilingual Translation Pipeline (IndicTrans2)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0048], summary: "Update Multilingual Translation Pipeline (IndicTrans2)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /translation-memory:
+    get: { tags: [M0049], summary: "List Translation Memory", responses: { '200': { description: ok } } }
+    post: { tags: [M0049], summary: "Create Translation Memory", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /translation-memory/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0049], summary: "Get Translation Memory", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0049], summary: "Update Translation Memory", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /language-qa-lqa:
+    get: { tags: [M0050], summary: "List Language QA (LQA)", responses: { '200': { description: ok } } }
+    post: { tags: [M0050], summary: "Create Language QA (LQA)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /language-qa-lqa/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0050], summary: "Get Language QA (LQA)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0050], summary: "Update Language QA (LQA)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /transliteration:
+    get: { tags: [M0051], summary: "List Transliteration", responses: { '200': { description: ok } } }
+    post: { tags: [M0051], summary: "Create Transliteration", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /transliteration/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0051], summary: "Get Transliteration", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0051], summary: "Update Transliteration", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /accessibility-transform-aaa:
+    get: { tags: [M0052], summary: "List Accessibility Transform (AAA)", responses: { '200': { description: ok } } }
+    post: { tags: [M0052], summary: "Create Accessibility Transform (AAA)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /accessibility-transform-aaa/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0052], summary: "Get Accessibility Transform (AAA)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0052], summary: "Update Accessibility Transform (AAA)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /alt-text-generation:
+    get: { tags: [M0053], summary: "List Alt-Text Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0053], summary: "Create Alt-Text Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /alt-text-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0053], summary: "Get Alt-Text Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0053], summary: "Update Alt-Text Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /audio-description:
+    get: { tags: [M0054], summary: "List Audio Description", responses: { '200': { description: ok } } }
+    post: { tags: [M0054], summary: "Create Audio Description", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /audio-description/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0054], summary: "Get Audio Description", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0054], summary: "Update Audio Description", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /sign-language-isl-overlay:
+    get: { tags: [M0055], summary: "List Sign-Language (ISL) Overlay", responses: { '200': { description: ok } } }
+    post: { tags: [M0055], summary: "Create Sign-Language (ISL) Overlay", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /sign-language-isl-overlay/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0055], summary: "Get Sign-Language (ISL) Overlay", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0055], summary: "Update Sign-Language (ISL) Overlay", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /captions-transcripts:
+    get: { tags: [M0056], summary: "List Captions & Transcripts", responses: { '200': { description: ok } } }
+    post: { tags: [M0056], summary: "Create Captions & Transcripts", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /captions-transcripts/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0056], summary: "Get Captions & Transcripts", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0056], summary: "Update Captions & Transcripts", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dyslexia-friendly-rendering:
+    get: { tags: [M0057], summary: "List Dyslexia-Friendly Rendering", responses: { '200': { description: ok } } }
+    post: { tags: [M0057], summary: "Create Dyslexia-Friendly Rendering", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dyslexia-friendly-rendering/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0057], summary: "Get Dyslexia-Friendly Rendering", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0057], summary: "Update Dyslexia-Friendly Rendering", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /diksha-content-read:
+    get: { tags: [M0058], summary: "List DIKSHA Content Read", responses: { '200': { description: ok } } }
+    post: { tags: [M0058], summary: "Create DIKSHA Content Read", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /diksha-content-read/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0058], summary: "Get DIKSHA Content Read", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0058], summary: "Update DIKSHA Content Read", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /diksha-content-contribute:
+    get: { tags: [M0059], summary: "List DIKSHA Content Contribute", responses: { '200': { description: ok } } }
+    post: { tags: [M0059], summary: "Create DIKSHA Content Contribute", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /diksha-content-contribute/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0059], summary: "Get DIKSHA Content Contribute", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0059], summary: "Update DIKSHA Content Contribute", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-discovery-search-opensearch:
+    get: { tags: [M0060], summary: "List Content Discovery & Search (OpenSearch)", responses: { '200': { description: ok } } }
+    post: { tags: [M0060], summary: "Create Content Discovery & Search (OpenSearch)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-discovery-search-opensearch/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0060], summary: "Get Content Discovery & Search (OpenSearch)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0060], summary: "Update Content Discovery & Search (OpenSearch)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-recommendation:
+    get: { tags: [M0061], summary: "List Content Recommendation", responses: { '200': { description: ok } } }
+    post: { tags: [M0061], summary: "Create Content Recommendation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-recommendation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0061], summary: "Get Content Recommendation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0061], summary: "Update Content Recommendation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /lesson-plan-library:
+    get: { tags: [M0062], summary: "List Lesson-Plan Library", responses: { '200': { description: ok } } }
+    post: { tags: [M0062], summary: "Create Lesson-Plan Library", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /lesson-plan-library/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0062], summary: "Get Lesson-Plan Library", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0062], summary: "Update Lesson-Plan Library", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /question-bank:
+    get: { tags: [M0063], summary: "List Question Bank", responses: { '200': { description: ok } } }
+    post: { tags: [M0063], summary: "Create Question Bank", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /question-bank/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0063], summary: "Get Question Bank", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0063], summary: "Update Question Bank", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /oer-repository:
+    get: { tags: [M0064], summary: "List OER Repository", responses: { '200': { description: ok } } }
+    post: { tags: [M0064], summary: "Create OER Repository", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /oer-repository/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0064], summary: "Get OER Repository", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0064], summary: "Update OER Repository", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /print-ready-pdf-generation:
+    get: { tags: [M0065], summary: "List Print-Ready PDF Generation", responses: { '200': { description: ok } } }
+    post: { tags: [M0065], summary: "Create Print-Ready PDF Generation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /print-ready-pdf-generation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0065], summary: "Get Print-Ready PDF Generation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0065], summary: "Update Print-Ready PDF Generation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /qr-verifier-on-content:
+    get: { tags: [M0066], summary: "List QR Verifier on Content", responses: { '200': { description: ok } } }
+    post: { tags: [M0066], summary: "Create QR Verifier on Content", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /qr-verifier-on-content/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0066], summary: "Get QR Verifier on Content", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0066], summary: "Update QR Verifier on Content", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /content-licensing-rights:
+    get: { tags: [M0067], summary: "List Content Licensing & Rights", responses: { '200': { description: ok } } }
+    post: { tags: [M0067], summary: "Create Content Licensing & Rights", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /content-licensing-rights/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0067], summary: "Get Content Licensing & Rights", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0067], summary: "Update Content Licensing & Rights", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /offline-content-pack:
+    get: { tags: [M0068], summary: "List Offline Content Pack", responses: { '200': { description: ok } } }
+    post: { tags: [M0068], summary: "Create Offline Content Pack", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /offline-content-pack/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0068], summary: "Get Offline Content Pack", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0068], summary: "Update Offline Content Pack", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /bagless-day-activity-bank:
+    get: { tags: [M0069], summary: "List Bagless-Day Activity Bank", responses: { '200': { description: ok } } }
+    post: { tags: [M0069], summary: "Create Bagless-Day Activity Bank", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /bagless-day-activity-bank/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0069], summary: "Get Bagless-Day Activity Bank", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0069], summary: "Update Bagless-Day Activity Bank", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /reading-campaign-content-ennum-ezhuthum:
+    get: { tags: [M0070], summary: "List Reading Campaign Content (Ennum Ezhuthum)", responses: { '200': { description: ok } } }
+    post: { tags: [M0070], summary: "Create Reading Campaign Content (Ennum Ezhuthum)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /reading-campaign-content-ennum-ezhuthum/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0070], summary: "Get Reading Campaign Content (Ennum Ezhuthum)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0070], summary: "Update Reading Campaign Content (Ennum Ezhuthum)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]

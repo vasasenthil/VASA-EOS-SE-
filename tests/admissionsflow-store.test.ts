@@ -1,0 +1,62 @@
+import { test, beforeEach, afterEach } from "node:test"
+import assert from "node:assert/strict"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { __setTestDb } from "@/lib/persistence"
+import { makeFakeDb } from "./helpers/fake-db"
+import { fileApplicant, actOnApplicant, getApplicant, deleteApplicant, listApplicants } from "@/lib/admissionsflow/store"
+import { recordResult, getResult, deleteResult, listResults } from "@/lib/sports/store"
+import { scopeRecords, SCOPE_TENANTS, DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
+
+beforeEach(() => __setTestDb(makeFakeDb() as unknown as SupabaseClient))
+afterEach(() => __setTestDb(undefined))
+
+test("admissions: verify (Academic Head) -> enrol (Principal) mints APAAR; role-gated", async () => {
+  const rec = await fileApplicant({ name: "Aarthi", dob: "2019-05-01", gender: "Female", category: "General", className: "1" })
+  assert.equal(rec.instance.status, "in_progress")
+  assert.equal(rec.apaarId, undefined)
+
+  // Principal can't verify first — that's the Academic Head's step.
+  assert.equal((await actOnApplicant(rec.id, { actorRole: "PRINCIPAL", actor: "HM", decision: "approve" })).ok, false)
+
+  let res = await actOnApplicant(rec.id, { actorRole: "ACADEMIC_HEAD", actor: "AH", decision: "approve" })
+  assert.equal(res.record?.instance.status, "in_progress")
+  res = await actOnApplicant(rec.id, { actorRole: "PRINCIPAL", actor: "HM", decision: "approve" })
+  assert.equal(res.record?.instance.status, "approved")
+  assert.match(res.record?.apaarId ?? "", /^APAAR-\d{12}$/) // minted on enrolment
+  assert.ok((await getApplicant(rec.id))?.apaarId)
+  assert.equal(await deleteApplicant(rec.id), true)
+})
+
+test("admissions: applicants carry a tenant and scope by jurisdiction (student/APAAR PII)", async () => {
+  const a = await fileApplicant({ name: "A", dob: "2018-06-01", gender: "F", category: "BC", className: "1", tenantId: "TN-CHN-B1-S1" })
+  await fileApplicant({ name: "B", dob: "2018-07-01", gender: "M", category: "SC", className: "1", tenantId: "TN-CHN-B2-S1" })
+  assert.equal(a.tenantId, "TN-CHN-B1-S1")
+  // A filed applicant with no tenant defaults to the demo school.
+  const c = await fileApplicant({ name: "C", dob: "2018-08-01", gender: "F", category: "General", className: "1" })
+  assert.equal(c.tenantId, DEFAULT_SCHOOL_NODE)
+
+  const all = await listApplicants()
+  assert.equal(scopeRecords(SCOPE_TENANTS, "TN-CHN-B2-S1", all).length, 1) // B2-S1 sees only its own
+  assert.equal(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).length, all.length) // district sees all (Chennai subtree)
+  assert.equal(scopeRecords(SCOPE_TENANTS, "TN-CBE-B1-S1", all).length, 0) // an unrelated district's school sees none
+})
+
+test("sports: record result, list, delete (DB path) + in-memory fallback", async () => {
+  const r = await recordResult({ event: "100m Sprint", student: "A", medal: "gold" })
+  assert.equal((await getResult(r.id))?.medal, "gold")
+  assert.ok((await listResults()).some((x) => x.id === r.id))
+  assert.equal(await deleteResult(r.id), true)
+
+  __setTestDb(null)
+  const r2 = await recordResult({ event: "Chess", student: "B", medal: "silver" })
+  assert.ok((await listResults()).some((x) => x.id === r2.id))
+})
+
+test("admissions in-memory fallback works", async () => {
+  __setTestDb(null)
+  const rec = await fileApplicant({ name: "Z", dob: "2018-01-01", gender: "Male", category: "SC", className: "2" })
+  await actOnApplicant(rec.id, { actorRole: "ACADEMIC_HEAD", actor: "AH", decision: "approve" })
+  const res = await actOnApplicant(rec.id, { actorRole: "PRINCIPAL", actor: "HM", decision: "approve" })
+  assert.equal(res.record?.instance.status, "approved")
+  assert.ok(res.record?.apaarId)
+})

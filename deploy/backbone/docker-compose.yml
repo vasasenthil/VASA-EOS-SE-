@@ -1,0 +1,49 @@
+# VASA-EOS(SE)-TN — BACKBONE-ONLY stack (Postgres + platformd), for hosting the durable backend on any
+# Docker host / VM and exposing platformd publicly so the Vercel-hosted console can drive it.
+#
+#   cd deploy/backbone && cp .env.example .env && docker compose up --build -d
+#   # platformd is now on http://<this-host>:8080 ; put it behind TLS (a reverse proxy) and set that
+#   # HTTPS URL as PLATFORM_URL in Vercel. See README.md.
+#
+# Unlike deploy/pilot (which also runs the Next web container), this stack is just the backend — because on a
+# Vercel deployment the frontend already runs on Vercel and only needs a reachable backbone URL.
+
+name: vasa-eos-backbone
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vasa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-in-production}
+      POSTGRES_DB: ${POSTGRES_DB:-vasa}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vasa} -d ${POSTGRES_DB:-vasa}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  platformd:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.platformd
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-vasa}:${POSTGRES_PASSWORD:-change-me-in-production}@db:5432/${POSTGRES_DB:-vasa}?sslmode=disable
+      # auth gateway — when set, mutating requests require `Authorization: Bearer <PLATFORM_API_TOKEN>`. Set the
+      # SAME value as the Vercel project's PLATFORM_API_TOKEN. Leave empty only for a fully-open local demo.
+      PLATFORM_API_TOKEN: ${PLATFORM_API_TOKEN:-}
+      PILOT_DISTRICT: ${PILOT_DISTRICT:-TN-DIST-Chennai}
+      PILOT_DISTRICT_2: ${PILOT_DISTRICT_2:-TN-DIST-Coimbatore}
+      PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PLATFORMD_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

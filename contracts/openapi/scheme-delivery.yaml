@@ -1,0 +1,310 @@
+openapi: 3.1.0
+info:
+  title: "VASA-EOS(SE) TN — scheme-delivery API"
+  version: 0.1.0
+  description: "CC-SPEC-001 §13 generated contract for the scheme-delivery domain. Every operation is policy-gated (OPA) and audited; PII fields are DPDP-classified."
+servers:
+  - url: https://api.vasa-eos.tn.gov.in/v1
+tags:
+  - name: M0177
+    description: "Scheme Catalogue (per GO)"
+  - name: M0178
+    description: "Eligibility Engine"
+  - name: M0179
+    description: "Entitlement Computation"
+  - name: M0180
+    description: "Reservation Engine (BC/MBC/SC/ST/DNT)"
+  - name: M0181
+    description: "Scholarship — SC/ST"
+  - name: M0182
+    description: "Scholarship — OBC/MBC"
+  - name: M0183
+    description: "Scholarship — EBC"
+  - name: M0184
+    description: "Scholarship — PwD"
+  - name: M0185
+    description: "Scholarship — Girl-Child"
+  - name: M0186
+    description: "Scholarship — Migrant"
+  - name: M0187
+    description: "PFMS Disbursement"
+  - name: M0188
+    description: "DBT / APBS"
+  - name: M0189
+    description: "Bank-Account Verification"
+  - name: M0190
+    description: "Beneficiary Register"
+  - name: M0191
+    description: "Scheme Fund-Flow Ledger"
+  - name: M0192
+    description: "Fund Sanction Workflow"
+  - name: M0193
+    description: "Fund Reconciliation (PFMS)"
+  - name: M0194
+    description: "Leakage Detection"
+  - name: M0195
+    description: "Free Textbook Distribution"
+  - name: M0196
+    description: "Free Uniform Distribution"
+  - name: M0197
+    description: "Bicycle Scheme"
+  - name: M0198
+    description: "Laptop Scheme"
+  - name: M0199
+    description: "Mid-Day-Meal (PM-POSHAN)"
+  - name: M0200
+    description: "MDM Nutrition Tracking"
+  - name: M0201
+    description: "MDM Stock & Indent"
+  - name: M0202
+    description: "Breakfast Scheme (TN)"
+  - name: M0203
+    description: "Transport / Bus Pass"
+  - name: M0204
+    description: "Hostel Allocation"
+  - name: M0205
+    description: "Pudhumai Penn Scheme"
+  - name: M0206
+    description: "Illam Thedi Kalvi"
+  - name: M0207
+    description: "Welfare Grievance (scheme)"
+  - name: M0208
+    description: "Scheme Audit Trail (GFR)"
+  - name: M0209
+    description: "Account-Aggregator Eligibility (consent)"
+paths:
+  /scheme-catalogue-per-go:
+    get: { tags: [M0177], summary: "List Scheme Catalogue (per GO)", responses: { '200': { description: ok } } }
+    post: { tags: [M0177], summary: "Create Scheme Catalogue (per GO)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scheme-catalogue-per-go/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0177], summary: "Get Scheme Catalogue (per GO)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0177], summary: "Update Scheme Catalogue (per GO)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /eligibility-engine:
+    get: { tags: [M0178], summary: "List Eligibility Engine", responses: { '200': { description: ok } } }
+    post: { tags: [M0178], summary: "Create Eligibility Engine", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /eligibility-engine/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0178], summary: "Get Eligibility Engine", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0178], summary: "Update Eligibility Engine", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /entitlement-computation:
+    get: { tags: [M0179], summary: "List Entitlement Computation", responses: { '200': { description: ok } } }
+    post: { tags: [M0179], summary: "Create Entitlement Computation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /entitlement-computation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0179], summary: "Get Entitlement Computation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0179], summary: "Update Entitlement Computation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /reservation-engine-bc-mbc-sc-st-dnt:
+    get: { tags: [M0180], summary: "List Reservation Engine (BC/MBC/SC/ST/DNT)", responses: { '200': { description: ok } } }
+    post: { tags: [M0180], summary: "Create Reservation Engine (BC/MBC/SC/ST/DNT)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /reservation-engine-bc-mbc-sc-st-dnt/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0180], summary: "Get Reservation Engine (BC/MBC/SC/ST/DNT)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0180], summary: "Update Reservation Engine (BC/MBC/SC/ST/DNT)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-sc-st:
+    get: { tags: [M0181], summary: "List Scholarship — SC/ST", responses: { '200': { description: ok } } }
+    post: { tags: [M0181], summary: "Create Scholarship — SC/ST", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-sc-st/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0181], summary: "Get Scholarship — SC/ST", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0181], summary: "Update Scholarship — SC/ST", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-obc-mbc:
+    get: { tags: [M0182], summary: "List Scholarship — OBC/MBC", responses: { '200': { description: ok } } }
+    post: { tags: [M0182], summary: "Create Scholarship — OBC/MBC", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-obc-mbc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0182], summary: "Get Scholarship — OBC/MBC", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0182], summary: "Update Scholarship — OBC/MBC", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-ebc:
+    get: { tags: [M0183], summary: "List Scholarship — EBC", responses: { '200': { description: ok } } }
+    post: { tags: [M0183], summary: "Create Scholarship — EBC", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-ebc/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0183], summary: "Get Scholarship — EBC", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0183], summary: "Update Scholarship — EBC", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-pwd:
+    get: { tags: [M0184], summary: "List Scholarship — PwD", responses: { '200': { description: ok } } }
+    post: { tags: [M0184], summary: "Create Scholarship — PwD", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-pwd/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0184], summary: "Get Scholarship — PwD", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0184], summary: "Update Scholarship — PwD", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-girl-child:
+    get: { tags: [M0185], summary: "List Scholarship — Girl-Child", responses: { '200': { description: ok } } }
+    post: { tags: [M0185], summary: "Create Scholarship — Girl-Child", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-girl-child/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0185], summary: "Get Scholarship — Girl-Child", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0185], summary: "Update Scholarship — Girl-Child", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scholarship-migrant:
+    get: { tags: [M0186], summary: "List Scholarship — Migrant", responses: { '200': { description: ok } } }
+    post: { tags: [M0186], summary: "Create Scholarship — Migrant", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scholarship-migrant/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0186], summary: "Get Scholarship — Migrant", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0186], summary: "Update Scholarship — Migrant", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pfms-disbursement:
+    get: { tags: [M0187], summary: "List PFMS Disbursement", responses: { '200': { description: ok } } }
+    post: { tags: [M0187], summary: "Create PFMS Disbursement", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pfms-disbursement/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0187], summary: "Get PFMS Disbursement", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0187], summary: "Update PFMS Disbursement", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /dbt-apbs:
+    get: { tags: [M0188], summary: "List DBT / APBS", responses: { '200': { description: ok } } }
+    post: { tags: [M0188], summary: "Create DBT / APBS", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /dbt-apbs/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0188], summary: "Get DBT / APBS", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0188], summary: "Update DBT / APBS", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /bank-account-verification:
+    get: { tags: [M0189], summary: "List Bank-Account Verification", responses: { '200': { description: ok } } }
+    post: { tags: [M0189], summary: "Create Bank-Account Verification", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /bank-account-verification/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0189], summary: "Get Bank-Account Verification", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0189], summary: "Update Bank-Account Verification", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /beneficiary-register:
+    get: { tags: [M0190], summary: "List Beneficiary Register", responses: { '200': { description: ok } } }
+    post: { tags: [M0190], summary: "Create Beneficiary Register", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /beneficiary-register/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0190], summary: "Get Beneficiary Register", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0190], summary: "Update Beneficiary Register", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scheme-fund-flow-ledger:
+    get: { tags: [M0191], summary: "List Scheme Fund-Flow Ledger", responses: { '200': { description: ok } } }
+    post: { tags: [M0191], summary: "Create Scheme Fund-Flow Ledger", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scheme-fund-flow-ledger/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0191], summary: "Get Scheme Fund-Flow Ledger", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0191], summary: "Update Scheme Fund-Flow Ledger", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /fund-sanction-workflow:
+    get: { tags: [M0192], summary: "List Fund Sanction Workflow", responses: { '200': { description: ok } } }
+    post: { tags: [M0192], summary: "Create Fund Sanction Workflow", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /fund-sanction-workflow/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0192], summary: "Get Fund Sanction Workflow", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0192], summary: "Update Fund Sanction Workflow", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /fund-reconciliation-pfms:
+    get: { tags: [M0193], summary: "List Fund Reconciliation (PFMS)", responses: { '200': { description: ok } } }
+    post: { tags: [M0193], summary: "Create Fund Reconciliation (PFMS)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /fund-reconciliation-pfms/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0193], summary: "Get Fund Reconciliation (PFMS)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0193], summary: "Update Fund Reconciliation (PFMS)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /leakage-detection:
+    get: { tags: [M0194], summary: "List Leakage Detection", responses: { '200': { description: ok } } }
+    post: { tags: [M0194], summary: "Create Leakage Detection", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /leakage-detection/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0194], summary: "Get Leakage Detection", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0194], summary: "Update Leakage Detection", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /free-textbook-distribution:
+    get: { tags: [M0195], summary: "List Free Textbook Distribution", responses: { '200': { description: ok } } }
+    post: { tags: [M0195], summary: "Create Free Textbook Distribution", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /free-textbook-distribution/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0195], summary: "Get Free Textbook Distribution", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0195], summary: "Update Free Textbook Distribution", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /free-uniform-distribution:
+    get: { tags: [M0196], summary: "List Free Uniform Distribution", responses: { '200': { description: ok } } }
+    post: { tags: [M0196], summary: "Create Free Uniform Distribution", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /free-uniform-distribution/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0196], summary: "Get Free Uniform Distribution", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0196], summary: "Update Free Uniform Distribution", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /bicycle-scheme:
+    get: { tags: [M0197], summary: "List Bicycle Scheme", responses: { '200': { description: ok } } }
+    post: { tags: [M0197], summary: "Create Bicycle Scheme", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /bicycle-scheme/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0197], summary: "Get Bicycle Scheme", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0197], summary: "Update Bicycle Scheme", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /laptop-scheme:
+    get: { tags: [M0198], summary: "List Laptop Scheme", responses: { '200': { description: ok } } }
+    post: { tags: [M0198], summary: "Create Laptop Scheme", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /laptop-scheme/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0198], summary: "Get Laptop Scheme", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0198], summary: "Update Laptop Scheme", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mid-day-meal-pm-poshan:
+    get: { tags: [M0199], summary: "List Mid-Day-Meal (PM-POSHAN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0199], summary: "Create Mid-Day-Meal (PM-POSHAN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mid-day-meal-pm-poshan/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0199], summary: "Get Mid-Day-Meal (PM-POSHAN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0199], summary: "Update Mid-Day-Meal (PM-POSHAN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mdm-nutrition-tracking:
+    get: { tags: [M0200], summary: "List MDM Nutrition Tracking", responses: { '200': { description: ok } } }
+    post: { tags: [M0200], summary: "Create MDM Nutrition Tracking", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mdm-nutrition-tracking/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0200], summary: "Get MDM Nutrition Tracking", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0200], summary: "Update MDM Nutrition Tracking", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /mdm-stock-indent:
+    get: { tags: [M0201], summary: "List MDM Stock & Indent", responses: { '200': { description: ok } } }
+    post: { tags: [M0201], summary: "Create MDM Stock & Indent", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /mdm-stock-indent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0201], summary: "Get MDM Stock & Indent", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0201], summary: "Update MDM Stock & Indent", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /breakfast-scheme-tn:
+    get: { tags: [M0202], summary: "List Breakfast Scheme (TN)", responses: { '200': { description: ok } } }
+    post: { tags: [M0202], summary: "Create Breakfast Scheme (TN)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /breakfast-scheme-tn/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0202], summary: "Get Breakfast Scheme (TN)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0202], summary: "Update Breakfast Scheme (TN)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /transport-bus-pass:
+    get: { tags: [M0203], summary: "List Transport / Bus Pass", responses: { '200': { description: ok } } }
+    post: { tags: [M0203], summary: "Create Transport / Bus Pass", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /transport-bus-pass/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0203], summary: "Get Transport / Bus Pass", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0203], summary: "Update Transport / Bus Pass", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /hostel-allocation:
+    get: { tags: [M0204], summary: "List Hostel Allocation", responses: { '200': { description: ok } } }
+    post: { tags: [M0204], summary: "Create Hostel Allocation", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /hostel-allocation/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0204], summary: "Get Hostel Allocation", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0204], summary: "Update Hostel Allocation", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /pudhumai-penn-scheme:
+    get: { tags: [M0205], summary: "List Pudhumai Penn Scheme", responses: { '200': { description: ok } } }
+    post: { tags: [M0205], summary: "Create Pudhumai Penn Scheme", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /pudhumai-penn-scheme/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0205], summary: "Get Pudhumai Penn Scheme", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0205], summary: "Update Pudhumai Penn Scheme", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /illam-thedi-kalvi:
+    get: { tags: [M0206], summary: "List Illam Thedi Kalvi", responses: { '200': { description: ok } } }
+    post: { tags: [M0206], summary: "Create Illam Thedi Kalvi", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /illam-thedi-kalvi/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0206], summary: "Get Illam Thedi Kalvi", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0206], summary: "Update Illam Thedi Kalvi", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /welfare-grievance-scheme:
+    get: { tags: [M0207], summary: "List Welfare Grievance (scheme)", responses: { '200': { description: ok } } }
+    post: { tags: [M0207], summary: "Create Welfare Grievance (scheme)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /welfare-grievance-scheme/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0207], summary: "Get Welfare Grievance (scheme)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0207], summary: "Update Welfare Grievance (scheme)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /scheme-audit-trail-gfr:
+    get: { tags: [M0208], summary: "List Scheme Audit Trail (GFR)", responses: { '200': { description: ok } } }
+    post: { tags: [M0208], summary: "Create Scheme Audit Trail (GFR)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /scheme-audit-trail-gfr/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0208], summary: "Get Scheme Audit Trail (GFR)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0208], summary: "Update Scheme Audit Trail (GFR)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+  /account-aggregator-eligibility-consent:
+    get: { tags: [M0209], summary: "List Account-Aggregator Eligibility (consent)", responses: { '200': { description: ok } } }
+    post: { tags: [M0209], summary: "Create Account-Aggregator Eligibility (consent)", responses: { '201': { description: created }, '403': { description: 'policy denied' } } }
+  /account-aggregator-eligibility-consent/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: string } } ]
+    get: { tags: [M0209], summary: "Get Account-Aggregator Eligibility (consent)", responses: { '200': { description: ok }, '404': { description: 'not found' } } }
+    patch: { tags: [M0209], summary: "Update Account-Aggregator Eligibility (consent)", responses: { '200': { description: ok }, '403': { description: 'policy denied' } } }
+components:
+  securitySchemes:
+    oidc: { type: openIdConnect, openIdConnectUrl: https://iam.vasa-eos.tn.gov.in/.well-known/openid-configuration }
+security: [ { oidc: [] } ]
