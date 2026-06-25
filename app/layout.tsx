@@ -14,6 +14,7 @@ import { CommandPaletteProvider } from "@/components/command-palette"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { RouteAnnouncer } from "@/components/route-announcer"
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help"
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -64,6 +65,7 @@ export default async function RootLayout({
             </CommandPaletteProvider>
           </AccessibilityProvider>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   )
