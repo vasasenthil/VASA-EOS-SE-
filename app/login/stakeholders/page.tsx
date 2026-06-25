@@ -75,6 +75,14 @@ export default function StakeholderDirectoryPage() {
             </CardContent>
           </Card>
         ))}
+        <p className="pt-1 text-center text-sm text-muted-foreground">
+          Looking for a feature instead of a role?{" "}
+          <a href="/directory" className="font-medium underline underline-offset-2">
+            Browse the full platform directory
+          </a>{" "}
+          — all portals and {""}
+          functional modules under one roof.
+        </p>
       </div>
     </Shell>
   )

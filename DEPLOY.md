@@ -18,10 +18,12 @@ bakes `NEXT_PUBLIC_DEMO_MODE=true`, so the public demo login works **without any
 ### Option A — Vercel native Git integration (simplest, no secrets)
 1. Go to <https://vercel.com/new> and **Import** this Git repository.
 2. Framework preset: **Next.js** (auto-detected). Leave the build settings as-is — `vercel.json`
-   already provides the install/build commands and the demo-mode env.
-3. Click **Deploy**. Vercel builds and gives you a production URL like
-   `https://<your-project>.vercel.app`, and re-deploys automatically on every push to the
-   default branch.
+   already provides the install/build commands and the demo-mode env. The project name defaults to
+   the `package.json` name, **`vasa-eos-se-tn`**, so the production URL reads
+   `https://vasa-eos-se-tn.vercel.app` (rename in the Vercel dashboard if you prefer another slug).
+3. Click **Deploy**. Vercel builds and gives you that production URL, and re-deploys automatically on
+   every push to the default branch. The whole platform — all stakeholder portals and all functional
+   modules — lives under that one URL; `/directory` is the single front door that links every one.
 
 ### Option B — CI-driven deploy (this repo's `deploy.yml` workflow)
 Use this only if you want GitHub Actions to drive the deploys.

@@ -2311,3 +2311,19 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   note 30→31.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 31.
+
+## Rollout #37 (deploy-identity): one URL "VASA-EOS-SE-TN" front door
+- Per request ("make it all under this url VASA-EOS-SE-TN"): the platform is already a single Next.js app / single
+  deployment (root → login → any of 17 portals → any of 31 modules), so this turn (a) NAMES the deploy targets and
+  (b) adds an explicit single front door so everything is reachable from one URL.
+- NAMING: package.json name my-v0-project → vasa-eos-se-tn (this is the slug Vercel defaults the project + URL to on
+  import → https://vasa-eos-se-tn.vercel.app). render.yaml services renamed vasa-eos-platformd → vasa-eos-se-tn-
+  platformd and vasa-eos-backbone-db → vasa-eos-se-tn-db. DEPLOY.md updated to document the vasa-eos-se-tn URL.
+- FRONT DOOR: new app/directory/ (/directory) — a single page listing ALL 17 stakeholder portals (grouped by the 8
+  governance tiers, each linked to its home / sign-in) AND ALL 31 deep modules (each linked to its route, with its
+  invariant), read live from config/portals.ts + lib/governance/durable-modules.ts so it can never drift. Linked
+  from the stakeholders sign-in page ("Browse the full platform directory").
+- HONEST: this makes the eventual URL read vasa-eos-se-tn and puts everything under one navigable root; it does NOT
+  itself create a live URL — that still needs the user to import to Vercel (or hand a token) and, for the 31 modules
+  to be fully functional rather than demo, deploy the backbone (render.yaml) + set PLATFORM_URL in Vercel.
+- Green: tsc 0, lint clean, next build success (/directory route added), 1557 tests at 96.17/81.64/91.62.
