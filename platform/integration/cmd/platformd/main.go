@@ -1019,6 +1019,59 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.ProcurementDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/wash", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Sanitation / WASH register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// register list; ?id= → one register. POST { action, ... }: register { id,org_unit,school_name } opens a
+		// school register; record { id,category,sanctioned_units,functional_units } upserts a facility line
+		// (rejecting an over-report and auto-revoking certification on a critical regression); certify { id }
+		// certifies the school Swachh (gated — every critical category must be fully functional).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				SchoolName      string `json:"school_name"`
+				Category        string `json:"category"`
+				SanctionedUnits int    `json:"sanctioned_units"`
+				FunctionalUnits int    `json:"functional_units"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordWashFacility(req.ID, integration.WashFacility{
+					Category: req.Category, SanctionedUnits: req.SanctionedUnits, FunctionalUnits: req.FunctionalUnits,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			case "certify":
+				out, err := s.p.CertifySwachh(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			default: // register
+				out, err := s.p.RegisterSchoolWash(integration.WashRegister{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), SchoolName: req.SchoolName,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			reg, ok := s.p.WashRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown wash register"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, reg, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedWashRegisters(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.WashDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

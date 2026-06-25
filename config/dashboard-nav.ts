@@ -133,6 +133,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "Campus Facilities (CIFM)", href: "/campus-facilities", icon: Hammer },
   { title: "Native AI Language Lab", href: "/language-lab", icon: Globe },
   { title: "Procurement & GeM", href: "/gem-procurement", icon: IndianRupee },
+  { title: "School Sanitation & WASH", href: "/wash-register", icon: Droplets },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

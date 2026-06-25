@@ -59,6 +59,8 @@ import type {
   PlatformSubstitution,
   PlatformLanguageLabDashboard,
   PlatformTranslationJob,
+  PlatformWashDashboard,
+  PlatformWashRegister,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -740,3 +742,34 @@ export const demoPurchaseOrders: PlatformPurchaseOrder[] = [
 export const demoSubstitutions: PlatformSubstitution[] = [
   { id: "SUB-CHN-01", org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 2, date: "2026-06-29", subject: "Tamil", original_teacher: "SYN-T-07", substitute_teacher: "SYN-T-019", reason: "regular teacher on RBSK duty", status: "assigned", created_on: "2026-06-25", updated_at: "2026-06-25T00:00:00Z" },
 ]
+
+// ── School Sanitation / WASH Register ────────────────────────────────────────────────────────────────────
+export const demoWashRegisters: PlatformWashRegister[] = [
+  { id: "WASH-CHN", org_unit: "33030004181", school_name: "Govt School CHN", certified: true, certified_on: "2026-06-25", status: "certified", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", facilities: [
+    { category: "girls_toilet", sanctioned_units: 6, functional_units: 6, last_inspected: "2026-06-25" },
+    { category: "boys_toilet", sanctioned_units: 6, functional_units: 5, last_inspected: "2026-06-25" },
+    { category: "cwsn_toilet", sanctioned_units: 2, functional_units: 2, last_inspected: "2026-06-25" },
+    { category: "drinking_water", sanctioned_units: 3, functional_units: 3, last_inspected: "2026-06-25" },
+    { category: "handwash_station", sanctioned_units: 8, functional_units: 8, last_inspected: "2026-06-25" },
+  ] },
+  { id: "WASH-CBE", org_unit: "33030004182", school_name: "Govt School CBE", certified: false, status: "registered", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", facilities: [
+    { category: "girls_toilet", sanctioned_units: 6, functional_units: 6, last_inspected: "2026-06-25" },
+    { category: "boys_toilet", sanctioned_units: 6, functional_units: 5, last_inspected: "2026-06-25" },
+    { category: "cwsn_toilet", sanctioned_units: 2, functional_units: 2, last_inspected: "2026-06-25" },
+    { category: "drinking_water", sanctioned_units: 3, functional_units: 1, last_inspected: "2026-06-25" },
+    { category: "handwash_station", sanctioned_units: 8, functional_units: 8, last_inspected: "2026-06-25" },
+  ] },
+]
+
+export const demoWashDashboard: PlatformWashDashboard = {
+  scope: SCOPE,
+  schools: 4,
+  certified: 1,
+  facilities: 20,
+  sanctioned_units: 100,
+  functional_units: 86,
+  functional_pct: 86,
+  by_category_functional: { girls_toilet: 22, boys_toilet: 20, cwsn_toilet: 8, drinking_water: 8, handwash_station: 28 },
+  pending: [demoWashRegisters[1]],
+  synthetic: true,
+}

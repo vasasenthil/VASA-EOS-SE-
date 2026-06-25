@@ -2598,3 +2598,76 @@ export async function platformAssignSubstitution(input: {
 export async function platformCancelSubstitution(id: string): Promise<{ ok: boolean; error: string; substitution?: PlatformSubstitution }> {
   return postJSON("/substitution", { action: "cancel", id })
 }
+
+// ── School Sanitation / WASH Register: no-over-report + Swachh certification gate ─────────────────────────
+// Each school keeps a register of WASH facility lines (toilets, drinking water, handwash). Functional units can
+// never exceed sanctioned units, and a school cannot be certified Swachh while any critical category (girls'
+// toilet, drinking water, handwash) is not fully functional. Embedded facility lines. Scoped.
+
+export interface PlatformWashFacility {
+  category: string // girls_toilet | boys_toilet | cwsn_toilet | drinking_water | handwash_station
+  sanctioned_units: number
+  functional_units: number
+  last_inspected?: string
+}
+
+export interface PlatformWashRegister {
+  id: string
+  org_unit: string
+  school_name: string
+  facilities?: PlatformWashFacility[]
+  certified: boolean
+  certified_on?: string
+  status: string // registered | certified
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformWashDashboard {
+  scope: string
+  schools: number
+  certified: number
+  facilities: number
+  sanctioned_units: number
+  functional_units: number
+  functional_pct: number
+  by_category_functional: Record<string, number>
+  pending?: PlatformWashRegister[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped WASH dashboard from the backbone (null when not configured). */
+export async function platformWashDashboard(scope = "TN"): Promise<PlatformWashDashboard | null> {
+  if (!platformConfigured()) return demo.demoWashDashboard
+  return getOrDemo(`/wash?scope=${encodeURIComponent(scope)}`, demo.demoWashDashboard)
+}
+
+/** The scoped WASH register list (optionally filtered by status). */
+export async function platformScopedWashRegisters(scope = "TN", status = ""): Promise<PlatformWashRegister[]> {
+  if (!platformConfigured()) return demo.demoWashRegisters
+  return getOrDemo(`/wash?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoWashRegisters)
+}
+
+/** Open a school's WASH register. */
+export async function platformRegisterSchoolWash(input: {
+  id: string
+  org_unit: string
+  school_name: string
+}): Promise<{ ok: boolean; error: string; register?: PlatformWashRegister }> {
+  return postJSON("/wash", { action: "register", ...input })
+}
+
+/** Record an inspected facility line — rejected on an over-report beyond sanctioned units. */
+export async function platformRecordWashFacility(input: {
+  id: string
+  category: string
+  sanctioned_units: number
+  functional_units: number
+}): Promise<{ ok: boolean; error: string; register?: PlatformWashRegister }> {
+  return postJSON("/wash", { action: "record", ...input })
+}
+
+/** Certify a school Swachh — rejected while any critical category is not fully functional. */
+export async function platformCertifySwachh(id: string): Promise<{ ok: boolean; error: string; register?: PlatformWashRegister }> {
+  return postJSON("/wash", { action: "certify", id })
+}
