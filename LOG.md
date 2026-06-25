@@ -2490,3 +2490,23 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   of features/modules/schemas). DB ownership: Postgres (42 durable tables) is canonical for the 35 modules;
   Supabase remains for the non-durable reference surfaces.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #48: Task-3 port-then-redirect (1/N) — Timetable Substitution ported to durable, /timetable redirected
+- Ported the reference /timetable page's unique "substitution" feature into the durable Class Timetable module (#11)
+  as a real Postgres-backed capability, then redirected /timetable → /class-timetable (it's now a true duplicate).
+  Zero feature loss: the substitution feature is now durable + audited, not a demo widget.
+- substitution.go + substitution_pg.go: Substitution (date-specific substitute for a scheduled period) with TWO
+  invariants validated against the LIVE timetable — (1) the period must be SCHEDULED (no substituting a free
+  period), (2) the substitute must be FREE (not the regular teacher of another class at that day+period — clash);
+  also rejects substitute==regular. Snapshots subject + original teacher from the slot. assigned→cancelled. New
+  table `substitutions`. New platformd endpoint /substitution (assign|cancel; GET list). lib/platform-client.ts:
+  substitution seam (getOrDemo) + demo. Surfaced on /class-timetable (substitutions card + assign/cancel forms).
+- next.config.mjs: added /timetable → /class-timetable. config/dashboard-nav.ts: removed "Timetable &
+  Substitution" /timetable entry (now redirected). One canonical timetable entry remains.
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): unscheduled period (P8) rejected;
+  substitute==regular rejected; valid free substitute assigned (snapshots original teacher + subject); durable
+  read-back + cancel. POST w/o bearer → 401.
+- Remaining port-then-redirect candidates: /postings (counselling) → teacher-transfer, /hostel (mess) →
+  hostel-occupancy. The 4 genuinely-distinct modules (/smc DAO, /grievance redressal, /procurement inventory,
+  /procurement-approvals sanction) are kept separate (not duplicates).
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.

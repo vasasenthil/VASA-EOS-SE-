@@ -2553,3 +2553,48 @@ export async function platformPayVendor(id: string, amount_paise: number): Promi
 export async function platformClosePurchaseOrder(id: string): Promise<{ ok: boolean; error: string; po?: PlatformPurchaseOrder }> {
   return postJSON("/procurement", { action: "close", id })
 }
+
+// ── Timetable Substitution: durable port of the reference /timetable substitution feature ────────────────
+// A date-specific substitute for a scheduled class period. Validated against the live timetable: the period must
+// be scheduled, and the substitute must be free (no clash). Surfaced on /class-timetable. Downward-scoped.
+
+export interface PlatformSubstitution {
+  id: string
+  org_unit: string
+  class: string
+  day: string
+  period: number
+  date: string
+  subject: string
+  original_teacher: string
+  substitute_teacher: string
+  reason?: string
+  status: string // assigned | cancelled
+  created_on: string
+  updated_at: string
+}
+
+/** The scoped substitution list (optionally filtered by status). */
+export async function platformScopedSubstitutions(scope = "TN", status = ""): Promise<PlatformSubstitution[]> {
+  if (!platformConfigured()) return demo.demoSubstitutions
+  return getOrDemo(`/substitution?scope=${encodeURIComponent(scope)}&status=${encodeURIComponent(status)}`, demo.demoSubstitutions)
+}
+
+/** Assign a substitute — rejected on an unscheduled period or a busy substitute. */
+export async function platformAssignSubstitution(input: {
+  id: string
+  org_unit: string
+  class: string
+  day: string
+  period: number
+  date: string
+  substitute_teacher: string
+  reason?: string
+}): Promise<{ ok: boolean; error: string; substitution?: PlatformSubstitution }> {
+  return postJSON("/substitution", { action: "assign", ...input })
+}
+
+/** Cancel an assigned substitution. */
+export async function platformCancelSubstitution(id: string): Promise<{ ok: boolean; error: string; substitution?: PlatformSubstitution }> {
+  return postJSON("/substitution", { action: "cancel", id })
+}

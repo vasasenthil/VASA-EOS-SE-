@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import { DemoDataNote } from "@/components/demo-data-note"
-import { getTimetableDashboard, getTeacherSlots, getClassGrid, backboneConnected } from "./actions"
-import { AssignSlotForm } from "./class-timetable-client"
+import { getTimetableDashboard, getTeacherSlots, getClassGrid, getSubstitutions, backboneConnected } from "./actions"
+import { AssignSlotForm, AssignSubstitutionForm, CancelSubstitutionForm } from "./class-timetable-client"
 
 export const dynamic = "force-dynamic"
 
@@ -31,6 +31,7 @@ export default async function ClassTimetablePage() {
   const classes = Array.from(new Set(probe.map((s) => s.class))).sort()
   const grid = org && classes[0] ? await getClassGrid(org, classes[0]) : []
   const cell = (day: string, period: number) => grid.find((s) => s.day === day && s.period === period)
+  const subs = await getSubstitutions("assigned")
 
   return (
     <Shell>
@@ -132,6 +133,50 @@ export default async function ClassTimetablePage() {
               </CardContent>
             </Card>
           </section>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Substitutions</CardTitle>
+              <CardDescription>
+                Date-specific substitute teachers for scheduled periods — the durable replacement of the former
+                &ldquo;Timetable &amp; Substitution&rdquo; page. {subs.length} active.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {subs.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-left text-muted-foreground">
+                        <th className="py-1 pr-3 font-medium">Id</th>
+                        <th className="py-1 pr-3 font-medium">Date</th>
+                        <th className="py-1 pr-3 font-medium">Class</th>
+                        <th className="py-1 pr-3 font-medium">Period</th>
+                        <th className="py-1 pr-3 font-medium">Subject</th>
+                        <th className="py-1 font-medium">Regular → Substitute</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {subs.sort((a, b) => a.id.localeCompare(b.id)).map((s) => (
+                        <tr key={s.id} className="border-t">
+                          <td className="py-1 pr-3 font-mono whitespace-nowrap">{s.id}</td>
+                          <td className="py-1 pr-3 whitespace-nowrap">{s.date}</td>
+                          <td className="py-1 pr-3">{s.class}</td>
+                          <td className="py-1 pr-3">{s.day} P{s.period}</td>
+                          <td className="py-1 pr-3">{s.subject}</td>
+                          <td className="py-1 font-mono">{s.original_teacher} → {s.substitute_teacher}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <AssignSubstitutionForm org={org || "33030004181"} />
+                <CancelSubstitutionForm />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </Shell>

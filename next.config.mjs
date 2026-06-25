@@ -28,6 +28,8 @@ const nextConfig = {
       { source: "/lesson-plans", destination: "/lesson-plan", permanent: false },
       { source: "/attendance", destination: "/student-attendance", permanent: false },
       { source: "/hostel-allocation", destination: "/hostel-occupancy", permanent: false },
+      // substitution ported into the durable Class Timetable module (#11), so /timetable is now a true duplicate.
+      { source: "/timetable", destination: "/class-timetable", permanent: false },
     ]
   },
 }

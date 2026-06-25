@@ -1448,6 +1448,41 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.TimetableDashboard(orDefault(q.Get("scope"), "TN")), nil)
 	}))
+	mux.HandleFunc("/substitution", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Timetable Substitution (the durable port of /timetable's substitution feature). GET ?scope=<org>&status= →
+		// the scoped substitution list. POST { action, ... }: assign { id,org_unit,class,day,period,date,
+		// substitute_teacher,reason } assigns a substitute (rejecting an unscheduled period or a busy substitute);
+		// cancel { id } cancels it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action            string `json:"action"`
+				ID                string `json:"id"`
+				OrgUnit           string `json:"org_unit"`
+				Class             string `json:"class"`
+				Day               string `json:"day"`
+				Period            int    `json:"period"`
+				Date              string `json:"date"`
+				SubstituteTeacher string `json:"substitute_teacher"`
+				Reason            string `json:"reason"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "cancel" {
+				out, err := s.p.CancelSubstitution(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "substitution": out}, nil)
+				return
+			}
+			out, err := s.p.AssignSubstitution(integration.Substitution{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Day: req.Day, Period: req.Period,
+				Date: req.Date, SubstituteTeacher: req.SubstituteTeacher, Reason: req.Reason,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "substitution": out}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.ScopedSubstitutions(orDefault(q.Get("scope"), "TN"), q.Get("status")), nil)
+	}))
 	mux.HandleFunc("/library", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Library circulation. GET ?scope=<org> → scoped circulation dashboard (active/overdue/lost);
 		// ?member= → a member's loan history. POST { action, ... }: issue { org_unit,book_id,title,copy_id,

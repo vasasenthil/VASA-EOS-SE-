@@ -139,7 +139,6 @@ export const dashboardNavConfig: Record<string, NavItem[]> = {
   ADMIN: [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { title: "Today (daily loop)", href: "/today", icon: Sun },
-    { title: "Timetable & Substitution", href: "/timetable", icon: CalendarDays },
     { title: "Remedial / NIPUN Classes", href: "/remedial", icon: BookOpen },
     { title: "Diagnostic Learning-Level", href: "/diagnostic", icon: Target },
     { title: "Holistic Progress Card", href: "/hpc", icon: ClipboardList },

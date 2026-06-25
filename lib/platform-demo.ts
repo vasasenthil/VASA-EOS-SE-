@@ -56,6 +56,7 @@ import type {
   PlatformFacility,
   PlatformProcurementDashboard,
   PlatformPurchaseOrder,
+  PlatformSubstitution,
   PlatformLanguageLabDashboard,
   PlatformTranslationJob,
 } from "@/lib/platform-client"
@@ -733,4 +734,9 @@ export const demoPurchaseOrders: PlatformPurchaseOrder[] = [
   { id: "PO-CHN-01", org_unit: "33030004181", item: "Dual-desk benches", vendor: "SYN-VEN-FURN", gem_contract: "GEMC-CHN-001", ordered_qty: 50, unit_price_paise: 2_500_00, received_qty: 30, paid_paise: 50_000_00, status: "ordered", created_on: "2026-06-05", updated_at: "2026-06-25T00:00:00Z" },
   { id: "PO-CHN-02", org_unit: "33030004181", item: "Smart-class tablets", vendor: "SYN-VEN-ICT", gem_contract: "GEMC-CHN-002", ordered_qty: 20, unit_price_paise: 9_000_00, received_qty: 20, paid_paise: 0, status: "ordered", created_on: "2026-06-12", updated_at: "2026-06-25T00:00:00Z" },
   { id: "PO-CHN-03", org_unit: "33030004181", item: "Library books", vendor: "SYN-VEN-BOOK", gem_contract: "GEMC-CHN-003", ordered_qty: 200, unit_price_paise: 350_00, received_qty: 0, paid_paise: 0, status: "ordered", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+// ── Timetable Substitution ───────────────────────────────────────────────────────────────────────────────
+export const demoSubstitutions: PlatformSubstitution[] = [
+  { id: "SUB-CHN-01", org_unit: "33030004181", class: "Grade 8-A", day: "monday", period: 2, date: "2026-06-29", subject: "Tamil", original_teacher: "SYN-T-07", substitute_teacher: "SYN-T-019", reason: "regular teacher on RBSK duty", status: "assigned", created_on: "2026-06-25", updated_at: "2026-06-25T00:00:00Z" },
 ]

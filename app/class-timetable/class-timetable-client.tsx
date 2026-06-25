@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState } from "react"
-import { setSlotAction, type ActionResult } from "./actions"
+import { setSlotAction, assignSubstitutionAction, cancelSubstitutionAction, type ActionResult } from "./actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -66,6 +66,65 @@ export function AssignSlotForm({ org, classes, teachers }: { org: string; classe
         (a teacher can never be in two classes at once).
       </p>
       <Button type="submit" disabled={pending}>{pending ? "Assigning…" : "Assign slot"}</Button>
+      <Notice state={state} />
+    </form>
+  )
+}
+
+/** Assign a substitute teacher for a scheduled period (ported from the former /timetable page). */
+export function AssignSubstitutionForm({ org }: { org: string }) {
+  const [state, action, pending] = useActionState(assignSubstitutionAction, EMPTY)
+  return (
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="org_unit" value={org} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label htmlFor="sb-class">Class</Label>
+          <Input id="sb-class" name="class" defaultValue="Grade 8-A" required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sb-day">Day</Label>
+          <select id="sb-day" name="day" defaultValue="monday" className="h-9 w-full rounded-md border bg-background px-3 text-sm">
+            {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sb-period">Period</Label>
+          <Input id="sb-period" name="period" type="number" min={1} max={8} defaultValue={2} required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sb-date">Date</Label>
+          <Input id="sb-date" name="date" type="date" defaultValue="2026-06-29" required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sb-sub">Substitute teacher</Label>
+          <Input id="sb-sub" name="substitute_teacher" placeholder="SYN-T-019" required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="sb-reason">Reason</Label>
+          <Input id="sb-reason" name="reason" placeholder="regular teacher on duty" />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        The period must be scheduled in the timetable, and the substitute must be free — a substitute already
+        teaching another class at that day + period is rejected.
+      </p>
+      <Button type="submit" disabled={pending}>{pending ? "Assigning…" : "Assign substitute"}</Button>
+      <Notice state={state} />
+    </form>
+  )
+}
+
+/** Cancel an assigned substitution. */
+export function CancelSubstitutionForm() {
+  const [state, action, pending] = useActionState(cancelSubstitutionAction, EMPTY)
+  return (
+    <form action={action} className="flex flex-wrap items-end gap-3">
+      <div className="space-y-1">
+        <Label htmlFor="sc-id">Substitution id</Label>
+        <Input id="sc-id" name="id" placeholder="SUB-CHN-01" required />
+      </div>
+      <Button type="submit" variant="secondary" disabled={pending}>{pending ? "Cancelling…" : "Cancel"}</Button>
       <Notice state={state} />
     </form>
   )
