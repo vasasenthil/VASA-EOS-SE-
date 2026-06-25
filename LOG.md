@@ -2240,3 +2240,26 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
 - Auth gateway (carried): platformd writes pass through authGate (bearer token, constant-time compare; reads + /healthz open).
 - Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 28.
+
+## Rollout #34 (a): NEW durable vertical — SMC Meetings & Resolutions (deep module #29, RTE §21–22)
+- Built the durable School Management Committee governance vertical inline in integration. smc.go (domain
+  SMCMeeting + embedded Resolution action items; lifecycle scheduled→convened→closed with an open→done resolution
+  sub-lifecycle; TWO hard server-side invariants: (1) COMPOSITION — RTE §21(2) three-fourths-parents rule
+  (parent_members ≥ ceil(0.75×total), rejected at schedule time), (2) QUORUM — a meeting can only be CONVENED, and
+  resolutions only passed, when a majority is present (present ≥ total/2+1); resolutions cannot be passed on a
+  non-quorate meeting + in-memory store + Platform methods + scoped dashboard (meetings/by_status/quorate_rate/
+  open_actions + open-action worklist) + multi-school seed (a convened Q1 review with one done + one open
+  resolution, and a scheduled Q2 review, per school across 2 districts)) and smc_pg.go (self-migrating PostgreSQL
+  adapter; resolutions stored as JSON). New platformd endpoint /smc (GET dashboard/list/id; POST schedule|convene|
+  resolve|complete|close). lib/platform-client.ts: SMC seam. app/smc-meetings/ (manage:school gated): live stat
+  strip, open-action worklist with per-item Mark-done, status mix, the meetings table, and schedule/convene/
+  resolve/close forms.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, with the auth gateway enforced): composition reject
+  (12 members / 8 parents → "three-fourths parents"); full lifecycle — resolve-before-convene REJECTED ("convened"),
+  convene-without-quorum REJECTED (5 of 10 → "quorum not met"), convene with 7/10 accepted, resolution passed +
+  embedded id, completed (open→done), meeting closed; durable read-back via the scoped list; downward-governance
+  scope (Chennai + Coimbatore subsets ⊆ TN). Auth gate: POST without bearer → 401, with token → 200, GET open.
+- Register: added smc-meetings to durable-modules.ts (now 29, test-verified backbone-wired); brochure 'modules'
+  note 28→29.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 29.

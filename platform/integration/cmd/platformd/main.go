@@ -601,6 +601,70 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.GrantDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/smc", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// SMC (School Management Committee) Meetings & Resolutions (RTE §21–22). GET ?scope=<org> → scoped
+		// governance dashboard; ?list=1&status= → the scoped meeting list; ?id= → one meeting. POST { action,...}:
+		// schedule { id,org_unit,title,scheduled_date,total_members,parent_members } constitutes a meeting (rejecting
+		// a committee with < three-fourths parents); convene { id,present_count } convenes it (rejecting no quorum);
+		// resolve { id,subject,owner,due_date } passes a resolution (convened only); complete { id,resolution_id }
+		// marks a resolution done; close { id } closes the meeting.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action        string `json:"action"`
+				ID            string `json:"id"`
+				OrgUnit       string `json:"org_unit"`
+				Title         string `json:"title"`
+				ScheduledDate string `json:"scheduled_date"`
+				TotalMembers  int    `json:"total_members"`
+				ParentMembers int    `json:"parent_members"`
+				PresentCount  int    `json:"present_count"`
+				Subject       string `json:"subject"`
+				Owner         string `json:"owner"`
+				DueDate       string `json:"due_date"`
+				ResolutionID  string `json:"resolution_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "convene":
+				out, err := s.p.ConveneSMCMeeting(req.ID, req.PresentCount)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "resolve":
+				out, err := s.p.PassSMCResolution(req.ID, integration.Resolution{Subject: req.Subject, Owner: req.Owner, DueDate: req.DueDate})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "complete":
+				out, err := s.p.CompleteSMCResolution(req.ID, req.ResolutionID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "close":
+				out, err := s.p.CloseSMCMeeting(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			default: // schedule
+				out, err := s.p.ScheduleSMCMeeting(integration.SMCMeeting{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, ScheduledDate: req.ScheduledDate,
+					TotalMembers: req.TotalMembers, ParentMembers: req.ParentMembers,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			m, ok := s.p.SMCMeetingRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown smc meeting"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, m, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedSMCMeetings(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.SMCDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/staff-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Staff (employee) Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped HR dashboard (present rate,
 		// on-leave, LWP roster); ?employee=<id> → an employee's payable-days + LWP profile. POST { employee_id,

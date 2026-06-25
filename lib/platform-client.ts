@@ -1996,3 +1996,91 @@ export async function platformMarkPeriod(input: {
 }): Promise<{ ok: boolean; error: string; record?: PlatformPeriodAttendance }> {
   return postJSON("/period-attendance", input)
 }
+
+// ── SMC Meetings & Resolutions: RTE three-fourths-parents + majority-quorum invariants ───────────────────
+// School Management Committee governance (RTE §21–22). A committee cannot be constituted unless ≥75% of its
+// members are parents (RTE §21(2)); a meeting can only be convened — and resolutions only passed — when a
+// majority quorum is present. Resolutions are embedded action items with an open→done lifecycle. Scoped.
+
+export interface PlatformResolution {
+  id: string
+  subject: string
+  owner: string
+  due_date: string
+  status: string // open | done
+}
+
+export interface PlatformSMCMeeting {
+  id: string
+  org_unit: string
+  title: string
+  scheduled_date: string
+  total_members: number
+  parent_members: number
+  present_count: number
+  status: string // scheduled | convened | closed
+  resolutions?: PlatformResolution[]
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformSMCDashboard {
+  scope: string
+  meetings: number
+  by_status: Record<string, number>
+  convened: number
+  quorate_rate: number
+  resolutions: number
+  open_actions: number
+  action_list?: PlatformResolution[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped SMC governance dashboard from the backbone (null when not configured). */
+export async function platformSMCDashboard(scope = "TN"): Promise<PlatformSMCDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/smc?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped SMC meeting list (optionally filtered by status). */
+export async function platformScopedSMCMeetings(scope = "TN", status = ""): Promise<PlatformSMCMeeting[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/smc?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Schedule/constitute an SMC meeting — rejected unless ≥75% of members are parents (RTE §21(2)). */
+export async function platformScheduleSMCMeeting(input: {
+  id: string
+  org_unit: string
+  title: string
+  scheduled_date: string
+  total_members: number
+  parent_members: number
+}): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
+  return postJSON("/smc", { action: "schedule", ...input })
+}
+
+/** Convene a scheduled meeting with attendance — rejected if the majority quorum isn't met. */
+export async function platformConveneSMCMeeting(id: string, present_count: number): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
+  return postJSON("/smc", { action: "convene", id, present_count })
+}
+
+/** Pass a resolution — only on a convened (quorate) meeting. */
+export async function platformPassSMCResolution(input: {
+  id: string
+  subject: string
+  owner?: string
+  due_date?: string
+}): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
+  return postJSON("/smc", { action: "resolve", ...input })
+}
+
+/** Mark an open resolution done. */
+export async function platformCompleteSMCResolution(id: string, resolution_id: string): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
+  return postJSON("/smc", { action: "complete", id, resolution_id })
+}
+
+/** Close a convened meeting. */
+export async function platformCloseSMCMeeting(id: string): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
+  return postJSON("/smc", { action: "close", id })
+}
