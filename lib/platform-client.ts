@@ -1366,13 +1366,13 @@ export interface PlatformCalendarDashboard {
 
 /** Jurisdiction-scoped calendar dashboard for a viewing role (its approval inbox + upcoming feed). */
 export async function platformCalendarDashboard(scope = "TN", asRole = "DEO", from = "2026-06-15"): Promise<PlatformCalendarDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoCalendarDashboard
   return getJSON(`/calendar?scope=${encodeURIComponent(scope)}&as=${encodeURIComponent(asRole)}&from=${encodeURIComponent(from)}`)
 }
 
 /** The scoped, date-ordered entry list (optionally filtered by type/year). */
 export async function platformCalendarEntries(scope = "TN", type = "", year = ""): Promise<PlatformCalendarEntry[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoCalendarEntriesFor(type, year)
   return getJSON(`/calendar?scope=${encodeURIComponent(scope)}&list=1&type=${encodeURIComponent(type)}&year=${encodeURIComponent(year)}`)
 }
 
@@ -1455,13 +1455,13 @@ export interface PlatformExamDashboard {
 
 /** Jurisdiction-scoped exam-results dashboard from the backbone (null when not configured). */
 export async function platformExamDashboard(scope = "TN"): Promise<PlatformExamDashboard | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoExamDashboard
   return getJSON(`/exams?scope=${encodeURIComponent(scope)}`)
 }
 
 /** A single marks sheet with its results + analytics. */
 export async function platformExamSheet(examID: string): Promise<PlatformExamSheet | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoExamSheetFor(examID)
   return getJSON(`/exams?exam=${encodeURIComponent(examID)}`)
 }
 
@@ -1526,13 +1526,13 @@ export interface PlatformAccessExplain {
 
 /** Directory & IAM roll-up: user count, role census, the role catalogue and the five access models. */
 export async function platformDirectorySummary(): Promise<PlatformDirectorySummary | null> {
-  if (!platformConfigured()) return null
+  if (!platformConfigured()) return demo.demoDirectorySummary
   return getJSON(`/directory`)
 }
 
 /** The users a subject org governs (downward-governance scoped; fail-closed). */
 export async function platformDirectoryScoped(scope: string): Promise<PlatformDirectoryUser[]> {
-  if (!platformConfigured()) return []
+  if (!platformConfigured()) return demo.demoDirectoryScopedFor(scope)
   const r = await getJSON<{ scope: string; users: PlatformDirectoryUser[] }>(`/directory?scope=${encodeURIComponent(scope)}`)
   return r.users ?? []
 }

@@ -2361,3 +2361,11 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   parent-teacher-meetings, health-screening (RBSK), teacher-cpd. 27/31 modules now viewable. Remaining 4:
   events-calendar, exam-results, user-directory, leave-approvals.
 - Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #42 (viewability): demo-data fallback batch 5/5 — ALL 31 modules viewable
+- Final batch: events-calendar (multi-tier approval inbox), exam-results (subject sheets + analytics),
+  user-directory (5-model IAM census). leave-approvals already renders (flow board, no backbone gate).
+- ALL 31 durable modules + 17 portals are now fully VIEWABLE on the hosted Vercel demo with representative data
+  (DemoDataNote marks it), with zero backend deploy and zero tokens. Writes persist once the backbone is deployed
+  (deploy/backbone). The /directory page links every portal + module.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.

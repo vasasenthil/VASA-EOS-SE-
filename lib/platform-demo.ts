@@ -44,6 +44,12 @@ import type {
   PlatformPtmBooking,
   PlatformRbskDashboard,
   PlatformCpdDashboard,
+  PlatformCalendarDashboard,
+  PlatformCalendarEntry,
+  PlatformExamDashboard,
+  PlatformExamSheet,
+  PlatformDirectorySummary,
+  PlatformDirectoryUser,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -554,4 +560,80 @@ export const demoCpdDashboard: PlatformCpdDashboard = {
   total_hours: 612,
   deficient_teachers: ["SYN-T-11", "SYN-T-15", "SYN-T-19"],
   synthetic: true,
+}
+
+// ── Academic Calendar ────────────────────────────────────────────────────────────────────────────────────
+const CAL_ENTRIES: PlatformCalendarEntry[] = [
+  { id: "CAL-CHN-term1", title: "Term 1 begins", type: "term", start_date: "2026-06-01", end_date: "2026-09-30", org_unit: SCOPE, academic_year: "2026-27", status: "approved", current_step: 2, created_at: "2026-05-01", updated_at: "2026-06-25T00:00:00Z", synthetic: true },
+  { id: "CAL-CHN-qexam", title: "Quarterly Examinations", type: "exam", start_date: "2026-09-15", end_date: "2026-09-25", org_unit: SCOPE, academic_year: "2026-27", status: "pending", approval_chain: [{ tier: "G4", approver_role: "DEO", required_scope: SCOPE, decision: "approved", decided_by: "deo-chennai" }, { tier: "G3", approver_role: "DIRECTOR", required_scope: "TN", decision: "" }], current_step: 1, created_at: "2026-06-10", updated_at: "2026-06-25T00:00:00Z", synthetic: true },
+  { id: "CAL-CHN-pongal", title: "Pongal Holidays", type: "holiday", start_date: "2027-01-14", end_date: "2027-01-17", org_unit: SCOPE, academic_year: "2026-27", status: "approved", current_step: 2, created_at: "2026-05-01", updated_at: "2026-06-25T00:00:00Z", synthetic: true },
+]
+export const demoCalendarDashboard: PlatformCalendarDashboard = {
+  scope: SCOPE,
+  academic_year: "2026-27",
+  total: 8,
+  by_type: { term: 2, exam: 2, holiday: 3, ptm: 1 },
+  by_status: { approved: 5, pending: 2, draft: 1 },
+  pending_approvals: 2,
+  published: 5,
+  my_inbox: [CAL_ENTRIES[1]],
+  upcoming: CAL_ENTRIES,
+  synthetic: true,
+}
+export function demoCalendarEntriesFor(type = "", year = ""): PlatformCalendarEntry[] {
+  return CAL_ENTRIES.filter((e) => (!type || e.type === type) && (!year || e.academic_year === year))
+}
+
+// ── Examinations & Results ───────────────────────────────────────────────────────────────────────────────
+const EXAM_STATS = { entered: 30, pass: 26, fail: 4, pass_pct: 86.7, mean_marks: 64.2, highest: 96, grade_distribution: { "A+": 4, A: 8, B: 10, C: 4, D: 4 } }
+export const demoExamDashboard: PlatformExamDashboard = {
+  scope: SCOPE,
+  sheets: 4,
+  by_status: { published: 2, submitted: 1, open: 1 },
+  results_recorded: 108,
+  overall_pass: 94,
+  overall_pass_pct: 87.0,
+  per_sheet: [
+    { exam_id: "EX-CHN-QT1-MATH", org_unit: "33030004181", subject: "Mathematics", class: "Grade 8-A", status: "published", stats: EXAM_STATS },
+    { exam_id: "EX-CHN-QT1-TAM", org_unit: "33030004181", subject: "Tamil", class: "Grade 8-A", status: "published", stats: { ...EXAM_STATS, pass: 28, fail: 2, pass_pct: 93.3, mean_marks: 68.1 } },
+    { exam_id: "EX-CHN-QT1-SCI", org_unit: "33030004181", subject: "Science", class: "Grade 8-A", status: "submitted", stats: { ...EXAM_STATS, pass: 24, fail: 6, pass_pct: 80.0, mean_marks: 60.4 } },
+  ],
+  synthetic: true,
+}
+export function demoExamSheetFor(examID: string): PlatformExamSheet {
+  return {
+    exam_id: examID || "EX-CHN-QT1-MATH", org_unit: "33030004181", subject: "Mathematics", class: "Grade 8-A", status: "published",
+    results: [
+      { student_id: "SYN-S-CHN-001", marks: 78, grade: "A", pass: true },
+      { student_id: "SYN-S-CHN-002", marks: 64, grade: "B", pass: true },
+      { student_id: "SYN-S-CHN-003", marks: 33, grade: "D", pass: false },
+      { student_id: "SYN-S-CHN-004", marks: 92, grade: "A+", pass: true },
+    ],
+    stats: EXAM_STATS,
+    synthetic: true,
+  }
+}
+
+// ── User Directory & IAM ─────────────────────────────────────────────────────────────────────────────────
+const DIR_SAMPLE: PlatformDirectoryUser[] = [
+  { id: "admin", name: "Platform Administrator", role: "ADMIN", org_unit: "TN", attributes: { cadre: "PMU" } },
+  { id: "deo-chennai", name: "District Education Officer — Chennai", role: "DEO", org_unit: "TN-DIST-Chennai", attributes: { district: "Chennai" } },
+  { id: "principal-egmore", name: "Principal — GHSS Egmore", role: "PRINCIPAL", org_unit: "33010100101", attributes: { school: "33010100101" } },
+  { id: "teacher-egmore", name: "Teacher — Class 9-A", role: "TEACHER", org_unit: "33010100101", attributes: { school: "33010100101" } },
+]
+export const demoDirectorySummary: PlatformDirectorySummary = {
+  users: 23,
+  roles: 16,
+  role_census: { DIRECTOR: 7, ADMIN: 1, DEO: 1, BEO: 1, CRCC: 1, PRINCIPAL: 1, TEACHER: 1, STUDENT: 1, PARENT: 1, SECRETARY: 1, MINISTER: 1 },
+  catalogue: [
+    { code: "PRINCIPAL", name: "Principal / Headmaster", tier: "school", grants: ["manage:school", "manage:staff", "resolve:grievance"] },
+    { code: "DEO", name: "District Education Officer", tier: "district", grants: ["read:district", "allocate:resource", "approve:recognition"] },
+    { code: "TEACHER", name: "Teacher", tier: "school", grants: ["read:class", "write:attendance", "write:assessment"] },
+  ],
+  sample: DIR_SAMPLE,
+  access_models: ["RBAC", "ABAC", "ReBAC", "PBAC", "context"],
+  synthetic: true,
+}
+export function demoDirectoryScopedFor(scope: string): PlatformDirectoryUser[] {
+  return DIR_SAMPLE
 }
