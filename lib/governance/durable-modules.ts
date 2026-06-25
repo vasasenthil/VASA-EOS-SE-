@@ -48,6 +48,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "lesson-plan", label: "Lesson Plans", service: "/lesson-plan", invariant: "publish quality-gate — a plan cannot be published without learning objectives" },
   { route: "period-attendance", label: "Period Attendance & Lesson Delivery", service: "/period-attendance", invariant: "timetable-validated period + published-plan link; subject/teacher snapshot; subject-wise attendance" },
   { route: "smc-meetings", label: "SMC Meetings & Resolutions", service: "/smc", invariant: "RTE §21(2) three-fourths-parents composition + majority-quorum convene; resolutions only on a quorate meeting" },
+  { route: "bonafide-register", label: "Bonafide Certificate Register", service: "/bonafide", invariant: "cross-module — cannot issue for a student with an active transfer certificate; monotonic per-school serial" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

@@ -2263,3 +2263,28 @@ Fixed the concrete, evidence-backed defects an audit surfaced in Governance and 
   note 28→29.
 - Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
   Durable backbone web modules now 29.
+
+## Rollout #35 (a): NEW durable vertical — Bonafide Certificate Register (deep module #30, cross-module)
+- Built the durable Bonafide / study-certificate registrar vertical inline in integration. bonafide.go (domain
+  BonafideCertificate; lifecycle requested→issued→revoked; TWO invariants: (1) CROSS-MODULE — IssueBonafide reads
+  the live TC store (studentHasActiveTC) and REJECTS issuing for a student who has an active transfer certificate
+  (requested/issued) — they are no longer on rolls here; (2) SERIAL INTEGRITY — each issued certificate is stamped
+  with a monotonic per-school serial BNF/<org>/2026/NNNN; a request issues once, only an issued cert revokes +
+  in-memory store + Platform methods + scoped dashboard (by_status/by_purpose/issued + pending worklist) +
+  multi-school seed (one issued + one pending per school across 2 districts)) and bonafide_pg.go (self-migrating
+  PostgreSQL adapter). New platformd endpoint /bonafide (GET dashboard/list/id; POST request|issue|revoke).
+  lib/platform-client.ts: bonafide seam. app/bonafide-register/ (manage:students gated): live stat strip, the
+  register table, and request/issue/revoke forms.
+- Bug found + fixed during live-proof: seedBonafide (runs inside bonafideOnce.Do) called nextBonafideSerial which
+  re-entered bonafideState() → sync.Once self-deadlock (first request hung). Fixed by threading the store through
+  nextBonafideSerial(s, org) so seeding never re-enters the Once. Caught precisely because the module was proven
+  live, not just unit-asserted.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, auth gate enforced): clean issue stamps a serial
+  matching ^BNF/33030004181/2026/\d{4}$ and is durably listed; re-issue rejected ("only a requested certificate");
+  CROSS-MODULE — after the student is given an active TC (reason transfer), issuing the bonafide is REJECTED
+  ("active transfer certificate"); revoke only applies to an issued cert; downward-governance scope (Chennai +
+  Coimbatore ⊆ TN). Auth gate: POST without bearer → 401, GET open → 200.
+- Register: added bonafide-register to durable-modules.ts (now 30, test-verified backbone-wired); brochure
+  'modules' note 29→30.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 30.

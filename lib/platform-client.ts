@@ -2084,3 +2084,64 @@ export async function platformCompleteSMCResolution(id: string, resolution_id: s
 export async function platformCloseSMCMeeting(id: string): Promise<{ ok: boolean; error: string; meeting?: PlatformSMCMeeting }> {
   return postJSON("/smc", { action: "close", id })
 }
+
+// ── Bonafide Certificate Register: cross-module TC gate + serial integrity ───────────────────────────────
+// A school issues a study/bonafide certificate for a currently-enrolled student. Two invariants: a certificate
+// cannot be ISSUED for a student who has an ACTIVE transfer certificate (they have left — composes with the TC
+// module), and each issued certificate is stamped with a monotonic per-school serial. Downward-governance scoped.
+
+export interface PlatformBonafide {
+  id: string
+  org_unit: string
+  student_id: string
+  student_name: string
+  purpose: string
+  serial: string
+  status: string // requested | issued | revoked
+  requested_on: string
+  issued_on: string
+  updated_at: string
+}
+
+export interface PlatformBonafideDashboard {
+  scope: string
+  total: number
+  by_status: Record<string, number>
+  by_purpose: Record<string, number>
+  issued: number
+  pending_work?: PlatformBonafide[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped bonafide-register dashboard from the backbone (null when not configured). */
+export async function platformBonafideDashboard(scope = "TN"): Promise<PlatformBonafideDashboard | null> {
+  if (!platformConfigured()) return null
+  return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}`)
+}
+
+/** The scoped bonafide certificate list (optionally filtered by status). */
+export async function platformScopedBonafide(scope = "TN", status = ""): Promise<PlatformBonafide[]> {
+  if (!platformConfigured()) return []
+  return getJSON(`/bonafide?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`)
+}
+
+/** Raise a bonafide certificate request (status requested). */
+export async function platformRequestBonafide(input: {
+  id: string
+  org_unit: string
+  student_id: string
+  student_name?: string
+  purpose: string
+}): Promise<{ ok: boolean; error: string; certificate?: PlatformBonafide }> {
+  return postJSON("/bonafide", { action: "request", ...input })
+}
+
+/** Issue a requested certificate — rejected if the student has an active TC; stamps a per-school serial. */
+export async function platformIssueBonafide(id: string): Promise<{ ok: boolean; error: string; certificate?: PlatformBonafide }> {
+  return postJSON("/bonafide", { action: "issue", id })
+}
+
+/** Revoke an issued certificate. */
+export async function platformRevokeBonafide(id: string): Promise<{ ok: boolean; error: string; certificate?: PlatformBonafide }> {
+  return postJSON("/bonafide", { action: "revoke", id })
+}

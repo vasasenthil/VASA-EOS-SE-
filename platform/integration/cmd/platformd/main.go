@@ -738,6 +738,56 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.TCDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/bonafide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Bonafide Certificate Register. GET ?scope=<org> → scoped registrar dashboard; ?list=1&status= → the scoped
+		// certificate list; ?id= → one certificate. POST { action, ... }: request { id,org_unit,student_id,
+		// student_name,purpose } raises a request; issue { id } issues it (rejected if the student has an active TC;
+		// stamps a per-school serial); revoke { id } revokes an issued certificate.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				StudentName string `json:"student_name"`
+				Purpose     string `json:"purpose"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "issue":
+				out, err := s.p.IssueBonafide(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			case "revoke":
+				out, err := s.p.RevokeBonafide(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			default: // request
+				out, err := s.p.RequestBonafide(integration.BonafideCertificate{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID,
+					StudentName: req.StudentName, Purpose: req.Purpose,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.BonafideRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown bonafide certificate"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedBonafide(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.BonafideDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
 		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,
