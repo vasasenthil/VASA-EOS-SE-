@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import { DemoDataNote } from "@/components/demo-data-note"
+import { MESS_CHECKLIST } from "@/lib/hostel"
 import { getHostelDashboard, getHostels, backboneConnected } from "./actions"
 import { RegisterHostelForm, AllotBedForm, VacateBedForm, CloseHostelForm } from "./hostel-client"
 
@@ -133,6 +134,26 @@ export default async function HostelOccupancyPage() {
               </CardContent>
             </Card>
           </section>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Mess &amp; welfare oversight</CardTitle>
+              <CardDescription>
+                Standing checklist for residential welfare hostels (Adi Dravidar, BC/MBC, KGBV and tribal welfare) —
+                the recurring mess, hygiene and safeguarding duties wardens attest each cycle.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
+                {MESS_CHECKLIST.map((m) => (
+                  <li key={m} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/60" />
+                    <span>{m}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       )}
     </Shell>

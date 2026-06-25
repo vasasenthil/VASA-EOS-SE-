@@ -17,9 +17,9 @@ const nextConfig = {
   },
   // Consolidation (Task 3): the reference-UI routes below are thin duplicates of a durable, backbone-wired module
   // covering the same domain — make the durable route canonical. Only routes with NO unique feature are redirected;
-  // pages with unique widgets (/timetable substitution, /postings counselling, /hostel mess-checklist, /procurement
-  // inventory, /procurement-approvals sanction, /smc DAO, /grievance redressal) are intentionally NOT redirected to
-  // avoid losing features. The redirected page files are preserved in-repo (this is reversible routing only).
+  // pages with unique widgets (/procurement inventory, /procurement-approvals sanction, /smc DAO, /grievance
+  // redressal) are intentionally NOT redirected to avoid losing features. The redirected page files are preserved
+  // in-repo (this is reversible routing only).
   async redirects() {
     return [
       { source: "/fees", destination: "/fee-ledger", permanent: false },
@@ -30,6 +30,11 @@ const nextConfig = {
       { source: "/hostel-allocation", destination: "/hostel-occupancy", permanent: false },
       // substitution ported into the durable Class Timetable module (#11), so /timetable is now a true duplicate.
       { source: "/timetable", destination: "/class-timetable", permanent: false },
+      // /postings is a strict subset of the durable, vacancy-gated /teacher-transfer (same status machine, weaker;
+      // its only "counselling" affordance is a free-text reason the durable form already captures).
+      { source: "/postings", destination: "/teacher-transfer", permanent: false },
+      // /hostel's mess & welfare-oversight checklist was ported into /hostel-occupancy, so it is now a true duplicate.
+      { source: "/hostel", destination: "/hostel-occupancy", permanent: false },
     ]
   },
 }
