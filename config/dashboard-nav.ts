@@ -140,6 +140,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "Water Quality Testing", href: "/water-testing", icon: Droplets },
   { title: "Notice Board & Circulars", href: "/notice-board", icon: ScrollText },
   { title: "Diagnostic & Remedial (FLN)", href: "/remedial-batches", icon: Target },
+  { title: "Co-curricular Registration", href: "/event-registration", icon: Award },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

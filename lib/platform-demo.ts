@@ -73,6 +73,8 @@ import type {
   PlatformCircular,
   PlatformRemedialDashboard,
   PlatformRemedialBatch,
+  PlatformRegistrationDashboard,
+  PlatformActivityEvent,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -943,5 +945,36 @@ export const demoRemedialDashboard: PlatformRemedialDashboard = {
   graduated: 4,
   graduate_pct: 7.7,
   near_full: [demoRemedialBatches[0]],
+  synthetic: true,
+}
+
+// ── Co-curricular Registration ───────────────────────────────────────────────────────────────────────────
+export const demoActivityEvents: PlatformActivityEvent[] = [
+  { id: "EVT-CHN-TRIAL", org_unit: "33030004181", name: "District football trial", category: "sports", seat_cap: 4, event_date: "2026-07-15", next_seq: 7, status: "open", created_on: "2026-06-15", updated_at: "2026-06-25T00:00:00Z", registrations: [
+    { student_id: "SYN-S-CHN-T01", state: "confirmed", seq: 1, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-T02", state: "confirmed", seq: 2, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-T03", state: "confirmed", seq: 3, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-T04", state: "confirmed", seq: 4, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-T05", state: "waitlisted", seq: 5, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-T06", state: "waitlisted", seq: 6, registered_on: "2026-06-25" },
+  ] },
+  { id: "EVT-CHN-ARTS", org_unit: "33030004181", name: "Madhubani art workshop", category: "arts", seat_cap: 20, event_date: "2026-07-22", next_seq: 9, status: "open", created_on: "2026-06-18", updated_at: "2026-06-25T00:00:00Z", registrations: [
+    { student_id: "SYN-S-CHN-A01", state: "confirmed", seq: 1, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A02", state: "confirmed", seq: 2, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A03", state: "confirmed", seq: 3, registered_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-A04", state: "confirmed", seq: 4, registered_on: "2026-06-25" },
+  ] },
+]
+
+export const demoRegistrationDashboard: PlatformRegistrationDashboard = {
+  scope: SCOPE,
+  events: 8,
+  by_category: { sports: 4, arts: 4 },
+  by_status: { open: 8 },
+  confirmed: 48,
+  waitlisted: 8,
+  seats: 96,
+  fill_pct: 50,
+  waitlists: [demoActivityEvents[0]],
   synthetic: true,
 }

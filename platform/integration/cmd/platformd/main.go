@@ -1410,6 +1410,62 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.RemedialDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/registrations", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Co-curricular Registration (seat cap + FIFO waitlist). GET ?scope=<org> → scoped dashboard; ?list=1&
+		// status= → the scoped event list; ?id= → one event. POST { action, ... }: create { id,org_unit,name,
+		// category,seat_cap,event_date } opens an event; register { id,student_id } confirms or waitlists;
+		// withdraw { id,student_id } withdraws (auto-promoting the earliest waitlisted on a vacated seat); close
+		// { id } closes registration.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Name      string `json:"name"`
+				Category  string `json:"category"`
+				SeatCap   int    `json:"seat_cap"`
+				EventDate string `json:"event_date"`
+				StudentID string `json:"student_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "register":
+				out, err := s.p.RegisterStudent(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawStudent(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			case "close":
+				out, err := s.p.CloseActivityEvent(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			default: // create
+				out, err := s.p.CreateActivityEvent(integration.ActivityEvent{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					SeatCap: req.SeatCap, EventDate: req.EventDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			e, ok := s.p.ActivityEventRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown event"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, e, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedActivityEvents(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RegistrationDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

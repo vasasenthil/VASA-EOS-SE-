@@ -3128,3 +3128,81 @@ export async function platformGraduateRemedial(input: {
 export async function platformCloseRemedialBatch(id: string): Promise<{ ok: boolean; error: string; batch?: PlatformRemedialBatch }> {
   return postJSON("/remedial", { action: "close", id })
 }
+
+// ── Co-curricular Registration: window + unique + seat cap + FIFO waitlist auto-promotion ─────────────────
+// Schools open seat-capped events and register students fairly — confirming up to the cap, waitlisting the rest,
+// and auto-promoting the earliest waitlisted when a confirmed seat frees. No registration once closed; one active
+// registration per student. Embedded registrations. Scoped.
+
+export interface PlatformRegistration {
+  student_id: string
+  state: string // confirmed | waitlisted | withdrawn
+  seq: number
+  registered_on: string
+}
+
+export interface PlatformActivityEvent {
+  id: string
+  org_unit: string
+  name: string
+  category: string // sports | arts | club | excursion | workshop
+  seat_cap: number
+  event_date: string
+  registrations?: PlatformRegistration[]
+  next_seq: number
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformRegistrationDashboard {
+  scope: string
+  events: number
+  by_category: Record<string, number>
+  by_status: Record<string, number>
+  confirmed: number
+  waitlisted: number
+  seats: number
+  fill_pct: number
+  waitlists?: PlatformActivityEvent[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped registration dashboard from the backbone (null when not configured). */
+export async function platformRegistrationDashboard(scope = "TN"): Promise<PlatformRegistrationDashboard | null> {
+  if (!platformConfigured()) return demo.demoRegistrationDashboard
+  return getOrDemo(`/registrations?scope=${encodeURIComponent(scope)}`, demo.demoRegistrationDashboard)
+}
+
+/** The scoped event list (optionally filtered by status). */
+export async function platformScopedActivityEvents(scope = "TN", status = ""): Promise<PlatformActivityEvent[]> {
+  if (!platformConfigured()) return demo.demoActivityEvents
+  return getOrDemo(`/registrations?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoActivityEvents)
+}
+
+/** Open a seat-capped event. */
+export async function platformCreateActivityEvent(input: {
+  id: string
+  org_unit: string
+  name: string
+  category: string
+  seat_cap: number
+  event_date: string
+}): Promise<{ ok: boolean; error: string; event?: PlatformActivityEvent }> {
+  return postJSON("/registrations", { action: "create", ...input })
+}
+
+/** Register a student — confirmed up to the cap, else waitlisted. Rejected when closed or already registered. */
+export async function platformRegisterStudent(id: string, student_id: string): Promise<{ ok: boolean; error: string; event?: PlatformActivityEvent }> {
+  return postJSON("/registrations", { action: "register", id, student_id })
+}
+
+/** Withdraw a student — auto-promotes the earliest waitlisted on a vacated confirmed seat. */
+export async function platformWithdrawStudent(id: string, student_id: string): Promise<{ ok: boolean; error: string; event?: PlatformActivityEvent }> {
+  return postJSON("/registrations", { action: "withdraw", id, student_id })
+}
+
+/** Close registration for an event. */
+export async function platformCloseActivityEvent(id: string): Promise<{ ok: boolean; error: string; event?: PlatformActivityEvent }> {
+  return postJSON("/registrations", { action: "close", id })
+}
