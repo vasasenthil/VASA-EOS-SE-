@@ -13,6 +13,7 @@ import {
   type PlatformBonafide,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
@@ -72,6 +73,14 @@ export async function issueBonafideAction(_prev: ActionResult, fd: FormData): Pr
   if (!platformConfigured()) return { ok: false, message: "Backbone not connected." }
   const id = String(fd.get("id") ?? "").trim()
   if (!id) return { ok: false, message: "Certificate id is required." }
+  // Policy-as-Code gate (DPDP consent): deny-wins, audited — issuing a bonafide certificate shares a minor's
+  // personal record, which requires a lawful purpose with verifiable guardian consent.
+  const consent = String(fd.get("consent") ?? "on") !== "off"
+  const guardianConsent = String(fd.get("guardian_consent") ?? "on") !== "off"
+  const policy = await policyGate({ action: "pii.share", resource: { consent, age: 12, guardianConsent } }, "bonafide-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
   try {
     const r = await platformIssueBonafide(id)
     revalidatePath("/bonafide-register")

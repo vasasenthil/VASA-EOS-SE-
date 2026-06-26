@@ -72,6 +72,20 @@ export const POLICY_ENFORCED_ACTIONS: PolicyEnforcedAction[] = [
     statute: "RPwD Act 2016 §16/§31 — inclusive assessment",
     effect: "a CWSN candidate's result cannot be processed without reasonable accommodation",
   },
+  {
+    route: "bonafide-register",
+    file: "app/bonafide-register/actions.ts",
+    policyAction: "pii.share",
+    statute: "DPDP Act 2023 §6/§9 — consent (minor: guardian consent)",
+    effect: "issuing a bonafide certificate (sharing a minor's record) is denied without lawful consent",
+  },
+  {
+    route: "school-grants",
+    file: "app/school-grants/actions.ts",
+    policyAction: "fund.release",
+    statute: "GFR / PFMS fund-flow + financial delegation",
+    effect: "a grant allocation is denied if unsanctioned and routed to secretariat approval above the delegated threshold",
+  },
 ]
 
 /** Count of mutating server-action flows wired to the runtime policy gate. */

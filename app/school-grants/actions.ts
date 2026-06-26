@@ -11,6 +11,7 @@ import {
   type PlatformGrantDashboard,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
@@ -44,6 +45,16 @@ export async function allocateGrantAction(_prev: ActionResult, fd: FormData): Pr
   if (!org_unit) return { ok: false, message: "School (org unit) is required." }
   if (!HEADS.includes(head)) return { ok: false, message: "A valid grant head is required." }
   if (!Number.isFinite(rupees) || rupees <= 0) return { ok: false, message: "Allocation must be a positive amount." }
+  // Policy-as-Code gate (PFMS / GFR fund-flow): deny-wins, audited — a grant release needs a prior sanction, and
+  // a high-value release above the delegated threshold is routed to secretariat approval (HITL).
+  const sanctioned = String(fd.get("sanctioned") ?? "on") !== "off"
+  const policy = await policyGate({ action: "fund.release", resource: { amount: rupees, sanctioned } }, "grants-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
+  if (policy.decision === "require-approval") {
+    return { ok: false, message: `₹${rupees.toLocaleString("en-IN")} exceeds delegated financial powers — requires secretariat approval (${policy.governing.map((rl) => rl.citation).join("; ")}).` }
+  }
   const id = `GR-${org_unit}-${head}-${Date.now().toString(36).toUpperCase()}`
   try {
     const r = await platformAllocateGrant({ id, org_unit, head, allocated_paise: Math.round(rupees * 100), year: 2026 })
