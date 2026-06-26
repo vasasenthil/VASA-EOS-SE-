@@ -65,6 +65,8 @@ import type {
   PlatformCompetition,
   PlatformInventoryDashboard,
   PlatformStockItem,
+  PlatformVisitorDashboard,
+  PlatformVisitorPass,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -828,5 +830,22 @@ export const demoInventoryDashboard: PlatformInventoryDashboard = {
   received: 404,
   issued: 92,
   low_stock: [demoStockItems[1]],
+  synthetic: true,
+}
+
+// ── Visitor & Gate Management ────────────────────────────────────────────────────────────────────────────
+export const demoVisitorPasses: PlatformVisitorPass[] = [
+  { id: "VIS-CHN-01", org_unit: "33030004181", visitor_id: "SYN-V-CHN-01", name: "Visitor SYN-V-CHN-01", purpose: "parent_meeting", host: "SYN-T-CHN-07", check_in_at: "2026-06-25T09:10:00Z", status: "checked_in", created_on: "2026-06-25", updated_at: "2026-06-25T09:30:00Z" },
+  { id: "VIS-CHN-02", org_unit: "33030004181", visitor_id: "SYN-V-CHN-02", name: "Visitor SYN-V-CHN-02", purpose: "vendor", host: "SYN-HM-CHN", check_in_at: "2026-06-25T09:25:00Z", status: "checked_in", created_on: "2026-06-25", updated_at: "2026-06-25T09:30:00Z" },
+  { id: "VIS-CHN-03", org_unit: "33030004181", visitor_id: "SYN-V-CHN-03", name: "Visitor SYN-V-CHN-03", purpose: "inspection", host: "SYN-HM-CHN", check_in_at: "2026-06-25T08:40:00Z", check_out_at: "2026-06-25T09:15:00Z", status: "checked_out", created_on: "2026-06-25", updated_at: "2026-06-25T09:30:00Z" },
+]
+
+export const demoVisitorDashboard: PlatformVisitorDashboard = {
+  scope: SCOPE,
+  total: 12,
+  on_premises: 8,
+  checked_out: 4,
+  by_purpose: { parent_meeting: 4, vendor: 4, inspection: 4 },
+  present: [demoVisitorPasses[0], demoVisitorPasses[1]],
   synthetic: true,
 }

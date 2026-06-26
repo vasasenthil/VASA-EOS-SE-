@@ -1189,6 +1189,54 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.InventoryDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/gate", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Visitor & Gate Management. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped pass list;
+		// ?id= → one pass. POST { action, ... }: checkin { id,org_unit,visitor_id,name,purpose,host } registers a
+		// visitor (rejecting a second concurrent open pass for the same visitor); checkout { id } records the exit
+		// (rejecting a double check-out).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				VisitorID string `json:"visitor_id"`
+				Name      string `json:"name"`
+				Purpose   string `json:"purpose"`
+				Host      string `json:"host"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "checkout":
+				out, err := s.p.CheckOutVisitor(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "pass": out}, nil)
+			default: // checkin
+				out, err := s.p.CheckInVisitor(integration.VisitorPass{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), VisitorID: req.VisitorID, Name: req.Name,
+					Purpose: req.Purpose, Host: req.Host,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "pass": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.VisitorPassRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown visitor pass"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedVisitorPasses(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.VisitorDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

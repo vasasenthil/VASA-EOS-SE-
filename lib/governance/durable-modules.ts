@@ -57,6 +57,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "wash-register", label: "School Sanitation & WASH Register", service: "/wash", invariant: "no over-report (functional units ≤ sanctioned) + Swachh/ODF certification gate — cannot certify while any critical facility is not fully functional; critical regression auto-revokes" },
   { route: "sports-competitions", label: "Co-curricular & Sports Competitions", service: "/competitions", invariant: "unique entry per student + podium-position uniqueness (one gold/silver/bronze) + advancement gate (only podium finishers advance; national is terminal)" },
   { route: "stock-register", label: "School Stores & Inventory Register", service: "/inventory", invariant: "no negative stock — an issue can never exceed quantity on hand + no close with stock on hand; reorder-level low-stock worklist" },
+  { route: "visitor-gate", label: "Visitor & Gate Management", service: "/gate", invariant: "single open pass per visitor statewide (no phantom presence) + no double check-out (only a checked-in pass can be checked out)" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

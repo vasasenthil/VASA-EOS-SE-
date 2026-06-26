@@ -2832,3 +2832,61 @@ export async function platformIssueStock(id: string, qty: number): Promise<{ ok:
 export async function platformCloseStockItem(id: string): Promise<{ ok: boolean; error: string; item?: PlatformStockItem }> {
   return postJSON("/inventory", { action: "close", id })
 }
+
+// ── Visitor & Gate Management: single-open-pass-per-visitor + no-double-check-out ─────────────────────────
+// The gate registers visitors on entry and records their exit. A visitor can hold only one open pass at a time
+// (no phantom presence), and a checked-out pass cannot be checked out again. The on-premises list is the live
+// safety signal. Scoped.
+
+export interface PlatformVisitorPass {
+  id: string
+  org_unit: string
+  visitor_id: string
+  name: string
+  purpose: string // parent_meeting | official | vendor | maintenance | inspection | guest
+  host: string
+  check_in_at: string
+  check_out_at?: string
+  status: string // checked_in | checked_out
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformVisitorDashboard {
+  scope: string
+  total: number
+  on_premises: number
+  checked_out: number
+  by_purpose: Record<string, number>
+  present?: PlatformVisitorPass[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped visitor/gate dashboard from the backbone (null when not configured). */
+export async function platformVisitorDashboard(scope = "TN"): Promise<PlatformVisitorDashboard | null> {
+  if (!platformConfigured()) return demo.demoVisitorDashboard
+  return getOrDemo(`/gate?scope=${encodeURIComponent(scope)}`, demo.demoVisitorDashboard)
+}
+
+/** The scoped visitor-pass list (optionally filtered by status). */
+export async function platformScopedVisitorPasses(scope = "TN", status = ""): Promise<PlatformVisitorPass[]> {
+  if (!platformConfigured()) return demo.demoVisitorPasses
+  return getOrDemo(`/gate?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoVisitorPasses)
+}
+
+/** Register a visitor at the gate — rejected on a second concurrent open pass for the same visitor. */
+export async function platformCheckInVisitor(input: {
+  id: string
+  org_unit: string
+  visitor_id: string
+  name: string
+  purpose: string
+  host: string
+}): Promise<{ ok: boolean; error: string; pass?: PlatformVisitorPass }> {
+  return postJSON("/gate", { action: "checkin", ...input })
+}
+
+/** Record a visitor's exit — rejected on a double check-out. */
+export async function platformCheckOutVisitor(id: string): Promise<{ ok: boolean; error: string; pass?: PlatformVisitorPass }> {
+  return postJSON("/gate", { action: "checkout", id })
+}
