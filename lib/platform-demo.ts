@@ -83,6 +83,8 @@ import type {
   PlatformDisciplinaryCase,
   PlatformLibraryFineDashboard,
   PlatformMemberFines,
+  PlatformSavingsDashboard,
+  PlatformSavingsAccount,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1060,5 +1062,28 @@ export const demoLibraryFineDashboard: PlatformLibraryFineDashboard = {
   waived_paise: 40_00,
   blocked: 4,
   blocked_list: [demoFineLedgers[1]],
+  synthetic: true,
+}
+
+// ── School Bank / Student Savings (money in paise) ───────────────────────────────────────────────────────
+export const demoSavingsAccounts: PlatformSavingsAccount[] = [
+  { id: "SAV-CHN-01", org_unit: "33030004181", student_id: "SYN-S-CHN-S1", balance_paise: 350_00, frozen: false, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", transactions: [
+    { id: "T-CHN-1", kind: "deposit", amount_paise: 500_00, balance_after: 500_00, recorded_on: "2026-06-25" },
+    { id: "T-CHN-2", kind: "withdrawal", amount_paise: 150_00, balance_after: 350_00, recorded_on: "2026-06-25" },
+  ] },
+  { id: "SAV-CHN-02", org_unit: "33030004181", student_id: "SYN-S-CHN-S2", balance_paise: 200_00, frozen: true, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", transactions: [
+    { id: "T-CHN-3", kind: "deposit", amount_paise: 200_00, balance_after: 200_00, recorded_on: "2026-06-25" },
+  ] },
+]
+
+export const demoSavingsDashboard: PlatformSavingsDashboard = {
+  scope: SCOPE,
+  accounts: 8,
+  by_status: { active: 8 },
+  balance_paise: 2_200_00,
+  deposits_paise: 2_800_00,
+  withdrawn_paise: 600_00,
+  frozen: 4,
+  frozen_list: [demoSavingsAccounts[1]],
   synthetic: true,
 }

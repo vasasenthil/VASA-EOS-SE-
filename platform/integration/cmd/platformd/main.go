@@ -1692,6 +1692,62 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.LibraryFineDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/savings", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Bank / Student Savings (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= →
+		// the scoped account list; ?id= → one account. POST { action, ... }: open { id,org_unit,student_id } opens
+		// a passbook; deposit { id,txn_id,amount_paise } credits; withdraw { id,txn_id,amount_paise } debits
+		// (rejecting an overdraw); freeze { id,frozen } sets/lifts a hold; close { id } closes a zero-balance book.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				TxnID       string `json:"txn_id"`
+				AmountPaise int64  `json:"amount_paise"`
+				Frozen      bool   `json:"frozen"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "deposit":
+				out, err := s.p.Deposit(req.ID, req.TxnID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "withdraw":
+				out, err := s.p.Withdraw(req.ID, req.TxnID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "freeze":
+				out, err := s.p.SetFreeze(req.ID, req.Frozen)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "close":
+				out, err := s.p.CloseSavingsAccount(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			default: // open
+				out, err := s.p.OpenSavingsAccount(integration.SavingsAccount{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			a, ok := s.p.SavingsAccountRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown savings account"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, a, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedSavingsAccounts(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.SavingsDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

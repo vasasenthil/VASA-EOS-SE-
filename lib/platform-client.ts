@@ -3505,3 +3505,81 @@ export async function platformWaiveFine(id: string, fine_id: string): Promise<{ 
 export async function platformRequestBorrow(id: string, book: string): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
   return postJSON("/library-fines", { action: "borrow", id, book })
 }
+
+// ── School Bank / Student Savings: no-negative-balance + no-txn-when-frozen + no-close-with-balance ───────
+// Each student holds a savings passbook with a running balance and an embedded transaction ledger. A withdrawal
+// can never exceed the balance, no transaction is allowed on a frozen/closed account, and an account can only be
+// closed at a zero balance. Embedded transactions. Money in paise. Scoped.
+
+export interface PlatformTxn {
+  id: string
+  kind: string // deposit | withdrawal
+  amount_paise: number
+  balance_after: number
+  recorded_on: string
+}
+
+export interface PlatformSavingsAccount {
+  id: string
+  org_unit: string
+  student_id: string
+  balance_paise: number
+  frozen: boolean
+  transactions?: PlatformTxn[]
+  status: string // active | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformSavingsDashboard {
+  scope: string
+  accounts: number
+  by_status: Record<string, number>
+  balance_paise: number
+  deposits_paise: number
+  withdrawn_paise: number
+  frozen: number
+  frozen_list?: PlatformSavingsAccount[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped savings dashboard from the backbone (null when not configured). */
+export async function platformSavingsDashboard(scope = "TN"): Promise<PlatformSavingsDashboard | null> {
+  if (!platformConfigured()) return demo.demoSavingsDashboard
+  return getOrDemo(`/savings?scope=${encodeURIComponent(scope)}`, demo.demoSavingsDashboard)
+}
+
+/** The scoped savings-account list (optionally filtered by status). */
+export async function platformScopedSavingsAccounts(scope = "TN", status = ""): Promise<PlatformSavingsAccount[]> {
+  if (!platformConfigured()) return demo.demoSavingsAccounts
+  return getOrDemo(`/savings?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoSavingsAccounts)
+}
+
+/** Open a student savings passbook. */
+export async function platformOpenSavingsAccount(input: {
+  id: string
+  org_unit: string
+  student_id: string
+}): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
+  return postJSON("/savings", { action: "open", ...input })
+}
+
+/** Deposit to a passbook. */
+export async function platformDeposit(id: string, txn_id: string, amount_paise: number): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
+  return postJSON("/savings", { action: "deposit", id, txn_id, amount_paise })
+}
+
+/** Withdraw from a passbook — rejected on an overdraw or a frozen/closed account. */
+export async function platformWithdraw(id: string, txn_id: string, amount_paise: number): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
+  return postJSON("/savings", { action: "withdraw", id, txn_id, amount_paise })
+}
+
+/** Freeze or unfreeze a passbook (a guardian/admin hold). */
+export async function platformSetFreeze(id: string, frozen: boolean): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
+  return postJSON("/savings", { action: "freeze", id, frozen })
+}
+
+/** Close a zero-balance passbook. */
+export async function platformCloseSavingsAccount(id: string): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
+  return postJSON("/savings", { action: "close", id })
+}
