@@ -10,6 +10,7 @@ import {
   type PlatformAdmissionDashboard,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const TENANT = "TN" // dashboard tenant prefix; applies are placed under TN/Chennai
@@ -45,6 +46,14 @@ export async function applyAction(_prev: ActionResult, fd: FormData): Promise<Ac
   const quota_full = String(fd.get("quota_full") ?? "") === "on"
   if (!applicant_id || !applicant_name) return { ok: false, message: "Applicant id and name are required." }
   if (!Number.isFinite(age) || age <= 0) return { ok: false, message: "A valid age is required." }
+  const pwd = String(fd.get("pwd") ?? "") === "on"
+  const accommodation = String(fd.get("accommodation") ?? "on") !== "off"
+  // Policy-as-Code gate (RPwD inclusive education): deny-wins, audited — a CWSN applicant cannot be processed
+  // without reasonable accommodation.
+  const policy = await policyGate({ action: "admission.process", resource: { age, pwd, accommodation } }, "admissions-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
   try {
     const r = await platformApplyAdmission({ applicant_id, applicant_name, age, category, decision, quota_full })
     revalidatePath("/rte-admissions")

@@ -13,6 +13,7 @@ import {
   type PlatformAppointment,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 // The district this console operates over (the pilot's PILOT_DISTRICT / the backbone's default org).
@@ -76,6 +77,13 @@ export async function appointAction(_prev: ActionResult, fd: FormData): Promise<
   const name = String(fd.get("name") ?? "").trim()
   const appointed_on = String(fd.get("appointed_on") ?? "").trim() || "2026-06-22"
   if (!establishment_id || !employee_id) return { ok: false, message: "Select a cadre and enter an employee id." }
+  const backgroundVerified = String(fd.get("background_verified") ?? "on") !== "off"
+  // Policy-as-Code gate (POCSO due diligence): deny-wins, audited — personnel with access to children must clear
+  // background verification before appointment.
+  const policy = await policyGate({ action: "staff.appoint", resource: { backgroundVerified } }, "establishment-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
   const id = `${establishment_id}-APPT-${employee_id}`
   try {
     const r = await platformAppointStaff({ id, establishment_id, employee_id, name: name || employee_id, appointed_on, org_unit: SCOPE })

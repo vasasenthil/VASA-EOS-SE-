@@ -11,6 +11,7 @@ import {
   type PlatformTCDashboard,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
@@ -68,6 +69,14 @@ export async function advanceTCAction(_prev: ActionResult, fd: FormData): Promis
     let r
     if (action === "issue") {
       if (!serial) return { ok: false, message: "A serial number is required to issue." }
+      // Policy-as-Code gate (DPDP consent): deny-wins, audited — issuing a TC shares a minor's personal record,
+      // which requires a lawful purpose with verifiable guardian consent.
+      const consent = String(fd.get("consent") ?? "on") !== "off"
+      const guardianConsent = String(fd.get("guardian_consent") ?? "on") !== "off"
+      const policy = await policyGate({ action: "pii.share", resource: { consent, age: 12, guardianConsent } }, "tc-officer")
+      if (policy.decision === "deny") {
+        return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+      }
       r = await platformIssueTC(id, serial, "2026-06-22")
     } else if (action === "cancel") {
       r = await platformCancelTC(id, note || "cancelled")

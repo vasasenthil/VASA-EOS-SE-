@@ -37,6 +37,27 @@ export const POLICY_ENFORCED_ACTIONS: PolicyEnforcedAction[] = [
     statute: "PFMS sanction-first + financial delegation",
     effect: "scholarship disbursement is denied if unsanctioned and gated above the delegated threshold",
   },
+  {
+    route: "rte-admissions",
+    file: "app/rte-admissions/actions.ts",
+    policyAction: "admission.process",
+    statute: "RPwD Act 2016 §16/§31 — inclusive education",
+    effect: "a CWSN applicant cannot be processed without reasonable accommodation",
+  },
+  {
+    route: "establishment",
+    file: "app/establishment/actions.ts",
+    policyAction: "staff.appoint",
+    statute: "Child-safety / POCSO due diligence",
+    effect: "staff with access to children cannot be appointed without clearing background verification",
+  },
+  {
+    route: "transfer-certificate",
+    file: "app/transfer-certificate/actions.ts",
+    policyAction: "pii.share",
+    statute: "DPDP Act 2023 §6/§9 — consent (minor: guardian consent)",
+    effect: "issuing a TC (sharing a minor's record) is denied without lawful consent",
+  },
 ]
 
 /** Count of mutating server-action flows wired to the runtime policy gate. */
