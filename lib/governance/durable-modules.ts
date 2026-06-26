@@ -59,6 +59,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "stock-register", label: "School Stores & Inventory Register", service: "/inventory", invariant: "no negative stock — an issue can never exceed quantity on hand + no close with stock on hand; reorder-level low-stock worklist" },
   { route: "visitor-gate", label: "Visitor & Gate Management", service: "/gate", invariant: "single open pass per visitor statewide (no phantom presence) + no double check-out (only a checked-in pass can be checked out)" },
   { route: "water-testing", label: "Water Quality Testing", service: "/water", invariant: "potability approval gate — cannot approve potable while any critical parameter (E.coli/turbidity/pH) is out of range + evidence-backed fail gate (cannot mark unsafe without a failing critical parameter)" },
+  { route: "notice-board", label: "Notice Board & Circulars", service: "/circulars", invariant: "no ack before publish + unique read-receipt per recipient + archive compliance gate (cannot archive until every targeted recipient has acknowledged)" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

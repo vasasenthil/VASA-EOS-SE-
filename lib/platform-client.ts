@@ -2971,3 +2971,77 @@ export async function platformApproveWater(id: string): Promise<{ ok: boolean; e
 export async function platformFailWater(id: string, remarks: string): Promise<{ ok: boolean; error: string; sample?: PlatformWaterTest }> {
   return postJSON("/water", { action: "fail", id, remarks })
 }
+
+// ── Notice Board & Circulars: no-ack-before-publish + unique ack + archive compliance gate ────────────────
+// An office drafts a circular to a target audience, publishes it, and tracks read-receipts until everyone has
+// acknowledged. A recipient cannot ack an unpublished circular, cannot ack twice, and a circular cannot be
+// archived until every target has acknowledged. Embedded acks. Scoped.
+
+export interface PlatformCircularAck {
+  recipient_id: string
+  acked_on: string
+}
+
+export interface PlatformCircular {
+  id: string
+  org_unit: string
+  title: string
+  category: string // academic | administrative | safety | examination | finance
+  summary?: string
+  target_count: number
+  acks?: PlatformCircularAck[]
+  status: string // draft | published | archived
+  published_on?: string
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformCircularDashboard {
+  scope: string
+  circulars: number
+  by_status: Record<string, number>
+  targets: number
+  acks: number
+  ack_pct: number
+  pending?: PlatformCircular[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped circulars dashboard from the backbone (null when not configured). */
+export async function platformCircularDashboard(scope = "TN"): Promise<PlatformCircularDashboard | null> {
+  if (!platformConfigured()) return demo.demoCircularDashboard
+  return getOrDemo(`/circulars?scope=${encodeURIComponent(scope)}`, demo.demoCircularDashboard)
+}
+
+/** The scoped circular list (optionally filtered by status). */
+export async function platformScopedCirculars(scope = "TN", status = ""): Promise<PlatformCircular[]> {
+  if (!platformConfigured()) return demo.demoCirculars
+  return getOrDemo(`/circulars?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoCirculars)
+}
+
+/** Draft a circular (status draft). */
+export async function platformCreateCircular(input: {
+  id: string
+  org_unit: string
+  title: string
+  category: string
+  summary?: string
+  target_count: number
+}): Promise<{ ok: boolean; error: string; circular?: PlatformCircular }> {
+  return postJSON("/circulars", { action: "create", ...input })
+}
+
+/** Publish a draft circular. */
+export async function platformPublishCircular(id: string): Promise<{ ok: boolean; error: string; circular?: PlatformCircular }> {
+  return postJSON("/circulars", { action: "publish", id })
+}
+
+/** Record a read-receipt — rejected on an unpublished or duplicate acknowledgement. */
+export async function platformAcknowledgeCircular(id: string, recipient_id: string): Promise<{ ok: boolean; error: string; circular?: PlatformCircular }> {
+  return postJSON("/circulars", { action: "ack", id, recipient_id })
+}
+
+/** Archive a fully-acknowledged circular — rejected while any target is outstanding. */
+export async function platformArchiveCircular(id: string): Promise<{ ok: boolean; error: string; circular?: PlatformCircular }> {
+  return postJSON("/circulars", { action: "archive", id })
+}

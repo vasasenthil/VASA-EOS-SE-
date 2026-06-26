@@ -1297,6 +1297,62 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.WaterDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/circulars", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Notice Board & Circulars. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped circular
+		// list; ?id= → one circular. POST { action, ... }: create { id,org_unit,title,category,summary,
+		// target_count } drafts a circular; publish { id } publishes it; ack { id,recipient_id } records a
+		// read-receipt (rejecting an unpublished or duplicate ack); archive { id } archives a fully-acknowledged
+		// circular (gated — every targeted recipient must have acknowledged).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Title       string `json:"title"`
+				Category    string `json:"category"`
+				Summary     string `json:"summary"`
+				TargetCount int    `json:"target_count"`
+				RecipientID string `json:"recipient_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "publish":
+				out, err := s.p.PublishCircular(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			case "ack":
+				out, err := s.p.AcknowledgeCircular(req.ID, req.RecipientID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			case "archive":
+				out, err := s.p.ArchiveCircular(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			default: // create
+				out, err := s.p.CreateCircular(integration.Circular{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Category: req.Category,
+					Summary: req.Summary, TargetCount: req.TargetCount,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.CircularRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown circular"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedCirculars(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CircularDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

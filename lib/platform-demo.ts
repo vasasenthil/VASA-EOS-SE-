@@ -69,6 +69,8 @@ import type {
   PlatformVisitorPass,
   PlatformWaterDashboard,
   PlatformWaterTest,
+  PlatformCircularDashboard,
+  PlatformCircular,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -880,5 +882,31 @@ export const demoWaterDashboard: PlatformWaterDashboard = {
   potable: 1,
   unsafe: 1,
   unsafe_list: [demoWaterTests[1]],
+  synthetic: true,
+}
+
+// ── Notice Board & Circulars ─────────────────────────────────────────────────────────────────────────────
+export const demoCirculars: PlatformCircular[] = [
+  { id: "CIR-CHN-EXAM", org_unit: "33030004181", title: "Half-yearly exam schedule", category: "examination", summary: "Datesheet and seating plan", target_count: 5, status: "published", published_on: "2026-06-25", created_on: "2026-06-15", updated_at: "2026-06-25T00:00:00Z", acks: [
+    { recipient_id: "SYN-T-CHN-01", acked_on: "2026-06-25" },
+    { recipient_id: "SYN-T-CHN-02", acked_on: "2026-06-25" },
+    { recipient_id: "SYN-T-CHN-03", acked_on: "2026-06-25" },
+  ] },
+  { id: "CIR-CHN-SAFE", org_unit: "33030004181", title: "Fire-drill protocol", category: "safety", summary: "Quarterly evacuation drill", target_count: 3, status: "published", published_on: "2026-06-25", created_on: "2026-06-10", updated_at: "2026-06-25T00:00:00Z", acks: [
+    { recipient_id: "SYN-T-CHN-01", acked_on: "2026-06-25" },
+    { recipient_id: "SYN-T-CHN-02", acked_on: "2026-06-25" },
+    { recipient_id: "SYN-T-CHN-03", acked_on: "2026-06-25" },
+  ] },
+  { id: "CIR-CHN-ADMIN", org_unit: "33030004181", title: "Staff meeting agenda", category: "administrative", summary: "Monthly review", target_count: 6, status: "draft", created_on: "2026-06-22", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoCircularDashboard: PlatformCircularDashboard = {
+  scope: SCOPE,
+  circulars: 12,
+  by_status: { published: 8, draft: 4 },
+  targets: 56,
+  acks: 41,
+  ack_pct: 73.2,
+  pending: [demoCirculars[0]],
   synthetic: true,
 }
