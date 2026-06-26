@@ -1237,6 +1237,66 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.VisitorDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/water", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Water Quality Testing. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped sample list;
+		// ?id= → one sample. POST { action, ... }: register { id,org_unit,source,sample_date } records a sample;
+		// record { id,name,value,safe_min,safe_max,critical } upserts a parameter reading; approve { id } approves
+		// potable (gated — every critical parameter must be in range); fail { id,remarks } marks unsafe (gated —
+		// requires a critical parameter out of range).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string  `json:"action"`
+				ID         string  `json:"id"`
+				OrgUnit    string  `json:"org_unit"`
+				Source     string  `json:"source"`
+				SampleDate string  `json:"sample_date"`
+				Name       string  `json:"name"`
+				Value      float64 `json:"value"`
+				SafeMin    float64 `json:"safe_min"`
+				SafeMax    float64 `json:"safe_max"`
+				Critical   bool    `json:"critical"`
+				Remarks    string  `json:"remarks"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordWaterParam(req.ID, integration.WaterParam{
+					Name: req.Name, Value: req.Value, SafeMin: req.SafeMin, SafeMax: req.SafeMax, Critical: req.Critical,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			case "approve":
+				out, err := s.p.ApproveWater(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			case "fail":
+				out, err := s.p.FailWater(req.ID, req.Remarks)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			default: // register
+				out, err := s.p.RegisterWaterSample(integration.WaterTest{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Source: req.Source, SampleDate: req.SampleDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.WaterTestRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown water sample"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedWaterTests(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.WaterDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

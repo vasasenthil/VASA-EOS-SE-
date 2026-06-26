@@ -2890,3 +2890,84 @@ export async function platformCheckInVisitor(input: {
 export async function platformCheckOutVisitor(id: string): Promise<{ ok: boolean; error: string; pass?: PlatformVisitorPass }> {
   return postJSON("/gate", { action: "checkout", id })
 }
+
+// ── Water Quality Testing: potability approval gate + evidence-backed fail gate ───────────────────────────
+// Schools sample drinking water; a lab records parameter readings (pH, turbidity, E.coli, TDS, chlorine). A
+// sample is approved potable only when every critical parameter is in range, and can be marked failed only when
+// a critical parameter is actually out of range. Embedded parameter lines. Scoped.
+
+export interface PlatformWaterParam {
+  name: string
+  value: number
+  safe_min: number
+  safe_max: number
+  critical: boolean
+}
+
+export interface PlatformWaterTest {
+  id: string
+  org_unit: string
+  source: string // borewell | tap | ro | tanker | open_well
+  sample_date: string
+  parameters?: PlatformWaterParam[]
+  status: string // sampled | tested | approved | failed
+  tested_on?: string
+  remarks?: string
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformWaterDashboard {
+  scope: string
+  samples: number
+  by_status: Record<string, number>
+  by_source: Record<string, number>
+  potable: number
+  unsafe: number
+  unsafe_list?: PlatformWaterTest[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped water-quality dashboard from the backbone (null when not configured). */
+export async function platformWaterDashboard(scope = "TN"): Promise<PlatformWaterDashboard | null> {
+  if (!platformConfigured()) return demo.demoWaterDashboard
+  return getOrDemo(`/water?scope=${encodeURIComponent(scope)}`, demo.demoWaterDashboard)
+}
+
+/** The scoped water-sample list (optionally filtered by status). */
+export async function platformScopedWaterTests(scope = "TN", status = ""): Promise<PlatformWaterTest[]> {
+  if (!platformConfigured()) return demo.demoWaterTests
+  return getOrDemo(`/water?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoWaterTests)
+}
+
+/** Register a drinking-water sample. */
+export async function platformRegisterWaterSample(input: {
+  id: string
+  org_unit: string
+  source: string
+  sample_date?: string
+}): Promise<{ ok: boolean; error: string; sample?: PlatformWaterTest }> {
+  return postJSON("/water", { action: "register", ...input })
+}
+
+/** Record a parameter reading. */
+export async function platformRecordWaterParam(input: {
+  id: string
+  name: string
+  value: number
+  safe_min: number
+  safe_max: number
+  critical: boolean
+}): Promise<{ ok: boolean; error: string; sample?: PlatformWaterTest }> {
+  return postJSON("/water", { action: "record", ...input })
+}
+
+/** Approve a sample potable — rejected while any critical parameter is out of range. */
+export async function platformApproveWater(id: string): Promise<{ ok: boolean; error: string; sample?: PlatformWaterTest }> {
+  return postJSON("/water", { action: "approve", id })
+}
+
+/** Mark a sample failed — rejected unless a critical parameter is out of range. */
+export async function platformFailWater(id: string, remarks: string): Promise<{ ok: boolean; error: string; sample?: PlatformWaterTest }> {
+  return postJSON("/water", { action: "fail", id, remarks })
+}

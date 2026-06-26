@@ -67,6 +67,8 @@ import type {
   PlatformStockItem,
   PlatformVisitorDashboard,
   PlatformVisitorPass,
+  PlatformWaterDashboard,
+  PlatformWaterTest,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -847,5 +849,36 @@ export const demoVisitorDashboard: PlatformVisitorDashboard = {
   checked_out: 4,
   by_purpose: { parent_meeting: 4, vendor: 4, inspection: 4 },
   present: [demoVisitorPasses[0], demoVisitorPasses[1]],
+  synthetic: true,
+}
+
+// ── Water Quality Testing ────────────────────────────────────────────────────────────────────────────────
+const STD_WATER_PARAMS: PlatformWaterTest["parameters"] = [
+  { name: "ph", value: 7.2, safe_min: 6.5, safe_max: 8.5, critical: true },
+  { name: "turbidity_ntu", value: 1.0, safe_min: 0, safe_max: 5, critical: true },
+  { name: "ecoli_cfu", value: 0, safe_min: 0, safe_max: 0, critical: true },
+  { name: "tds_mgl", value: 320, safe_min: 0, safe_max: 500, critical: false },
+  { name: "residual_chlorine", value: 0.4, safe_min: 0.2, safe_max: 1.0, critical: false },
+]
+
+export const demoWaterTests: PlatformWaterTest[] = [
+  { id: "WTR-CHN", org_unit: "33030004181", source: "borewell", sample_date: "2026-06-20", status: "approved", tested_on: "2026-06-25", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z", parameters: STD_WATER_PARAMS },
+  { id: "WTR-CBE", org_unit: "33030004182", source: "borewell", sample_date: "2026-06-20", status: "failed", tested_on: "2026-06-25", remarks: "E.coli detected — source chlorinated and resampled", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z", parameters: [
+    { name: "ph", value: 7.2, safe_min: 6.5, safe_max: 8.5, critical: true },
+    { name: "turbidity_ntu", value: 1.0, safe_min: 0, safe_max: 5, critical: true },
+    { name: "ecoli_cfu", value: 12, safe_min: 0, safe_max: 0, critical: true },
+    { name: "tds_mgl", value: 320, safe_min: 0, safe_max: 500, critical: false },
+    { name: "residual_chlorine", value: 0.4, safe_min: 0.2, safe_max: 1.0, critical: false },
+  ] },
+]
+
+export const demoWaterDashboard: PlatformWaterDashboard = {
+  scope: SCOPE,
+  samples: 4,
+  by_status: { approved: 1, failed: 1, tested: 2 },
+  by_source: { borewell: 4 },
+  potable: 1,
+  unsafe: 1,
+  unsafe_list: [demoWaterTests[1]],
   synthetic: true,
 }
