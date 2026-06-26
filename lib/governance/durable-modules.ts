@@ -69,6 +69,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "student-savings", label: "School Bank / Student Savings", service: "/savings", invariant: "money in paise — no negative balance (withdrawal ≤ balance) + no transaction on a frozen/closed passbook + no close with a balance (settle to zero first)" },
   { route: "vehicle-fitness", label: "Vehicle Fitness / Transport Safety", service: "/vehicle-fitness", invariant: "roadworthiness clearance gate — cannot clear a vehicle for service while any required document (fitness/insurance/permit/PUC/driver licence) is invalid + auto-ground on a required-document lapse" },
   { route: "textbook-indent", label: "Textbook / Uniform Indent", service: "/indent", invariant: "no over-indent (indented ≤ sanctioned entitlement) + approval cap (approved ≤ indented) + no over-supply (cumulative supplied ≤ approved); staged raise→approved→supplied" },
+  { route: "invigilation-roster", label: "Exam Invigilation Duty Roster", service: "/invigilation", invariant: "no clash — an invigilator cannot be on two sessions in the same date+slot + capacity/uniqueness per session + no close while understaffed" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

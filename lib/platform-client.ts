@@ -3718,3 +3718,72 @@ export async function platformSupplyIndent(id: string, qty: number): Promise<{ o
 export async function platformRejectIndent(id: string): Promise<{ ok: boolean; error: string; indent?: PlatformTextbookIndent }> {
   return postJSON("/indent", { action: "reject", id })
 }
+
+// ── Exam Invigilation Duty Roster: no-clash + capacity/uniqueness + no-close-understaffed ─────────────────
+// The exam cell rosters invigilators onto sessions (hall · date · slot). An invigilator cannot be on two
+// sessions in the same date+slot, a session takes at most its required count (each person once), and a session
+// can only be finalised when fully staffed. Embedded invigilators. Scoped.
+
+export interface PlatformDutySession {
+  id: string
+  org_unit: string
+  exam: string
+  date: string
+  slot: string // FN | AN
+  hall: string
+  required_invigilators: number
+  invigilators?: string[]
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformInvigilationDashboard {
+  scope: string
+  sessions: number
+  by_status: Record<string, number>
+  required_seats: number
+  assigned_seats: number
+  understaffed?: PlatformDutySession[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped invigilation dashboard from the backbone (null when not configured). */
+export async function platformInvigilationDashboard(scope = "TN"): Promise<PlatformInvigilationDashboard | null> {
+  if (!platformConfigured()) return demo.demoInvigilationDashboard
+  return getOrDemo(`/invigilation?scope=${encodeURIComponent(scope)}`, demo.demoInvigilationDashboard)
+}
+
+/** The scoped duty-session list (optionally filtered by status). */
+export async function platformScopedDutySessions(scope = "TN", status = ""): Promise<PlatformDutySession[]> {
+  if (!platformConfigured()) return demo.demoDutySessions
+  return getOrDemo(`/invigilation?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoDutySessions)
+}
+
+/** Open an exam session. */
+export async function platformCreateDutySession(input: {
+  id: string
+  org_unit: string
+  exam: string
+  date: string
+  slot: string
+  hall: string
+  required_invigilators: number
+}): Promise<{ ok: boolean; error: string; session?: PlatformDutySession }> {
+  return postJSON("/invigilation", { action: "create", ...input })
+}
+
+/** Roster an invigilator — rejected on a same-slot clash, over-capacity, or a duplicate. */
+export async function platformAssignInvigilator(id: string, teacher: string): Promise<{ ok: boolean; error: string; session?: PlatformDutySession }> {
+  return postJSON("/invigilation", { action: "assign", id, teacher })
+}
+
+/** Remove an invigilator from a session. */
+export async function platformUnassignInvigilator(id: string, teacher: string): Promise<{ ok: boolean; error: string; session?: PlatformDutySession }> {
+  return postJSON("/invigilation", { action: "unassign", id, teacher })
+}
+
+/** Finalise a fully-staffed session. */
+export async function platformCloseDutySession(id: string): Promise<{ ok: boolean; error: string; session?: PlatformDutySession }> {
+  return postJSON("/invigilation", { action: "close", id })
+}

@@ -1852,6 +1852,63 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.IndentDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/invigilation", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Exam Invigilation Duty Roster. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped session
+		// list; ?id= → one session. POST { action, ... }: create { id,org_unit,exam,date,slot,hall,
+		// required_invigilators } opens a session; assign { id,teacher } rosters an invigilator (rejecting a
+		// same-slot clash / over-capacity / duplicate); unassign { id,teacher } removes one; close { id }
+		// finalises a fully-staffed session.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action               string `json:"action"`
+				ID                   string `json:"id"`
+				OrgUnit              string `json:"org_unit"`
+				Exam                 string `json:"exam"`
+				Date                 string `json:"date"`
+				Slot                 string `json:"slot"`
+				Hall                 string `json:"hall"`
+				RequiredInvigilators int    `json:"required_invigilators"`
+				Teacher              string `json:"teacher"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "assign":
+				out, err := s.p.AssignInvigilator(req.ID, req.Teacher)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			case "unassign":
+				out, err := s.p.UnassignInvigilator(req.ID, req.Teacher)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			case "close":
+				out, err := s.p.CloseDutySession(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			default: // create
+				out, err := s.p.CreateDutySession(integration.DutySession{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Exam: req.Exam, Date: req.Date, Slot: req.Slot,
+					Hall: req.Hall, RequiredInvigilators: req.RequiredInvigilators,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			d, ok := s.p.DutySessionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown duty session"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, d, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedDutySessions(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InvigilationDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

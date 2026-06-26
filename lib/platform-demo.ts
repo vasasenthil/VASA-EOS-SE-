@@ -89,6 +89,8 @@ import type {
   PlatformFitnessVehicle,
   PlatformIndentDashboard,
   PlatformTextbookIndent,
+  PlatformInvigilationDashboard,
+  PlatformDutySession,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1128,5 +1130,21 @@ export const demoIndentDashboard: PlatformIndentDashboard = {
   approved_qty: 2400,
   supplied_qty: 2080,
   pending_approve: [demoIndents[0]],
+  synthetic: true,
+}
+
+// ── Exam Invigilation Duty Roster ────────────────────────────────────────────────────────────────────────
+export const demoDutySessions: PlatformDutySession[] = [
+  { id: "INV-CHN-FN", org_unit: "33030004181", exam: "Half-yearly", date: "2026-09-10", slot: "FN", hall: "Hall-A", required_invigilators: 2, invigilators: ["SYN-T-CHN-01", "SYN-T-CHN-02"], status: "open", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "INV-CHN-AN", org_unit: "33030004181", exam: "Half-yearly", date: "2026-09-10", slot: "AN", hall: "Hall-A", required_invigilators: 2, invigilators: ["SYN-T-CHN-03"], status: "open", created_on: "2026-06-20", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoInvigilationDashboard: PlatformInvigilationDashboard = {
+  scope: SCOPE,
+  sessions: 8,
+  by_status: { open: 8 },
+  required_seats: 16,
+  assigned_seats: 12,
+  understaffed: [demoDutySessions[1]],
   synthetic: true,
 }
