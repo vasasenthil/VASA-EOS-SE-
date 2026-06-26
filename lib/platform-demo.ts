@@ -75,6 +75,8 @@ import type {
   PlatformRemedialBatch,
   PlatformRegistrationDashboard,
   PlatformActivityEvent,
+  PlatformClinicDashboard,
+  PlatformClinicVisit,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -976,5 +978,22 @@ export const demoRegistrationDashboard: PlatformRegistrationDashboard = {
   seats: 96,
   fill_pct: 50,
   waitlists: [demoActivityEvents[0]],
+  synthetic: true,
+}
+
+// ── School Health Clinic / Sick-Room ─────────────────────────────────────────────────────────────────────
+export const demoClinicVisits: PlatformClinicVisit[] = [
+  { id: "CLN-CHN-01", org_unit: "33030004181", student_id: "SYN-S-CHN-C01", complaint: "Headache", status: "open", reported_at: "2026-06-25T10:00:00Z", created_on: "2026-06-25", updated_at: "2026-06-25T10:00:00Z", treatments: [{ note: "Rest + ORS", given_on: "2026-06-25" }] },
+  { id: "CLN-CHN-02", org_unit: "33030004181", student_id: "SYN-S-CHN-C02", complaint: "Minor cut", status: "closed", outcome: "recovered", reported_at: "2026-06-25T09:10:00Z", closed_at: "2026-06-25T10:00:00Z", created_on: "2026-06-25", updated_at: "2026-06-25T10:00:00Z", treatments: [{ note: "Antiseptic + dressing", given_on: "2026-06-25" }] },
+  { id: "CLN-CHN-03", org_unit: "33030004181", student_id: "SYN-S-CHN-C03", complaint: "High fever", status: "closed", outcome: "referred", destination: "PHC-CHN", reported_at: "2026-06-25T08:40:00Z", closed_at: "2026-06-25T10:00:00Z", created_on: "2026-06-25", updated_at: "2026-06-25T10:00:00Z" },
+]
+
+export const demoClinicDashboard: PlatformClinicDashboard = {
+  scope: SCOPE,
+  visits: 12,
+  open_now: 4,
+  by_outcome: { recovered: 5, referred: 2, sent_home: 1 },
+  referrals: 2,
+  open_list: [demoClinicVisits[0]],
   synthetic: true,
 }

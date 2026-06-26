@@ -1466,6 +1466,58 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.RegistrationDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/clinic", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Health Clinic / sick-room register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped visit list; ?id= → one visit. POST { action, ... }: open { id,org_unit,student_id,complaint }
+		// records a visit (rejecting a second concurrent open visit); treat { id,note } records first-aid; close
+		// { id,outcome,destination } closes with an outcome (gated — outcome required; a referral needs a
+		// destination).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Complaint   string `json:"complaint"`
+				Note        string `json:"note"`
+				Outcome     string `json:"outcome"`
+				Destination string `json:"destination"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "treat":
+				out, err := s.p.TreatClinicVisit(req.ID, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			case "close":
+				out, err := s.p.CloseClinicVisit(req.ID, req.Outcome, req.Destination)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			default: // open
+				out, err := s.p.OpenClinicVisit(integration.ClinicVisit{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Complaint: req.Complaint,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.ClinicVisitRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown clinic visit"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedClinicVisits(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ClinicDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

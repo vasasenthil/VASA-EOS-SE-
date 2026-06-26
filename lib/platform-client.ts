@@ -3206,3 +3206,70 @@ export async function platformWithdrawStudent(id: string, student_id: string): P
 export async function platformCloseActivityEvent(id: string): Promise<{ ok: boolean; error: string; event?: PlatformActivityEvent }> {
   return postJSON("/registrations", { action: "close", id })
 }
+
+// ── School Health Clinic / Sick-Room: single-open-visit + outcome gate + referral destination ────────────
+// Day-to-day sick-room visits: a student reports, the nurse records first-aid, and the visit is closed with an
+// outcome. A student can have only one open visit at a time; a visit cannot be closed without an outcome; a
+// referral requires a destination. Embedded treatments. Scoped.
+
+export interface PlatformTreatment {
+  note: string
+  given_on: string
+}
+
+export interface PlatformClinicVisit {
+  id: string
+  org_unit: string
+  student_id: string
+  complaint: string
+  treatments?: PlatformTreatment[]
+  outcome?: string // recovered | referred | sent_home
+  destination?: string
+  reported_at: string
+  closed_at?: string
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformClinicDashboard {
+  scope: string
+  visits: number
+  open_now: number
+  by_outcome: Record<string, number>
+  referrals: number
+  open_list?: PlatformClinicVisit[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped clinic dashboard from the backbone (null when not configured). */
+export async function platformClinicDashboard(scope = "TN"): Promise<PlatformClinicDashboard | null> {
+  if (!platformConfigured()) return demo.demoClinicDashboard
+  return getOrDemo(`/clinic?scope=${encodeURIComponent(scope)}`, demo.demoClinicDashboard)
+}
+
+/** The scoped clinic-visit list (optionally filtered by status). */
+export async function platformScopedClinicVisits(scope = "TN", status = ""): Promise<PlatformClinicVisit[]> {
+  if (!platformConfigured()) return demo.demoClinicVisits
+  return getOrDemo(`/clinic?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoClinicVisits)
+}
+
+/** Open a sick-room visit — rejected on a second concurrent open visit for the student. */
+export async function platformOpenClinicVisit(input: {
+  id: string
+  org_unit: string
+  student_id: string
+  complaint: string
+}): Promise<{ ok: boolean; error: string; visit?: PlatformClinicVisit }> {
+  return postJSON("/clinic", { action: "open", ...input })
+}
+
+/** Record a treatment on an open visit. */
+export async function platformTreatClinicVisit(id: string, note: string): Promise<{ ok: boolean; error: string; visit?: PlatformClinicVisit }> {
+  return postJSON("/clinic", { action: "treat", id, note })
+}
+
+/** Close a visit with an outcome — rejected without an outcome, or a referral without a destination. */
+export async function platformCloseClinicVisit(id: string, outcome: string, destination: string): Promise<{ ok: boolean; error: string; visit?: PlatformClinicVisit }> {
+  return postJSON("/clinic", { action: "close", id, outcome, destination })
+}
