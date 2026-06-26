@@ -71,6 +71,8 @@ import type {
   PlatformWaterTest,
   PlatformCircularDashboard,
   PlatformCircular,
+  PlatformRemedialDashboard,
+  PlatformRemedialBatch,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -908,5 +910,38 @@ export const demoCircularDashboard: PlatformCircularDashboard = {
   acks: 41,
   ack_pct: 73.2,
   pending: [demoCirculars[0]],
+  synthetic: true,
+}
+
+// ── Diagnostic & Remedial Learning (NIPUN FLN) ───────────────────────────────────────────────────────────
+export const demoRemedialBatches: PlatformRemedialBatch[] = [
+  { id: "REM-CHN-LIT", org_unit: "33030004181", subject: "literacy", target_level: 4, capacity: 10, status: "open", created_on: "2026-06-10", updated_at: "2026-06-25T00:00:00Z", enrollments: [
+    { student_id: "SYN-S-CHN-L01", level: 1, exited: true, exit_level: 4, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L02", level: 2, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L03", level: 3, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L04", level: 1, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L05", level: 2, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L06", level: 3, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L07", level: 1, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L08", level: 2, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-L09", level: 3, exited: false, enrolled_on: "2026-06-25" },
+  ] },
+  { id: "REM-CHN-NUM", org_unit: "33030004181", subject: "numeracy", target_level: 3, capacity: 12, status: "open", created_on: "2026-06-12", updated_at: "2026-06-25T00:00:00Z", enrollments: [
+    { student_id: "SYN-S-CHN-N01", level: 1, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-N02", level: 2, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-N03", level: 1, exited: false, enrolled_on: "2026-06-25" },
+    { student_id: "SYN-S-CHN-N04", level: 2, exited: false, enrolled_on: "2026-06-25" },
+  ] },
+]
+
+export const demoRemedialDashboard: PlatformRemedialDashboard = {
+  scope: SCOPE,
+  batches: 8,
+  by_subject: { literacy: 4, numeracy: 4 },
+  by_status: { open: 8 },
+  active: 48,
+  graduated: 4,
+  graduate_pct: 7.7,
+  near_full: [demoRemedialBatches[0]],
   synthetic: true,
 }

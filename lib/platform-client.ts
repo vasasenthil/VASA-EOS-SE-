@@ -3045,3 +3045,86 @@ export async function platformAcknowledgeCircular(id: string, recipient_id: stri
 export async function platformArchiveCircular(id: string): Promise<{ ok: boolean; error: string; circular?: PlatformCircular }> {
   return postJSON("/circulars", { action: "archive", id })
 }
+
+// ── Diagnostic & Remedial Learning (NIPUN FLN): capacity + eligibility + unique + proficiency gates ───────
+// Students diagnosed below the proficiency target are grouped into capped remedial batches. Enrolment is gated
+// by capacity, eligibility (must be below target) and uniqueness; graduation is gated by proficiency (must reach
+// the target). Embedded enrolments. Scoped.
+
+export interface PlatformRemedialEnrollment {
+  student_id: string
+  level: number
+  exited: boolean
+  exit_level?: number
+  enrolled_on: string
+}
+
+export interface PlatformRemedialBatch {
+  id: string
+  org_unit: string
+  subject: string // literacy | numeracy
+  target_level: number
+  capacity: number
+  enrollments?: PlatformRemedialEnrollment[]
+  status: string // open | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformRemedialDashboard {
+  scope: string
+  batches: number
+  by_subject: Record<string, number>
+  by_status: Record<string, number>
+  active: number
+  graduated: number
+  graduate_pct: number
+  near_full?: PlatformRemedialBatch[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped remedial (FLN) dashboard from the backbone (null when not configured). */
+export async function platformRemedialDashboard(scope = "TN"): Promise<PlatformRemedialDashboard | null> {
+  if (!platformConfigured()) return demo.demoRemedialDashboard
+  return getOrDemo(`/remedial?scope=${encodeURIComponent(scope)}`, demo.demoRemedialDashboard)
+}
+
+/** The scoped remedial-batch list (optionally filtered by status). */
+export async function platformScopedRemedialBatches(scope = "TN", status = ""): Promise<PlatformRemedialBatch[]> {
+  if (!platformConfigured()) return demo.demoRemedialBatches
+  return getOrDemo(`/remedial?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoRemedialBatches)
+}
+
+/** Open a remedial batch (status open). */
+export async function platformCreateRemedialBatch(input: {
+  id: string
+  org_unit: string
+  subject: string
+  target_level: number
+  capacity: number
+}): Promise<{ ok: boolean; error: string; batch?: PlatformRemedialBatch }> {
+  return postJSON("/remedial", { action: "create", ...input })
+}
+
+/** Enrol a below-target student — rejected on over-capacity, a duplicate, or an ineligible (proficient) student. */
+export async function platformEnrolRemedial(input: {
+  id: string
+  student_id: string
+  level: number
+}): Promise<{ ok: boolean; error: string; batch?: PlatformRemedialBatch }> {
+  return postJSON("/remedial", { action: "enrol", ...input })
+}
+
+/** Graduate a student — rejected unless re-assessed at or above the proficiency target. */
+export async function platformGraduateRemedial(input: {
+  id: string
+  student_id: string
+  exit_level: number
+}): Promise<{ ok: boolean; error: string; batch?: PlatformRemedialBatch }> {
+  return postJSON("/remedial", { action: "graduate", ...input })
+}
+
+/** Close a remedial batch. */
+export async function platformCloseRemedialBatch(id: string): Promise<{ ok: boolean; error: string; batch?: PlatformRemedialBatch }> {
+  return postJSON("/remedial", { action: "close", id })
+}

@@ -139,6 +139,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "Visitor & Gate Management", href: "/visitor-gate", icon: Cctv },
   { title: "Water Quality Testing", href: "/water-testing", icon: Droplets },
   { title: "Notice Board & Circulars", href: "/notice-board", icon: ScrollText },
+  { title: "Diagnostic & Remedial (FLN)", href: "/remedial-batches", icon: Target },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

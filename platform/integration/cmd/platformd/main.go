@@ -1353,6 +1353,63 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.CircularDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/remedial", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Diagnostic & Remedial Learning (NIPUN FLN). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped batch list; ?id= → one batch. POST { action, ... }: create { id,org_unit,subject,target_level,
+		// capacity } opens a batch; enrol { id,student_id,level } enrols a below-target student (capacity +
+		// eligibility + uniqueness gated); graduate { id,student_id,exit_level } exits a now-proficient student
+		// (proficiency gated); close { id } closes the batch.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Subject     string `json:"subject"`
+				TargetLevel int    `json:"target_level"`
+				Capacity    int    `json:"capacity"`
+				StudentID   string `json:"student_id"`
+				Level       int    `json:"level"`
+				ExitLevel   int    `json:"exit_level"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "enrol", "enroll":
+				out, err := s.p.EnrolRemedial(req.ID, req.StudentID, req.Level)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			case "graduate":
+				out, err := s.p.GraduateRemedial(req.ID, req.StudentID, req.ExitLevel)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			case "close":
+				out, err := s.p.CloseRemedialBatch(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			default: // create
+				out, err := s.p.CreateRemedialBatch(integration.RemedialBatch{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Subject: req.Subject, TargetLevel: req.TargetLevel,
+					Capacity: req.Capacity,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.RemedialBatchRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown remedial batch"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedRemedialBatches(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RemedialDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,
