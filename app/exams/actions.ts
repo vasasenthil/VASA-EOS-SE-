@@ -5,6 +5,7 @@ import { appendAudit } from "@/lib/audit/trail"
 import { EXAM_SUBJECTS, type ExamType } from "@/lib/exams"
 import { can } from "@/lib/access/policy"
 import { resolveSubject } from "@/lib/access/resolve"
+import { policyGate } from "@/lib/policy-engine/server"
 
 export interface ExamResultSubject {
   name: string
@@ -29,6 +30,15 @@ export async function processResultAction(_prev: ExamState, formData: FormData):
   // High-stakes: anchoring exam results + pushing marksheets is authority-only.
   const decision = can(await resolveSubject(), "process:exam", { type: "exam", id: candidateApaar })
   if (!decision.permitted) return { error: `Not allowed: ${decision.reason}` }
+
+  // Policy-as-Code gate (RPwD Act 2016 §16/§31): deny-wins, audited — a CWSN candidate's assessment cannot be
+  // conducted without the reasonable accommodation they are entitled to.
+  const pwd = ((formData.get("pwd") as string) || "") === "on"
+  const accommodation = ((formData.get("accommodation") as string) || "on") !== "off"
+  const policy = await policyGate({ action: "assessment.conduct", resource: { pwd, accommodation } }, "exam-controller")
+  if (policy.decision === "deny") {
+    return { error: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
 
   // In production these come from AI-augmented OMR + human-reviewed evaluation.
   const subjectNames = EXAM_SUBJECTS[examType] ?? EXAM_SUBJECTS.SSLC

@@ -58,6 +58,20 @@ export const POLICY_ENFORCED_ACTIONS: PolicyEnforcedAction[] = [
     statute: "DPDP Act 2023 §6/§9 — consent (minor: guardian consent)",
     effect: "issuing a TC (sharing a minor's record) is denied without lawful consent",
   },
+  {
+    route: "fee-ledger",
+    file: "app/fee-ledger/actions.ts",
+    policyAction: "fee.capitation",
+    statute: "RTE Act 2009 §13(1) — no screening / no capitation fee",
+    effect: "raising a capitation/screening/donation fee demand is denied outright",
+  },
+  {
+    route: "exams",
+    file: "app/exams/actions.ts",
+    policyAction: "assessment.conduct",
+    statute: "RPwD Act 2016 §16/§31 — inclusive assessment",
+    effect: "a CWSN candidate's result cannot be processed without reasonable accommodation",
+  },
 ]
 
 /** Count of mutating server-action flows wired to the runtime policy gate. */

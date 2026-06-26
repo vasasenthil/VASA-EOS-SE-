@@ -11,9 +11,14 @@ import {
   type PlatformFeeDashboard,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
+
+// Fee categories that RTE Act 2009 §13(1) prohibits outright (capitation / screening / donation).
+// Raising such a demand is denied by the Policy-as-Code gate, citing the statute.
+const PROHIBITED_FEE_CATEGORIES = new Set(["capitation", "donation", "screening"])
 
 export interface ActionResult {
   ok: boolean
@@ -52,6 +57,13 @@ export async function raiseDemandAction(_prev: ActionResult, fd: FormData): Prom
   const due_on = String(fd.get("due_on") ?? "").trim() || "2026-06-30"
   if (!id || !student_id || !category) return { ok: false, message: "Demand id, student and category are required." }
   if (amount_paise <= 0) return { ok: false, message: "Amount must be a positive rupee value." }
+  // Policy-as-Code gate (RTE §13(1)): deny-wins, audited — no school may collect a capitation/screening fee.
+  if (PROHIBITED_FEE_CATEGORIES.has(category.toLowerCase())) {
+    const policy = await policyGate({ action: "fee.capitation", resource: { category } }, "fee-officer")
+    if (policy.decision === "deny") {
+      return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+    }
+  }
   try {
     const r = await platformRaiseDemand({ id, student_id, category, term, amount_paise, due_on, org_unit: SCOPE })
     revalidatePath("/fee-ledger")
