@@ -1575,6 +1575,63 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.ImprestDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/disciplinary", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Disciplinary / Vigilance. GET ?scope=<org> → scoped dashboard; ?list=1&stage= → the scoped case
+		// list; ?id= → one case. POST { action, ... }: charge { id,org_unit,employee_id,charge } opens a case;
+		// inquiry { id,findings } records the inquiry; decide { id,penalty } imposes a penalty (gated — requires
+		// an inquiry + a sanctioned penalty); appeal { id,grounds } appeals a decided case; close { id } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				EmployeeID string `json:"employee_id"`
+				Charge     string `json:"charge"`
+				Findings   string `json:"findings"`
+				Penalty    string `json:"penalty"`
+				Grounds    string `json:"grounds"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "inquiry":
+				out, err := s.p.HoldInquiry(req.ID, req.Findings)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "decide":
+				out, err := s.p.DecideCase(req.ID, req.Penalty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "appeal":
+				out, err := s.p.AppealCase(req.ID, req.Grounds)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "close":
+				out, err := s.p.CloseCase(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			default: // charge
+				out, err := s.p.IssueCharge(integration.DisciplinaryCase{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), EmployeeID: req.EmployeeID, Charge: req.Charge,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.DisciplinaryCaseRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown disciplinary case"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedDisciplinaryCases(scope, q.Get("stage")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.DisciplinaryDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

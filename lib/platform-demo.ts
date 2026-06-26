@@ -79,6 +79,8 @@ import type {
   PlatformClinicVisit,
   PlatformImprestDashboard,
   PlatformImprestBook,
+  PlatformDisciplinaryDashboard,
+  PlatformDisciplinaryCase,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1018,5 +1020,22 @@ export const demoImprestDashboard: PlatformImprestDashboard = {
   spent_paise: 8_200_00,
   unreimbursed_paise: 4_100_00,
   outstanding: [demoImprestBooks[0]],
+  synthetic: true,
+}
+
+// ── Staff Disciplinary / Vigilance ───────────────────────────────────────────────────────────────────────
+export const demoDisciplinaryCases: PlatformDisciplinaryCase[] = [
+  { id: "DIS-CHN-01", org_unit: "33030004181", employee_id: "SYN-T-CHN-11", charge: "Unauthorised absence", appealed: false, stage: "charge_issued", created_on: "2026-06-18", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "DIS-CHN-02", org_unit: "33030004181", employee_id: "SYN-T-CHN-12", charge: "Negligence of duty", inquiry_findings: "Charge substantiated on two of three counts", appealed: false, stage: "under_inquiry", created_on: "2026-06-12", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "DIS-CHN-03", org_unit: "33030004181", employee_id: "SYN-T-CHN-13", charge: "Misconduct", inquiry_findings: "Charge proved", penalty: "withhold_increment", appeal_grounds: "Penalty disproportionate to the proven charge", appealed: true, stage: "decided", created_on: "2026-06-05", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoDisciplinaryDashboard: PlatformDisciplinaryDashboard = {
+  scope: SCOPE,
+  cases: 12,
+  by_stage: { charge_issued: 4, under_inquiry: 4, decided: 3, closed: 1 },
+  by_penalty: { withhold_increment: 2, censure: 1 },
+  under_appeal: 2,
+  pending_inquiry: [demoDisciplinaryCases[0]],
   synthetic: true,
 }

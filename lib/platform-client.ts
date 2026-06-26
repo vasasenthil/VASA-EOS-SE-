@@ -3351,3 +3351,74 @@ export async function platformReplenishImprest(id: string, amount_paise: number)
 export async function platformSettleImprest(id: string): Promise<{ ok: boolean; error: string; book?: PlatformImprestBook }> {
   return postJSON("/imprest", { action: "settle", id })
 }
+
+// ── Staff Disciplinary / Vigilance: no-penalty-without-inquiry + valid penalty + appeal-after-decision ────
+// A due-process proceeding: charge → inquiry → decision (penalty) → close, with an appeal after decision. A
+// penalty cannot be imposed without an inquiry (natural justice), the penalty must be from the sanctioned
+// schedule, and an appeal is allowed only against a decided case. Scoped.
+
+export interface PlatformDisciplinaryCase {
+  id: string
+  org_unit: string
+  employee_id: string
+  charge: string
+  inquiry_findings?: string
+  penalty?: string
+  appeal_grounds?: string
+  appealed: boolean
+  stage: string // charge_issued | under_inquiry | decided | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformDisciplinaryDashboard {
+  scope: string
+  cases: number
+  by_stage: Record<string, number>
+  by_penalty: Record<string, number>
+  under_appeal: number
+  pending_inquiry?: PlatformDisciplinaryCase[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped disciplinary dashboard from the backbone (null when not configured). */
+export async function platformDisciplinaryDashboard(scope = "TN"): Promise<PlatformDisciplinaryDashboard | null> {
+  if (!platformConfigured()) return demo.demoDisciplinaryDashboard
+  return getOrDemo(`/disciplinary?scope=${encodeURIComponent(scope)}`, demo.demoDisciplinaryDashboard)
+}
+
+/** The scoped disciplinary-case list (optionally filtered by stage). */
+export async function platformScopedDisciplinaryCases(scope = "TN", stage = ""): Promise<PlatformDisciplinaryCase[]> {
+  if (!platformConfigured()) return demo.demoDisciplinaryCases
+  return getOrDemo(`/disciplinary?scope=${encodeURIComponent(scope)}&list=1&stage=${encodeURIComponent(stage)}`, demo.demoDisciplinaryCases)
+}
+
+/** Issue a charge (open a case). */
+export async function platformIssueCharge(input: {
+  id: string
+  org_unit: string
+  employee_id: string
+  charge: string
+}): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
+  return postJSON("/disciplinary", { action: "charge", ...input })
+}
+
+/** Record the inquiry findings. */
+export async function platformHoldInquiry(id: string, findings: string): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
+  return postJSON("/disciplinary", { action: "inquiry", id, findings })
+}
+
+/** Impose a penalty — rejected without an inquiry or with an unsanctioned penalty. */
+export async function platformDecideCase(id: string, penalty: string): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
+  return postJSON("/disciplinary", { action: "decide", id, penalty })
+}
+
+/** Appeal a decided case. */
+export async function platformAppealCase(id: string, grounds: string): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
+  return postJSON("/disciplinary", { action: "appeal", id, grounds })
+}
+
+/** Close a decided case. */
+export async function platformCloseCase(id: string): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
+  return postJSON("/disciplinary", { action: "close", id })
+}

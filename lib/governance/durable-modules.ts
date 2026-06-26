@@ -64,6 +64,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "event-registration", label: "Co-curricular Registration", service: "/registrations", invariant: "registration window + unique registration per student + seat cap (confirmed never exceeds cap) + FIFO waitlist auto-promotion on a vacated seat" },
   { route: "health-clinic", label: "School Health Clinic (Sick Room)", service: "/clinic", invariant: "single open visit per student statewide + outcome gate (cannot close without a recorded outcome) + referral requires a destination" },
   { route: "imprest-book", label: "Petty Cash / Imprest Book", service: "/imprest", invariant: "GFR controls (paise) — no overspend beyond cash on hand + imprest ceiling (no replenish beyond the sanctioned float) + settlement reconciliation gate (settle only when cash equals the float)" },
+  { route: "staff-disciplinary", label: "Staff Disciplinary / Vigilance", service: "/disciplinary", invariant: "natural justice — no penalty without an inquiry + penalty must be from the sanctioned schedule + appeal only against a decided case; staged charge→inquiry→decided→closed" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */
