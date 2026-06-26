@@ -94,7 +94,7 @@ export interface NavItem {
   isHeader?: boolean
 }
 
-// The 46 deep / durable modules (driven by the Go backbone + PostgreSQL). Surfaced as a single navigable section
+// The 47 deep / durable modules (driven by the Go backbone + PostgreSQL). Surfaced as a single navigable section
 // so they are reachable from the sidebar, not only via /directory. Kept in sync with lib/governance/durable-modules.ts.
 export const durableModuleNav: NavItem[] = [
   { title: "▸ Durable Modules", href: "/directory", icon: Layers },
@@ -144,6 +144,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "School Health Clinic (Sick Room)", href: "/health-clinic", icon: HeartPulse },
   { title: "Petty Cash / Imprest Book", href: "/imprest-book", icon: PiggyBank },
   { title: "Staff Disciplinary / Vigilance", href: "/staff-disciplinary", icon: Scale },
+  { title: "Library Fine Ledger", href: "/library-fines", icon: BookA },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

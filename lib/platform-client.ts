@@ -3422,3 +3422,86 @@ export async function platformAppealCase(id: string, grounds: string): Promise<{
 export async function platformCloseCase(id: string): Promise<{ ok: boolean; error: string; case?: PlatformDisciplinaryCase }> {
   return postJSON("/disciplinary", { action: "close", id })
 }
+
+// ── Library Fine Ledger: no-overpay + no-re-settle + borrow-block gate (money in paise) ───────────────────
+// Each member has a ledger of overdue fines; a payment can never exceed a fine's outstanding, a settled fine
+// cannot be re-settled, and a member over the block threshold is blocked from borrowing. Embedded fines. Scoped.
+
+export interface PlatformFine {
+  id: string
+  book: string
+  days_overdue: number
+  amount_paise: number
+  paid_paise: number
+  status: string // open | paid | waived
+  accrued_on: string
+}
+
+export interface PlatformMemberFines {
+  id: string
+  org_unit: string
+  member_id: string
+  block_threshold_paise: number
+  fines?: PlatformFine[]
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformLibraryFineDashboard {
+  scope: string
+  ledgers: number
+  outstanding_paise: number
+  collected_paise: number
+  waived_paise: number
+  blocked: number
+  blocked_list?: PlatformMemberFines[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped library-fine dashboard from the backbone (null when not configured). */
+export async function platformLibraryFineDashboard(scope = "TN"): Promise<PlatformLibraryFineDashboard | null> {
+  if (!platformConfigured()) return demo.demoLibraryFineDashboard
+  return getOrDemo(`/library-fines?scope=${encodeURIComponent(scope)}`, demo.demoLibraryFineDashboard)
+}
+
+/** The scoped member fine-ledger list. */
+export async function platformScopedFineLedgers(scope = "TN"): Promise<PlatformMemberFines[]> {
+  if (!platformConfigured()) return demo.demoFineLedgers
+  return getOrDemo(`/library-fines?scope=${encodeURIComponent(scope)}&list=1`, demo.demoFineLedgers)
+}
+
+/** Open a member fine ledger. */
+export async function platformOpenFineLedger(input: {
+  id: string
+  org_unit: string
+  member_id: string
+  block_threshold_paise: number
+}): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
+  return postJSON("/library-fines", { action: "open", ...input })
+}
+
+/** Accrue an overdue fine (amount = days × daily rate). */
+export async function platformAccrueFine(input: {
+  id: string
+  fine_id: string
+  book: string
+  days_overdue: number
+  rate_paise: number
+}): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
+  return postJSON("/library-fines", { action: "accrue", ...input })
+}
+
+/** Pay a fine — rejected on an overpay or re-settlement. */
+export async function platformPayFine(id: string, fine_id: string, amount_paise: number): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
+  return postJSON("/library-fines", { action: "pay", id, fine_id, amount_paise })
+}
+
+/** Waive a fine — rejected on a re-settlement. */
+export async function platformWaiveFine(id: string, fine_id: string): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
+  return postJSON("/library-fines", { action: "waive", id, fine_id })
+}
+
+/** Request to borrow — rejected while the member is over the block threshold. */
+export async function platformRequestBorrow(id: string, book: string): Promise<{ ok: boolean; error: string; ledger?: PlatformMemberFines }> {
+  return postJSON("/library-fines", { action: "borrow", id, book })
+}

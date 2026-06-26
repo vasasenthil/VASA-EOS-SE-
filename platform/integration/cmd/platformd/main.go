@@ -1632,6 +1632,66 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.DisciplinaryDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/library-fines", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Library Fine Ledger (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1 → the scoped ledger
+		// list; ?id= → one ledger. POST { action, ... }: open { id,org_unit,member_id,block_threshold_paise }
+		// opens a ledger; accrue { id,fine_id,book,days_overdue,rate_paise } books an overdue fine; pay { id,
+		// fine_id,amount_paise } pays it (rejecting an overpay/re-settle); waive { id,fine_id } waives it; borrow
+		// { id,book } enforces the borrow-block gate.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action              string `json:"action"`
+				ID                  string `json:"id"`
+				OrgUnit             string `json:"org_unit"`
+				MemberID            string `json:"member_id"`
+				BlockThresholdPaise int64  `json:"block_threshold_paise"`
+				FineID              string `json:"fine_id"`
+				Book                string `json:"book"`
+				DaysOverdue         int    `json:"days_overdue"`
+				RatePaise           int64  `json:"rate_paise"`
+				AmountPaise         int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "accrue":
+				out, err := s.p.AccrueFine(req.ID, req.FineID, req.Book, req.DaysOverdue, req.RatePaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "pay":
+				out, err := s.p.PayFine(req.ID, req.FineID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "waive":
+				out, err := s.p.WaiveFine(req.ID, req.FineID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "borrow":
+				out, err := s.p.RequestBorrow(req.ID, req.Book)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			default: // open
+				out, err := s.p.OpenFineLedger(integration.MemberFines{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), MemberID: req.MemberID, BlockThresholdPaise: req.BlockThresholdPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			m, ok := s.p.FineLedgerRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown fine ledger"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, m, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedFineLedgers(scope), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LibraryFineDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

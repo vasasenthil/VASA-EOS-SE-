@@ -65,6 +65,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "health-clinic", label: "School Health Clinic (Sick Room)", service: "/clinic", invariant: "single open visit per student statewide + outcome gate (cannot close without a recorded outcome) + referral requires a destination" },
   { route: "imprest-book", label: "Petty Cash / Imprest Book", service: "/imprest", invariant: "GFR controls (paise) — no overspend beyond cash on hand + imprest ceiling (no replenish beyond the sanctioned float) + settlement reconciliation gate (settle only when cash equals the float)" },
   { route: "staff-disciplinary", label: "Staff Disciplinary / Vigilance", service: "/disciplinary", invariant: "natural justice — no penalty without an inquiry + penalty must be from the sanctioned schedule + appeal only against a decided case; staged charge→inquiry→decided→closed" },
+  { route: "library-fines", label: "Library Fine Ledger", service: "/library-fines", invariant: "money in paise — no overpay beyond a fine's outstanding + no re-settling a paid/waived fine + borrow-block gate (member over the dues threshold cannot be issued a book)" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

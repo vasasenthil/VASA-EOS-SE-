@@ -81,6 +81,8 @@ import type {
   PlatformImprestBook,
   PlatformDisciplinaryDashboard,
   PlatformDisciplinaryCase,
+  PlatformLibraryFineDashboard,
+  PlatformMemberFines,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1037,5 +1039,26 @@ export const demoDisciplinaryDashboard: PlatformDisciplinaryDashboard = {
   by_penalty: { withhold_increment: 2, censure: 1 },
   under_appeal: 2,
   pending_inquiry: [demoDisciplinaryCases[0]],
+  synthetic: true,
+}
+
+// ── Library Fine Ledger (money in paise) ─────────────────────────────────────────────────────────────────
+export const demoFineLedgers: PlatformMemberFines[] = [
+  { id: "FINE-CHN-M1", org_unit: "33030004181", member_id: "SYN-S-CHN-M1", block_threshold_paise: 100_00, created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", fines: [
+    { id: "F-CHN-1", book: "Wings of Fire", days_overdue: 5, amount_paise: 10_00, paid_paise: 10_00, status: "paid", accrued_on: "2026-06-25" },
+  ] },
+  { id: "FINE-CHN-M2", org_unit: "33030004181", member_id: "SYN-S-CHN-M2", block_threshold_paise: 100_00, created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", fines: [
+    { id: "F-CHN-2", book: "Atlas of India", days_overdue: 80, amount_paise: 160_00, paid_paise: 0, status: "open", accrued_on: "2026-06-25" },
+  ] },
+]
+
+export const demoLibraryFineDashboard: PlatformLibraryFineDashboard = {
+  scope: SCOPE,
+  ledgers: 8,
+  outstanding_paise: 640_00,
+  collected_paise: 120_00,
+  waived_paise: 40_00,
+  blocked: 4,
+  blocked_list: [demoFineLedgers[1]],
   synthetic: true,
 }
