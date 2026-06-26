@@ -1,9 +1,38 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
+import { DEMO_USERS } from "@/lib/demo-auth"
+import { PORTALS, type PortalRole } from "@/config/portals"
 import type { UserOUAssignment, UserOUAssignmentInput, AuthUser } from "../types"
+
+// Demo roster: when there is no database (or the deployment runs in NEXT_PUBLIC_DEMO_MODE),
+// the User Management screen is populated from the 24 representative stakeholder accounts
+// (DEMO_USERS) instead of showing a "database not configured" error — searchable + paginated,
+// matching the real query's shape. Production (DEMO_MODE off + a real DB) never calls this.
+function demoAuthRoster(params?: { searchTerm?: string; page?: number; pageSize?: number }): {
+  success: boolean
+  message: string
+  data: AuthUser[]
+  total?: number
+} {
+  const all: AuthUser[] = Object.entries(DEMO_USERS)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([email, role], i) => ({
+      id: `demo-user-${String(i + 1).padStart(3, "0")}`,
+      email,
+      raw_user_meta_data: { name: PORTALS[role as PortalRole]?.label ?? role.replace(/_/g, " ") },
+    }))
+  const term = (params?.searchTerm ?? "").trim().toLowerCase()
+  const filtered = term ? all.filter((u) => (u.email ?? "").toLowerCase().includes(term)) : all
+  const total = filtered.length
+  const page = params?.page ?? 1
+  const size = params?.pageSize ?? total
+  const start = (page - 1) * size
+  const data = size > 0 ? filtered.slice(start, start + size) : filtered
+  return { success: true, message: "Demo roster (no database configured).", data, total }
+}
 
 const CRITICAL_DB_ERROR_MSG =
   "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
@@ -320,8 +349,10 @@ export async function getAuthUsersForSelectionAction(params?: {
   page?: number
   pageSize?: number
 }): Promise<{ success: boolean; message: string; data: AuthUser[]; total?: number }> {
-  if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+  // Demo walkthrough (no DB, or NEXT_PUBLIC_DEMO_MODE): populate from the demo roster so the
+  // User Management screen shows the representative stakeholder accounts instead of an error.
+  if (isDemoModeEnabled()) {
+    return demoAuthRoster(params)
   }
   try {
     // The directory of people lives in public.users (id, email, full_name, role, school_id). The previous

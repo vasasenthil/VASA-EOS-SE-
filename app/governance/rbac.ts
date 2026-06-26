@@ -1,6 +1,6 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import { DEMO_COOKIE } from "@/lib/demo-auth"
 import { SYSTEM_ROLES } from "./types" // Assuming PERMISSIONS constant is also in types.ts
@@ -26,12 +26,16 @@ interface PermissionCheckParams {
  * @returns A Promise resolving to true if the user has the permission, false otherwise.
  */
 export async function hasPermission({ userId, permissionString, ouId }: PermissionCheckParams): Promise<boolean> {
-  if (!isSupabaseAdminConfigured()) {
-    // Credential-free demo walkthrough: a demo session is granted access so the
-    // governance/admin screens are viewable. Production always has a DB, so this
-    // branch never runs there and the real RBAC check below applies.
+  // Demo walkthrough: a demo-login session is granted access to the governance/admin
+  // screens whenever demo mode is on — i.e. when there is no DB OR the deployment opts
+  // in via NEXT_PUBLIC_DEMO_MODE=true (even with a paused DB + service-role key set).
+  // Production (DEMO_MODE off + a real DB) skips this and the real RBAC check below runs,
+  // so behaviour there is unchanged.
+  if (isDemoModeEnabled()) {
     const demoRole = (await cookies()).get(DEMO_COOKIE)?.value
     if (demoRole) return true
+  }
+  if (!isSupabaseAdminConfigured()) {
     console.error("hasPermission check failed:", CRITICAL_DB_ERROR_MSG)
     return false
   }
