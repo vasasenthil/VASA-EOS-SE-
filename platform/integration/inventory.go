@@ -338,7 +338,7 @@ func seedStock(s stockStore) {
 			onHand, reorder      int
 		}{
 			{"A4 paper", "stationery", "ream", 40, 10},
-			{"Chalk boxes", "stationery", "pack", 8, 10},     // at/below reorder → low stock
+			{"Chalk boxes", "stationery", "pack", 8, 10}, // at/below reorder → low stock
 			{"Lab gloves", "lab", "pack", 25, 5},
 			{"Football", "sports", "nos", 6, 4},
 		}

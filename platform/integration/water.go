@@ -300,14 +300,14 @@ func (p *Platform) WaterTestRecord(id string) (WaterTest, bool) { return waterSt
 // WaterDashboard is the jurisdiction-scoped drinking-water picture: samples by status/source, potable (approved)
 // and unsafe (failed) counts, and the unsafe-source worklist. Downward-governance scoped.
 type WaterDashboard struct {
-	Scope     string         `json:"scope"`
-	Samples   int            `json:"samples"`
-	ByStatus  map[string]int `json:"by_status"`
-	BySource  map[string]int `json:"by_source"`
-	Potable   int            `json:"potable"`
-	Unsafe    int            `json:"unsafe"`
-	UnsafeList []WaterTest   `json:"unsafe_list,omitempty"`
-	Synthetic bool           `json:"synthetic"`
+	Scope      string         `json:"scope"`
+	Samples    int            `json:"samples"`
+	ByStatus   map[string]int `json:"by_status"`
+	BySource   map[string]int `json:"by_source"`
+	Potable    int            `json:"potable"`
+	Unsafe     int            `json:"unsafe"`
+	UnsafeList []WaterTest    `json:"unsafe_list,omitempty"`
+	Synthetic  bool           `json:"synthetic"`
 }
 
 // WaterDashboard rolls up samples across the schools a tenant node governs (fail-closed for others).
