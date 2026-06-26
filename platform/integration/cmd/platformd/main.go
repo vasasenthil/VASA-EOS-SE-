@@ -1133,6 +1133,62 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.CompetitionDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/inventory", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Stores / Inventory register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// item list; ?id= → one item. POST { action, ... }: add { id,org_unit,name,category,unit,on_hand,
+		// reorder_level } records a new item; receive { id,qty } books a goods receipt; issue { id,qty } books an
+		// issue (rejecting an issue beyond on-hand — no negative stock); close { id } retires a zero-balance item.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action       string `json:"action"`
+				ID           string `json:"id"`
+				OrgUnit      string `json:"org_unit"`
+				Name         string `json:"name"`
+				Category     string `json:"category"`
+				Unit         string `json:"unit"`
+				OnHand       int    `json:"on_hand"`
+				ReorderLevel int    `json:"reorder_level"`
+				Qty          int    `json:"qty"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "receive":
+				out, err := s.p.ReceiveStock(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			case "issue":
+				out, err := s.p.IssueStock(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			case "close":
+				out, err := s.p.CloseStockItem(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			default: // add
+				out, err := s.p.AddStockItem(integration.StockItem{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Unit: req.Unit, OnHand: req.OnHand, ReorderLevel: req.ReorderLevel,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			it, ok := s.p.StockItemRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown stock item"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, it, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedStockItems(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InventoryDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

@@ -63,6 +63,8 @@ import type {
   PlatformWashRegister,
   PlatformCompetitionDashboard,
   PlatformCompetition,
+  PlatformInventoryDashboard,
+  PlatformStockItem,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -807,5 +809,24 @@ export const demoCompetitionDashboard: PlatformCompetitionDashboard = {
   podium: 16,
   advanced: 4,
   open_meets: [demoCompetitions[0], demoCompetitions[1]],
+  synthetic: true,
+}
+
+// ── School Stores / Inventory ────────────────────────────────────────────────────────────────────────────
+export const demoStockItems: PlatformStockItem[] = [
+  { id: "STK-CHN-01", org_unit: "33030004181", name: "A4 paper", category: "stationery", unit: "ream", on_hand: 40, reorder_level: 10, received: 40, issued: 0, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "STK-CHN-02", org_unit: "33030004181", name: "Chalk boxes", category: "stationery", unit: "pack", on_hand: 8, reorder_level: 10, received: 30, issued: 22, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "STK-CHN-03", org_unit: "33030004181", name: "Lab gloves", category: "lab", unit: "pack", on_hand: 25, reorder_level: 5, received: 25, issued: 0, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "STK-CHN-04", org_unit: "33030004181", name: "Football", category: "sports", unit: "nos", on_hand: 6, reorder_level: 4, received: 6, issued: 0, status: "active", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoInventoryDashboard: PlatformInventoryDashboard = {
+  scope: SCOPE,
+  items: 16,
+  by_status: { active: 16 },
+  on_hand: 312,
+  received: 404,
+  issued: 92,
+  low_stock: [demoStockItems[1]],
   synthetic: true,
 }

@@ -56,6 +56,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "gem-procurement", label: "Procurement & GeM Purchase Orders", service: "/procurement", invariant: "GFR controls — no over-receipt beyond ordered qty + no over-payment beyond goods received (paise)" },
   { route: "wash-register", label: "School Sanitation & WASH Register", service: "/wash", invariant: "no over-report (functional units ≤ sanctioned) + Swachh/ODF certification gate — cannot certify while any critical facility is not fully functional; critical regression auto-revokes" },
   { route: "sports-competitions", label: "Co-curricular & Sports Competitions", service: "/competitions", invariant: "unique entry per student + podium-position uniqueness (one gold/silver/bronze) + advancement gate (only podium finishers advance; national is terminal)" },
+  { route: "stock-register", label: "School Stores & Inventory Register", service: "/inventory", invariant: "no negative stock — an issue can never exceed quantity on hand + no close with stock on hand; reorder-level low-stock worklist" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

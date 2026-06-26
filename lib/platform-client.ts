@@ -2761,3 +2761,74 @@ export async function platformAdvanceWinner(id: string, student_id: string): Pro
 export async function platformCloseCompetition(id: string): Promise<{ ok: boolean; error: string; competition?: PlatformCompetition }> {
   return postJSON("/competitions", { action: "close", id })
 }
+
+// ── School Stores / Inventory: no-negative-stock + no-close-with-stock ────────────────────────────────────
+// Schools hold consumables in a stock register with a running on-hand balance. An issue can never exceed the
+// quantity on hand, and an item can only be retired at a zero balance. A reorder level drives a low-stock
+// worklist. Scoped.
+
+export interface PlatformStockItem {
+  id: string
+  org_unit: string
+  name: string
+  category?: string
+  unit: string // nos | kg | litre | pack | metre | ream
+  on_hand: number
+  reorder_level: number
+  received: number
+  issued: number
+  status: string // active | closed
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformInventoryDashboard {
+  scope: string
+  items: number
+  by_status: Record<string, number>
+  on_hand: number
+  received: number
+  issued: number
+  low_stock?: PlatformStockItem[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped inventory dashboard from the backbone (null when not configured). */
+export async function platformInventoryDashboard(scope = "TN"): Promise<PlatformInventoryDashboard | null> {
+  if (!platformConfigured()) return demo.demoInventoryDashboard
+  return getOrDemo(`/inventory?scope=${encodeURIComponent(scope)}`, demo.demoInventoryDashboard)
+}
+
+/** The scoped stock-item list (optionally filtered by status). */
+export async function platformScopedStockItems(scope = "TN", status = ""): Promise<PlatformStockItem[]> {
+  if (!platformConfigured()) return demo.demoStockItems
+  return getOrDemo(`/inventory?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoStockItems)
+}
+
+/** Add a stock item (status active). */
+export async function platformAddStockItem(input: {
+  id: string
+  org_unit: string
+  name: string
+  category?: string
+  unit: string
+  on_hand: number
+  reorder_level: number
+}): Promise<{ ok: boolean; error: string; item?: PlatformStockItem }> {
+  return postJSON("/inventory", { action: "add", ...input })
+}
+
+/** Book a goods receipt against an item. */
+export async function platformReceiveStock(id: string, qty: number): Promise<{ ok: boolean; error: string; item?: PlatformStockItem }> {
+  return postJSON("/inventory", { action: "receive", id, qty })
+}
+
+/** Book an issue — rejected on an issue beyond on-hand (no negative stock). */
+export async function platformIssueStock(id: string, qty: number): Promise<{ ok: boolean; error: string; item?: PlatformStockItem }> {
+  return postJSON("/inventory", { action: "issue", id, qty })
+}
+
+/** Retire a zero-balance item. */
+export async function platformCloseStockItem(id: string): Promise<{ ok: boolean; error: string; item?: PlatformStockItem }> {
+  return postJSON("/inventory", { action: "close", id })
+}
