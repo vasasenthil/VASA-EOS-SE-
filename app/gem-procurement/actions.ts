@@ -14,6 +14,7 @@ import {
   type PlatformPurchaseOrder,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
@@ -97,6 +98,14 @@ export async function payAction(_prev: ActionResult, fd: FormData): Promise<Acti
   if (!id) return { ok: false, message: "PO id is required." }
   const amount_paise = Math.round((Number.isFinite(rupees) ? rupees : 0) * 100)
   if (amount_paise <= 0) return { ok: false, message: "Amount must be positive." }
+  // Policy-as-Code gate (GFR/PFMS fund-flow): deny-wins, audited to the integrity ledger before any release.
+  const policy = await policyGate({ action: "fund.release", resource: { amount: rupees, sanctioned: true } }, "procurement-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
+  if (policy.decision === "require-approval") {
+    return { ok: false, message: `₹${rupees} exceeds delegated financial powers — requires secretariat approval (${policy.governing.map((rl) => rl.citation).join("; ")}).` }
+  }
   try {
     const r = await platformPayVendor(id, amount_paise)
     revalidatePath("/gem-procurement")

@@ -12,6 +12,7 @@ import {
   type PlatformDisbursement,
 } from "@/lib/platform-client"
 import { canDo } from "@/lib/access/guard"
+import { policyGate } from "@/lib/policy-engine/server"
 import { logger } from "@/lib/logger"
 
 const SCOPE = process.env.PLATFORM_DEFAULT_ORG ?? "TN-DIST-Chennai"
@@ -93,7 +94,16 @@ export async function disburseAction(_prev: ActionResult, fd: FormData): Promise
   if (!platformConfigured()) return { ok: false, message: "Backbone not connected." }
   const id = String(fd.get("id") ?? "").trim()
   const paymentRef = String(fd.get("payment_ref") ?? "").trim() || `PFMS-${Date.now()}`
+  const amount = Number.parseFloat(String(fd.get("amount_rupees") ?? "0")) || 0
   if (!id) return { ok: false, message: "Case id required." }
+  // Policy-as-Code gate (PFMS sanction-first + financial-delegation), audited to the integrity ledger.
+  const policy = await policyGate({ action: "fund.release", resource: { amount, sanctioned: true } }, "dbt-officer")
+  if (policy.decision === "deny") {
+    return { ok: false, message: `Blocked by policy: ${policy.governing.map((rl) => rl.citation).join("; ")}` }
+  }
+  if (policy.decision === "require-approval") {
+    return { ok: false, message: `This disbursement exceeds delegated powers — requires higher approval (${policy.governing.map((rl) => rl.citation).join("; ")}).` }
+  }
   try {
     const r = await platformActScholarship(id, "disburse", { paymentRef })
     revalidatePath("/dbt-scholarship")
