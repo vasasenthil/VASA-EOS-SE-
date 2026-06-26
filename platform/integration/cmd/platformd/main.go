@@ -1518,6 +1518,63 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.ClinicDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/imprest", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Petty Cash / Imprest book (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped book list; ?id= → one book. POST { action, ... }: open { id,org_unit,sanctioned_paise } opens a
+		// float; spend { id,voucher_id,payee,purpose,amount_paise } books a voucher (rejecting an overspend);
+		// replenish { id,amount_paise } reimburses (rejecting a top-up beyond the float); settle { id } settles a
+		// balanced book (gated — cash must equal the sanctioned float).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				SanctionedPaise int64  `json:"sanctioned_paise"`
+				VoucherID       string `json:"voucher_id"`
+				Payee           string `json:"payee"`
+				Purpose         string `json:"purpose"`
+				AmountPaise     int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "spend":
+				out, err := s.p.SpendImprest(req.ID, integration.Voucher{
+					ID: req.VoucherID, Payee: req.Payee, Purpose: req.Purpose, AmountPaise: req.AmountPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			case "replenish":
+				out, err := s.p.ReplenishImprest(req.ID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			case "settle":
+				out, err := s.p.SettleImprest(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			default: // open
+				out, err := s.p.OpenImprest(integration.ImprestBook{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), SanctionedPaise: req.SanctionedPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.ImprestBookRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown imprest book"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedImprestBooks(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ImprestDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

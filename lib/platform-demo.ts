@@ -77,6 +77,8 @@ import type {
   PlatformActivityEvent,
   PlatformClinicDashboard,
   PlatformClinicVisit,
+  PlatformImprestDashboard,
+  PlatformImprestBook,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -995,5 +997,26 @@ export const demoClinicDashboard: PlatformClinicDashboard = {
   by_outcome: { recovered: 5, referred: 2, sent_home: 1 },
   referrals: 2,
   open_list: [demoClinicVisits[0]],
+  synthetic: true,
+}
+
+// ── Petty Cash / Imprest (money in paise) ────────────────────────────────────────────────────────────────
+export const demoImprestBooks: PlatformImprestBook[] = [
+  { id: "IMP-CHN", org_unit: "33030004181", sanctioned_paise: 10_000_00, cash_paise: 7_950_00, status: "open", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", vouchers: [
+    { id: "V-CHN-01", payee: "SYN-VEN-STAT", purpose: "Stationery", amount_paise: 1_200_00, recorded_on: "2026-06-25" },
+    { id: "V-CHN-02", payee: "SYN-VEN-REPAIR", purpose: "Fan repair", amount_paise: 850_00, recorded_on: "2026-06-25" },
+  ] },
+  { id: "IMP-CBE", org_unit: "33030004182", sanctioned_paise: 10_000_00, cash_paise: 10_000_00, status: "open", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoImprestDashboard: PlatformImprestDashboard = {
+  scope: SCOPE,
+  books: 4,
+  by_status: { open: 4 },
+  sanctioned_paise: 40_000_00,
+  cash_paise: 35_900_00,
+  spent_paise: 8_200_00,
+  unreimbursed_paise: 4_100_00,
+  outstanding: [demoImprestBooks[0]],
   synthetic: true,
 }

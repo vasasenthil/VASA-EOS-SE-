@@ -3273,3 +3273,81 @@ export async function platformTreatClinicVisit(id: string, note: string): Promis
 export async function platformCloseClinicVisit(id: string, outcome: string, destination: string): Promise<{ ok: boolean; error: string; visit?: PlatformClinicVisit }> {
   return postJSON("/clinic", { action: "close", id, outcome, destination })
 }
+
+// ── Petty Cash / Imprest: no-overspend + imprest ceiling + settlement reconciliation gate (money in paise) ─
+// A school holds a sanctioned cash float, spends it via vouchers, and is replenished up to the float. A voucher
+// can never exceed cash on hand; a replenishment can never exceed the float; and the book can only be settled
+// when cash equals the sanctioned float (every rupee reimbursed). Embedded vouchers. Scoped.
+
+export interface PlatformVoucher {
+  id: string
+  payee: string
+  purpose: string
+  amount_paise: number
+  recorded_on: string
+}
+
+export interface PlatformImprestBook {
+  id: string
+  org_unit: string
+  sanctioned_paise: number
+  cash_paise: number
+  vouchers?: PlatformVoucher[]
+  status: string // open | settled
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformImprestDashboard {
+  scope: string
+  books: number
+  by_status: Record<string, number>
+  sanctioned_paise: number
+  cash_paise: number
+  spent_paise: number
+  unreimbursed_paise: number
+  outstanding?: PlatformImprestBook[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped imprest dashboard from the backbone (null when not configured). */
+export async function platformImprestDashboard(scope = "TN"): Promise<PlatformImprestDashboard | null> {
+  if (!platformConfigured()) return demo.demoImprestDashboard
+  return getOrDemo(`/imprest?scope=${encodeURIComponent(scope)}`, demo.demoImprestDashboard)
+}
+
+/** The scoped imprest-book list (optionally filtered by status). */
+export async function platformScopedImprestBooks(scope = "TN", status = ""): Promise<PlatformImprestBook[]> {
+  if (!platformConfigured()) return demo.demoImprestBooks
+  return getOrDemo(`/imprest?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoImprestBooks)
+}
+
+/** Open an imprest book (cash == sanctioned float). */
+export async function platformOpenImprest(input: {
+  id: string
+  org_unit: string
+  sanctioned_paise: number
+}): Promise<{ ok: boolean; error: string; book?: PlatformImprestBook }> {
+  return postJSON("/imprest", { action: "open", ...input })
+}
+
+/** Book a voucher — rejected on an overspend beyond cash on hand. */
+export async function platformSpendImprest(input: {
+  id: string
+  voucher_id: string
+  payee: string
+  purpose: string
+  amount_paise: number
+}): Promise<{ ok: boolean; error: string; book?: PlatformImprestBook }> {
+  return postJSON("/imprest", { action: "spend", ...input })
+}
+
+/** Replenish — rejected on a top-up beyond the sanctioned float. */
+export async function platformReplenishImprest(id: string, amount_paise: number): Promise<{ ok: boolean; error: string; book?: PlatformImprestBook }> {
+  return postJSON("/imprest", { action: "replenish", id, amount_paise })
+}
+
+/** Settle a balanced book — rejected unless cash equals the sanctioned float. */
+export async function platformSettleImprest(id: string): Promise<{ ok: boolean; error: string; book?: PlatformImprestBook }> {
+  return postJSON("/imprest", { action: "settle", id })
+}
