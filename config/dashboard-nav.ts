@@ -149,6 +149,7 @@ export const durableModuleNav: NavItem[] = [
   { title: "Vehicle Fitness / Transport Safety", href: "/vehicle-fitness", icon: Bus },
   { title: "Textbook / Uniform Indent", href: "/textbook-indent", icon: Backpack },
   { title: "Exam Invigilation Roster", href: "/invigilation-roster", icon: ClipboardList },
+  { title: "Government Orders (Secretariat)", href: "/government-order", icon: ScrollText },
 ]
 
 export const dashboardNavConfig: Record<string, NavItem[]> = {

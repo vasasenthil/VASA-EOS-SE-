@@ -91,6 +91,8 @@ import type {
   PlatformTextbookIndent,
   PlatformInvigilationDashboard,
   PlatformDutySession,
+  PlatformGovernmentOrderDashboard,
+  PlatformGovernmentOrder,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1146,5 +1148,23 @@ export const demoInvigilationDashboard: PlatformInvigilationDashboard = {
   required_seats: 16,
   assigned_seats: 12,
   understaffed: [demoDutySessions[1]],
+  synthetic: true,
+}
+
+// ── Government Order (GO) register ────────────────────────────────────────────────────────────────────────
+export const demoGovernmentOrders: PlatformGovernmentOrder[] = [
+  { id: "GO-CHN-SCHEME", org_unit: "33030004181", number: "G.O.(Ms)No.100/SE/2026", department: "School Education (SE1)", category: "scheme", subject: "Sanction of the breakfast scheme for the academic year", amount_paise: 0, status: "published", vetted_by: "SYN-LAW-01", approved_by: "SYN-SEC-01", created_on: "2026-04-02", updated_at: "2026-06-26T00:00:00Z" },
+  { id: "GO-CHN-EST", org_unit: "33030004181", number: "G.O.(D)No.200/SE/2026", department: "School Education (SE2)", category: "establishment", subject: "Posting and transfer of headmasters — periodic counselling", amount_paise: 0, status: "issued", vetted_by: "SYN-LAW-02", approved_by: "SYN-SEC-01", created_on: "2026-05-12", updated_at: "2026-06-26T00:00:00Z" },
+  { id: "GO-CHN-FIN", org_unit: "33030004181", department: "School Education (Budget)", category: "financial", subject: "Release of composite school grant — first instalment", amount_paise: 45000000, status: "approved", vetted_by: "SYN-LAW-01", approved_by: "SYN-SEC-02", created_on: "2026-06-08", updated_at: "2026-06-26T00:00:00Z" },
+  { id: "GO-CHN-POL", org_unit: "33030004181", department: "School Education (Policy)", category: "policy", subject: "Adoption of the revised continuous assessment framework", amount_paise: 0, status: "drafted", created_on: "2026-06-22", updated_at: "2026-06-26T00:00:00Z" },
+]
+
+export const demoGovernmentOrderDashboard: PlatformGovernmentOrderDashboard = {
+  scope: SCOPE,
+  orders: 16,
+  by_status: { published: 4, issued: 4, approved: 4, drafted: 4 },
+  by_category: { scheme: 4, establishment: 4, financial: 4, policy: 4 },
+  financial_value_paise: 0,
+  in_flight: [demoGovernmentOrders[1], demoGovernmentOrders[2], demoGovernmentOrders[3]],
   synthetic: true,
 }

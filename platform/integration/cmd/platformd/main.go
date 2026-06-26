@@ -1909,6 +1909,71 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.InvigilationDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/government-order", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Government Order (GO) register — the L1 State-Secretariat instrument. GET ?scope=<org> → scoped
+		// dashboard; ?list=1&status= → the scoped GO list; ?id= → one GO. POST { action, ... }: draft
+		// { id,org_unit,department,category,subject,amount_paise } opens a draft; vet { id,by } records legal
+		// vetting (draft→vetted); approve { id,by } records competent-authority approval (vetted→approved); issue
+		// { id,number } assigns a gazette number and issues (approved→issued, duplicate live numbers rejected);
+		// publish { id } gazettes it (issued→published); withdraw { id,reason } rescinds at any stage.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Department  string `json:"department"`
+				Category    string `json:"category"`
+				Subject     string `json:"subject"`
+				AmountPaise int64  `json:"amount_paise"`
+				Number      string `json:"number"`
+				By          string `json:"by"`
+				Reason      string `json:"reason"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "vet":
+				out, err := s.p.VetGO(req.ID, req.By)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "approve":
+				out, err := s.p.ApproveGO(req.ID, req.By)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "issue":
+				out, err := s.p.IssueGO(req.ID, req.Number)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "publish":
+				out, err := s.p.PublishGO(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawGO(req.ID, req.Reason)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			default: // draft
+				out, err := s.p.DraftGO(integration.GovernmentOrder{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Department: req.Department, Category: req.Category,
+					Subject: req.Subject, AmountPaise: req.AmountPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			o, ok := s.p.GovernmentOrderRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown government order"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, o, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedGovernmentOrders(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GovernmentOrderDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

@@ -3787,3 +3787,84 @@ export async function platformUnassignInvigilator(id: string, teacher: string): 
 export async function platformCloseDutySession(id: string): Promise<{ ok: boolean; error: string; session?: PlatformDutySession }> {
   return postJSON("/invigilation", { action: "close", id })
 }
+
+// ── Government Order (GO) register: linear lifecycle + gazette-number uniqueness + terminal withdrawal ─────
+// The canonical L1 State-Secretariat instrument. A GO advances drafted → vetted → approved → issued →
+// published one step at a time; issue assigns a gazette number that must be unique across live orders; a
+// withdrawn order is terminal. Downward-governance scoped.
+
+export interface PlatformGovernmentOrder {
+  id: string
+  org_unit: string
+  number?: string
+  department: string
+  category: string // policy | financial | establishment | scheme | administrative
+  subject: string
+  amount_paise: number
+  status: string // drafted | vetted | approved | issued | published | withdrawn
+  drafted_by?: string
+  vetted_by?: string
+  approved_by?: string
+  reason?: string
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformGovernmentOrderDashboard {
+  scope: string
+  orders: number
+  by_status: Record<string, number>
+  by_category: Record<string, number>
+  financial_value_paise: number
+  in_flight?: PlatformGovernmentOrder[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped Government Order dashboard from the backbone (null when not configured). */
+export async function platformGovernmentOrderDashboard(scope = "TN"): Promise<PlatformGovernmentOrderDashboard | null> {
+  if (!platformConfigured()) return demo.demoGovernmentOrderDashboard
+  return getOrDemo(`/government-order?scope=${encodeURIComponent(scope)}`, demo.demoGovernmentOrderDashboard)
+}
+
+/** The scoped Government Order list (optionally filtered by status). */
+export async function platformScopedGovernmentOrders(scope = "TN", status = ""): Promise<PlatformGovernmentOrder[]> {
+  if (!platformConfigured()) return demo.demoGovernmentOrders
+  return getOrDemo(`/government-order?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoGovernmentOrders)
+}
+
+/** Open a draft Government Order. */
+export async function platformDraftGO(input: {
+  id: string
+  org_unit: string
+  department: string
+  category: string
+  subject: string
+  amount_paise: number
+}): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "draft", ...input })
+}
+
+/** Record legal vetting of a draft (draft → vetted). */
+export async function platformVetGO(id: string, by: string): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "vet", id, by })
+}
+
+/** Record competent-authority approval (vetted → approved). */
+export async function platformApproveGO(id: string, by: string): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "approve", id, by })
+}
+
+/** Assign a gazette number and issue (approved → issued) — duplicate live numbers are rejected. */
+export async function platformIssueGO(id: string, number: string): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "issue", id, number })
+}
+
+/** Gazette an issued order (issued → published). */
+export async function platformPublishGO(id: string): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "publish", id })
+}
+
+/** Rescind a Government Order at any stage, with a reason. */
+export async function platformWithdrawGO(id: string, reason: string): Promise<{ ok: boolean; error: string; order?: PlatformGovernmentOrder }> {
+  return postJSON("/government-order", { action: "withdraw", id, reason })
+}

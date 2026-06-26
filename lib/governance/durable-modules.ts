@@ -70,6 +70,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "vehicle-fitness", label: "Vehicle Fitness / Transport Safety", service: "/vehicle-fitness", invariant: "roadworthiness clearance gate — cannot clear a vehicle for service while any required document (fitness/insurance/permit/PUC/driver licence) is invalid + auto-ground on a required-document lapse" },
   { route: "textbook-indent", label: "Textbook / Uniform Indent", service: "/indent", invariant: "no over-indent (indented ≤ sanctioned entitlement) + approval cap (approved ≤ indented) + no over-supply (cumulative supplied ≤ approved); staged raise→approved→supplied" },
   { route: "invigilation-roster", label: "Exam Invigilation Duty Roster", service: "/invigilation", invariant: "no clash — an invigilator cannot be on two sessions in the same date+slot + capacity/uniqueness per session + no close while understaffed" },
+  { route: "government-order", label: "Government Orders (State Secretariat)", service: "/government-order", invariant: "linear lifecycle — drafted→vetted→approved→issued→published one stage at a time (no skipping) + gazette number required on issue with cross-order uniqueness (no duplicate live number) + withdrawal is terminal; financial GOs gated by Policy-as-Code (PFMS sanction-first)" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */

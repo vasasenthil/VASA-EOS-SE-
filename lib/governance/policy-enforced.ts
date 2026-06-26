@@ -86,6 +86,13 @@ export const POLICY_ENFORCED_ACTIONS: PolicyEnforcedAction[] = [
     statute: "GFR / PFMS fund-flow + financial delegation",
     effect: "a grant allocation is denied if unsanctioned and routed to secretariat approval above the delegated threshold",
   },
+  {
+    route: "government-order",
+    file: "app/government-order/actions.ts",
+    policyAction: "fund.release",
+    statute: "GFR / PFMS fund-flow + financial delegation",
+    effect: "issuing a financial Government Order is denied if unsanctioned and routed to secretariat approval above the delegated threshold",
+  },
 ]
 
 /** Count of mutating server-action flows wired to the runtime policy gate. */
