@@ -1798,6 +1798,60 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.VehicleFitnessDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/indent", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Textbook / Uniform Indent. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped indent
+		// list; ?id= → one indent. POST { action, ... }: raise { id,org_unit,item,entitled_qty,indented_qty }
+		// raises an indent (rejecting an over-indent beyond entitlement); approve { id,approved_qty } approves a
+		// quantity (≤ indented); supply { id,qty } books a supply (cumulative ≤ approved); reject { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Item        string `json:"item"`
+				EntitledQty int    `json:"entitled_qty"`
+				IndentedQty int    `json:"indented_qty"`
+				ApprovedQty int    `json:"approved_qty"`
+				Qty         int    `json:"qty"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "approve":
+				out, err := s.p.ApproveIndent(req.ID, req.ApprovedQty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			case "supply":
+				out, err := s.p.SupplyIndent(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			case "reject":
+				out, err := s.p.RejectIndent(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			default: // raise
+				out, err := s.p.RaiseIndent(integration.TextbookIndent{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Item: req.Item, EntitledQty: req.EntitledQty, IndentedQty: req.IndentedQty,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			in, ok := s.p.IndentRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown indent"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, in, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedIndents(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.IndentDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

@@ -3650,3 +3650,71 @@ export async function platformRecordDoc(input: {
 export async function platformClearVehicle(id: string): Promise<{ ok: boolean; error: string; vehicle?: PlatformFitnessVehicle }> {
   return postJSON("/vehicle-fitness", { action: "clear", id })
 }
+
+// ── Textbook / Uniform Indent: no-over-indent + approval cap + no-over-supply ─────────────────────────────
+// A school raises an indent against its sanctioned entitlement, a higher office approves a quantity, and supply
+// is delivered against the approval. Indented ≤ entitlement, approved ≤ indented, cumulative supplied ≤ approved.
+// Staged raise → approved → supplied. Scoped.
+
+export interface PlatformTextbookIndent {
+  id: string
+  org_unit: string
+  item: string // textbook_set | uniform_set | notebook_pack | shoes | atlas
+  entitled_qty: number
+  indented_qty: number
+  approved_qty: number
+  supplied_qty: number
+  status: string // raised | approved | supplied | rejected
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformIndentDashboard {
+  scope: string
+  indents: number
+  by_status: Record<string, number>
+  entitled_qty: number
+  indented_qty: number
+  approved_qty: number
+  supplied_qty: number
+  pending_approve?: PlatformTextbookIndent[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped indent dashboard from the backbone (null when not configured). */
+export async function platformIndentDashboard(scope = "TN"): Promise<PlatformIndentDashboard | null> {
+  if (!platformConfigured()) return demo.demoIndentDashboard
+  return getOrDemo(`/indent?scope=${encodeURIComponent(scope)}`, demo.demoIndentDashboard)
+}
+
+/** The scoped indent list (optionally filtered by status). */
+export async function platformScopedIndents(scope = "TN", status = ""): Promise<PlatformTextbookIndent[]> {
+  if (!platformConfigured()) return demo.demoIndents
+  return getOrDemo(`/indent?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoIndents)
+}
+
+/** Raise an indent — rejected on an over-indent beyond the entitlement. */
+export async function platformRaiseIndent(input: {
+  id: string
+  org_unit: string
+  item: string
+  entitled_qty: number
+  indented_qty: number
+}): Promise<{ ok: boolean; error: string; indent?: PlatformTextbookIndent }> {
+  return postJSON("/indent", { action: "raise", ...input })
+}
+
+/** Approve a quantity — rejected beyond the indented quantity. */
+export async function platformApproveIndent(id: string, approved_qty: number): Promise<{ ok: boolean; error: string; indent?: PlatformTextbookIndent }> {
+  return postJSON("/indent", { action: "approve", id, approved_qty })
+}
+
+/** Book a supply — rejected on a cumulative over-supply beyond the approved quantity. */
+export async function platformSupplyIndent(id: string, qty: number): Promise<{ ok: boolean; error: string; indent?: PlatformTextbookIndent }> {
+  return postJSON("/indent", { action: "supply", id, qty })
+}
+
+/** Reject a raised indent. */
+export async function platformRejectIndent(id: string): Promise<{ ok: boolean; error: string; indent?: PlatformTextbookIndent }> {
+  return postJSON("/indent", { action: "reject", id })
+}

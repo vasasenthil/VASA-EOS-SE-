@@ -87,6 +87,8 @@ import type {
   PlatformSavingsAccount,
   PlatformVehicleFitnessDashboard,
   PlatformFitnessVehicle,
+  PlatformIndentDashboard,
+  PlatformTextbookIndent,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1107,5 +1109,24 @@ export const demoVehicleFitnessDashboard: PlatformVehicleFitnessDashboard = {
   cleared: 1,
   grounded: 3,
   grounds: [demoFitnessVehicles[1]],
+  synthetic: true,
+}
+
+// ── Textbook / Uniform Indent ────────────────────────────────────────────────────────────────────────────
+export const demoIndents: PlatformTextbookIndent[] = [
+  { id: "IND-CHN-BOOK", org_unit: "33030004181", item: "textbook_set", entitled_qty: 320, indented_qty: 300, approved_qty: 0, supplied_qty: 0, status: "raised", created_on: "2026-06-15", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "IND-CHN-UNI", org_unit: "33030004181", item: "uniform_set", entitled_qty: 320, indented_qty: 300, approved_qty: 280, supplied_qty: 200, status: "approved", created_on: "2026-06-10", updated_at: "2026-06-25T00:00:00Z" },
+  { id: "IND-CHN-NB", org_unit: "33030004181", item: "notebook_pack", entitled_qty: 320, indented_qty: 320, approved_qty: 320, supplied_qty: 320, status: "supplied", created_on: "2026-06-05", updated_at: "2026-06-25T00:00:00Z" },
+]
+
+export const demoIndentDashboard: PlatformIndentDashboard = {
+  scope: SCOPE,
+  indents: 12,
+  by_status: { raised: 4, approved: 4, supplied: 4 },
+  entitled_qty: 3840,
+  indented_qty: 3680,
+  approved_qty: 2400,
+  supplied_qty: 2080,
+  pending_approve: [demoIndents[0]],
   synthetic: true,
 }
