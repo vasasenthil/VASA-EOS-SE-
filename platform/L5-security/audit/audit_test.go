@@ -1,6 +1,9 @@
 package audit
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func seed(t *testing.T) *Log {
 	t.Helper()
@@ -101,5 +104,78 @@ func TestEmptyLogRoots(t *testing.T) {
 	l := New()
 	if l.Head() != genesisPrev || l.MerkleRoot() != genesisPrev {
 		t.Fatal("empty log head/root should be genesis")
+	}
+}
+
+// fakeSink is an in-test durability backend for the audit log.
+type fakeSink struct {
+	stored []Record
+	failOn int // persist returns an error when len(stored)==failOn (0 = never)
+}
+
+func (f *fakeSink) Persist(r Record) error {
+	if f.failOn != 0 && len(f.stored) == f.failOn {
+		return errors.New("disk full")
+	}
+	f.stored = append(f.stored, r)
+	return nil
+}
+func (f *fakeSink) Load() ([]Record, error) { return f.stored, nil }
+
+func TestSinkPersistsAndReloads(t *testing.T) {
+	sink := &fakeSink{}
+	l, err := NewWithSink(sink)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		if _, err := l.Append(Entry{Action: "fund.release", Actor: "SEC", TS: "t"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(sink.stored) != 3 {
+		t.Fatalf("sink must have 3 persisted records, got %d", len(sink.stored))
+	}
+	// a NEW log over the same sink reloads the verified chain and continues from its head.
+	l2, err := NewWithSink(sink)
+	if err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if l2.Len() != 3 {
+		t.Fatalf("reloaded log must have 3 records, got %d", l2.Len())
+	}
+	r, _ := l2.Append(Entry{Action: "offswitch.engage", TS: "t"})
+	if r.Seq != 4 || r.PrevHash != sink.stored[2].Hash {
+		t.Fatalf("reloaded chain did not continue: %+v", r)
+	}
+	if bad, err := l2.Verify(); err != nil {
+		t.Fatalf("reloaded+appended chain must verify: bad=%d err=%v", bad, err)
+	}
+}
+
+func TestSinkLoadRejectsTamperedChain(t *testing.T) {
+	sink := &fakeSink{}
+	l, _ := NewWithSink(sink)
+	l.Append(Entry{Action: "a", TS: "t"})
+	l.Append(Entry{Action: "b", TS: "t"})
+	// tamper with a persisted record's content.
+	sink.stored[0].Action = "tampered"
+	if _, err := NewWithSink(sink); err == nil {
+		t.Fatal("loading a tampered persisted chain must fail at startup")
+	}
+}
+
+func TestSinkPersistFailureRollsBack(t *testing.T) {
+	sink := &fakeSink{failOn: 1} // fail on the SECOND append
+	l, _ := NewWithSink(sink)
+	if _, err := l.Append(Entry{Action: "a", TS: "t"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := l.Append(Entry{Action: "b", TS: "t"}); err == nil {
+		t.Fatal("a persist failure must surface as an error")
+	}
+	// memory and store stay consistent (both 1).
+	if l.Len() != 1 || len(sink.stored) != 1 {
+		t.Fatalf("rollback failed: len=%d stored=%d", l.Len(), len(sink.stored))
 	}
 }

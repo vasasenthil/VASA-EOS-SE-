@@ -1,6 +1,6 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled, isDbUnreachable } from "@/lib/supabase/server"
 import { demoOrganizationalUnits, demoTiers } from "@/lib/governance/demo"
 import { canDo } from "@/lib/access/guard"
 import { revalidatePath } from "next/cache"
@@ -124,7 +124,7 @@ export async function getOrganizationalUnitsAction(params?: {
   includeUserCount?: boolean
   includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     // Demo walkthrough (no database): show the representative demo hierarchy so the page renders.
     return { success: true, message: "No database configured — showing demo units.", data: demoOrganizationalUnits() }
   }
@@ -154,6 +154,10 @@ export async function getOrganizationalUnitsAction(params?: {
 
     if (error) {
       console.error("Error fetching OUs:", error)
+      // a configured-but-unreachable database should not blank the form — fall back to the demo units.
+      if (isDbUnreachable(error)) {
+        return { success: true, message: "Database unreachable — showing demo units.", data: demoOrganizationalUnits() }
+      }
       return { success: false, message: `Failed to fetch OUs: ${error.message}`, data: [] }
     }
 
@@ -164,6 +168,10 @@ export async function getOrganizationalUnitsAction(params?: {
     return { success: true, message: "Organizational Units fetched successfully.", data: ous }
   } catch (e: any) {
     console.error("Unexpected error fetching OUs:", e)
+    // a thrown network failure (TypeError: fetch failed) degrades to demo units instead of a hard error.
+    if (isDbUnreachable(e)) {
+      return { success: true, message: "Database unreachable — showing demo units.", data: demoOrganizationalUnits() }
+    }
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
   }
 }
@@ -385,6 +393,10 @@ export async function getGovernanceTiersAction(): Promise<OUActionState<Governan
 
     if (error) {
       console.error("Error fetching governance tiers:", error)
+      // a configured-but-unreachable database should not blank the form — fall back to the demo tiers.
+      if (isDbUnreachable(error)) {
+        return { success: true, message: "Database unreachable — showing demo tiers.", data: demoTiers() }
+      }
       return { success: false, message: `Failed to fetch governance tiers: ${error.message}`, data: [] }
     }
     const tiers = (data as GovernanceTier[] | null) ?? []
@@ -394,6 +406,10 @@ export async function getGovernanceTiersAction(): Promise<OUActionState<Governan
     return { success: true, message: "Governance tiers fetched successfully.", data: tiers }
   } catch (e: any) {
     console.error("Unexpected error fetching governance tiers:", e)
+    // a thrown network failure (TypeError: fetch failed) degrades to demo tiers instead of a hard error.
+    if (isDbUnreachable(e)) {
+      return { success: true, message: "Database unreachable — showing demo tiers.", data: demoTiers() }
+    }
     return { success: false, message: `An unexpected error occurred: ${e.message}`, data: [] }
   }
 }

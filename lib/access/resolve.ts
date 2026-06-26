@@ -7,7 +7,7 @@
 // walkthrough keeps working; set DEMO_ROLE to test enforcement as a lesser role.
 
 import { cookies } from "next/headers"
-import { getUserIdFromAction, getUserRoleAndSchool } from "@/lib/auth/server"
+import { getUserIdFromAction, getUserRoleAndSchool, getUserRoles } from "@/lib/auth/server"
 import { isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { DEMO_COOKIE } from "@/lib/demo-auth"
 import { PORTALS, type PortalRole } from "@/config/portals"
@@ -52,8 +52,14 @@ export async function resolveSubject(): Promise<Subject> {
     const userId = await getUserIdFromAction()
     if (userId) {
       const info = await getUserRoleAndSchool(userId)
-      const role = asRole(info?.role)
-      if (role) return subjectForRoles([role], { school: info?.school_id ?? "" }, userId)
+      // Resolve EVERY role the user holds (primary + per-OU assignments), not just the first, so a multi-role
+      // user is authorised for all of them. Only valid portal roles become Subject roles.
+      const roles = (await getUserRoles(userId))
+        .map(asRole)
+        .filter((r): r is PortalRole => r !== null)
+      if (roles.length > 0) {
+        return subjectForRoles(roles, { school: info?.school_id ?? "" }, userId)
+      }
     }
   } catch {
     // Fall through to the demo session / fail-closed fallback.

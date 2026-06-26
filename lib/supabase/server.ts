@@ -78,3 +78,7 @@ export const isSupabaseAdminConfigured = (): boolean => !!supabaseAdminInstance
 // production deployment with a database stays fail-closed unless it deliberately enables the demo.
 export const isDemoModeEnabled = (): boolean =>
   process.env.NEXT_PUBLIC_DEMO_MODE === "true" || !isSupabaseAdminConfigured()
+
+// Re-exported from the pure connectivity module so existing `@/lib/supabase/server` imports keep working while
+// the detection logic stays dependency-free and unit-testable.
+export { isDbUnreachable } from "./connectivity"

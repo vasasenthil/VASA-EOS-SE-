@@ -115,3 +115,23 @@ func TestDirectoryScopedByDownwardGovernance(t *testing.T) {
 		t.Fatalf("an unknown subject must see nobody: %d", len(got))
 	}
 }
+
+func TestEvaluateAccessExplicitSubject(t *testing.T) {
+	p := newPlatform(t)
+	chennaiSchool := p.SchoolsGovernedBy("TN-DIST-Chennai").Sample[0]
+	// a HEAD_TEACHER (write:school grant) in-jurisdiction → permit, no pre-seeded user needed.
+	hm := directory.User{Role: "HEAD_TEACHER", OrgUnit: chennaiSchool, Attributes: map[string]string{"cadre": "teaching"}}
+	if dec := p.EvaluateAccess(hm, "write:school", directory.Resource{OrgUnit: chennaiSchool}, directory.Context{}); !dec.Permitted() {
+		t.Fatalf("head teacher should write:school in own school: %+v", dec)
+	}
+	// a TEACHER lacks write:school → RBAC deny (this is what gates approve:leave / manage:staff in the app).
+	tch := directory.User{Role: "TEACHER", OrgUnit: chennaiSchool, Attributes: map[string]string{"cadre": "teaching"}}
+	if dec := p.EvaluateAccess(tch, "write:school", directory.Resource{OrgUnit: chennaiSchool}, directory.Context{}); dec.Effect != "deny" || dec.DecidingModel != "RBAC" {
+		t.Fatalf("teacher must be RBAC-denied write:school: %+v", dec)
+	}
+	// an anonymous subject (no role) is denied everything (fail-closed) — the frontend's role-less fallback.
+	anon := directory.User{Role: "", OrgUnit: ""}
+	if dec := p.EvaluateAccess(anon, "read:report", directory.Resource{}, directory.Context{}); dec.Effect != "deny" {
+		t.Fatalf("a role-less subject must be denied: %+v", dec)
+	}
+}

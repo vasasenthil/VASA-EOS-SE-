@@ -1056,3 +1056,1457 @@ wired into the composition root and surfaced on platformd:
   persisted in Postgres.
 - Green bar: 54 Go modules pass (in-memory sweep), durable PG tests (calendar + exams) pass via the CI
   `TestPg` step against the live PostgreSQL service, OPA 33/33, gofmt clean.
+
+## Production-wiring vertical 3 + the frontend↔backbone connection: Staff Leave & Approval
+- Closes the audit's biggest gap ("the Next.js app never calls the Go platformd; two disconnected stacks").
+- New L6 `leave` module — file a request → DYNAMIC multi-level approval whose depth is the number of days
+  (principal always · +BEO over 5 days · +DEO over 15 days); pure transitions (NewRequest/ApplyDecide) shared
+  by both stores. `platform/integration/leave.go` (+ scoped listing + role-gated approval inbox) and
+  `leave_pg.go` (durable PostgreSQL adapter, chain as JSONB). platformd: `POST /leave`, `POST /leave/decide`,
+  `GET /leave?scope=&status=&as=`. Migration of record: `scripts/083-create-leave-requests-table.sql`.
+- THE CONNECTION: new `lib/platform-client.ts` (typed HTTP client to platformd; active when `PLATFORM_URL` is
+  set). `app/leave-approvals/actions.ts` now routes file/decide/list through the Go backbone when configured
+  (adapting the backbone leave.Request into the board's LeaveFlowRecord), with the existing Supabase/in-memory
+  path as the credential-free fallback. So a frontend "Submit leave request" button → Next.js server action →
+  HTTP → Go platformd → PostgreSQL, with OPA enforcement and a real audit chain.
+- PROVEN LIVE (raw): `TestPgLeaveDurable` passes (20-day request routes principal→BEO→DEO; every decision
+  survives fresh store instances; wrong-role fail-closed; list/filter durable). Against platformd
+  (live-opa + DATABASE_URL): the EXACT request `platformFileLeave()` sends filed LV-DEMO-1 (16 days → 3-level
+  chain) → confirmed in Postgres via psql; walked HEAD_TEACHER→BEO→DEO via `/leave/decide` to approved;
+  DEO-first attempt fail-closed; final state durable in Postgres.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 3 durable PG tests (calendar+exams+leave)
+  pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors. 505 tests.
+
+## Production-wiring vertical 4: User Directory / IAM → durable PostgreSQL
+- New `platform/integration/directory_pg.go` — durable PostgreSQL user store (`directory_users`: role, org unit,
+  ABAC attributes as JSONB, suspension). `userDirectory` interface; `iamState()` selects the Postgres store when
+  `DATABASE_URL` is set, in-memory otherwise; idempotent seed (upsert) refreshes the synthetic catalogue without
+  disturbing real added users. `AccessExplain` now resolves the user from the store and runs the engine over it
+  (so the five-model PDP decides over PERSISTED records). New `Platform.AddUser` (durable CRUD) + `POST /directory`.
+- PROVEN LIVE (raw): `TestPgDirectoryDurable` passes — users persist across fresh store instances; idempotent
+  update; rollups durable; the unified PDP decides over persisted users (in-jurisdiction read permit;
+  out-of-jurisdiction ReBAC deny; a durably-suspended user ABAC-denied). Against platformd (live-opa +
+  DATABASE_URL): `POST /directory` added a new DEO → confirmed in Postgres via psql → `/access-explain` over the
+  persisted user returned permit (RBAC, in-jurisdiction); directory count grew durably.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 4 durable PG tests
+  (calendar+exams+leave+directory) pass via the CI TestPg step against the live PostgreSQL service, OPA 33/33,
+  gofmt clean, tsc 0 errors. 506 tests.
+- Durable, restart-surviving, PDP-enforced verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM.
+
+## Production-wiring vertical 5: tamper-evident Audit chain → durable PostgreSQL
+- Added an optional `Sink` to the pure L5 `audit` module (interface only — module stays stdlib): `NewWithSink`
+  loads + RE-VERIFIES the persisted chain on startup and continues from its head; `Append` persists each sealed
+  record before acknowledging and rolls back the in-memory append on a persist failure (memory/storage never
+  diverge). Module tests: persist+reload+continue, tamper-on-load rejection, persist-failure rollback.
+- New `platform/integration/audit_pg.go` — PostgreSQL audit sink (`audit_chain`: seq PK, UNIQUE hash, prev_hash
+  links). `newAuditLog()` wires it into the Platform when `DATABASE_URL` is set; a persisted chain that fails
+  verification at startup makes the platform refuse to run (fail-closed). Migration: `scripts/084`.
+- PROVEN LIVE (raw): `TestPgAuditDurable` + `TestPgAuditPlatformDurable` pass — the chain survives fresh log
+  AND fresh platform instances, re-verifies, continues contiguously, and a directly-tampered persisted row is
+  rejected at startup. platformd restart proof: run 1 wrote 2 audited records (leave.file, leave.decide) to
+  Postgres; a fresh process reported audit_records=2 / chain_intact=true and a new action continued the SAME
+  chain (seq 3, prev_hash = seq 2's hash across the restart boundary); SQL self-join showed 0 broken links.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 6 durable PG tests
+  (calendar+exams+leave+directory+audit×2) pass via the CI TestPg step against the live PostgreSQL service,
+  OPA 33/33, gofmt clean, tsc 0 errors. 511 tests.
+- Durable, restart-surviving verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain.
+
+## Unifying the two PDPs: the Next.js access guard delegates to the Go sovereign PDP
+- Closes the audit's "TS and Go PDPs are separate code, could diverge" finding, and confirms the ADMIN-default
+  is already gated: `resolveSubject()` returns a ROLE-LESS anonymous subject in a configured deployment (canDo
+  denies); only the credential-free demo (no DB) falls back to a configurable DEMO_ROLE.
+- Go: `Platform.EvaluateAccess(user, action, resource, ctx)` evaluates an EXPLICIT subject (not a pre-seeded
+  user) against the unified five-model engine; new `POST /access-decide` endpoint exposes it. Test
+  `TestEvaluateAccessExplicitSubject` (head teacher write:school permit · teacher RBAC-deny · role-less deny).
+- TS: `lib/platform-client.platformDecideAccess()` calls `/access-decide`; new `lib/access/pdp-bridge.ts` maps
+  the app's 17 portal roles + 12 guarded actions onto the Go PDP vocabulary (e.g. PRINCIPAL→HEAD_TEACHER,
+  approve:leave→write:school, manage:users→manage:users, resolve:grievance→route:grievance). `lib/access/
+  guard.ts canDo()` now consults the sovereign PDP first when `PLATFORM_URL` is set (authoritative for mapped
+  actions); unmapped actions / a backbone blip degrade to the local PDP (which uses the real resolved role).
+- PROVEN LIVE (raw): `/access-decide` over the mapped vocabulary — PRINCIPAL approve:leave→permit, TEACHER
+  approve:leave→deny (RBAC), PUBLIC manage:users→deny, ADMIN manage:users→permit (wildcard), SECRETARY
+  manage:users→permit, DEO resolve:grievance→permit, anonymous→deny (fail-closed). The frontend and the
+  backbone now share ONE decision engine.
+- Green bar (both stacks): 55 Go modules pass (in-memory sweep), 6 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Production-wiring vertical 6: Grievance Redressal cases (SLA auto-escalation) → durable PostgreSQL
+- New L12 `grievance` module — a citizen grievance becomes a durable case handled by a tier of officers under
+  an SLA. DISTINCT feature vs the AI grievance-routing in grievance.go: TIME-DRIVEN escalation. Category drives
+  the chain (safety → HEAD_TEACHER·DEO·DIRECTOR, SLA 3d; financial → HEAD_TEACHER·BEO·DEO; others →
+  HEAD_TEACHER·BEO, SLA 7d). Pure transitions (NewGrievance/ApplyResolve/ApplyReject/ApplyEscalate/Overdue).
+- Integration `grievance_case.go` (named to avoid colliding with the existing routing feature):
+  `FileGrievanceCase` · `HandleGrievanceCase` (resolve/reject/escalate, fail-closed handler gating) ·
+  `EscalateOverdueCases` (the SLA sweep — every open case past due auto-escalates, "sla" actor) ·
+  `GrievanceCaseDashboard` (scoped: by status/category, overdue count, open list) · `GrievanceCasesScopedBy`.
+  Durable PG adapter `grievance_case_pg.go` (chain JSONB). platformd: `POST /grievance-case`,
+  `POST /grievance-case/act`, `POST /grievance-case/sweep`, `GET /grievance-case?scope=&status=&list=`.
+  Migration: `scripts/085-create-grievance-cases-table.sql`.
+- PROVEN LIVE (raw): `TestPgGrievanceDurable` (file safety case → 3-tier chain; wrong-handler fail-closed;
+  escalate + resolve persist across fresh instances) and `TestSLAAutoEscalation` (an overdue open case is
+  auto-escalated, recording the "sla" actor) pass. platformd (durable audit + DATABASE_URL): filed a safety
+  grievance (chain HEAD_TEACHER→DEO→DIRECTOR, SLA due +3d) → head teacher resolved at tier 0; a DEO acting at
+  tier 0 was fail-closed ("needs HEAD_TEACHER"); both persisted in Postgres.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+- Durable verticals now: Calendar · Exams · Leave (frontend-wired) · Directory/IAM · Audit chain · Grievance cases.
+
+## Automatic SLA enforcement: background grievance sweeper inside platformd
+- platformd now runs the grievance SLA sweep on a timer (`GRIEVANCE_SWEEP_SECONDS` > 0 → a background ticker),
+  so an overdue case auto-escalates to the next tier WITHOUT an external cron — escalation is genuinely
+  time-driven. The banner shows `sla-sweep <interval>` (or `off`); a new metric
+  `vasa_grievance_sla_escalations_total` counts auto-escalations; each is written to the durable audit chain.
+  Unit test `TestGrievanceSweeperConfig` (off by default / off at zero interval).
+- PROVEN LIVE (raw): seeded an overdue open grievance directly in Postgres (due 2026-06-08), started platformd
+  with `GRIEVANCE_SWEEP_SECONDS=2` → banner `sla-sweep 2s`; at +2s the log showed "auto-escalated 1 overdue
+  grievance case(s): [SWEEP-1]"; the row moved tier 0→1 with `decided_by=sla, decision=escalated` (no manual
+  call); `/metrics` reported `vasa_grievance_sla_escalations_total 1`; a `system:sla grievance.case.escalate.sla`
+  record was persisted to the audit chain.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 7 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Second frontend↔backbone flow: the grievance board → durable Go grievance-case service
+- Extends the frontend↔backbone connection (after leave) to a second flow. `lib/platform-client.ts` gains
+  `platformFileGrievance` / `platformActGrievance` / `platformListGrievance` (calling `/grievance-case`,
+  `/grievance-case/act`). `app/grievance-approvals/actions.ts` now routes file/act/list through the Go backbone
+  when `PLATFORM_URL` is set — adapting the backbone grievance.Grievance into the board's GrievanceFlowRecord
+  (synthesising the workflow instance from the escalation chain), with a category mapper onto the canonical set
+  and PRINCIPAL→HEAD_TEACHER role mapping. The existing in-memory/Supabase path remains the demo fallback.
+- PROVEN LIVE (raw): the EXACT requests the grievance actions send drove the Go backend — filed a "safety"
+  grievance (category mapped → 3-tier chain HEAD_TEACHER→DEO→DIRECTOR) confirmed in Postgres via psql; resolved
+  at tier 0 (PRINCIPAL→HEAD_TEACHER) → status resolved; the list endpoint returned it as resolved. So a second
+  frontend flow (grievance) now drives the durable, SLA-enforced, audited Go backbone over HTTP.
+- Green bar: tsc 0 errors (TS-only change this turn); the Go backbone (56 modules, 7 durable PG tests, OPA
+  33/33) is unchanged from the prior green sweep.
+
+## Production-wiring vertical 7: durable Admission applications register (PII-free)
+- The admission workflow computed + audited decisions but never persisted the APPLICATION. Added a durable
+  applications register: `admission_store.go` (AdmissionApplication + interface + in-memory store + dashboard)
+  and `admission_pg.go` (PostgreSQL adapter, upsert). `recordAdmission(req,res)` is called at each terminal
+  outcome (admitted/denied/pending-approval/residency) — guarded to never persist an id-less request. NO
+  cleartext PII is stored (the name is sealed under the tenant KEK during the workflow; only a pii_sealed flag
+  is kept). `Platform.AdmissionApplicationRecord` + `AdmissionDashboard(tenant)`; `GET /admissions`. Migration:
+  `scripts/086-create-admission-applications-table.sql`.
+- Surfaced + fixed a latent bug: `recordAdmission` guards against an empty applicant id (the endpoint contract
+  is camelCase — `applicantId` — which binds case-insensitively; a malformed snake_case body would otherwise
+  collide on id="").
+- PROVEN LIVE (raw): `TestPgAdmissionDurable` (admitted + pending records persist across fresh instances;
+  post-HITL upsert to admitted is durable) and `TestAdmissionPersistsApplication` (the live EWS-reject workflow
+  records a pending-approval application with its HITL request id; dashboard rolls it up) pass. platformd
+  (live-opa + DATABASE_URL): admitted a GEN applicant (credential ADM-LIVE-A1) and an EWS reject → pending; the
+  `admission_applications` table held both with proper ids, effect, credential id and pii_sealed — and NO PII;
+  `/admissions?tenant=TN/Chennai` rolled them up by stage/category.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests
+  (calendar·exams·leave·directory·audit×2·grievance·admission) pass via the CI TestPg step against the live
+  PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Closing the admission loop: durable HITL finalisation
+- `Platform.FinaliseAdmission(ctx, requestID, approve, officer)` resolves a pending-approval admission
+  end-to-end: a scoped officer decides the HITL request (admission.decide, fail-closed) and the DURABLE
+  application record is flipped to its final stage. Child-protective RTE semantics: requested reject + APPROVE
+  → denied (rejection upheld); requested reject + REJECT → admitted (overturned in the child's favour, credential
+  minted+anchored); requested admit + APPROVE → admitted; requested admit + REJECT → denied. `POST
+  /admissions/finalise`.
+- PROVEN LIVE (raw): `TestFinaliseAdmissionUpdatesPersistedRecord` passes (pending → overturn admits + issues
+  ADM-credential, record finalised with no dangling request id; upheld rejection denies; unknown request id
+  errors). platformd (live-opa + DATABASE_URL): an EWS reject → pending-approval (request TR-0001, persisted);
+  the reviewer overturned it (approve=false) → the durable row flipped from pending-approval/TR-0001/no-cred to
+  admitted / cleared-request / credential ADM-FE-EWS.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Sovereign Console surfaces live durable operations
+- The T0 super-admin console now shows the LIVE operating state of the durable workflow verticals, not just
+  conformance figures: a new `operations` block rolls up admissions (+pending review), grievance cases
+  (+overdue), leave (+pending), exam sheets, calendar entries and directory users — with a `durable` flag
+  (true when DATABASE_URL is set, so the counts are persisted). Read-only; role-gated like the rest of the
+  console (a non-super-admin sees nothing).
+- PROVEN LIVE (raw): `TestSovereignConsoleSurfacesLiveOperations` passes (the driven EWS admission + filed
+  grievance + seeded exams/calendar/directory all reflected; a TEACHER sees zero operations). platformd
+  (live-opa + DATABASE_URL): after driving a pending EWS admission and a grievance, `/sovereign?role=SUPERADMIN`
+  reported operations.durable=true, admissions 6 (pending 2), grievance_cases 5, leave 3, exam_sheets 3,
+  calendar 12, directory_users 22 — all from the durable Postgres stores; `role=TEACHER` → HTTP 403.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Prometheus gauges for the durable operational backlogs
+- `/metrics` now exposes the live operating state of the durable verticals as Prometheus gauges, so ops can
+  alert on backlogs: `vasa_store_durable` (1=persisted), `vasa_admissions` + `vasa_admissions_pending_review`,
+  `vasa_grievance_cases` + `vasa_grievance_overdue`, `vasa_leave_requests` + `vasa_leave_pending`,
+  `vasa_exam_sheets`, `vasa_calendar_entries`, `vasa_directory_users`. Sourced live from the persisted stores
+  via a new exported `Platform.Operations()` (aggregate counts only, no PII — `/metrics` is unauthenticated).
+- PROVEN LIVE (raw): the endpoint test asserts the new gauges; platformd (live-opa + DATABASE_URL) scrape
+  returned `vasa_store_durable 1`, `vasa_admissions 6`, `vasa_admissions_pending_review 2`,
+  `vasa_grievance_cases 5`, `vasa_grievance_overdue 0`, `vasa_leave_requests 3`, `vasa_leave_pending 1`,
+  `vasa_exam_sheets 3`, `vasa_calendar_entries 12`, `vasa_directory_users 22` — all from the durable stores.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Citizen-facing grievance tracker (public, PII-suppressed)
+- `Platform.GrievancePublicStatus(id)` + public `GET /track/grievance?id=` — a citizen tracks their grievance
+  ticket with no authentication. The view is PII-SUPPRESSED by construction: it returns only the ticket id,
+  category, status, the handling tier (role), the SLA filed/due dates and the escalation count — never the
+  complainant identity OR the free-text complaint (both of which may carry PII). Unknown ticket → not-found.
+- PROVEN LIVE (raw): `TestGrievancePublicStatusSuppressesPII` files a grievance with PII in the complainant +
+  subject and asserts none of it (name/phone/child-name/complaint text) appears in the public view. platformd
+  (durable + DATABASE_URL): filed PUB-1 with PII (complainant "Mrs. Lakshmi 98xxxxxx21", subject naming a child
+  + scholarship); `/track/grievance?id=PUB-1` returned only {category:financial, status:open, with_tier:
+  HEAD_TEACHER, filed_on, due_by, escalations:0} — a grep for the PII strings found NONE; unknown ticket → 404.
+- Green bar (both stacks): 56 Go modules pass (in-memory sweep), 8 durable PG tests pass via the CI TestPg step
+  against the live PostgreSQL service, OPA 33/33, gofmt clean, tsc 0 errors.
+
+## Resolve Governance + User-Management issues (audit-driven)
+Fixed the concrete, evidence-backed defects an audit surfaced in Governance and User Management:
+- **G-1 / UM-4 (HIGH, runtime bug):** `getAuthUsersForSelectionAction` (`app/governance/user-assignments/
+  actions.ts`) selected `raw_user_meta_data` — a Supabase auth.users column that does NOT exist on
+  public.users — failing with column-not-found. Now selects `id,email,full_name` and maps `full_name` into the
+  `AuthUser.raw_user_meta_data.name` shape the assignment UI expects.
+- **G-3 (multi-role gap):** `resolveSubject` only ever resolved the FIRST role. Added `getUserRoles(userId)`
+  (`lib/auth/server.ts`) — primary public.users role UNION user_ou_assignments roles — and `resolveSubject`
+  (`lib/access/resolve.ts`) now authorises ALL of a user's valid portal roles.
+- **G-2 (3 dangling TODOs):** the policy-CRUD "Determine OU context" TODOs (`app/policies/create/actions.ts`)
+  are resolved as an explicit DESIGN DECISION: policies are STATE-TIER artifacts (gated by *_NATIONAL
+  permissions), deliberately not per-OU — OU-scoping would fragment statutory State policy. 0 TODOs remain in
+  governance/policy/access TS.
+- **UM-1 / G-4 (the two disconnected identity planes):** new `lib/access/backbone-sync.ts` propagates a
+  Next.js-registered user into the Go sovereign directory (the durable identity plane the five-model PDP
+  decides over). Correctness-first: org_unit must be a REAL tenancy node — school-tier users → their UDISE
+  (a T6 node), state-tier roles → canonical Go nodes (TN/TN-SEC/TN-DIR-DSE); district/block roles with no
+  resolvable node are SKIPPED (not mis-anchored, which would break ReBAC). Wired into `register-user-action.ts`
+  (best-effort; a sync failure never fails a successful registration). No-op without PLATFORM_URL.
+  `platform-client.platformUpsertUser` + exported `backendRoleFor` from the PDP bridge.
+- **UM-3 was a FALSE alarm:** `app/admin/governance/users/page.tsx` and the assignments page both exist.
+- **Drift fix:** regenerated `scripts/bootstrap.sql` (85 migrations) — it was stale after this session's durable
+  migrations (081–086); the bootstrap drift test now passes.
+- PROVEN LIVE (raw): POSTing the exact payload `syncUserToBackbone` sends for a registered TEACHER created a
+  durable Go directory user (org_unit = real Chennai UDISE 33030004181, cadre=teaching); the unified PDP then
+  decided over them correctly — `write:assessment` in own school → permit (RBAC), in another school → deny
+  (ReBAC).
+- Green bar (both stacks): TS suite 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ 95/80/88 gate), tsc 0, lint
+  clean; Go 56 modules + 8 durable PG tests + OPA 33/33, gofmt clean.
+
+## Complete the identity-plane unification (UM-1/G-4) + new ecosystem vertical: Student Attendance
+### Identity-plane: district/block officers now anchorable
+- Go: exported `tenancy.DistrictNodeID`/`DirectorateNodeID`; `Platform.ResolveTenancyNode(hint)` resolves a
+  governance hint (node id / district name / directorate code) to a REAL tenancy node, fail-closed; endpoint
+  `GET /tenancy/resolve`. Test `TestResolveTenancyNode` (Chennai→TN-DIST-Chennai, DSE→TN-DIR-DSE, unknown→none).
+- TS: `lib/platform-client.platformResolveNode`; `backbone-sync` now anchors DEO/CEO via their district →
+  resolved tenancy node (no mis-anchoring). UM-1/G-4 is now complete across ALL tiers (school·state·district).
+- PROVEN LIVE: `/tenancy/resolve?district=Chennai` → {node:TN-DIST-Chennai, resolved:true}.
+### Student Attendance (new durable L6 vertical, RTE chronic-absentee analytics)
+- New L6 `attendance` module — high-volume daily data plane (one record per student per day), NOT a workflow:
+  Mark (idempotent on student+date — re-marking corrects), Get, List(filter), `AttendanceRate` (present+late /
+  attendable, excused-exempt), `IsChronicAbsentee` (<75% over >=10 days = RTE dropout early-warning), DaySummary.
+- Integration `attendance.go` (+ `attendance_pg.go`): per-platform store (mem/pg); `MarkAttendance` (audited),
+  `StudentAttendanceProfile` (rate + chronic flag), `AttendanceDashboard(scope, date)` (downward-governance
+  scoped: per-school day rates + chronic-absentee roll-up). Seeded ~20 days for a Chennai cohort incl. one
+  engineered chronic absentee. platformd: `GET /attendance?scope=&date=` (dashboard), `?student=` (profile),
+  `POST /attendance` (mark). Migration `scripts/087`.
+- PROVEN LIVE (raw): `TestPgAttendanceDurable` (16-day history persists + correction upsert + chronic flag over
+  the durable history) and `TestAttendanceDashboardScoped` pass. platformd (durable): marked LIVE-STU-1
+  (confirmed in Postgres); `/attendance?scope=TN-DIST-Chennai&date=` → 1 school, 12 marked, chronic_absentees
+  ['SYN-STU-D']; `/attendance?student=SYN-STU-D` → rate 30%, chronic true, 20 days.
+- Green bar (both stacks): 57 Go modules pass, 9 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; TS 1544/1544 pass, coverage 96.15/81.60/91.58 (≥ gate), tsc 0, lint clean.
+- Durable verticals now: Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · **Attendance**.
+
+## Ecosystem vertical: Scholarship / DBT (Direct Benefit Transfer) — durable, money-grade
+- New L6 `scholarship` module — a financial vertical distinct from the others: a scholarship is SANCTIONED
+  through an AMOUNT-DRIVEN multi-level fund-approval chain (PFMS/GFR: school+BEO always; +DEO over Rs50,000;
+  +directorate over Rs2,00,000), DISBURSED with a payment reference, then RECONCILED against the rail (matched →
+  reconciled; unmatched → FLAGGED as a leakage signal). Money in PAISE (int64) — never floats. Pure transitions
+  (NewDisbursement/ApplyDecide/ApplyDisburse/ApplyReconcile) shared by the in-memory and Postgres stores.
+- Integration `scholarship.go` (+ `scholarship_pg.go`): `FileScholarship`, `SanctionScholarship` (high-stakes
+  fund-release, fail-closed per tier), `DisburseScholarship`, `ReconcileScholarship` (all audited),
+  `ScholarshipDashboard(scope)` (downward-governance scoped: by status/scheme, pending-sanction backlog, total
+  rupees disbursed, leakage count). platformd: `POST /scholarship` (file), `POST /scholarship/act`
+  (sanction/disburse/reconcile), `GET /scholarship?scope=&status=&id=`. Migration `scripts/088`.
+- PROVEN LIVE (raw): `TestPgScholarshipDurable` (₹60k → 3-tier sanction → disburse → reconcile all persist
+  across fresh instances; wrong tier fail-closed) and `TestScholarshipDashboardScoped` pass. platformd (durable
+  + DATABASE_URL): filed ₹60,000 post-matric (chain HEAD_TEACHER→BEO→DEO); DEO-first sanction fail-closed;
+  walked to sanctioned → disbursed (PFMS-TXN-LIVE-1) → reconcile-unmatched → FLAGGED; Postgres shows
+  status=flagged, the audit chain holds the full money trail (sanction×2 / disburse / reconcile).
+- Green bar (both stacks): 58 Go modules pass, 10 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (9): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · **Scholarship/DBT**.
+
+## Ecosystem vertical: Teacher CPD (Continuing Professional Development) — durable, NEP-2020 compliance
+- New L6 `cpd` module — completes the TEACHER lifecycle (onboarding → service → professional development). A
+  data+analytics plane: durable records of in-service training (NISHTHA/SCERT/DIET/DIKSHA) with the NEP 2020
+  compliance picture — `HoursFor` (completed/certified hours; enrolled doesn't count) and `IsCompliant` (>= 50
+  hours/year). Pure + stdlib.
+- Integration `cpd.go` (+ `cpd_pg.go`): `RecordCPD` (audited), `TeacherCPDProfile(teacher, year)` (hours vs the
+  50h target + compliant flag), `CPDDashboard(scope, year)` (downward-governance scoped: teachers, compliant
+  count, compliance rate, total hours, deficient roster). Seeded 2026 CPD for a Chennai teacher cohort incl. one
+  engineered deficient teacher. platformd: `GET /cpd?scope=&year=` (dashboard), `?teacher=&year=` (profile),
+  `POST /cpd` (record). Migration `scripts/089`.
+- PROVEN LIVE (raw): `TestPgCpdDurable` (records + upsert correction persist across fresh instances; compliance
+  computes over durable history) and `TestCPDDashboardScoped` pass. platformd (durable + DATABASE_URL): recorded
+  a NISHTHA 20h completion (confirmed in Postgres); `/cpd?scope=TN-DIST-Chennai&year=2026` → 8 teachers, 7
+  compliant (87.5%), 435 total hours, deficient ['SYN-T-02']; `/cpd?teacher=SYN-T-02` → 19h vs 50h target, not
+  compliant.
+- Green bar (both stacks): 59 Go modules pass, 11 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (10): Calendar · Exams · Leave · Directory · Audit · Grievance · Admission · Attendance · Scholarship/DBT · **Teacher CPD**.
+
+## Ecosystem vertical: RBSK Child-Health Screening — durable child-welfare referral pipeline
+- New L12 `rbsk` module (Rashtriya Bal Swasthya Karyakram) — completes the student-welfare side alongside
+  attendance: every student is screened for the FOUR Ds (defect / disease / deficiency / disability); any
+  finding AUTO-refers to the DEIC (District Early Intervention Centre); the referral is tracked through the
+  pipeline (referred → under-treatment → closed). Pure transitions (NewScreening/ApplyTreat/ApplyClose).
+- Integration `rbsk.go` (+ `rbsk_pg.go`): `RecordScreening` (audited; auto-referral), `AdvanceReferral`
+  (treat/close, audited), `RBSKDashboard(scope)` (downward-governance scoped: screened coverage, healthy vs
+  with-findings, the 4-D breakdown, active referrals, referral closure rate), `RBSKReferralsScopedBy` (the
+  follow-up worklist). Findings stored as JSONB. Health data is sensitive → the dashboard surfaces aggregate
+  counts; individual findings are visible only to the governing officer. Seeded a synthetic screening camp at a
+  Chennai school (~18% with findings). platformd: `GET /rbsk?scope=&id=&referrals=`, `POST /rbsk`,
+  `POST /rbsk/referral`. Migration `scripts/090`.
+- PROVEN LIVE (raw): `TestPgRbskDurable` (findings JSONB + the treat→close pipeline persist across fresh
+  instances) and `TestRBSKDashboardScoped` pass. platformd (durable + DATABASE_URL): screened a student with
+  deficiency+disability → auto-referred to DEIC (confirmed in Postgres); referral walked treat → under-treatment
+  → closed with outcome; `/rbsk?scope=TN-DIST-Chennai` → 20 screened, 15 healthy, 5 with findings
+  (defect 2·deficiency 1·disease 2), 5 active referrals.
+- Green bar (both stacks): 60 Go modules pass, 12 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (11): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·**RBSK Health**.
+
+## Ecosystem vertical: School Timetable — durable, constraint-checked (teacher-clash detection)
+- New L6 `timetable` module — the operational scheduling plane that ties together the class roster and the
+  teacher roster: assign a class-slot (org · class · day · period → subject + teacher), and the store ENFORCES
+  the hard timetabling invariant that a teacher can never be in two classes at the same day+period
+  (`teacherClash`). Pure + stdlib: `Slot.Validate` (working day, period 1..8, teacher present), `Store.Set`
+  (validate → reject clash → upsert), `List` (day/period/class ordered), `TeacherLoad`.
+- Integration `timetable.go` (+ `timetable_pg.go`): `SetTimetableSlot` (audited; audits `timetable.set` /
+  `.set.denied`), `ClassTimetable(org,class)` + `TeacherTimetable(teacher)` (grid views), `TimetableDashboard
+  (scope)` (downward-governance scoped: slots, distinct classes/teachers, per-teacher weekly load, overloaded
+  roster > 30 periods/wk). The durable adapter does the clash check in SQL (targeted existence query on
+  teacher_id+day+period) before the ON CONFLICT upsert; index on (teacher_id,day,period). Seeded a clash-free
+  Grade 8-A weekly grid (5 days × 6 periods, 3 SYN-T teachers) at a Chennai school. platformd: `GET /timetable
+  ?class=&teacher=` (dashboard / grid), `POST /timetable` (assign). Migration `scripts/091`.
+- PROVEN LIVE (raw): `TestPgTimetableDurable` (slots + reassign upsert persist across fresh instances; the
+  teacher-clash invariant is enforced durably, surviving a fresh store) and `TestTimetableDashboardScoped`
+  pass. platformd (durable + DATABASE_URL): assigned free teacher SYN-T-09 to Grade 9-A Mon P1 (confirmed in
+  Postgres); a clash (SYN-T-09 in Grade 9-B at the same slot) was REJECTED — "teacher SYN-T-09 is already
+  teaching Grade 9-A at monday"; P2 for the same teacher was allowed; psql confirmed a clash-free schedule.
+- Green bar (both stacks): 61 Go modules pass, 13 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (12): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·**School Timetable**.
+
+## Ecosystem vertical: School Library — durable, constraint-checked circulation (one-copy-one-borrower)
+- New L6 `library` module — the learning-resources circulation plane: issue a physical book copy to a member
+  (student/teacher), renew (capped at 2), return, or mark lost. The store enforces the one hard invariant a
+  library must hold — a single physical copy can be on loan to at most one member at a time (`copyOnLoan`).
+  Pure + stdlib: `NewLoan` (computes the 14-day due date), `Validate`, the `ApplyReturn`/`ApplyRenew`/`ApplyLost`
+  transitions, `IsOverdue`/`OverdueCount` analytics.
+- Integration `library.go` (+ `library_pg.go`): `IssueBook`/`ReturnBook`/`RenewBook`/`ReportBookLost` (all
+  audited; deny paths audit too), `MemberLoans(member)` (history), `LibraryDashboard(scope)` (downward-governance
+  scoped: active loans, the overdue roster as-of today, copies lost, distinct members/titles). The durable
+  adapter enforces the copy invariant TWICE — a targeted SQL existence check before the insert AND a partial
+  unique index `(org_unit, copy_id) WHERE status='on_loan'`; transitions reuse the pure Apply* functions. Seeded
+  a circulation set at a real Chennai school library with two engineered-overdue loans. platformd: `GET /library
+  ?scope=` (dashboard), `?member=` (history), `POST /library {action: issue|return|renew|lost, …}`. Migration
+  `scripts/092`.
+- PROVEN LIVE (raw): `TestPgLibraryDurable` (loans + renew + return persist across fresh instances; the copy
+  invariant is enforced durably and survives a fresh store; a returned copy is re-issuable; lost persists) and
+  `TestLibraryDashboardScoped` pass. platformd (durable + DATABASE_URL): issued copy CP-NEW-1 to SYN-S-900
+  (confirmed in Postgres); the SAME copy to SYN-S-901 while out was REJECTED — "copy CP-NEW-1 is already on loan
+  (LOAN-…)"; renew extended the due date 2026-07-04→07-18 (renewals=1); return freed the copy; re-issue to
+  SYN-S-901 then SUCCEEDED; psql confirmed exactly one active loan per copy throughout. Seeded Chennai dashboard:
+  6 active loans, 2 overdue, 6 members, 4 titles.
+- Green bar (both stacks): 62 Go modules pass, 14 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (13): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·**School Library**.
+
+## Ecosystem vertical: School Transport — durable, route-safety (capacity + fitness/licence gating)
+- New L6 `transport` module — the student-transport route-safety plane: register a bus route (vehicle + driver
+  with the statutory validity dates that govern whether it may carry children) and seat students on it, with the
+  TWO hard safety invariants school transport must hold — (1) a route can never carry more students than the
+  vehicle's seating CAPACITY, and (2) no student may be allotted to an UNSERVICEABLE vehicle (one whose fitness
+  certificate or whose driver's licence has lapsed). Pure + stdlib: `Route.Serviceable`/`UnserviceableReason`
+  (the safety gate), `Occupancy`, `Store.Allot` (validate → serviceability gate → dedupe → capacity check).
+- Integration `transport.go` (+ `transport_pg.go`): `RegisterRoute`, `AllotSeat`, `WithdrawSeat` (all audited;
+  deny paths too), `RouteRoster(routeID)` (the manifest), `TransportDashboard(scope)` (downward-governance
+  scoped: fleet size, total capacity vs seated → utilisation %, and the unserviceable-route SAFETY ROSTER). The
+  durable adapter enforces capacity against the live occupancy count and the serviceability gate against the
+  stored route before each insert; a partial unique index backstops one-active-seat-per-student-per-route.
+  Seeded a Chennai fleet (one full route, one engineered unserviceable route with a lapsed FC). platformd:
+  `GET /transport?scope=&roster=`, `POST /transport {action: route|allot|withdraw, …}`. Migration `scripts/093`.
+- PROVEN LIVE (raw): `TestPgTransportDurable` (routes + seats persist across fresh instances; capacity ceiling
+  and the unserviceable gate are enforced durably; a withdrawn seat frees capacity) and
+  `TestTransportDashboardScoped` pass. platformd (durable + DATABASE_URL): a 5th seat on the full capacity-4
+  route RT-CHN-01 was REJECTED ("route RT-CHN-01 is at capacity"); allotting a child to RT-CHN-03 (lapsed FC)
+  was REJECTED ("cannot allot to an unserviceable route — vehicle fitness certificate expired (2026-03-01)");
+  after withdrawing a seat the re-allot SUCCEEDED; psql confirmed exactly 4 active seats (= capacity). Seeded
+  Chennai dashboard: 3 routes, 84 capacity, 9 seated (10.7% utilisation), 1 unserviceable route on the safety
+  roster.
+- Green bar (both stacks): 63 Go modules pass, 15 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (14): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·**School Transport**.
+
+## Ecosystem vertical: Mid-Day Meal (PM-POSHAN) — durable, accountability (stock can never go negative)
+- New L6 `mdm` module — the PM-POSHAN food-accountability plane: a per-school foodgrain stock ledger (receipts
+  in / consumptions out) + the daily meal-service register, with the two invariants the scheme must hold — (1)
+  foodgrain stock can never go NEGATIVE (a day's cooking can never consume more grain than is on hand — the core
+  leakage gate), and (2) meals served can never exceed enrolment (a data-quality gate). Foodgrain is tracked in
+  GRAMS (int64, never floats), mirroring the money-in-paise discipline. Pure + stdlib: `Balance` (receipts minus
+  consumptions, with idempotent exclude), `Store.Serve` (validate → enrolment gate → stock gate → write meal +
+  matching consumption entry), `CoverageRate`.
+- Integration `mdm.go` (+ `mdm_pg.go`): `ReceiveFoodgrain`, `ServeMeal` (both audited; deny paths too),
+  `SchoolMealRegister(org)`, `MDMDashboard(scope)` (downward-governance scoped: meal coverage %, total grain
+  consumed, and the days-of-cover LOW-STOCK roster at each school's recent burn rate). The durable adapter
+  enforces the stock gate against the live balance INSIDE the same transaction that writes the meal + its
+  consumption ledger entry, so service and draw-down are atomic. Seeded a fortnight's lifting + five serving days
+  at a Chennai school (~93% coverage, driven low so the days-of-cover signal fires). platformd: `GET /mdm?scope=
+  &register=`, `POST /mdm {action: receive|serve, …}`. Migration `scripts/094`.
+- PROVEN LIVE (raw): `TestPgMdmDurable` (stock + meal register persist across fresh instances; the
+  stock-non-negative gate is enforced durably and atomically; a re-serve corrects the balance idempotently
+  without double-deducting) and `TestMDMDashboardScoped` pass. platformd (durable + DATABASE_URL): with 50.5kg on
+  hand, a day cooking 60kg was REJECTED ("insufficient foodgrain stock — need 60000g, have 50500g"); meals_served
+  400 > enrolment 320 was REJECTED; a 30kg serve SUCCEEDED and drew stock to 20.5kg (confirmed in Postgres); a
+  100kg receipt restored it to 120.5kg. Seeded Chennai dashboard: 1 school, 5 meal-days, 93.4% coverage,
+  149.5kg consumed, low-stock roster fires (1 day of cover).
+- Green bar (both stacks): 64 Go modules pass, 16 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (15): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·**Mid-Day Meal**.
+
+## Ecosystem vertical: Infrastructure & Asset Register — durable, constraint-checked maintenance lifecycle
+- New L6 `infra` module — the estate-management plane: a school's physical assets/rooms (with a condition grade)
+  and the maintenance tickets raised against them, as a constraint-checked state machine. Holds three register
+  invariants — (1) a ticket may only be raised against a known, non-decommissioned asset; (2) a ticket walks
+  open → in_progress → resolved → closed with no skips (pure ApplyAssign/ApplyResolve/ApplyClose); and (3) an
+  asset can NEVER be decommissioned (or returned to service) while it still has open tickets — you cannot retire
+  a room mid-repair. A critical ticket auto-flips its asset to under_maintenance. Pure + stdlib.
+- Integration `infra.go` (+ `infra_pg.go`): `RegisterAsset`, `RaiseMaintenanceTicket`, `AdvanceTicket`
+  (assign/resolve/close), `DecommissionAsset`, `ReturnAssetToService` (all audited; deny paths too),
+  `AssetTickets(assetID)`, `InfraDashboard(scope)` (downward-governance scoped: condition/status rollup, open
+  backlog by severity, needs-attention roster — unusable, under-maintenance, or critical-open assets). The
+  durable adapter enforces the invariants against the live state and writes a critical ticket's auto-flip in the
+  same transaction as the ticket; lifecycle transitions reuse the pure Apply* functions. Seeded a Chennai school
+  register (5 assets across categories/conditions) with a critical sanitation ticket + a routine ICT ticket.
+  platformd: `GET /infra?scope=&tickets=`, `POST /infra {action: asset|ticket|assign|resolve|close|
+  decommission|return, …}`. Migration `scripts/095`.
+- PROVEN LIVE (raw): `TestPgInfraDurable` (assets + tickets persist across fresh instances; the lifecycle, the
+  critical auto-flip, and the no-decommission-with-open-tickets invariant are all enforced durably) and
+  `TestInfraDashboardScoped` pass. platformd (durable + DATABASE_URL): decommissioning the toilet block (open
+  critical ticket) was REJECTED ("cannot decommission an asset with open maintenance tickets — close them
+  first"); the ticket walked assign → resolve → close; return-to-service then SUCCEEDED (in_service/fair),
+  confirmed in Postgres. Seeded Chennai dashboard: 5 assets (good 2·fair 2·poor 1), 1 under maintenance, 2 open
+  tickets (critical 1·medium 1), needs-attention roster fires.
+- Green bar (both stacks): 65 Go modules pass, 17 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (16): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·**Infrastructure & Asset Register**.
+
+## Ecosystem vertical: Fee & Finance Ledger — durable, money-grade (no overpayment, paise)
+- New L6 `fees` module — the school finance plane: fee demands raised against students (exam/hostel/special
+  heads — TN government schooling is largely free, but statutory heads remain) and the payments collected, with
+  the money-grade invariants a ledger must hold — every amount is in PAISE (int64, never floats), a payment can
+  never take the collected total ABOVE the amount demanded (no overpayment), and a fully-paid or waived demand is
+  closed to further payment. Pure + stdlib: `PaidSoFar` (with idempotent exclude), `Store.RecordPayment`
+  (validate → open gate → overpayment gate → status recompute), `WaiveDemand`, `Outstanding`.
+- Integration `fees.go` (+ `fees_pg.go`): `RaiseFeeDemand`, `CollectFeePayment`, `WaiveFeeDemand` (all audited;
+  deny paths too), `StudentFeeLedger(org,student)`, `FeeDashboard(scope)` (downward-governance scoped: demanded
+  vs collected vs outstanding in paise, collection %, status breakdown, defaulter roster of open demands past
+  due). The durable adapter enforces the overpayment gate against the live collected total INSIDE the same
+  transaction that writes the payment and recomputes the demand status, so collection + status are atomic.
+  Seeded a Chennai exam-fee ledger (6 demands: 2 paid · 1 partial · 2 unpaid defaulters · 1 waived). platformd:
+  `GET /fees?scope=&student=&org=`, `POST /fees {action: demand|payment|waive, …}`. Migration `scripts/096`.
+- PROVEN LIVE (raw): `TestPgFeesDurable` (demands + payments persist across fresh instances; the no-overpayment
+  gate is enforced durably and atomically with the status recompute; a re-recorded payment corrects
+  idempotently; waiver closes a demand durably) and `TestFeeDashboardScoped` pass. platformd (durable +
+  DATABASE_URL): against demand FEE-CHN-EXAM-003 (25000p demand, 10000p paid) a 20000p payment was REJECTED
+  ("would overpay … outstanding 15000p, tendered 20000p"); a payment on a fully-paid demand was REJECTED
+  ("demand … is paid and cannot take payment"); the exact 15000p balance SUCCEEDED → status paid; psql confirmed
+  the collected total equals 25000p exactly (never more). Seeded Chennai dashboard: 6 demands, Rs1250 demanded,
+  48% collected, Rs650 outstanding, 3 defaulters, 1 waived.
+- Green bar (both stacks): 66 Go modules pass, 18 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (17): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·**Fee & Finance Ledger**.
+
+## Ecosystem vertical: School Health Immunisation — durable, clinical sequence invariant
+- New L6 `immunisation` module — the school-health immunisation register: vaccine doses administered to students
+  under the school-health schedule (UIP/RBSK school-age vaccines: Td10·Td16·MR·JE·VitaminA·Albendazole), with
+  the clinical invariants an immunisation register must hold — a dose may only be recorded in SEQUENCE (dose N
+  requires doses 1..N-1 already given), a vaccine can never exceed its scheduled dose count, and a dose cannot be
+  future-dated. Immunisation status (complete/partial/due) is derived against the schedule. Pure + stdlib:
+  `Schedule`/`RequiredDoses`, `DosesGivenExcluding`, `StatusFor`, `Store.AdministerDose` (validate → sequence →
+  no-duplicate-slot).
+- Integration `immunisation.go` (+ `immunisation_pg.go`): `RecordImmunisation` (audited; deny paths too),
+  `StudentImmunisationCard(student)` (the per-child card — officer-only), `ImmunisationDashboard(scope)`
+  (downward-governance scoped: per-vaccine completion across the cohort + the due/partial follow-up worklist).
+  Health data is sensitive, so the dashboard headlines aggregate coverage and includes the per-child worklist
+  only for the governing officer (mirroring RBSK). The durable adapter enforces the schedule/sequence/no-future
+  invariants against the durable doses (reusing the pure helpers) and backstops the no-duplicate-slot rule with
+  a partial unique index. Seeded a Chennai immunisation drive (10 children: full single-dose coverage, partial
+  MR rollout). platformd: `GET /immunisation?scope=&student=&schedule=`, `POST /immunisation {dose…}`. Migration
+  `scripts/097`.
+- PROVEN LIVE (raw): `TestPgImmunisationDurable` (doses persist across fresh instances; the sequence and
+  no-duplicate-slot invariants are enforced durably; a re-record corrects in place) and
+  `TestImmunisationDashboardScoped` pass. platformd (durable + DATABASE_URL): recording MR dose 2 for a child
+  with no dose 1 was REJECTED ("out-of-sequence dose — MR dose 2 requires dose 1 first"); an off-schedule vaccine
+  (COVID) was REJECTED; a future-dated dose was REJECTED; recording MR dose 1 then dose 2 in order SUCCEEDED →
+  status complete; psql confirmed the two doses in sequence. Seeded Chennai dashboard: 10 students, 41 doses,
+  single-dose vaccines 100%, MR 40% (4 complete·3 partial·3 due).
+- Green bar (both stacks): 67 Go modules pass, 19 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (18): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·**School Health Immunisation**.
+
+## Ecosystem vertical: Parent-Teacher Meeting — durable, capacity-checked booking + attendance lifecycle
+- New L6 `ptm` module — the parent-engagement plane: scheduled PTM sessions (with a fixed slot count) and the
+  guardian bookings against them, as a capacity-checked booking system with an attendance lifecycle. Holds the
+  invariants a meeting register must keep — a session can never be OVERBOOKED beyond its slots, a guardian can
+  never double-book the same session, a cancelled session takes no bookings, and a booking walks
+  booked → attended | no_show (a cancellation frees its slot). Turnout (attended vs occupied) is derived. Pure +
+  stdlib: `Occupied`, `Store.Book` (validate → session-open → no-double-book → capacity), the pure
+  ApplyAttend/ApplyNoShow/ApplyCancel transitions.
+- Integration `ptm.go` (+ `ptm_pg.go`): `SchedulePTM`, `BookPTM`, `MarkPTMAttendance` (attend/noshow/cancel) (all
+  audited; deny paths too), `SessionBookings(sessionID)` (the attendance sheet), `PTMDashboard(scope)`
+  (downward-governance scoped: per-session fill % + turnout %, overall turnout, low-turnout roster). The durable
+  adapter enforces the overbooking + double-booking invariants against the live bookings and backstops the
+  no-double-book rule with a partial unique index; transitions reuse the pure Apply* functions. Seeded a Chennai
+  Term-1 PTM (8 slots, 6 booked, 4 attended · 1 no-show · 1 booked). platformd: `GET /ptm?scope=&sheet=`,
+  `POST /ptm {action: session|book|attend|noshow|cancel, …}`. Migration `scripts/098`.
+- PROVEN LIVE (raw): `TestPgPtmDurable` (sessions + bookings persist across fresh instances; the overbooking and
+  double-booking invariants are enforced durably; a cancellation frees a slot; the attendance lifecycle
+  persists) and `TestPTMDashboardScoped` pass. platformd (durable + DATABASE_URL): after filling the 8-slot
+  session, a 9th booking was REJECTED ("session PTM-CHN-T1 is full (8 slots)"); a double-booking by an
+  already-booked student was REJECTED; cancelling an attended slot was REJECTED ("only a booked slot can be
+  cancelled"); cancelling a still-booked slot freed it and the 9th booking then SUCCEEDED; psql confirmed
+  exactly 8 occupied (non-cancelled) bookings (= slots). Seeded Chennai dashboard: 1 session, 8 slots, 6
+  occupied (75% fill), 4 attended (66.7% turnout).
+- Green bar (both stacks): 68 Go modules pass, 20 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (19): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·**Parent-Teacher Meeting**.
+
+## Ecosystem vertical: Free-Supply Entitlement Distribution — durable, no over-issue (leakage gate)
+- New L6 `entitlement` module — the free-supply distribution plane: each student's entitlement under TN's
+  free-supply schemes (textbooks/notebooks/uniforms/shoes/bags/cycles) and the issues distributed against it,
+  with the accountability invariant a distribution register must hold — a student can never be issued MORE than
+  their entitlement (the over-issue/leakage gate). Quantities are whole units; fulfilment status (pending →
+  partial → fulfilled) is derived. Pure + stdlib: `IssuedSoFar` (with idempotent exclude), `Store.IssueSupply`
+  (validate → open gate → over-issue gate → status recompute), `Remaining`.
+- Integration `entitlement.go` (+ `entitlement_pg.go`): `GrantEntitlement`, `IssueSupply` (both audited; deny
+  paths too), `StudentEntitlements(org,student)`, `EntitlementDashboard(scope)` (downward-governance scoped:
+  per-item entitled vs issued → fulfilment %, fulfilled-vs-pending student counts, shortfall worklist). The
+  durable adapter enforces the over-issue gate against the live issued total INSIDE the same transaction that
+  writes the issue and recomputes the entitlement status, so distribution + status are atomic. Seeded a Chennai
+  2026 free-supply roll (8 children × textbook/uniform/notebook; most fully supplied, some partial, one
+  pending). platformd: `GET /entitlement?scope=&student=&org=`, `POST /entitlement {action: grant|issue, …}`.
+  Migration `scripts/099`.
+- PROVEN LIVE (raw): `TestPgEntitlementDurable` (entitlements + issues persist across fresh instances; the
+  over-issue gate is enforced durably and atomically with the status recompute; a re-issue corrects
+  idempotently; a fulfilled entitlement is closed) and `TestEntitlementDashboardScoped` pass. platformd (durable
+  + DATABASE_URL): against ENT-CHN-006-uniform (4 entitled, 2 issued) an issue of 3 was REJECTED ("would
+  over-issue … remaining 2, tendered 3"); an issue against a fulfilled entitlement was REJECTED; issuing the
+  exact remaining 2 SUCCEEDED → status fulfilled; psql confirmed the issued total equals 4 exactly (never more).
+  Seeded Chennai dashboard: 8 students, uniform 75% / textbook·notebook 62.5% fulfilment, 9-entry shortfall
+  worklist.
+- Green bar (both stacks): 69 Go modules pass, 21 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (20): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·**Free-Supply Entitlement Distribution**.
+
+## Ecosystem vertical: Staff Establishment & Sanctioned-Post Register — durable, no over-appointment
+- New L6 `establishment` module — the staffing-control plane: each school's sanctioned posts (by cadre) and the
+  appointments made against them, with the accountability invariant an establishment register must hold — the
+  FILLED posts of a cadre can never exceed its SANCTIONED strength (the over-appointment gate). A vacated post
+  frees its slot; vacancy (sanctioned − filled) is derived. Pure + stdlib: `FilledCount`, `Store.Appoint`
+  (validate → open gate → no-double-post → over-appointment gate), `Vacate`, `Vacancies`.
+- Integration `establishment.go` (+ `establishment_pg.go`): `SanctionPosts`, `AppointStaff`, `VacatePost` (all
+  audited; deny paths too), `EstablishmentRoster(establishmentID)`, `EstablishmentDashboard(scope)`
+  (downward-governance scoped: sanctioned vs filled strength across cadres, vacancy %, vacancy roster). The
+  durable adapter enforces the over-appointment gate against the live filled count and backstops the
+  one-filled-post-per-employee rule with a partial unique index. Seeded a Chennai sanctioned-post register
+  (5 cadres, 18 sanctioned, 15 filled, 3 vacancies). platformd: `GET /establishment?scope=&roster=`,
+  `POST /establishment {action: sanction|appoint|vacate, …}`. Migration `scripts/100`.
+- PROVEN LIVE (raw): `TestPgEstablishmentDurable` (sanctioned posts + appointments persist across fresh
+  instances; the over-appointment and no-double-post invariants are enforced durably; a vacate frees a post; a
+  frozen establishment refuses appointments) and `TestEstablishmentDashboardScoped` pass. platformd (durable +
+  DATABASE_URL): a 7th appointment to the full 6-post SGT cadre was REJECTED ("ESTAB-CHN-03 is at sanctioned
+  strength (6)"); once BT reached 8/8 a 9th was REJECTED ("at sanctioned strength (8)"); vacating a BT post then
+  re-appointing SUCCEEDED; psql confirmed exactly 8 filled BT posts (= sanctioned). Seeded Chennai dashboard:
+  5 cadres, 18 sanctioned, 15 filled, 16.7% vacancy, 3-entry vacancy roster.
+- Green bar (both stacks): 70 Go modules pass, 22 durable PG tests pass via the CI TestPg step, OPA 33/33,
+  gofmt clean; tsc 0 (TS unchanged this turn).
+- Durable verticals now (21): Calendar·Exams·Leave·Directory·Audit·Grievance·Admission·Attendance·Scholarship/DBT·Teacher-CPD·RBSK·Timetable·Library·Transport·Mid-Day Meal·Infrastructure·Fees·Immunisation·PTM·Entitlement·**Staff Establishment**.
+
+## Pilot enablement: one-command single-district deployment (moat lever #1)
+- Made the deployment DISTRICT-SELECTABLE: new `pilotDistrict()` (reads `PILOT_DISTRICT`, default
+  TN-DIST-Chennai) now backs all 14 vertical seeds via `tenancyLeafUnder(pilotDistrict())`. Default keeps
+  every test green; an override relocates the entire seed (proven: under PILOT_DISTRICT=Madurai the
+  Chennai-asserting dashboard test fails, i.e. the data genuinely moved).
+- New `deploy/pilot/`: `docker-compose.yml` (Postgres 16 + platformd + web console, wired —
+  PLATFORM_URL points the web app's server actions at the durable Go backbone), `.env.example`,
+  `smoke.sh` (20 scoped dashboards + a durability check), `PILOT.md` (go-live runbook, honest real-vs-gated
+  table, the full-Supabase path).
+- PROVEN LIVE: against a FRESH EMPTY database, platformd self-migrated (no manual schema step) and seeded
+  TN-DIST-Madurai (5 cadres / 18 sanctioned) with Chennai correctly empty (0); smoke 20/20 dashboards 200 with
+  district-scoped data; and after a FULL process kill + restart against the same Postgres the data survived —
+  a marker sanctioned-post written before the kill (`PILOT-DURABLE-PROOF`, sanctioned 7) was read back intact,
+  audit hash-chain re-loaded from Postgres. This is a durable system of record, not a demo.
+- Green bar: 69 Go modules pass, durable PG suite passes, OPA 33/33, gofmt clean, tsc 0, `docker compose config`
+  validates. No new module (district seam + deploy package only).
+
+## Full-stack milestone: Staff Establishment as a working, clickable end-to-end module
+- Established the end-to-end pattern that turns a backbone vertical into a real, clickable application module:
+  web form → server action → `lib/platform-client` → durable Go backbone (platformd) → PostgreSQL → realtime
+  scoped dashboard. Every button performs a real, persisted, server-enforced operation (not a demo no-op).
+- `lib/platform-client.ts`: added the establishment seam — `platformEstablishmentDashboard`,
+  `platformEstablishmentRoster`, `platformSanctionPosts`, `platformAppointStaff`, `platformVacatePost` (+ a
+  `getJSON` helper). When PLATFORM_URL is set these drive the backbone; otherwise callers degrade gracefully.
+- `app/establishment/`: `actions.ts` (role-gated `canDo("manage:staff")` server actions), `page.tsx` (force-
+  dynamic; realtime sanctioned/filled/vacant/vacancy% summary + per-cadre roster with working Vacate +
+  Sanction/Appoint forms), `establishment-client.tsx` (interactive `useActionState` forms surfacing the
+  backbone's exact responses incl. the invariant rejection).
+- PROVEN LIVE (real client code against a running platformd + Postgres): READ → 5 cadres / 18 sanctioned / 15
+  filled / 3 vacant; the Appoint button to a full 6/6 cadre was REJECTED server-side ("ESTAB-CHN-03 is at
+  sanctioned strength (6)") and the over-appointment was NOT recorded (psql: still exactly 6); Sanction+Appoint
+  created a new "Lab Assistant" cadre and filled it, persisted in Postgres. District-selectable via
+  PILOT_DISTRICT; runs in the deploy/pilot full stack.
+- Green: tsc 0, lint clean, next build compiled (establishment page bundle present), 1555 TS tests over the
+  95/80/88 coverage gate. This is the template now to roll across the remaining modules, one per turn.
+
+## Full-stack rollout #2: Fee & Finance Ledger module + the local full-stack launcher
+- Fee & Finance Ledger as a working, clickable end-to-end module at /fee-ledger (the existing /fees stays a
+  static demo). lib/platform-client.ts: fees seam (platformFeeDashboard, platformStudentFees,
+  platformRaiseDemand, platformCollectPayment, platformWaiveDemand). app/fee-ledger/: role-gated server actions
+  (canDo manage:school), a force-dynamic page (realtime demanded/collected/outstanding/collection% + a
+  defaulter roster with a working Waive + Raise/Collect forms), and useActionState client forms. Money is in
+  paise end-to-end; the UI shows rupees.
+- PROVEN LIVE (real client code → running platformd + Postgres): READ 6 demands / ₹1250 demanded / ₹600
+  collected / 48%; the Collect button overpaying FEE-CHN-EXAM-003 was REJECTED server-side ("would overpay …
+  outstanding 15000p, tendered 20000p"); Raise+Collect a new hostel demand persisted in full.
+- NEW: deploy/pilot/run-local.sh — one command boots the FULL STACK locally (no Docker): builds + starts
+  platformd (DATABASE_URL + PILOT_DISTRICT, self-migrates/seeds), then the Next.js app with PLATFORM_URL set so
+  every wired module's buttons persist. Prints the URL + demo login. This is the "local full-stack first"
+  deliverable.
+- Green: tsc 0, lint clean, next build compiled (fee-ledger + establishment bundles present), 1555 TS tests over
+  the 95/80/88 coverage gate. Working clickable modules now: Establishment, Fee Ledger (2 of ~20; rolling on).
+
+## Full-stack rollout #3: RTE Admissions — multi-step apply + HITL (BEO/DEO) approval, working end-to-end
+- RTE Admissions as a working, clickable module at /rte-admissions (drives the Go backbone's genuine RTE flow;
+  the legacy /admissions and /admissions-approvals demos stay intact). lib/platform-client.ts: admission seam
+  (platformAdmissionDashboard, platformApplyAdmission, platformFinaliseAdmission). app/rte-admissions/:
+  role-gated server actions (canDo manage:students); a force-dynamic page with a realtime register (by
+  stage/category, admitted, pending-review), an Apply form, and — the showcase — a HITL approval inbox with
+  Uphold/Overturn buttons. The RTE rule is policy-as-code (OPA/Rego): rejecting an EWS/DG applicant while the
+  25% quota is unmet is held for BEO/DEO review (RTE §12(1)(c)).
+- PROVEN LIVE (real client code → platformd + OPA + Postgres): apply {reject, EWS, quota-unmet} → Stage
+  pending-approval (request TR-0002, reason RTE-EWS-QUOTA); the inbox showed pending_review=1; the officer
+  Overturn finalised it → admitted; an ordinary GEN admit went straight through. Full multi-step + multi-level
+  approval loop, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61. Working clickable modules now (3):
+  Establishment, Fee Ledger, RTE Admissions.
+
+## Full-stack rollout #4: Grievance Redressal — durable, multi-tier SLA escalation, working end-to-end
+- Grievance Redressal as a working, clickable module at /grievance-cases driving the Go backbone (the legacy
+  local-store /grievance and /grievance-approvals stay intact). Reuses the existing platform-client grievance
+  seam (platformListGrievance, platformFileGrievance, platformActGrievance). app/grievance-cases/: a File form
+  (open to complainants), an open-cases escalation worklist rendering each case's tiered chain with the current
+  tier highlighted + SLA-breach flag, and officer Resolve/Escalate/Reject buttons (canDo manage:governance).
+- PROVEN LIVE (real client code → platformd + Postgres): file a financial grievance → chain
+  [HEAD_TEACHER, BEO, DEO], tier 0, SLA due; list scoped → 2 cases; escalate at tier 0 (HEAD_TEACHER) → tier 1
+  (BEO); resolve at tier 1 → status resolved. (A safety grievance opens the [HEAD_TEACHER, DEO, DIRECTOR]
+  chain — category-driven, as designed.) Full multi-tier escalation loop, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (4): Establishment, Fee Ledger, RTE Admissions, Grievance Redressal.
+
+## Full-stack rollout #5: Scholarship / DBT — amount-driven sanction → disburse → reconcile, working end-to-end
+- Scholarship/DBT as a working, clickable module at /dbt-scholarship driving the Go backbone. lib/platform-client.ts:
+  scholarship seam (platformScholarshipDashboard, platformScholarshipList, platformFileScholarship,
+  platformActScholarship). app/dbt-scholarship/: role-gated server actions (canDo approve:dbt); a force-dynamic
+  page with a realtime DBT picture (cases · pending sanction · disbursed ₹ · leakage flags · by-status), a File
+  form, a pending-sanction worklist rendering each case's amount-sized chain with the current tier highlighted +
+  Approve/Reject, a ready-to-disburse list with a Disburse(payment-ref) action, and a disbursed list with
+  Reconcile (rail-matched / unmatched→flag). Money in paise; UI in rupees.
+- PROVEN LIVE (real client code → platformd + Postgres): file ₹75,000 post-matric → chain
+  [HEAD_TEACHER, BEO, DEO] (DEO added because >₹50k); sanction tier-by-tier → sanctioned; disburse (PFMS ref) →
+  disbursed; reconcile UNMATCHED → flagged (leakage); dashboard flagged_leakage=1, disbursed_rupees=75000. The
+  full money-grade pipeline, persisted and audited.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (5): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT.
+
+## Full-stack rollout #6: Mid-Day Meal (PM-POSHAN) — stock-non-negative + daily serving, working end-to-end
+- MDM as a working, clickable module at /mid-day-meal driving the Go backbone. lib/platform-client.ts: mdm seam
+  (platformMdmDashboard, platformReceiveFoodgrain, platformServeMeal). app/mid-day-meal/: role-gated server
+  actions (canDo manage:school); a force-dynamic page with a realtime PM-POSHAN picture (schools · meal-days ·
+  meals-served · coverage% · grain consumed), a per-school foodgrain stock table with days-of-cover + low-stock
+  flags, a Serve form (draws grain from stock) and a Receive form (tops it up). Foodgrain in grams; UI in kg.
+- PROVEN LIVE (real client code → platformd + Postgres): school balance 50.5kg / 93.4% coverage; serving 150.5kg
+  with 50.5kg on hand was REJECTED ("insufficient foodgrain stock — need 150500g, have 50500g"); meals 400 >
+  enrolment 320 was REJECTED; a valid 30kg serve and a 100kg receipt succeeded. Both invariants enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (6): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal.
+
+## Full-stack rollout #7: School Transport — route safety (capacity + fitness/licence), working end-to-end
+- School Transport as a working, clickable module at /school-transport driving the Go backbone.
+  lib/platform-client.ts: transport seam (platformTransportDashboard, platformRouteRoster,
+  platformRegisterRoute, platformAllotSeat, platformWithdrawSeat). app/school-transport/: role-gated server
+  actions (manage:students for seats, manage:school for routes); a force-dynamic page with a realtime safety
+  picture (routes · capacity · seated · utilisation% · unserviceable count), per-route cards showing
+  seated/capacity + serviceable/UNSERVICEABLE badge + the safety reason + a roster with working Withdraw, an
+  Allot form and a Register-route form.
+- PROVEN LIVE (real client code → platformd + Postgres): 3 routes, 9/84 seats, 1 unserviceable; allotting to a
+  full route (RT-CHN-01) was REJECTED ("route RT-CHN-01 is at capacity"); allotting to an unserviceable route
+  (RT-CHN-03) was REJECTED ("cannot allot to an unserviceable route — vehicle fitness certificate expired
+  (2026-03-01)"); withdrawing a seat freed it and the re-allot SUCCEEDED. Both safety invariants enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (7): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport.
+
+## Full-stack rollout #8: School Health Immunisation — dose-sequence invariant, working end-to-end
+- Immunisation as a working, clickable module at /health-immunisation driving the Go backbone.
+  lib/platform-client.ts: immunisation seam (platformImmunisationDashboard, platformImmunisationSchedule,
+  platformStudentImmunisationCard, platformRecordDose). app/health-immunisation/: role-gated server actions
+  (manage:students); a force-dynamic page with students/doses/vaccines stats, per-vaccine coverage
+  (complete/partial/due + %), a Record-dose form (vaccine from the live schedule), and an officer-only follow-up
+  worklist. Health data sensitive: aggregate coverage public, per-child worklist officer-only.
+- PROVEN LIVE (real client code → platformd + Postgres): schedule [Albendazole, JE, MR, Td10, Td16, VitA];
+  10 students / 41 doses; recording MR dose 2 with no dose 1 was REJECTED ("out-of-sequence dose — MR dose 2
+  requires dose 1 first"); an off-schedule vaccine (COVID) was REJECTED; recording dose 1 then dose 2 in order
+  SUCCEEDED. All gates enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (8): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation.
+
+## Full-stack rollout #9: Free-Supply Entitlement — no over-issue, working end-to-end
+- Entitlement Distribution as a working, clickable module at /free-supply driving the Go backbone.
+  lib/platform-client.ts: entitlement seam (platformEntitlementDashboard, platformGrantEntitlement,
+  platformIssueSupply). app/free-supply/: role-gated server actions (manage:school); a force-dynamic page with
+  students/items/shortfall stats, per-item fulfilment (entitled vs issued + %), an Issue form (entitlement
+  picked from the shortfall worklist), a Grant form, and a shortfall worklist.
+- PROVEN LIVE (real client code → platformd + Postgres): 8 students / 9 shortfall; issuing 3 against
+  ENT-CHN-006-uniform (2 remaining) was REJECTED ("issue would over-issue ENT-CHN-006-uniform — remaining 2,
+  tendered 3"); issuing exactly 2 SUCCEEDED; grant-a-new-entitlement + issue-within SUCCEEDED. The over-issue
+  gate enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (9): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement.
+
+## Full-stack rollout #10: Class Timetable — teacher-clash invariant, working end-to-end
+- Timetable as a working, clickable module at /class-timetable driving the Go backbone. lib/platform-client.ts:
+  timetable seam (platformTimetableDashboard, platformClassTimetable, platformTeacherTimetable, platformSetSlot).
+  app/class-timetable/: role-gated server actions (manage:school); a force-dynamic page with slots/classes/
+  teachers/overloaded stats, a rendered weekly grid (day × period) for the seeded class, an Assign-slot form
+  (class/day/period/subject/teacher), and a per-teacher weekly-load table with overload flags. The school org +
+  classes are discovered from a seeded teacher's slots.
+- PROVEN LIVE (real client code → platformd + Postgres): 30 slots / 3 teachers; SYN-T-01 busy friday P1 in
+  Grade 8-A; assigning SYN-T-01 to Grade 9-Z at the SAME friday P1 was REJECTED ("teacher SYN-T-01 is already
+  teaching Grade 8-A at friday"); assigning to a free period (P8) SUCCEEDED. The clash invariant enforced
+  server-side (in SQL).
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (10): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable.
+
+## Full-stack rollout #11: School Library — one-copy-one-borrower, working end-to-end
+- Library circulation as a working, clickable module at /school-library driving the Go backbone (the existing
+  /library and /library-circulation demos stay intact). lib/platform-client.ts: library seam
+  (platformLibraryDashboard, platformMemberLoans, platformIssueBook, platformLibraryAct). app/school-library/:
+  role-gated server actions (manage:school); a force-dynamic page with active-loans/overdue/lost/members/titles
+  stats, an overdue-loans list with Return/Renew/Lost buttons, and an Issue form. The library org is discovered
+  from the seeded overdue loans.
+- PROVEN LIVE (real client code → platformd + Postgres): 6 active / 2 overdue; copy CP-SCI-002-1 held by
+  SYN-S-002; issuing the same copy to SYN-S-777 was REJECTED ("copy CP-SCI-002-1 is already on loan
+  (LOAN-002)"); returning it then re-issuing SUCCEEDED. The one-copy-one-borrower invariant enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (11): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library.
+
+## Full-stack rollout #12: Estate & Asset Register — no-decommission-with-open-ticket, working end-to-end
+- The durable infrastructure register as a working, clickable module at /estate-register driving the Go backbone
+  (the existing /infrastructure and /maintenance reference demos stay intact; /asset-register is a separate
+  lib/assetmgmt reference module — left untouched). lib/platform-client.ts: infra seam (platformInfraDashboard,
+  platformAssetTickets, platformRegisterAsset, platformRaiseTicket, platformAdvanceTicket,
+  platformDecommissionAsset, platformReturnAsset). app/estate-register/: role-gated server actions
+  (manage:school); a force-dynamic page with assets/under-maintenance/decommissioned/open-tickets stats, a
+  by-condition breakdown, an open-backlog-by-severity strip, a needs-attention roster that renders each asset's
+  full ticket history with lifecycle controls (Assign → Resolve → Close) and per-asset Decommission /
+  Return-to-service buttons, plus Register-asset and Raise-ticket forms. School org discovered from the
+  needs-attention roster.
+- PROVEN LIVE (real client code → platformd + Postgres): 5 seeded assets; the critical sanitation ticket
+  MTK-CHN-001 auto-flipped AST-CHN-TOILET-G to under_maintenance (open_by_severity.critical=1). A fresh asset
+  with an open high-severity ticket REJECTED decommission ("…open ticket…"); after Assign→Resolve→Close the
+  decommission SUCCEEDED (status=decommissioned). Independently, return-to-service was REJECTED while a ticket
+  was open and SUCCEEDED once closed (status=in_service, condition=good). Postgres rows verified durable
+  (infra_assets=7, infra_tickets=4, 1 decommissioned). The no-decommission-with-open-ticket invariant and the
+  critical auto-flip are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (12): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register.
+
+## Full-stack rollout #13: Parent–Teacher Meetings — no-overbooking/no-double-booking, working end-to-end
+- PTM as a working, clickable module at /parent-teacher-meetings driving the Go backbone's /ptm service (the
+  existing /ptm reference demo stays intact). lib/platform-client.ts: ptm seam (platformPtmDashboard,
+  platformSessionSheet, platformSchedulePtm, platformBookPtm, platformMarkPtmAttendance). app/parent-teacher-
+  meetings/: role-gated server actions (manage:school); a force-dynamic page with sessions/total-slots/occupied/
+  attended/turnout stats, a per-session rollup (fill vs slots, turnout vs booked, no-shows) with a low-turnout
+  flag, a live attendance sheet for the focus session with Attended / No-show / Cancel controls, plus Schedule-
+  session and Book-slot forms. School org + focus session discovered from the rollup.
+- PROVEN LIVE (real client code → platformd + Postgres): seeded session PTM-CHN-T1 (8 slots, 6 occupied, 4
+  attended). A fresh 2-slot session: booking the SAME student twice was REJECTED ("…already has a booking…");
+  a third booking into the full session was REJECTED ("…is full (2 slots)"); attend + no-show persisted and the
+  sheet reflected them. Postgres rows verified durable (ptm_sessions=2, ptm_bookings=8, 5 attended, 2 no_show).
+  The no-overbooking and no-double-booking invariants are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (13): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings.
+
+## Full-stack rollout #14: RBSK Child-Health Screening — auto-referral + closure pipeline, working end-to-end
+- RBSK as a working, clickable module at /health-screening driving the Go backbone's /rbsk service (the existing
+  /rbsk, /rbsk-screening, /health-referrals reference modules stay intact). lib/platform-client.ts: rbsk seam
+  (platformRbskDashboard, platformRbskReferrals, platformRecordScreening, platformAdvanceReferral).
+  app/health-screening/: role-gated server actions (manage:school); a force-dynamic page with screened/healthy/
+  with-findings/active-referrals/closure stats, a findings breakdown (the four Ds), an active-referral worklist
+  with Accept-&-treat / Close (outcome) controls, and a Record-screening form (the four Ds as checkboxes). School
+  org discovered from the referral worklist.
+- PROVEN LIVE (real client code → platformd + Postgres): 20 seeded screenings (15 healthy, 5 referred). A healthy
+  screening (no findings) raised NO referral (status=healthy); a screening flagging "deficiency" AUTO-REFERRED to
+  DEIC (status=referred); treat → under-treatment, a second treat REJECTED ("only a referred screening can enter
+  treatment"), close(outcome) → closed, a re-close REJECTED ("only an open referral can be closed"). Postgres rows
+  verified durable (rbsk_screenings: 16 healthy, 5 referred, 1 closed). The auto-referral and pipeline transitions
+  are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (14): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening.
+
+## Full-stack rollout #15: Teacher CPD (NEP-2020 50h) — count/compliance pipeline, working end-to-end
+- CPD as a working, clickable module at /teacher-cpd driving the Go backbone's /cpd service (the existing /cpd
+  reference module stays intact). lib/platform-client.ts: cpd seam (platformCpdDashboard, platformTeacherCpd,
+  platformRecordCpd). app/teacher-cpd/: role-gated server actions (manage:staff); a force-dynamic page with
+  teachers/compliant/compliance%/total-hours/deficient stats, a deficient-teacher roster with per-teacher hours-
+  toward-50 progress bars, and a Record-CPD form (teacher datalist, provider/status selects, hours). The 50-hour
+  NEP target is the gate; only completed/certified hours count. School org discovered from the deficient profiles
+  (fallback SYN-T-01).
+- PROVEN LIVE (real client code → platformd + Postgres): 8 seeded teachers, 7 compliant (87.5%), 435 total hours.
+  A brand-new teacher started at 0h/non-compliant; an ENROLLED 40h course added 0 qualifying hours (still
+  deficient, on the roster); a CERTIFIED 55h course flipped it to compliant and off the deficient roster; an
+  invalid provider ("Udemy") was REJECTED ("invalid provider Udemy"). Postgres rows verified durable (cpd_records
+  total 27, incl. the proof teacher's certified 55h + enrolled 40h). The 50-hour rule and provider/status
+  validation are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (15): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD.
+
+## Full-stack rollout #16: Student Attendance — upsert marks + RTE chronic-absentee, working end-to-end
+- Attendance as a working, clickable module at /student-attendance driving the Go backbone's /attendance service
+  (the existing /attendance and /attendance-register reference modules stay intact). lib/platform-client.ts:
+  attendance seam (platformAttendanceDashboard, platformStudentAttendance, platformMarkAttendance).
+  app/student-attendance/: role-gated server actions (manage:students); a force-dynamic page with schools/marked/
+  present-rate/chronic stats, a per-school daily roll-up table (present/absent/late/excused + rate), a chronic-
+  absentee roster with each learner's rate + days, and a Mark form (student datalist, status/source selects,
+  date). School org discovered from the chronic profiles (fallback per_school roll-up).
+- PROVEN LIVE (real client code → platformd + Postgres): 12 seeded marks on 2026-06-10, SYN-STU-D a seeded
+  chronic absentee. Invalid status "holiday" REJECTED ("invalid status holiday"); marking a date present then
+  re-marking it absent UPSERTED (days_recorded stayed 1, rate 100→0 — a single Postgres row, not a duplicate);
+  10 days at 3-present/7-absent (30%) flagged chronic=true, while 10 present (100%) was chronic=false — the RTE
+  75% floor over >=10 attendable days. Postgres rows verified durable (1 row for the corrected date, 10 each for
+  the chronic/ok learners). The (student,date) upsert key and the chronic-absentee rule are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (16): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance.
+
+## Full-stack rollout #17: Academic Calendar — dynamic multi-tier approval chain, working end-to-end
+- Calendar as a working, clickable module at /events-calendar driving the Go backbone's /calendar + /calendar/
+  decide services (the existing /academic-calendar reference module stays intact). lib/platform-client.ts:
+  calendar seam (platformCalendarDashboard, platformCalendarEntries, platformAddCalendarEntry,
+  platformDecideCalendarEntry). app/events-calendar/: role-gated server actions (manage:school to add,
+  manage:governance to decide); a force-dynamic page with entries/published/pending stats, an approval inbox that
+  renders each pending entry's FULL governance route (current tier highlighted) with Approve/Reject controls
+  carrying that tier's role + required scope, an upcoming-published feed, and an Add-&-submit form. The approval
+  depth is sized dynamically from entry type + tenancy level.
+- PROVEN LIVE (real client code → platformd + Postgres): 4 seeded entries (AY 2026-2027). A school EVENT
+  auto-published (empty chain → approved). A school EXAM entered a 2-level chain G4(DEO/scheme.recommend) →
+  G3(DIRECTOR/scheme.approve): a DIRECTOR acting at G4 was REJECTED ("may not act at tier G4"); a DEO without the
+  scope was REJECTED ("lacks the required scope scheme.recommend"); DEO+scheme.recommend advanced it to G3;
+  DIRECTOR+scheme.approve published it (status=approved, step 2/2). A reject at G4 stopped the chain
+  (status=rejected, not published). Postgres rows verified durable (calendar_entries: event→approved,
+  exam→approved@step2, reject→rejected). The dynamic chain sizing and fail-closed role+scope gating are enforced
+  server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (17): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar.
+
+## Full-stack rollout #18: Examinations & Results — PDP-gated marks lifecycle, working end-to-end
+- Exams as a working, clickable module at /exam-results driving the Go backbone's /exams + /exams/marks +
+  /exams/lifecycle services (the existing /exams and /results reference modules stay intact).
+  lib/platform-client.ts: exams seam (platformExamDashboard, platformExamSheet, platformEnterMarks,
+  platformExamLifecycle). app/exam-results/: role-gated server actions (manage:school); a force-dynamic page with
+  sheets/results-recorded/overall-pass/pass% stats, a per-sheet roll-up (status + analytics: pass, mean, highest,
+  grade distribution) with stage-appropriate lifecycle controls (Submit / Publish / Return), an Enter-marks form,
+  and a PDP acting-identity selector (Teacher SYN-U-TCH vs Head Teacher SYN-U-HM).
+- PROVEN LIVE (real client code → platformd + Postgres): 3 seeded sheets (open Maths / submitted Science /
+  published Tamil), 90 results, 70% overall pass. A TEACHER entered a mark (persisted); an UNKNOWN actor was
+  DENIED ("unknown actor"); separation of duties — a TEACHER moderating the submitted Science sheet was DENIED
+  ("not authorised … write:school"), the HEAD TEACHER published it; a published sheet REJECTED further marks; the
+  head ran Maths open→submit→publish and SYN-STU-001's 77/100 graded to pass=true. Postgres rows verified durable
+  (exam_sheets all published, exam_results persisted). The PDP separation-of-duties gate and submit-locks-grades
+  rule are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (18): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar, Examinations & Results.
+
+## Full-stack rollout #19: User Directory & IAM — durable users + five-model access-explain, working end-to-end
+- Directory as a working, clickable module at /user-directory driving the Go backbone's /directory +
+  /access-explain services (the existing /staff-directory reference module stays intact). lib/platform-client.ts:
+  directory seam (platformDirectorySummary, platformDirectoryScoped, platformAccessExplain; reuses the existing
+  platformUpsertUser). app/user-directory/: role-gated server actions (manage:staff to upsert); a force-dynamic
+  page with users/roles/access-models/in-scope stats, the five access models, a downward-scoped user list, an
+  Add/Update-user form (role from the canonical catalogue), the canonical role catalogue with census, and an
+  interactive ACCESS-EXPLAIN panel that renders the composed effect + the full per-model trace
+  (RBAC·ABAC·ReBAC·PBAC·CABAC).
+- PROVEN LIVE (real client code → platformd + Postgres): 19 seeded users / 19 roles / 5 access models. Adding a
+  user with an unknown role was REJECTED ("unknown role"); a valid TEACHER upserted durably and appeared in the
+  school scope (4 users). access-explain: SYN-U-TCH write:assessment @ school → PERMIT (RBAC, with per-model
+  trace); SYN-U-TCH write:school → DENY ("role TEACHER does not grant write:school"); an unknown user →
+  fail-closed null (no decision). Postgres rows verified durable (directory_users incl. the proof user). Role/
+  jurisdiction validation and the five-model PDP are enforced server-side.
+- Green: tsc 0, lint clean, coverage gate 1555 tests at 96.16/81.63/91.61, live wiring proven. Working clickable
+  modules now (19): Establishment, Fee Ledger, RTE Admissions, Grievance, Scholarship/DBT, Mid-Day Meal,
+  School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable, School Library,
+  Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD, Student Attendance,
+  Academic Calendar, Examinations & Results, User Directory & IAM.
+
+## Full-stack rollout #20: Audit Trail & Integrity Ledger — the hash-chain capstone, working end-to-end
+- Audit was the one durable Postgres store without a web module. Added a NEW backbone read endpoint /audit to
+  platformd (GET ?actor=&action=&resource=&effect=&limit= — substring filters, most-recent-first; returns chain
+  length, head hash, Merkle root, a live Verify() tamper-evidence check + bad_index, and an effect census) and
+  rebuilt platformd (go build + go vet clean). lib/platform-client.ts: audit seam (platformAuditTrail).
+  app/audit-trail/: a force-dynamic read+verify console with an integrity banner (intact ✓ / broken at #n),
+  length/integrity/showing stats, an effect census, a GET filter form (every field a real query against the
+  durable ledger), and a records table (seq · ts · actor · action · resource · effect · linked hash). Append-only
+  by construction — surfaced read-only.
+- PROVEN LIVE (real client code → platformd + Postgres): 612 durable records accumulated from every prior
+  module's operations; the hash-chain VERIFIES intact (bad_index=-1); each record's prev_hash links to the next
+  record's hash in an unbroken chain; head + Merkle root are 64-char SHA-256; filtering by effect=deny surfaces
+  the real PDP denials (exam separation-of-duties, unknown-actor); the effect census spans permit/executed/
+  approved/published/resolved/deny/rejected/… Postgres audit_chain verified durable (612 rows). The tamper-evident
+  integrity check is computed server-side.
+- Green: tsc 0, lint clean, Go vet clean, build success, 1555 tests at 96.16/81.63/91.61, live wiring proven.
+  ALL 21 durable Postgres stores now have a working clickable web module (20 operational verticals + the audit
+  ledger). Working clickable modules now (20): Establishment, Fee Ledger, RTE Admissions, Grievance,
+  Scholarship/DBT, Mid-Day Meal, School Transport, Health Immunisation, Free-Supply Entitlement, Class Timetable,
+  School Library, Estate & Asset Register, Parent–Teacher Meetings, RBSK Health Screening, Teacher CPD,
+  Student Attendance, Academic Calendar, Examinations & Results, User Directory & IAM, Audit Trail.
+
+## Rollout #21 (A·B·C): multi-school seed · hosted-backbone package · interactive AI Engine Lab
+- A — MULTI-SCHOOL SEED DENSIFICATION (commit 82ac177): pilotDistricts()/pilotSchools(n) round-robin helpers;
+  attendance + mdm seeds now spread across 4 schools over 2 districts. Proven live on a fresh Postgres: scope=TN
+  aggregates 4 schools / 48 marks / 4 chronic (bottom-up), Chennai + Coimbatore each scope to their own 2 schools
+  (top-down). go build/vet/test green; school 0 unchanged so prior proofs hold.
+- B — HOSTED-BACKBONE DEPLOY PACKAGE (commit f27e0a5): deploy/backbone/ — a Render blueprint (managed Postgres +
+  Dockerised platformd with /healthz), a backbone-only docker-compose + .env.example, and a README wiring guide
+  (deploy backbone → set PLATFORM_URL + PLATFORM_DEFAULT_ORG in Vercel → redeploy), incl. managed-DB option and a
+  security note. Makes the deployed Vercel site one env var from fully click-to-persist. (Provisioning the host /
+  setting Vercel secrets is the one human step I can't do from the sandbox.)
+- C — INTERACTIVE AI ENGINE LAB (this commit): app/ai-engine-lab/ runs two of the 6 native AI engines LIVE on
+  user input via server actions — the Analytics engine (mean/median/spread/trend/z-score anomaly detection) and
+  the Conversational engine (grounded, citation-backed Q&A over a fixed TN school-policy corpus that refuses
+  off-corpus questions). Pure/deterministic/explainable/human-authority — and because they run in-app they work on
+  the deployed site even without the backbone. Proven: analytics flags the injected anomaly; conversational cites
+  RTE-2009 and refuses an off-corpus question.
+- Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all three proven
+  live. Working clickable modules now (21): the 20 durable verticals + AI Engine Lab.
+
+## Rollout #22: wider multi-school seeding + two more live AI engines
+- CI hygiene: fixed a pre-existing flaky test (commit 0ee56ac) — TestPgDirectoryDurable leaked PGU-* rows (one at
+  the out-of-tree node S-CHN-1) into the shared directory_users table, making TestDirectoryScopedByDownwardGov-
+  ernance flake "20 of 21" by test order; added a t.Cleanup so the durable test is self-contained. The user-
+  reported CI failure was the gofmt issue on 5bd255a, already fixed remotely by ce2c0cc (in tree); platform job is
+  green on 6f58609.
+- MULTI-SCHOOL SEED, WIDER: fees + immunisation seeds now spread across pilotSchools(4) too (joining attendance +
+  mdm). Proven live on a fresh Postgres: fees scope=TN aggregates 12 defaulters / Rs 5,000 demanded across the
+  estate, with Chennai and Coimbatore each scoping to their own 6 (2 schools); immunisation scope=TN aggregates
+  40 children / 164 doses. go build + gofmt + full go test green.
+- AI ENGINE LAB, +2 ENGINES: /ai-engine-lab now runs FOUR of the six native engines live — added Assessment
+  (marks -> grade band + per-objective mastery + weak-objective flags) and Reasoning (rule-based RTE-eligibility
+  inference where every conclusion cites its rule + clause). Pure/deterministic/explainable/human-authority,
+  in-app so they work on the deployed site without the backbone. Proven: assessment flags the weak Geometry
+  objective; reasoning fires RTE-25 + neighbourhood with full provenance.
+- Green: tsc 0, lint clean, go vet/test clean, build success, 1555 tests at 96.16/81.63/91.61, all increments
+  proven live.
+
+## Rollout #23: backbone auth gateway (bearer token in front of the mutating surface)
+- platformd now has a built-in auth gateway (cmd/platformd/main.go authGate middleware wrapping the mux). When
+  PLATFORM_API_TOKEN is set, every state-changing request (POST/PUT/PATCH/DELETE) must carry
+  `Authorization: Bearer <token>`; safe reads (GET/HEAD/OPTIONS) and /healthz stay open so dashboards + health
+  checks keep working. Constant-time token compare (crypto/subtle). When the var is unset the gate is a no-op —
+  local dev, the test suite and the credential-free demo are unaffected. Startup banner reports "auth on/off".
+- Web seam: lib/platform-client.ts postJSON now adds the Authorization header from PLATFORM_API_TOKEN (server-only
+  env, never sent to the browser); all writes route through postJSON, reads need no token.
+- PROVEN LIVE: a token-protected platformd — GET /attendance -> 200 (open), POST without token -> 401, POST with a
+  wrong token -> 401, POST with the correct bearer -> 200 (record persisted), GET /healthz -> 200. Through the real
+  web client: a write SUCCEEDS with the correct PLATFORM_API_TOKEN and is rejected (HTTP 401) with a wrong one.
+- Deploy package updated: render.yaml generates a PLATFORM_API_TOKEN, docker-compose/.env.example carry it, and
+  README documents setting the SAME token on platformd + Vercel (+ a curl verification). This is the prerequisite
+  that makes exposing the backend publicly safe.
+- Green: tsc 0, lint clean, gofmt + go vet + go test (cmd/platformd + integration) clean, build success, 1555
+  tests at 96.16/81.63/91.61, gate proven both server-side and through the web client.
+
+## Rollout #24: all 6 AI engines live + wider multi-school seed; Render Blueprint to repo root
+- Render Blueprint moved to repo root (/render.yaml, commit ccfc90a) so the dashboard's "New -> Blueprint" flow
+  auto-detects it (a copy under deploy/backbone would not be found). Same content: managed Postgres +
+  token-protected platformd via Dockerfile.platformd, /healthz, auto-generated PLATFORM_API_TOKEN.
+- AI ENGINE LAB now runs ALL SIX native engines live: added Personalisation (prereq-aware next-objective
+  recommendations over a maths learning path) and Policy (coverage-lever impact -> newly-covered beneficiaries +
+  indicative cost + equity note), joining Analytics, Conversational, Assessment, Reasoning. Pure/deterministic/
+  explainable; in-app so they work on the deployed site without the backbone. Proven: personalisation recommends
+  Multiplication (Addition mastered) but not Division (prereq unmet); policy projects 60%->85% of 100k = 25,000
+  newly covered at the right cost.
+- MULTI-SCHOOL SEED, WIDER: entitlement + rbsk seeds now spread across pilotSchools(4) too (joining attendance,
+  mdm, fees, immunisation -> 6 modules). Proven live on a fresh Postgres: entitlement scope=TN aggregates 32
+  students (Chennai 16 + Coimbatore 16); rbsk scope=TN aggregates 80 screened / 12 referrals (40 + 40). Scholarship
+  has no seed (filed interactively) so nothing to spread there. go build + gofmt + full go test green.
+- DEPLOYMENT BOUNDARY (honest): cannot deploy backend+DB to a public host from the sandbox — no cloud account/
+  creds (api.render.com 403), Docker Hub image pulls firewall-blocked (403 on the blob CDN, so the production
+  image can't be built here), and no public ingress. The native stack (same Go code + real Postgres + auth gate +
+  multi-school) is proven repeatedly; the Render Blueprint + deploy/backbone package make it one sign-in away.
+- Green: tsc 0, lint clean, gofmt + go test (integration) clean, build success, 1555 tests at 96.16/81.63/91.61,
+  all increments proven live.
+
+## Rollout #25: multi-school seeding extended to 7 more modules (13 total)
+- Added schoolTag(si) helper: "CHN" for school 0 (so all existing ids + the tests/proofs that reference them are
+  unchanged) and "S<n>" otherwise. Extended seven more seeds across pilotSchools(4): establishment, infra,
+  timetable, ptm, library, transport, exams. Care taken with the cross-school invariants — timetable teachers and
+  library copy ids are globally unique, so both are per-school-suffixed (a teacher can't be shared between schools;
+  a physical copy can't exist twice).
+- Multi-school now covers 13 modules: attendance, mdm, fees, immunisation, entitlement, rbsk, establishment,
+  infra, timetable, ptm, library, transport, exams.
+- PROVEN LIVE on a fresh Postgres (scope=TN aggregates, districts scope to their own 2 schools): establishment 72
+  sanctioned (Chennai 36 + Coimbatore 36); infra 20 assets / 8 open tickets / 4 under-maintenance; timetable 120
+  slots / 12 teachers; ptm 4 sessions / 32 slots / 16 attended; library 24 active loans / 8 overdue; transport 12
+  routes; exams 12 sheets / 360 results. go build + gofmt + go vet + full go test green (school-0 ids preserved so
+  every existing proof still passes).
+- Remaining (next batch): cpd (teachers), grievance + admission (case/approval workflows — multi-school is about
+  flow not counts). Scholarship has no seed (filed interactively); calendar is approval-based.
+- Green: go build/gofmt/vet/test clean; no TS changed this turn so tsc/lint/coverage/build unchanged from #24 and
+  re-confirmed green.
+
+## Rollout #26: multi-school seeding extended to CPD (14 modules; all seeded count-rollups now multi-school)
+- cpd seed now spreads across pilotSchools(4): a teacher cohort per school with one engineered deficient teacher
+  each. Teachers are per-school-suffixed (a teacher belongs to one school); school 0 keeps SYN-T-0n so existing
+  proofs/tests pass.
+- Multi-school now covers 14 modules: attendance, mdm, fees, immunisation, entitlement, rbsk, establishment,
+  infra, timetable, ptm, library, transport, exams, cpd.
+- PROVEN LIVE on a fresh Postgres: cpd scope=TN aggregates 32 teachers / 28 compliant / 4 deficient (1 per
+  school) / 1724 hours; Chennai 16 + Coimbatore 16. go build + gofmt + full go test green.
+- This completes the multi-school seeding for ALL seeded count-rollup modules. Remaining seeded modules left by
+  design: directory (the IAM role plane, not a school count) and calendar (approval workflow). grievance,
+  admission and scholarship have NO seed (filed interactively).
+- Green: go build/gofmt/test clean; no TS changed, Next build re-confirmed; 1555 tests at 96.16/81.63/91.61.
+
+## Rollout #27: NEW durable vertical — School Inspection & Monitoring (deep-build #23)
+- First brand-new durable backbone vertical built this phase (the prior 22 wired existing stores). Built fully
+  inline in the integration package (no go.mod change, like admission): platform/integration/inspection.go
+  (domain Inspection + file→action→close transitions + no-duplicate-open invariant + in-memory store + Platform
+  methods + scoped dashboard + multi-school seed) and inspection_pg.go (durable PostgreSQL adapter, self-
+  migrating). New platformd endpoint /inspection (GET dashboard/list/id; POST file|action|close). lib/platform-
+  client.ts: inspection seam. app/school-inspection/: role-gated (manage:governance) force-dynamic dashboard
+  (inspections/open/closed/avg-compliance/low/by-type), an open worklist with Record-action / Close controls, and
+  a File-inspection form.
+- INVARIANTS (server-side): a school cannot carry two OPEN inspections of the same type; an inspection can be
+  closed only after an action is recorded against its findings; compliance score 0..100; valid type/date.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 16 seeded visits across 4 schools / 2 districts
+  (academic/admin/safety/financial); score>100 rejected; duplicate open safety inspection rejected ("already has
+  an open"); close-before-action rejected ("after an action"); action(note)→close succeeded; a fresh inspection
+  allowed once the prior closed. TN rollup total 18 / avg compliance 58.8 / 10 low-compliance; districts strict
+  subsets. Postgres `inspections` table verified durable.
+- Green: go build + gofmt + go vet + full go test clean; tsc 0, lint clean, build success, 1555 tests at
+  96.16/81.63/91.61. Durable backbone web modules now 23 (was 22). [(b) brochure pillar + (c) live deploy: queued.]
+
+## Rollout #28 (b): advance the 'modules' brochure pillar — self-verifying durable-module register
+- Honest advancement of the partial "391 functional modules" pillar. Its note was stale ("7 deep-transactional");
+  this session built 23 deep durable backbone-wired modules. Added lib/governance/durable-modules.ts — a register
+  pinning the 23 routes whose server actions drive platformd + PostgreSQL, each with its backbone service +
+  enforced invariant — and tests/durable-modules.test.ts which asserts every listed route has an actions.ts that
+  imports @/lib/platform-client (i.e. is genuinely durable, not reference UI). The "23 deep modules" claim is now
+  TEST-ENFORCED and cannot drift.
+- Refreshed brochure-coverage.ts notes honestly (all stay PARTIAL — no overstatement): modules → cites the 23
+  deep-transactional modules + the self-verifying register; persistence → cites the 22 self-migrating PostgreSQL
+  stores proven durable vs PG16 (state-scale load test still pending); auth → cites the new backbone auth gateway
+  (still a single shared secret, not per-user SSO).
+- Register integrity preserved: coverage stays a candid mid-range (<100%); keys-hsm/escrow-offswitch/multicloud
+  still pending; federation still partial — all enforced by tests/brochure-coverage.test.ts.
+- NOTE: the ephemeral container re-cloned stale at #12 again mid-session; all work was safe on origin (6f44cbf) —
+  fetched + hard-reset to restore the tree, no loss.
+- Green: tsc 0, lint clean, build success, 1557 tests (+2) at 96.17/81.64/91.62; durable-modules.ts 100% covered.
+
+## Rollout #29 (a): NEW durable vertical — Transfer Certificates (deep module #24)
+- Second net-new durable backbone vertical, built inline in the integration package: tc.go (domain
+  TransferCertificate + request→issue→cancel transitions + one-active-TC-per-student invariant + in-memory store +
+  Platform methods + scoped dashboard + multi-school seed) and tc_pg.go (self-migrating PostgreSQL adapter). New
+  platformd endpoint /tc (GET dashboard/list/id; POST request|issue|cancel). lib/platform-client.ts: tc seam.
+  app/transfer-certificate/: role-gated (manage:students) dashboard (total/issued/pending/cancelled + by-reason),
+  a pending worklist with Issue(serial)/Cancel controls, and a Raise-TC form.
+- INVARIANTS (server-side): a student can hold at most one ACTIVE TC (requested or issued) per school; issue needs
+  a serial number; valid reason/date.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded TCs across 4 schools / 2 districts;
+  invalid reason rejected; a SECOND active TC for the same student rejected ("already has an active TC");
+  issue-without-serial rejected; request→issue(serial)→cancel succeeded; a fresh TC allowed once the prior was
+  cancelled. Postgres transfer_certificates verified durable (8 issued / 5 requested / 1 cancelled).
+- Register updated: added transfer-certificate to lib/governance/durable-modules.ts (now 24) — the durable-modules
+  test verifies its actions.ts drives platform-client; brochure 'modules' note bumped 23→24 deep-transactional.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 24.
+
+## Rollout #30 (a): NEW durable vertical — Staff Attendance & Payable Days (deep module #25)
+- Third net-new durable backbone vertical (inline in integration): staffattendance.go (domain StaffAttendance +
+  payable-days/LWP computation + (employee,date) upsert + in-memory store + Platform methods + scoped dashboard +
+  multi-school seed) and staffattendance_pg.go (self-migrating PostgreSQL adapter, PK (employee_id,date)). New
+  platformd endpoint /staff-attendance (GET dashboard/employee-profile; POST mark). lib/platform-client.ts: staff
+  seam. app/employee-attendance/ (route /staff-attendance was a reference module): role-gated (manage:staff)
+  dashboard (schools/marked/present-rate/on-leave/LWP) + an LWP roster with per-employee payable/LWP + a Mark form.
+- PURPOSE distinct from student attendance (RTE retention): payroll-grade — present/on_duty/leave = 1 payable day,
+  half_day = 0.5, unauthorised absent = 0 and accrues toward leave-without-pay (LWP).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 24 employees across 4 schools / 2 districts with
+  one LWP employee per school; invalid status rejected; a 5-day mix computed payable_days=3.5 + lwp_days=1;
+  re-marking the absent day as present UPSERTED (still 5 days, lwp_days→0, payable→4.5). Postgres staff_attendance
+  durable. districts strict subsets.
+- Register: added employee-attendance to durable-modules.ts (now 25, test-verified backbone-wired); brochure
+  'modules' note 24→25.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 25.
+
+## Rollout #31 (a): NEW durable vertical — School Grant Utilisation (deep module #26)
+- Fourth net-new durable backbone vertical (inline in integration), money-grade. grant.go (domain Grant +
+  allocate→spend→close + NO-OVER-SPEND invariant + in-memory store + Platform methods + scoped utilisation
+  dashboard + multi-school seed) and grant_pg.go (self-migrating PostgreSQL adapter). New platformd endpoint
+  /grant (GET dashboard/list/id; POST allocate|spend|close). lib/platform-client.ts: grant seam.
+  app/school-grants/: role-gated (manage:governance) dashboard (grants/allocated/spent/balance/utilisation% +
+  by-head, ₹ from paise), a low-utilisation roster with Book-expenditure / Close controls, and an Allocate form.
+- INVARIANT (server-side): cumulative expenditure can NEVER exceed the allocation; amounts in paise; only an open
+  grant can be spent against.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded grants across 4 schools / 2 districts;
+  invalid head rejected; allocate ₹1,000 → spend ₹600 ok → spend ₹500 REJECTED (over-spend, ₹400 remaining) →
+  spend exactly ₹400 ok (fully utilised) → further ₹0.01 rejected → close ok → spend-after-close rejected.
+  Postgres grants durable (13 rows, ₹4.01L allocated / ₹2.65L spent). districts strict subsets.
+- Register: added school-grants to durable-modules.ts (now 26, test-verified backbone-wired); brochure 'modules'
+  note 25→26.
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 26. CI platform workflow confirmed GREEN on all recent commits (amd64 fix held).
+
+## Rollout #32 (a): NEW durable vertical — Lesson Plans (deep module #27, design-led)
+- Per a design consultation (user chose: complementary period model · reference-timetable+snapshot · full
+  Lesson-Plan module FIRST), built the durable Lesson Plans vertical (inline in integration). lessonplan.go
+  (domain LessonPlan + draft→publish→archive + PUBLISH QUALITY-GATE: cannot publish without learning objectives +
+  in-memory store + Platform methods + scoped dashboard + multi-school seed with FLN/NEP tags) and lessonplan_pg.go
+  (self-migrating PostgreSQL adapter). New platformd endpoint /lesson-plan (GET dashboard/list/id; POST create|
+  publish|archive). lib/platform-client.ts: lesson-plan seam. app/lesson-plan/ (the reference /lesson-plans stays
+  intact): role-gated (manage:school) dashboard (plans/published/draft/archived + by-subject), a draft worklist
+  with Publish/Archive controls (flagging plans with no objectives), and an authoring form (topic/objectives/
+  FLN-NEP tags/resources/periods).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): 12 seeded plans across 4 schools / 2 districts (8
+  published, 4 draft — the no-objectives Science plan stays draft per school); missing topic rejected; publishing a
+  draft WITHOUT objectives REJECTED ("cannot publish ... without learning objectives"); adding objectives then
+  publishing succeeded; re-publish rejected; archive succeeded. Postgres lesson_plans durable (8 published / 4
+  draft / 1 archived). districts strict subsets.
+- Register: added lesson-plan to durable-modules.ts (now 27, test-verified backbone-wired); brochure 'modules'
+  note 26→27.
+- NEXT (per the design): a Period-wise Attendance & Lesson-Delivery module that references the Class Timetable slot
+  (snapshot subject/teacher), a date, and a PUBLISHED lesson plan — computing subject-wise attendance % + teacher
+  engagement. Daily Student/Staff attendance stay as-is (RTE + payroll).
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 27.
+
+## Rollout #33 (a): NEW durable vertical — Period Attendance & Lesson Delivery (deep module #28, design-led step 2)
+- Completes the period-attendance design the user approved (complementary module · reference-timetable+snapshot ·
+  Lesson-Plan first). Built the durable Period Attendance & Lesson Delivery vertical inline in integration.
+  periodattendance.go (domain PeriodAttendance keyed org|class|date|period; MarkPeriod validates the period against
+  the Class Timetable slot — rejects "no scheduled period" for that day — and SNAPSHOTS subject + teacher from the
+  slot; day derived from the date via Weekday; start/end from a 45-min bell schedule; a delivered period may LINK a
+  PUBLISHED lesson plan, validated against the lesson-plan store; present = strength − absentees; (org,class,date,
+  period) upsert corrects a mark) + in-memory store + Platform methods + scoped dashboard (delivered/not_held/
+  present_rate/by_subject SubjectAttendance/teacher_engagement) + multi-school seed (6 periods/school on 2026-06-01
+  Mon, Mathematics period linked to LP-<tag>-01). periodattendance_pg.go (self-migrating PostgreSQL adapter).
+  New platformd endpoint /period-attendance (GET dashboard/sheet; POST mark). lib/platform-client.ts: period seam.
+  app/period-attendance/ (manage:students gated): live stat strip, subject-wise attendance + teacher-engagement
+  cards, the day's period sheet, and a Mark-period form. Cross-module: reads Timetable (#10) + Lesson Plan (#27).
+- PROVEN LIVE (real client code → platformd + a fresh Postgres): dashboard rollup 24 delivered with subject-wise
+  split and teacher engagement, district subset honoured; integration test — an unscheduled period REJECTED ("no
+  scheduled period"); a DRAFT plan (LP-CHN-03) REJECTED ("must be published"); the PUBLISHED LP-CHN-01 accepted with
+  subject=Mathematics / teacher=SYN-T-03 / day=monday / present_count=28; upsert correction to 29; a not_held period
+  recorded. Postgres period_attendance durable (23 delivered + 1 not_held).
+- Register: added period-attendance to durable-modules.ts (now 28, test-verified backbone-wired); brochure 'modules'
+  note 27→28 ("28 are now DEEP-transactional").
+- Auth gateway (carried): platformd writes pass through authGate (bearer token, constant-time compare; reads + /healthz open).
+- Green: go build/gofmt/vet/test clean; tsc 0, lint clean, build success, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 28.
+
+## Rollout #34 (a): NEW durable vertical — SMC Meetings & Resolutions (deep module #29, RTE §21–22)
+- Built the durable School Management Committee governance vertical inline in integration. smc.go (domain
+  SMCMeeting + embedded Resolution action items; lifecycle scheduled→convened→closed with an open→done resolution
+  sub-lifecycle; TWO hard server-side invariants: (1) COMPOSITION — RTE §21(2) three-fourths-parents rule
+  (parent_members ≥ ceil(0.75×total), rejected at schedule time), (2) QUORUM — a meeting can only be CONVENED, and
+  resolutions only passed, when a majority is present (present ≥ total/2+1); resolutions cannot be passed on a
+  non-quorate meeting + in-memory store + Platform methods + scoped dashboard (meetings/by_status/quorate_rate/
+  open_actions + open-action worklist) + multi-school seed (a convened Q1 review with one done + one open
+  resolution, and a scheduled Q2 review, per school across 2 districts)) and smc_pg.go (self-migrating PostgreSQL
+  adapter; resolutions stored as JSON). New platformd endpoint /smc (GET dashboard/list/id; POST schedule|convene|
+  resolve|complete|close). lib/platform-client.ts: SMC seam. app/smc-meetings/ (manage:school gated): live stat
+  strip, open-action worklist with per-item Mark-done, status mix, the meetings table, and schedule/convene/
+  resolve/close forms.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, with the auth gateway enforced): composition reject
+  (12 members / 8 parents → "three-fourths parents"); full lifecycle — resolve-before-convene REJECTED ("convened"),
+  convene-without-quorum REJECTED (5 of 10 → "quorum not met"), convene with 7/10 accepted, resolution passed +
+  embedded id, completed (open→done), meeting closed; durable read-back via the scoped list; downward-governance
+  scope (Chennai + Coimbatore subsets ⊆ TN). Auth gate: POST without bearer → 401, with token → 200, GET open.
+- Register: added smc-meetings to durable-modules.ts (now 29, test-verified backbone-wired); brochure 'modules'
+  note 28→29.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 29.
+
+## Rollout #35 (a): NEW durable vertical — Bonafide Certificate Register (deep module #30, cross-module)
+- Built the durable Bonafide / study-certificate registrar vertical inline in integration. bonafide.go (domain
+  BonafideCertificate; lifecycle requested→issued→revoked; TWO invariants: (1) CROSS-MODULE — IssueBonafide reads
+  the live TC store (studentHasActiveTC) and REJECTS issuing for a student who has an active transfer certificate
+  (requested/issued) — they are no longer on rolls here; (2) SERIAL INTEGRITY — each issued certificate is stamped
+  with a monotonic per-school serial BNF/<org>/2026/NNNN; a request issues once, only an issued cert revokes +
+  in-memory store + Platform methods + scoped dashboard (by_status/by_purpose/issued + pending worklist) +
+  multi-school seed (one issued + one pending per school across 2 districts)) and bonafide_pg.go (self-migrating
+  PostgreSQL adapter). New platformd endpoint /bonafide (GET dashboard/list/id; POST request|issue|revoke).
+  lib/platform-client.ts: bonafide seam. app/bonafide-register/ (manage:students gated): live stat strip, the
+  register table, and request/issue/revoke forms.
+- Bug found + fixed during live-proof: seedBonafide (runs inside bonafideOnce.Do) called nextBonafideSerial which
+  re-entered bonafideState() → sync.Once self-deadlock (first request hung). Fixed by threading the store through
+  nextBonafideSerial(s, org) so seeding never re-enters the Once. Caught precisely because the module was proven
+  live, not just unit-asserted.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, auth gate enforced): clean issue stamps a serial
+  matching ^BNF/33030004181/2026/\d{4}$ and is durably listed; re-issue rejected ("only a requested certificate");
+  CROSS-MODULE — after the student is given an active TC (reason transfer), issuing the bonafide is REJECTED
+  ("active transfer certificate"); revoke only applies to an issued cert; downward-governance scope (Chennai +
+  Coimbatore ⊆ TN). Auth gate: POST without bearer → 401, GET open → 200.
+- Register: added bonafide-register to durable-modules.ts (now 30, test-verified backbone-wired); brochure
+  'modules' note 29→30.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 30.
+
+## Rollout #36 (a): NEW durable vertical — Teacher Transfer & Posting (deep module #31, cross-module)
+- Built the durable Teacher Transfer & Posting HR vertical inline in integration (teachertransfer.go + _pg.go).
+  Domain TeacherTransfer; lifecycle requested→approved→posted (or rejected). TWO invariants: (1) SINGLE ACTIVE
+  REQUEST — a teacher cannot hold two in-flight transfer requests; (2) CROSS-MODULE VACANCY GATE — ApproveTransfer
+  computes cadreVacancy(toOrg, cadre) from the LIVE Establishment register (sanctioned − filled over the school's
+  active establishments of that cadre) and REJECTS approval when there is no open post — you cannot post a teacher
+  where no sanctioned vacancy exists. Scoped dashboard by DESTINATION school (by_status/by_reason/posted + pending
+  worklist); multi-school seed across 2 districts (a posted transfer into a school with a BT vacancy + a pending
+  mutual request). Named TeacherTransfer/teacher-transfer to avoid colliding with transfer.go (student APAAR
+  portability — an unrelated concern).
+- New platformd endpoint /teacher-transfer (GET dashboard/list/id; POST request|approve|post|reject). lib/platform-
+  client.ts: teacher-transfer seam. app/teacher-transfer/ (manage:staff gated): live stat strip, the requests table
+  (by destination), and request/approve/post/reject forms.
+- PROVEN LIVE (real client code → platformd + a fresh Postgres, auth gate enforced): single-active-request reject;
+  CROSS-MODULE both ways — a BT transfer (8/7 sanctioned, 1 vacancy) approves+posts, a Secondary-Grade transfer
+  (6/6, full) is REJECTED ("no sanctioned vacancy"); post-before-approve rejected; reject only on a requested one,
+  durably listed; downward-governance scope by destination (Chennai + Coimbatore ⊆ TN). Auth gate: POST without
+  bearer → 401, GET open → 200.
+- Register: added teacher-transfer to durable-modules.ts (now 31, test-verified backbone-wired); brochure 'modules'
+  note 30→31.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 31.
+
+## Rollout #37 (deploy-identity): one URL "VASA-EOS-SE-TN" front door
+- Per request ("make it all under this url VASA-EOS-SE-TN"): the platform is already a single Next.js app / single
+  deployment (root → login → any of 17 portals → any of 31 modules), so this turn (a) NAMES the deploy targets and
+  (b) adds an explicit single front door so everything is reachable from one URL.
+- NAMING: package.json name my-v0-project → vasa-eos-se-tn (this is the slug Vercel defaults the project + URL to on
+  import → https://vasa-eos-se-tn.vercel.app). render.yaml services renamed vasa-eos-platformd → vasa-eos-se-tn-
+  platformd and vasa-eos-backbone-db → vasa-eos-se-tn-db. DEPLOY.md updated to document the vasa-eos-se-tn URL.
+- FRONT DOOR: new app/directory/ (/directory) — a single page listing ALL 17 stakeholder portals (grouped by the 8
+  governance tiers, each linked to its home / sign-in) AND ALL 31 deep modules (each linked to its route, with its
+  invariant), read live from config/portals.ts + lib/governance/durable-modules.ts so it can never drift. Linked
+  from the stakeholders sign-in page ("Browse the full platform directory").
+- HONEST: this makes the eventual URL read vasa-eos-se-tn and puts everything under one navigable root; it does NOT
+  itself create a live URL — that still needs the user to import to Vercel (or hand a token) and, for the 31 modules
+  to be fully functional rather than demo, deploy the backbone (render.yaml) + set PLATFORM_URL in Vercel.
+- Green: tsc 0, lint clean, next build success (/directory route added), 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #38 (viewability): demo-data fallback so modules are VIEWABLE without a backend (batch 1/…)
+- Requirement: view the 31 deep modules + 17 portals on the hosted Vercel demo (no backend deploy, no tokens). The
+  portals already work (demo auth). The modules showed a blocking "Backbone not connected" alert — not viewable.
+- Fix pattern: lib/platform-demo.ts holds representative snapshots (TN-DIST-Chennai, synthetic SYN- ids mirroring
+  the Go seeds). Each platform-client getter returns the demo snapshot when !platformConfigured() (instead of
+  null/[]). Each module page now gates on data presence (!d) not connectivity, and shows components/demo-data-note
+  (DemoDataNote) when !connected — so the real dashboard/lists/forms render, marked "Demo data". Writes still no-op
+  in this mode; deploying the backbone (deploy/backbone) makes them persist.
+- Batch 1 (6 modules wired + viewable): establishment, fee-ledger, student-attendance, smc-meetings,
+  bonafide-register, teacher-transfer. Remaining ~23 durable modules to follow in subsequent batches.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #39 (viewability): demo-data fallback batch 2/… (7 more modules viewable)
+- Same pattern as batch 1: lib/platform-demo.ts snapshots + platform-client getters return demo when
+  !platformConfigured() + pages gate on data presence with the DemoDataNote. Batch 2 modules now viewable on the
+  hosted demo: audit-trail (hash-chain intact + records), school-inspection, transfer-certificate,
+  employee-attendance, school-grants, lesson-plan, period-attendance. 13/31 modules now viewable.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #40 (viewability): demo-data fallback batch 3/… (7 more modules viewable)
+- Batch 3 modules now viewable on the hosted demo: rte-admissions (RTE §12(1)(c) HITL applications),
+  grievance-cases (SLA escalation chain), dbt-scholarship, mid-day-meal, school-transport (incl. unserviceable
+  route), health-immunisation. grievance-approvals already renders (flow board, no backbone gate). 20/31 modules
+  now viewable. Remaining ~11: free-supply, class-timetable, school-library, estate-register,
+  parent-teacher-meetings, health-screening, teacher-cpd, events-calendar, exam-results, user-directory,
+  leave-approvals.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #41 (viewability): demo-data fallback batch 4/… (7 more modules viewable)
+- Batch 4 now viewable: free-supply, class-timetable, school-library, estate-register (with open tickets),
+  parent-teacher-meetings, health-screening (RBSK), teacher-cpd. 27/31 modules now viewable. Remaining 4:
+  events-calendar, exam-results, user-directory, leave-approvals.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #42 (viewability): demo-data fallback batch 5/5 — ALL 31 modules viewable
+- Final batch: events-calendar (multi-tier approval inbox), exam-results (subject sheets + analytics),
+  user-directory (5-model IAM census). leave-approvals already renders (flow board, no backbone gate).
+- ALL 31 durable modules + 17 portals are now fully VIEWABLE on the hosted Vercel demo with representative data
+  (DemoDataNote marks it), with zero backend deploy and zero tokens. Writes persist once the backbone is deployed
+  (deploy/backbone). The /directory page links every portal + module.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #42: wire all 31 durable modules into the sidebar navigation
+- The left-nav was a curated list pointing at the older reference routes (/fees, /timetable, …), so the 31 deep
+  durable modules (SMC, bonafide, teacher-transfer, …) were only reachable via /directory or direct URL.
+- config/dashboard-nav.ts: added a shared durableModuleNav[] (a "▸ Durable Modules" link to /directory + all 31
+  module links with icons, kept in sync with lib/governance/durable-modules.ts) and spread it into the operational
+  roles: ADMIN, PRINCIPAL, BEO, DEO, DIRECTOR, SECRETARY, MINISTER. Now every durable module is clickable from the
+  sidebar; pages stay role-gated server-side.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #43: NEW durable vertical — Hostel Allocation & Occupancy (deep module #32) + sidebar to ALL roles
+- Built the durable Hostel Allocation & Occupancy welfare vertical inline in integration (hostel.go + _pg.go).
+  Domain Hostel with embedded Residents; allot→vacate lifecycle. TWO invariants: (1) CAPACITY — occupancy can never
+  exceed capacity (no over-allocation); (2) ONE BED PER STUDENT statewide — AllotBed scans every governed hostel and
+  rejects a second active placement. Scoped dashboard (hostels/capacity/occupied/occupancy_pct/by_type + near-full
+  ≥90% worklist); multi-school seed (a near-full boys + a girls hostel per school across 2 districts). Route is
+  /hostel-occupancy (both /hostel and /hostel-allocation are pre-existing reference pages).
+- New platformd endpoint /hostel (GET dashboard/list/id; POST register|allot|vacate|close). lib/platform-client.ts:
+  hostel seam (+ demo fallback). app/hostel-occupancy/ (manage:school/students gated). Register now 32; brochure
+  'modules' note 31→32.
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): register+allot+vacate durable;
+  CAPACITY — 3rd allotment into a cap-2 hostel rejected ("full"); ONE-BED — a student already placed cannot be
+  placed in a second hostel ("already holds an active bed"), but can after vacating; close-with-residents rejected;
+  downward-governance scope (Chennai+Coimbatore ⊆ TN). POST without bearer → 401.
+- SIDEBAR: config/dashboard-nav.ts now spreads durableModuleNav into ALL 17 roles (added the remaining TEACHER,
+  STUDENT, SUBJECT_INCHARGE, ACADEMIC_HEAD, INSTITUTION_HEAD, PARENT, CRCC, VENDOR, RESEARCHER, PUBLIC); pages stay
+  role-gated server-side. Hostel added to the durable-modules nav section.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 32.
+
+## Rollout #44: NEW durable vertical — CIFM Campus Infrastructure & Facilities Management (deep module #33)
+- User asked whether "Native AI Language Lab" + "Native AI CIFM" are in the catalogue/repo. Honest answer: CIFM
+  was absent (only the Estate & Asset Register existed); Language Lab partial (Bhashini/i18n/multilingual + the
+  language Native-AI pillar) but no dedicated module. Built CIFM this turn; Language Lab queued next.
+- Built the durable CIFM facilities-operations vertical inline in integration (cifm.go + cifm_pg.go). Domain
+  Facility (building/lab/toilet/water/electrical/ground) + AMC + embedded WorkOrders; register → raise → complete →
+  set-operational / close. SAFETY invariant: a facility cannot return to operational while an OPEN CRITICAL work
+  order remains, and raising a critical WO auto-flips it to under_maintenance. Distinct from estate-register (asset
+  register + decommission gate). Scoped dashboard (by category/status/condition + open WOs + critical-open +
+  needs-attention worklist); multi-school seed (one critical toilet WO per school). Route /campus-facilities.
+- New platformd endpoint /cifm (register|raise|complete|operational|close). lib/platform-client.ts: cifm seam +
+  demo fallback. app/campus-facilities/ (manage:school gated). Register now 33; brochure note 32→33. Added to the
+  durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): register + WO lifecycle durable;
+  SAFETY GATE — critical WO auto-flips to under_maintenance, set-operational REJECTED until the WO is completed,
+  then succeeds; close-with-open-WO rejected; downward-governance scope (Chennai+Coimbatore ⊆ TN). POST w/o bearer → 401.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 33.
+
+## Rollout #45: NEW durable vertical — Native AI Language Lab (deep module #34)
+- Operationalises the language Native-AI pillar (Bhashini/i18n seam) as a durable translation-and-publishing
+  workflow. languagelab.go + languagelab_pg.go: TranslationJob (content title + domain + source/target lang +
+  machine-assisted flag); requested → translated → reviewed → published (+ reject). QUALITY GATE: a translation
+  cannot be PUBLISHED without being REVIEWED (so machine/Bhashini output never reaches parents unreviewed); target
+  must be a valid Eighth-Schedule language (en + the 22), source ≠ target. Scoped dashboard (by_status/by_target_lang
+  /published/machine_assisted/languages_covered + review worklist); multi-school seed (a published Tamil notice, a
+  machine-assisted Telugu circular awaiting review, a Hindi request). Route /language-lab.
+- New platformd endpoint /language-lab (request|translate|review|publish|reject). lib/platform-client.ts: seam +
+  demo fallback. app/language-lab/ (manage:school gated). Register now 34; brochure note 33→34. Added to the
+  durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): invalid target lang + same-lang
+  rejected; QUALITY GATE — publish-before-review REJECTED ("has not been reviewed"), then review→publish succeeds;
+  reject works; durable scoped read-back; downward-governance scope (Chennai+Coimbatore ⊆ TN). POST w/o bearer → 401.
+- Note: container had re-cloned stale to #12 at turn start; restored from origin (work safe), untracked new files
+  preserved. CIFM (#33) was already shipped the prior turn.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 34.
+
+## Rollout #46 (a): graceful backbone degradation — no more bare "Backbone not connected" red error
+- Problem: when the hosted backbone is configured (PLATFORM_URL set) but momentarily unreachable (Render free-tier
+  cold start / mid-redeploy / an endpoint not yet deployed after shipping a new module), module pages showed a
+  blocking red "Backbone not connected" alert. Reported on /hostel-occupancy after #32 shipped but Render hadn't
+  redeployed.
+- Fix (lib/platform-client.ts): (1) getJSON now has an 8s AbortSignal timeout (fail fast instead of hanging);
+  (2) new getOrDemo(path, fallback) — dashboard getters fall back to their demo snapshot on any fetch failure, so
+  the page renders sample data instead of erroring; (3) new platformReachable() — a quick /healthz probe; the 32
+  module backboneConnected() now return platformReachable() (configured AND answering) instead of just
+  platformConfigured(). Pages already gate on !d and show DemoDataNote when !connected, so: backend healthy → live
+  data, no note; backend unreachable → sample data + an honest "Sample data — live backbone isn't responding,
+  reload in a minute" note; reloads to live automatically once it answers. Write guards keep using platformConfigured.
+- components/demo-data-note.tsx reworded for the configured-but-waking case. Means future module additions no longer
+  require a manual Render redeploy to avoid a scary error in the deploy window.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #46 (b): NEW durable vertical — Procurement & GeM Purchase Orders (deep module #35)
+- Built the durable GeM procurement finance vertical inline in integration (procurement.go + procurement_pg.go).
+  PurchaseOrder (item/vendor/GeM contract/ordered_qty/unit_price_paise + cumulative received_qty + paid_paise);
+  create → receive → pay → close. TWO GFR controls (money in paise): (1) NO OVER-RECEIPT — cumulative received can
+  never exceed ordered qty; (2) NO OVER-PAYMENT BEYOND GOODS RECEIVED — cumulative paid can never exceed
+  received_qty × unit_price (can't pay for undelivered goods). Scoped dashboard (ordered/received/paid value totals
+  + outstanding (received−paid) + pending-receipt worklist); multi-school seed (part-received/part-paid benches,
+  fully-received-unpaid tablets, awaiting-receipt books). Route /gem-procurement (/procurement is a reference page).
+- New platformd endpoint /procurement (create|receive|pay|close). lib/platform-client.ts: seam (uses getOrDemo
+  graceful fallback) + demo. app/gem-procurement/ (manage:school gated, rupee↔paise conversion). Register now 35;
+  brochure note 34→35. Added to the durable-modules sidebar section (all 17 roles).
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): create+receive+pay within limits
+  durable; NO OVER-RECEIPT — receiving 5 more into 6/10 (→11) REJECTED, 4 (→10) ok; NO OVER-PAYMENT — paying 50000
+  beyond received value 100000 (already 60000) REJECTED, 40000 ok; close requires full receipt; scope subset.
+  POST w/o bearer → 401.
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.
+  Durable backbone web modules now 35.
+
+## Rollout #47: Task-3 consolidation (zero-loss) — make durable modules canonical, de-dup the nav
+- Architecture audit found the components single-sourced (one sidebar/header/shell/nav) but ~12 domains existing
+  twice: a reference-UI page (lib/<m> + Supabase) and a durable module (Go platformd + Postgres). Consolidated
+  toward the durable layer WITHOUT deleting anything (reversible routing only).
+- REDIRECTS (next.config.mjs, files preserved) — 6 reference routes that are thin duplicates with NO unique
+  feature, now canonicalised to their durable twin: /fees→/fee-ledger, /cpd→/teacher-cpd,
+  /staff-attendance→/employee-attendance, /lesson-plans→/lesson-plan, /attendance→/student-attendance,
+  /hostel-allocation→/hostel-occupancy.
+- PRESERVED (NOT redirected — they carry unique features the durable twin lacks; redirecting would lose features):
+  /timetable (substitution), /postings (counselling), /hostel (mess checklist), /procurement (inventory),
+  /procurement-approvals (sanction workflow), /smc (DAO governance), /grievance (redressal), /governance/directory.
+  These are flagged for a feature-port-then-redirect follow-up.
+- NAV DE-DUP (config/dashboard-nav.ts): removed the 5 ADMIN reference entries whose domain now redirects to the
+  durable twin (Daily Attendance, Staff Attendance, Lesson Planning, Teacher CPD, Fee Management); kept Timetable &
+  Substitution and Teacher Posting & Transfer (unique features). Each domain now shows one canonical menu entry.
+- NOTHING DELETED: every reference page, lib/<m> store, Supabase migration and durable table is intact (zero loss
+  of features/modules/schemas). DB ownership: Postgres (42 durable tables) is canonical for the 35 modules;
+  Supabase remains for the non-durable reference surfaces.
+- Green: tsc 0, lint clean, next build success, 1557 tests at 96.17/81.64/91.62.
+
+## Rollout #48: Task-3 port-then-redirect (1/N) — Timetable Substitution ported to durable, /timetable redirected
+- Ported the reference /timetable page's unique "substitution" feature into the durable Class Timetable module (#11)
+  as a real Postgres-backed capability, then redirected /timetable → /class-timetable (it's now a true duplicate).
+  Zero feature loss: the substitution feature is now durable + audited, not a demo widget.
+- substitution.go + substitution_pg.go: Substitution (date-specific substitute for a scheduled period) with TWO
+  invariants validated against the LIVE timetable — (1) the period must be SCHEDULED (no substituting a free
+  period), (2) the substitute must be FREE (not the regular teacher of another class at that day+period — clash);
+  also rejects substitute==regular. Snapshots subject + original teacher from the slot. assigned→cancelled. New
+  table `substitutions`. New platformd endpoint /substitution (assign|cancel; GET list). lib/platform-client.ts:
+  substitution seam (getOrDemo) + demo. Surfaced on /class-timetable (substitutions card + assign/cancel forms).
+- next.config.mjs: added /timetable → /class-timetable. config/dashboard-nav.ts: removed "Timetable &
+  Substitution" /timetable entry (now redirected). One canonical timetable entry remains.
+- PROVEN LIVE (real client → platformd + fresh Postgres, auth gate enforced): unscheduled period (P8) rejected;
+  substitute==regular rejected; valid free substitute assigned (snapshots original teacher + subject); durable
+  read-back + cancel. POST w/o bearer → 401.
+- Remaining port-then-redirect candidates: /postings (counselling) → teacher-transfer, /hostel (mess) →
+  hostel-occupancy. The 4 genuinely-distinct modules (/smc DAO, /grievance redressal, /procurement inventory,
+  /procurement-approvals sanction) are kept separate (not duplicates).
+- Green: tsc 0, lint clean, next build success, gofmt/vet/go test clean, 1557 tests at 96.17/81.64/91.62.

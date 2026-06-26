@@ -3,6 +3,8 @@
 import { z } from "zod"
 import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { syncUserToBackbone } from "@/lib/access/backbone-sync"
+import { logger } from "@/lib/logger"
 
 const registerUserSchema = z.object({
   fullName: z.string().min(3, "Full name must be at least 3 characters long."),
@@ -109,6 +111,11 @@ export async function registerUserAction(
         errors: { _general: "Database profile insertion error." },
       }
     }
+
+    // Propagate the new user into the Go sovereign directory so the backbone PDP/ReBAC knows about them
+    // (one identity plane). Best-effort: a sync failure must NOT fail a registration that already succeeded.
+    const sync = await syncUserToBackbone({ id: authUser.user.id, name: fullName, role, schoolId })
+    if (!sync.synced) logger.info("backbone directory sync skipped", { id: authUser.user.id, reason: sync.reason })
 
     revalidatePath("/admin/users") // Or whatever path lists users
     return {

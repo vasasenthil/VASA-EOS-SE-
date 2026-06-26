@@ -79,7 +79,15 @@ jobs:
 
       - name: Validate Protobuf contracts (protoc compile)
         run: |
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends protobuf-compiler
+          # GitHub-hosted runners ship a Microsoft apt repo (packages.microsoft.com / azure-cli) that
+          # intermittently returns 403 and aborts `apt-get update`, which then skips the protobuf-compiler
+          # install (protoc: command not found, exit 127). protobuf-compiler comes from the Ubuntu archive,
+          # so drop the flaky third-party sources and don't let a single repo failure fail the job.
+          sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list \
+                     /etc/apt/sources.list.d/azure-cli.list \
+                     /etc/apt/sources.list.d/azure-cli.sources 2>/dev/null || true
+          sudo apt-get update || true
+          sudo apt-get install -y --no-install-recommends protobuf-compiler
           protoc --proto_path=contracts/protobuf --descriptor_set_out=/dev/null contracts/protobuf/*.proto
 
   platformd-image:
@@ -115,7 +123,10 @@ jobs:
         with:
           context: .
           file: Dockerfile.platformd
-          platforms: linux/amd64,linux/arm64
+          # amd64-only: the arm64 leg builds under QEMU emulation (slow + flaky) and doubles the Docker Hub
+          # base-image pulls (anonymous rate-limit). amd64 is what the deploy targets (Render/most hosts) use;
+          # re-add linux/arm64 here when an arm runtime is actually required.
+          platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
             ${{ steps.img.outputs.name }}:latest

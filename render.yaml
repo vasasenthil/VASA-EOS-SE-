@@ -1,0 +1,42 @@
+# VASA-EOS(SE)-TN — Render Blueprint (repo root, so "New → Blueprint" auto-detects it).
+#
+# One-click path to a public, durable Go backbone so the deployed Vercel site becomes fully click-to-persist.
+# Deploys ONLY the backbone (PostgreSQL + the token-protected platformd) and gives platformd a public HTTPS URL;
+# the Next.js console stays on Vercel and is pointed at that URL via env vars. Full guide: deploy/backbone/README.md
+#
+# Steps: Render dashboard → New → Blueprint → connect vasasenthil/vasa-eos-se- → it reads THIS file. After it goes
+# green, copy the platformd service URL + the generated PLATFORM_API_TOKEN and set them (plus PLATFORM_DEFAULT_ORG)
+# in the Vercel project, then redeploy Vercel.
+
+databases:
+  - name: vasa-eos-se-tn-db
+    databaseName: vasa
+    user: vasa
+    plan: free # free Postgres is capped + expires ~30 days; upgrade to a paid plan for a real pilot
+
+services:
+  - type: web
+    name: vasa-eos-se-tn-platformd
+    runtime: docker
+    dockerfilePath: ./Dockerfile.platformd
+    dockerContext: .
+    plan: free
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      # the durable store — platformd self-migrates every vertical's tables here on boot (CREATE TABLE IF NOT EXISTS)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vasa-eos-se-tn-db
+          property: connectionString
+      # auth gateway: Render generates a strong value; copy the SAME value into the Vercel project's
+      # PLATFORM_API_TOKEN so the console can write. Reads + /healthz stay open.
+      - key: PLATFORM_API_TOKEN
+        generateValue: true
+      # districts the deployment seeds + scopes against (the tenancy tree carries all 38 TN districts)
+      - key: PILOT_DISTRICT
+        value: TN-DIST-Chennai
+      - key: PILOT_DISTRICT_2
+        value: TN-DIST-Coimbatore
+      - key: PORT
+        value: "8080"

@@ -58,3 +58,23 @@ func TestPlatformJurisdictionScope(t *testing.T) {
 		t.Fatalf("an unknown subject must govern nothing, got %+v", got)
 	}
 }
+
+func TestResolveTenancyNode(t *testing.T) {
+	p := newPlatform(t)
+	// a district name resolves to its canonical T3 node.
+	if id, ok := p.ResolveTenancyNode(struct{ Node, District, Directorate string }{District: "Chennai"}); !ok || id != "TN-DIST-Chennai" {
+		t.Fatalf("Chennai must resolve to TN-DIST-Chennai: id=%s ok=%v", id, ok)
+	}
+	// a directorate code resolves to its T2 node.
+	if id, ok := p.ResolveTenancyNode(struct{ Node, District, Directorate string }{Directorate: "DSE"}); !ok || id != "TN-DIR-DSE" {
+		t.Fatalf("DSE must resolve to TN-DIR-DSE: id=%s ok=%v", id, ok)
+	}
+	// an explicit existing node id passes through.
+	if id, ok := p.ResolveTenancyNode(struct{ Node, District, Directorate string }{Node: "TN"}); !ok || id != "TN" {
+		t.Fatalf("TN must resolve: id=%s ok=%v", id, ok)
+	}
+	// an unknown hint fails closed.
+	if _, ok := p.ResolveTenancyNode(struct{ Node, District, Directorate string }{District: "Atlantis"}); ok {
+		t.Fatal("an unknown district must not resolve")
+	}
+}

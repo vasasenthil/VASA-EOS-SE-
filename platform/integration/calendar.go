@@ -267,3 +267,70 @@ func tenancyLeafUnder(org string) string {
 	}
 	return ""
 }
+
+// pilotDistrict is the tenancy district the demo seeds plant against. It defaults to Chennai but is overridable
+// via the PILOT_DISTRICT env var (e.g. "TN-DIST-Madurai") so a single-district pilot deployment can be pointed
+// at the district that is actually going live, without code changes.
+func pilotDistrict() string {
+	if d := os.Getenv("PILOT_DISTRICT"); d != "" {
+		return d
+	}
+	return "TN-DIST-Chennai"
+}
+
+// pilotDistricts returns the districts the multi-school seeds spread across, so district→state roll-ups span
+// more than a single node. The primary pilot district plus one sibling (overridable via PILOT_DISTRICT_2).
+func pilotDistricts() []string {
+	primary := pilotDistrict()
+	second := os.Getenv("PILOT_DISTRICT_2")
+	if second == "" {
+		second = "TN-DIST-Coimbatore"
+	}
+	if second == primary {
+		second = "TN-DIST-Madurai"
+	}
+	return []string{primary, second}
+}
+
+// pilotSchools returns up to n distinct T6 school UDISEs drawn from the pilot districts in order, so the
+// operational seeds populate several schools across more than one district. This is what turns the downward
+// scope + upward roll-up machinery from a single-school demo into a genuine multi-node picture: a district or
+// state dashboard then aggregates real data from many schools, while each school still sees only its own.
+// schoolTag returns the id fragment a per-school seed uses for school index si. School 0 keeps the original
+// "CHN" tag so all existing ids (and the tests/proofs that reference them) are unchanged; later schools get a
+// distinct "S<n>" tag so their seeded ids stay unique across the multi-school estate.
+func schoolTag(si int) string {
+	if si == 0 {
+		return "CHN"
+	}
+	return fmt.Sprintf("S%d", si)
+}
+
+func pilotSchools(n int) []string {
+	h, err := tenancyHierarchy()
+	if err != nil || h == nil || n <= 0 {
+		return nil
+	}
+	// gather each district's school leaves, then round-robin across districts so the selection genuinely spans
+	// more than one district (rather than exhausting the first district's leaves before reaching the next).
+	dists := pilotDistricts()
+	leaves := make([][]string, len(dists))
+	maxLen := 0
+	for i, dist := range dists {
+		leaves[i] = h.LeavesUnder(dist, 6)
+		if len(leaves[i]) > maxLen {
+			maxLen = len(leaves[i])
+		}
+	}
+	out := make([]string, 0, n)
+	seen := map[string]bool{}
+	for col := 0; col < maxLen && len(out) < n; col++ {
+		for d := 0; d < len(dists) && len(out) < n; d++ {
+			if col < len(leaves[d]) && !seen[leaves[d][col]] {
+				seen[leaves[d][col]] = true
+				out = append(out, leaves[d][col])
+			}
+		}
+	}
+	return out
+}

@@ -2,6 +2,7 @@ import { Shell } from "@/components/shell"
 import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/components/page-header"
 import { integrationModes } from "@/lib/integrations"
 import { SchoolLookup } from "./school-lookup"
+import { ReconciliationPanel } from "./reconciliation-panel"
 
 export default function SchoolRegistryPage() {
   const mode = integrationModes.udise
@@ -15,7 +16,10 @@ export default function SchoolRegistryPage() {
           tagged with its adapter mode and a trace id for transparency and audit.
         </PageHeaderDescription>
       </PageHeader>
-      <SchoolLookup mode={mode} />
+      <div className="space-y-6">
+        <ReconciliationPanel />
+        <SchoolLookup mode={mode} />
+      </div>
     </Shell>
   )
 }

@@ -7,25 +7,40 @@ package main
 
 import (
 	"crypto/ed25519"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/vasa-eos-se-tn/platform/adapters"
+	"github.com/vasa-eos-se-tn/platform/attendance"
+	"github.com/vasa-eos-se-tn/platform/audit"
 	"github.com/vasa-eos-se-tn/platform/capacity"
+	"github.com/vasa-eos-se-tn/platform/cpd"
 	"github.com/vasa-eos-se-tn/platform/directory"
 	"github.com/vasa-eos-se-tn/platform/engines"
+	"github.com/vasa-eos-se-tn/platform/entitlement"
+	"github.com/vasa-eos-se-tn/platform/establishment"
+	"github.com/vasa-eos-se-tn/platform/fees"
+	"github.com/vasa-eos-se-tn/platform/immunisation"
+	"github.com/vasa-eos-se-tn/platform/infra"
 	"github.com/vasa-eos-se-tn/platform/integration"
 	"github.com/vasa-eos-se-tn/platform/iot"
+	"github.com/vasa-eos-se-tn/platform/library"
+	"github.com/vasa-eos-se-tn/platform/mdm"
 	"github.com/vasa-eos-se-tn/platform/onboarding"
 	"github.com/vasa-eos-se-tn/platform/population"
+	"github.com/vasa-eos-se-tn/platform/ptm"
 	"github.com/vasa-eos-se-tn/platform/quality"
 	"github.com/vasa-eos-se-tn/platform/reconcile"
 	"github.com/vasa-eos-se-tn/platform/retrieval"
+	"github.com/vasa-eos-se-tn/platform/timetable"
+	"github.com/vasa-eos-se-tn/platform/transport"
 )
 
 func main() {
@@ -50,6 +65,29 @@ type server struct {
 	tutor     atomic.Int64
 	refused   atomic.Int64
 	errors    atomic.Int64
+	swept     atomic.Int64 // grievance cases auto-escalated by the SLA sweeper
+}
+
+// startGrievanceSweeper runs the grievance SLA sweep on a timer when GRIEVANCE_SWEEP_SECONDS > 0, so a case
+// that breaches its deadline auto-escalates to the next tier WITHOUT an external cron. It returns a short
+// status for the banner; the loop runs in a background goroutine for the life of the process.
+func (s *server) startGrievanceSweeper() string {
+	secs := 0
+	fmt.Sscanf(envOr("GRIEVANCE_SWEEP_SECONDS", "0"), "%d", &secs)
+	if secs <= 0 {
+		return "off"
+	}
+	go func() {
+		t := time.NewTicker(time.Duration(secs) * time.Second)
+		defer t.Stop()
+		for range t.C {
+			if escalated := s.p.EscalateOverdueCases(); len(escalated) > 0 {
+				s.swept.Add(int64(len(escalated)))
+				log.Printf("sla-sweep: auto-escalated %d overdue grievance case(s): %v", len(escalated), escalated)
+			}
+		}
+	}()
+	return fmt.Sprintf("%ds", secs)
 }
 
 // newServer constructs the platform and returns its HTTP handler plus a banner describing the policy stack.
@@ -64,7 +102,42 @@ func newServer() (http.Handler, string) {
 		log.Fatal(err)
 	}
 	p.SetRetriever(demoRetriever()) // a small public demo corpus so /retrieve and tutor grounding work
-	return (&server{p: p}).routes(), banner
+	srv := &server{p: p}
+	sweep := srv.startGrievanceSweeper()
+	h, authBanner := authGate(srv.routes())
+	return h, banner + " · sla-sweep " + sweep + " · " + authBanner
+}
+
+// authGate is the backbone's authentication gateway. When PLATFORM_API_TOKEN is set, every state-changing
+// request (POST/PUT/PATCH/DELETE) must carry `Authorization: Bearer <token>`; safe reads (GET/HEAD/OPTIONS) and
+// the /healthz liveness probe stay open so dashboards and health checks keep working. When the env var is unset
+// the gate is a no-op, so local development, the test suite and the credential-free demo are unaffected. This is
+// what makes it safe to expose platformd publicly: its mutating surface is no longer unauthenticated.
+func authGate(next http.Handler) (http.Handler, string) {
+	token := os.Getenv("PLATFORM_API_TOKEN")
+	if token == "" {
+		return next, "auth off (PLATFORM_API_TOKEN unset)"
+	}
+	want := []byte("Bearer " + token)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+			next.ServeHTTP(w, r)
+			return
+		}
+		if r.URL.Path == "/healthz" {
+			next.ServeHTTP(w, r)
+			return
+		}
+		got := []byte(r.Header.Get("Authorization"))
+		if len(got) != len(want) || subtle.ConstantTimeCompare(got, want) != 1 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"unauthorized: a valid Bearer token is required for mutating requests"}`))
+			return
+		}
+		next.ServeHTTP(w, r)
+	}), "auth on (bearer token required for writes)"
 }
 
 // demoGraph is a tiny curriculum graph source for the demo retriever.
@@ -300,12 +373,1712 @@ func (s *server) routes() http.Handler {
 	}))
 	mux.HandleFunc("/directory", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// the User Directory & IAM roll-up — every user category bound to an org unit + the 5-model catalogue.
-		// ?scope=<org> applies downward-governance scoping to the user list.
+		// GET ?scope=<org> applies downward-governance scoping to the user list.
+		// POST { id,name,role,org_unit,attributes,suspended } durably adds/updates a user.
+		if r.Method == http.MethodPost {
+			var u directory.User
+			if !decode(w, r, &u) {
+				return
+			}
+			out, err := s.p.AddUser(u)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "user": out}, nil)
+			return
+		}
 		if scope := r.URL.Query().Get("scope"); scope != "" {
 			s.writeJSON(w, map[string]any{"scope": scope, "users": s.p.DirectoryScopedBy(scope)}, nil)
 			return
 		}
 		s.writeJSON(w, s.p.DirectorySummary(), nil)
+	}))
+	mux.HandleFunc("/audit", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the immutable, hash-chained audit trail every workflow writes to. GET ?actor=&action=&resource=&effect=
+		// filters (substring, case-insensitive); ?limit=N caps the (most-recent-first) page. The response also
+		// carries the chain length, head hash, Merkle root and a live tamper-evidence verification.
+		q := r.URL.Query()
+		fa, fac, fr, fe := strings.ToLower(q.Get("actor")), strings.ToLower(q.Get("action")), strings.ToLower(q.Get("resource")), strings.ToLower(q.Get("effect"))
+		limit := 100
+		if v := q.Get("limit"); v != "" {
+			var n int
+			if _, err := fmt.Sscanf(v, "%d", &n); err == nil && n > 0 && n <= 2000 {
+				limit = n
+			}
+		}
+		all := s.p.Audit.Records()
+		badIndex, verr := s.p.Audit.Verify()
+		match := func(rec audit.Record) bool {
+			if fa != "" && !strings.Contains(strings.ToLower(rec.Actor), fa) {
+				return false
+			}
+			if fac != "" && !strings.Contains(strings.ToLower(rec.Action), fac) {
+				return false
+			}
+			if fr != "" && !strings.Contains(strings.ToLower(rec.Resource), fr) {
+				return false
+			}
+			if fe != "" && !strings.Contains(strings.ToLower(rec.Effect), fe) {
+				return false
+			}
+			return true
+		}
+		// most-recent-first, filtered, capped.
+		out := make([]audit.Record, 0, limit)
+		for i := len(all) - 1; i >= 0 && len(out) < limit; i-- {
+			if match(all[i]) {
+				out = append(out, all[i])
+			}
+		}
+		// distinct action census (over the whole chain) for the dashboard.
+		census := map[string]int{}
+		for _, rec := range all {
+			census[rec.Effect]++
+		}
+		s.writeJSON(w, map[string]any{
+			"length":        s.p.Audit.Len(),
+			"head":          s.p.Audit.Head(),
+			"merkle_root":   s.p.Audit.MerkleRoot(),
+			"intact":        verr == nil,
+			"bad_index":     badIndex,
+			"effect_census": census,
+			"matched":       len(out),
+			"records":       out,
+		}, nil)
+	}))
+	mux.HandleFunc("/period-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Period (lesson-wise) Attendance. GET ?scope=<org> → scoped dashboard (delivered/not-held, present rate,
+		// subject-wise attendance, teacher engagement); ?sheet=&class=&date= → a class-date period sheet; ?id= →
+		// one record. POST { org_unit,class,date,period,status,strength,absentees[],lesson_plan_id } marks a
+		// period — validated against the timetable slot + (if delivered) a published lesson plan.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				OrgUnit      string   `json:"org_unit"`
+				Class        string   `json:"class"`
+				Date         string   `json:"date"`
+				Period       int      `json:"period"`
+				Status       string   `json:"status"`
+				Strength     int      `json:"strength"`
+				Absentees    []string `json:"absentees"`
+				LessonPlanID string   `json:"lesson_plan_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			out, err := s.p.MarkPeriod(integration.PeriodMarkInput{
+				OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Date: orDefault(req.Date, "2026-06-01"),
+				Period: req.Period, Status: req.Status, Strength: req.Strength, Absentees: req.Absentees, LessonPlanID: req.LessonPlanID,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "record": out}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			rec, ok := s.p.PeriodRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown period record"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, rec, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("sheet") == "1" {
+			s.writeJSON(w, s.p.ScopedPeriods(scope, q.Get("class"), orDefault(q.Get("date"), "2026-06-01")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.PeriodDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/lesson-plan", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Lesson Plans (academic). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped plan list;
+		// ?id= → one plan. POST { action, ... }: create { id,org_unit,class,subject,teacher_id,topic,objectives,
+		// tags,resources,periods } drafts a plan; publish { id } publishes (rejecting one without objectives);
+		// archive { id } archives it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Class      string `json:"class"`
+				Subject    string `json:"subject"`
+				TeacherID  string `json:"teacher_id"`
+				Topic      string `json:"topic"`
+				Objectives string `json:"objectives"`
+				Tags       string `json:"tags"`
+				Resources  string `json:"resources"`
+				Periods    int    `json:"periods"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "publish":
+				out, err := s.p.AdvanceLessonPlan(req.ID, "publish")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			case "archive":
+				out, err := s.p.AdvanceLessonPlan(req.ID, "archive")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			default: // create
+				per := req.Periods
+				if per == 0 {
+					per = 1
+				}
+				out, err := s.p.CreateLessonPlan(integration.LessonPlan{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Subject: req.Subject,
+					TeacherID: req.TeacherID, Topic: req.Topic, Objectives: req.Objectives, Tags: req.Tags,
+					Resources: req.Resources, Periods: per,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "plan": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			l, ok := s.p.LessonPlanRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown lesson plan"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, l, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedLessonPlans(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LessonPlanDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/grant", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Grant Utilisation (money in paise). GET ?scope=<org> → scoped utilisation dashboard; ?list=1&
+		// status= → the scoped grant list; ?id= → one grant. POST { action, ... }: allocate { id,org_unit,head,
+		// allocated_paise,year } records an allocation; spend { id,amount_paise,purpose } books expenditure
+		// (rejecting an over-spend); close { id } closes the grant.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action         string `json:"action"`
+				ID             string `json:"id"`
+				OrgUnit        string `json:"org_unit"`
+				Head           string `json:"head"`
+				AllocatedPaise int64  `json:"allocated_paise"`
+				Year           int    `json:"year"`
+				AmountPaise    int64  `json:"amount_paise"`
+				Purpose        string `json:"purpose"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "spend":
+				out, err := s.p.BookExpenditure(req.ID, req.AmountPaise, req.Purpose)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			case "close":
+				out, err := s.p.CloseGrant(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			default: // allocate
+				out, err := s.p.AllocateGrant(integration.Grant{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Head: req.Head, AllocatedPaise: req.AllocatedPaise, Year: req.Year,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "grant": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			g, ok := s.p.GrantRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown grant"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, g, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedGrants(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GrantDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/smc", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// SMC (School Management Committee) Meetings & Resolutions (RTE §21–22). GET ?scope=<org> → scoped
+		// governance dashboard; ?list=1&status= → the scoped meeting list; ?id= → one meeting. POST { action,...}:
+		// schedule { id,org_unit,title,scheduled_date,total_members,parent_members } constitutes a meeting (rejecting
+		// a committee with < three-fourths parents); convene { id,present_count } convenes it (rejecting no quorum);
+		// resolve { id,subject,owner,due_date } passes a resolution (convened only); complete { id,resolution_id }
+		// marks a resolution done; close { id } closes the meeting.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action        string `json:"action"`
+				ID            string `json:"id"`
+				OrgUnit       string `json:"org_unit"`
+				Title         string `json:"title"`
+				ScheduledDate string `json:"scheduled_date"`
+				TotalMembers  int    `json:"total_members"`
+				ParentMembers int    `json:"parent_members"`
+				PresentCount  int    `json:"present_count"`
+				Subject       string `json:"subject"`
+				Owner         string `json:"owner"`
+				DueDate       string `json:"due_date"`
+				ResolutionID  string `json:"resolution_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "convene":
+				out, err := s.p.ConveneSMCMeeting(req.ID, req.PresentCount)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "resolve":
+				out, err := s.p.PassSMCResolution(req.ID, integration.Resolution{Subject: req.Subject, Owner: req.Owner, DueDate: req.DueDate})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "complete":
+				out, err := s.p.CompleteSMCResolution(req.ID, req.ResolutionID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			case "close":
+				out, err := s.p.CloseSMCMeeting(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			default: // schedule
+				out, err := s.p.ScheduleSMCMeeting(integration.SMCMeeting{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, ScheduledDate: req.ScheduledDate,
+					TotalMembers: req.TotalMembers, ParentMembers: req.ParentMembers,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meeting": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			m, ok := s.p.SMCMeetingRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown smc meeting"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, m, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedSMCMeetings(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.SMCDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/staff-attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff (employee) Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped HR dashboard (present rate,
+		// on-leave, LWP roster); ?employee=<id> → an employee's payable-days + LWP profile. POST { employee_id,
+		// org_unit, date, status, marked_by } marks (or corrects) attendance — keyed by (employee, date).
+		if r.Method == http.MethodPost {
+			var rec integration.StaffAttendance
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.MarkStaffAttendance(rec)
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "record": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		if emp := q.Get("employee"); emp != "" {
+			s.writeJSON(w, s.p.StaffAttendanceProfile(emp), nil)
+			return
+		}
+		s.writeJSON(w, s.p.StaffAttendanceDashboard(orDefault(q.Get("scope"), "TN"), orDefault(q.Get("date"), "2026-06-01")), nil)
+	}))
+	mux.HandleFunc("/tc", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Transfer Certificate register. GET ?scope=<org> → scoped TC dashboard; ?list=1&status= → the scoped TC
+		// list; ?id= → one TC. POST { action, ... }: request { id,org_unit,student_id,reason,requested_on } raises
+		// a TC (rejecting a second active TC for the same student); issue { id,serial,on } issues it; cancel
+		// { id,note } cancels it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Reason      string `json:"reason"`
+				RequestedOn string `json:"requested_on"`
+				Serial      string `json:"serial"`
+				On          string `json:"on"`
+				Note        string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "issue":
+				out, err := s.p.AdvanceTC(req.ID, "issue", req.Serial, req.On)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			case "cancel":
+				out, err := s.p.AdvanceTC(req.ID, "cancel", req.Note, "")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			default: // request
+				out, err := s.p.RequestTC(integration.TransferCertificate{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Reason: req.Reason,
+					RequestedOn: orDefault(req.RequestedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "tc": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.TCRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown TC"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTCs(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TCDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/bonafide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Bonafide Certificate Register. GET ?scope=<org> → scoped registrar dashboard; ?list=1&status= → the scoped
+		// certificate list; ?id= → one certificate. POST { action, ... }: request { id,org_unit,student_id,
+		// student_name,purpose } raises a request; issue { id } issues it (rejected if the student has an active TC;
+		// stamps a per-school serial); revoke { id } revokes an issued certificate.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				StudentName string `json:"student_name"`
+				Purpose     string `json:"purpose"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "issue":
+				out, err := s.p.IssueBonafide(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			case "revoke":
+				out, err := s.p.RevokeBonafide(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			default: // request
+				out, err := s.p.RequestBonafide(integration.BonafideCertificate{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID,
+					StudentName: req.StudentName, Purpose: req.Purpose,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "certificate": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.BonafideRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown bonafide certificate"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedBonafide(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.BonafideDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/teacher-transfer", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Teacher Transfer & Posting. GET ?scope=<org> → scoped HR dashboard (by destination school); ?list=1&
+		// status= → the scoped request list; ?id= → one request. POST { action, ... }: request { id,employee_id,
+		// name,cadre,from_org,to_org,reason } raises a request (rejecting a second active one); approve { id }
+		// approves it (rejected unless the destination has a sanctioned vacancy in the cadre — cross-module against
+		// the Establishment register); post { id } finalises an approved transfer; reject { id,note } rejects it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				EmployeeID string `json:"employee_id"`
+				Name       string `json:"name"`
+				Cadre      string `json:"cadre"`
+				FromOrg    string `json:"from_org"`
+				ToOrg      string `json:"to_org"`
+				Reason     string `json:"reason"`
+				Note       string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "approve":
+				out, err := s.p.ApproveTeacherTransfer(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			case "post":
+				out, err := s.p.PostTeacherTransfer(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			case "reject":
+				out, err := s.p.RejectTeacherTransfer(req.ID, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			default: // request
+				out, err := s.p.RequestTeacherTransfer(integration.TeacherTransfer{
+					ID: req.ID, EmployeeID: req.EmployeeID, Name: req.Name, Cadre: req.Cadre,
+					FromOrg: req.FromOrg, ToOrg: orDefault(req.ToOrg, "TN"), Reason: orDefault(req.Reason, "request"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "transfer": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.TeacherTransferRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown teacher transfer"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTeacherTransfers(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TeacherTransferDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/hostel", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Hostel Allocation & Occupancy (welfare). GET ?scope=<org> → scoped occupancy dashboard; ?list=1&status= →
+		// the scoped hostel list; ?id= → one hostel. POST { action, ... }: register { id,org_unit,name,type,
+		// capacity } opens a hostel; allot { id,student_id } places a student (rejecting over-allocation + a second
+		// statewide bed); vacate { id,student_id } removes a student; close { id } closes an empty hostel.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Name      string `json:"name"`
+				Type      string `json:"type"`
+				Capacity  int    `json:"capacity"`
+				StudentID string `json:"student_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "allot":
+				out, err := s.p.AllotBed(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			case "vacate":
+				out, err := s.p.VacateBed(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			case "close":
+				out, err := s.p.CloseHostel(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			default: // register
+				out, err := s.p.RegisterHostel(integration.Hostel{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Type: req.Type, Capacity: req.Capacity,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "hostel": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			h, ok := s.p.HostelRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown hostel"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, h, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedHostels(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.HostelDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/cifm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// CIFM — Campus Infrastructure & Facilities Management. GET ?scope=<org> → scoped facilities dashboard;
+		// ?list=1&status= → the scoped facility list; ?id= → one facility. POST { action, ... }: register { id,
+		// org_unit,name,category,condition,amc_vendor,amc_expiry } registers a facility; raise { id,wo_title,
+		// wo_priority } raises a work order (a critical one auto-flips to under_maintenance); complete { id,wo_id }
+		// completes a work order; operational { id } returns it to operational (rejected with an open critical WO);
+		// close { id } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Category   string `json:"category"`
+				Condition  string `json:"condition"`
+				AMCVendor  string `json:"amc_vendor"`
+				AMCExpiry  string `json:"amc_expiry"`
+				WOTitle    string `json:"wo_title"`
+				WOPriority string `json:"wo_priority"`
+				WOID       string `json:"wo_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "raise":
+				out, err := s.p.RaiseWorkOrder(req.ID, integration.WorkOrder{Title: req.WOTitle, Priority: req.WOPriority})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "complete":
+				out, err := s.p.CompleteWorkOrder(req.ID, req.WOID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "operational":
+				out, err := s.p.SetFacilityOperational(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			case "close":
+				out, err := s.p.CloseFacility(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			default: // register
+				out, err := s.p.RegisterFacility(integration.Facility{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Condition: req.Condition, AMCVendor: req.AMCVendor, AMCExpiry: req.AMCExpiry,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "facility": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			f, ok := s.p.FacilityRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown facility"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, f, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedFacilities(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CifmDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/procurement", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Procurement & GeM Purchase Orders (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= →
+		// the scoped PO list; ?id= → one PO. POST { action, ... }: create { id,org_unit,item,vendor,gem_contract,
+		// ordered_qty,unit_price_paise } raises a PO; receive { id,qty } books a goods receipt (rejecting an
+		// over-receipt); pay { id,amount_paise } books a payment (rejecting an over-payment beyond goods received);
+		// close { id } closes a fully-received PO.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action         string `json:"action"`
+				ID             string `json:"id"`
+				OrgUnit        string `json:"org_unit"`
+				Item           string `json:"item"`
+				Vendor         string `json:"vendor"`
+				GemContract    string `json:"gem_contract"`
+				OrderedQty     int    `json:"ordered_qty"`
+				UnitPricePaise int64  `json:"unit_price_paise"`
+				Qty            int    `json:"qty"`
+				AmountPaise    int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "receive":
+				out, err := s.p.ReceiveGoods(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			case "pay":
+				out, err := s.p.PayVendor(req.ID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			case "close":
+				out, err := s.p.ClosePurchaseOrder(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			default: // create
+				out, err := s.p.CreatePurchaseOrder(integration.PurchaseOrder{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Item: req.Item, Vendor: req.Vendor,
+					GemContract: req.GemContract, OrderedQty: req.OrderedQty, UnitPricePaise: req.UnitPricePaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "po": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			po, ok := s.p.PurchaseOrderRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown purchase order"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, po, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedPurchaseOrders(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ProcurementDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/wash", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Sanitation / WASH register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// register list; ?id= → one register. POST { action, ... }: register { id,org_unit,school_name } opens a
+		// school register; record { id,category,sanctioned_units,functional_units } upserts a facility line
+		// (rejecting an over-report and auto-revoking certification on a critical regression); certify { id }
+		// certifies the school Swachh (gated — every critical category must be fully functional).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				SchoolName      string `json:"school_name"`
+				Category        string `json:"category"`
+				SanctionedUnits int    `json:"sanctioned_units"`
+				FunctionalUnits int    `json:"functional_units"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordWashFacility(req.ID, integration.WashFacility{
+					Category: req.Category, SanctionedUnits: req.SanctionedUnits, FunctionalUnits: req.FunctionalUnits,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			case "certify":
+				out, err := s.p.CertifySwachh(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			default: // register
+				out, err := s.p.RegisterSchoolWash(integration.WashRegister{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), SchoolName: req.SchoolName,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "register": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			reg, ok := s.p.WashRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown wash register"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, reg, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedWashRegisters(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.WashDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/competitions", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Co-curricular & Sports Competitions. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// competition list; ?id= → one competition. POST { action, ... }: create { id,org_unit,name,discipline,
+		// level,event_date } opens a competition; enter { id,student_id,class } enters a student (unique entry);
+		// result { id,student_id,position } records a podium result (1..3, position unique); advance { id,
+		// student_id } advances a podium finisher to the next level (terminal at national); close { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Discipline string `json:"discipline"`
+				Level      string `json:"level"`
+				EventDate  string `json:"event_date"`
+				StudentID  string `json:"student_id"`
+				Class      string `json:"class"`
+				Position   int    `json:"position"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "enter":
+				out, err := s.p.EnterCompetition(req.ID, req.StudentID, req.Class)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "result":
+				out, err := s.p.RecordResult(req.ID, req.StudentID, req.Position)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "advance":
+				out, err := s.p.AdvanceWinner(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			case "close":
+				out, err := s.p.CloseCompetition(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			default: // create
+				out, err := s.p.CreateCompetition(integration.Competition{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Discipline: req.Discipline,
+					Level: req.Level, EventDate: req.EventDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "competition": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.CompetitionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown competition"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedCompetitions(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CompetitionDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/inventory", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Stores / Inventory register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// item list; ?id= → one item. POST { action, ... }: add { id,org_unit,name,category,unit,on_hand,
+		// reorder_level } records a new item; receive { id,qty } books a goods receipt; issue { id,qty } books an
+		// issue (rejecting an issue beyond on-hand — no negative stock); close { id } retires a zero-balance item.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action       string `json:"action"`
+				ID           string `json:"id"`
+				OrgUnit      string `json:"org_unit"`
+				Name         string `json:"name"`
+				Category     string `json:"category"`
+				Unit         string `json:"unit"`
+				OnHand       int    `json:"on_hand"`
+				ReorderLevel int    `json:"reorder_level"`
+				Qty          int    `json:"qty"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "receive":
+				out, err := s.p.ReceiveStock(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			case "issue":
+				out, err := s.p.IssueStock(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			case "close":
+				out, err := s.p.CloseStockItem(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			default: // add
+				out, err := s.p.AddStockItem(integration.StockItem{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Unit: req.Unit, OnHand: req.OnHand, ReorderLevel: req.ReorderLevel,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "item": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			it, ok := s.p.StockItemRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown stock item"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, it, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedStockItems(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InventoryDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/gate", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Visitor & Gate Management. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped pass list;
+		// ?id= → one pass. POST { action, ... }: checkin { id,org_unit,visitor_id,name,purpose,host } registers a
+		// visitor (rejecting a second concurrent open pass for the same visitor); checkout { id } records the exit
+		// (rejecting a double check-out).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				VisitorID string `json:"visitor_id"`
+				Name      string `json:"name"`
+				Purpose   string `json:"purpose"`
+				Host      string `json:"host"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "checkout":
+				out, err := s.p.CheckOutVisitor(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "pass": out}, nil)
+			default: // checkin
+				out, err := s.p.CheckInVisitor(integration.VisitorPass{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), VisitorID: req.VisitorID, Name: req.Name,
+					Purpose: req.Purpose, Host: req.Host,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "pass": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.VisitorPassRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown visitor pass"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedVisitorPasses(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.VisitorDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/water", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Water Quality Testing. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped sample list;
+		// ?id= → one sample. POST { action, ... }: register { id,org_unit,source,sample_date } records a sample;
+		// record { id,name,value,safe_min,safe_max,critical } upserts a parameter reading; approve { id } approves
+		// potable (gated — every critical parameter must be in range); fail { id,remarks } marks unsafe (gated —
+		// requires a critical parameter out of range).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string  `json:"action"`
+				ID         string  `json:"id"`
+				OrgUnit    string  `json:"org_unit"`
+				Source     string  `json:"source"`
+				SampleDate string  `json:"sample_date"`
+				Name       string  `json:"name"`
+				Value      float64 `json:"value"`
+				SafeMin    float64 `json:"safe_min"`
+				SafeMax    float64 `json:"safe_max"`
+				Critical   bool    `json:"critical"`
+				Remarks    string  `json:"remarks"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordWaterParam(req.ID, integration.WaterParam{
+					Name: req.Name, Value: req.Value, SafeMin: req.SafeMin, SafeMax: req.SafeMax, Critical: req.Critical,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			case "approve":
+				out, err := s.p.ApproveWater(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			case "fail":
+				out, err := s.p.FailWater(req.ID, req.Remarks)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			default: // register
+				out, err := s.p.RegisterWaterSample(integration.WaterTest{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Source: req.Source, SampleDate: req.SampleDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "sample": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			t, ok := s.p.WaterTestRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown water sample"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, t, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedWaterTests(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.WaterDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/circulars", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Notice Board & Circulars. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped circular
+		// list; ?id= → one circular. POST { action, ... }: create { id,org_unit,title,category,summary,
+		// target_count } drafts a circular; publish { id } publishes it; ack { id,recipient_id } records a
+		// read-receipt (rejecting an unpublished or duplicate ack); archive { id } archives a fully-acknowledged
+		// circular (gated — every targeted recipient must have acknowledged).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Title       string `json:"title"`
+				Category    string `json:"category"`
+				Summary     string `json:"summary"`
+				TargetCount int    `json:"target_count"`
+				RecipientID string `json:"recipient_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "publish":
+				out, err := s.p.PublishCircular(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			case "ack":
+				out, err := s.p.AcknowledgeCircular(req.ID, req.RecipientID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			case "archive":
+				out, err := s.p.ArchiveCircular(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			default: // create
+				out, err := s.p.CreateCircular(integration.Circular{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Category: req.Category,
+					Summary: req.Summary, TargetCount: req.TargetCount,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "circular": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.CircularRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown circular"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedCirculars(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CircularDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/remedial", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Diagnostic & Remedial Learning (NIPUN FLN). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped batch list; ?id= → one batch. POST { action, ... }: create { id,org_unit,subject,target_level,
+		// capacity } opens a batch; enrol { id,student_id,level } enrols a below-target student (capacity +
+		// eligibility + uniqueness gated); graduate { id,student_id,exit_level } exits a now-proficient student
+		// (proficiency gated); close { id } closes the batch.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Subject     string `json:"subject"`
+				TargetLevel int    `json:"target_level"`
+				Capacity    int    `json:"capacity"`
+				StudentID   string `json:"student_id"`
+				Level       int    `json:"level"`
+				ExitLevel   int    `json:"exit_level"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "enrol", "enroll":
+				out, err := s.p.EnrolRemedial(req.ID, req.StudentID, req.Level)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			case "graduate":
+				out, err := s.p.GraduateRemedial(req.ID, req.StudentID, req.ExitLevel)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			case "close":
+				out, err := s.p.CloseRemedialBatch(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			default: // create
+				out, err := s.p.CreateRemedialBatch(integration.RemedialBatch{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Subject: req.Subject, TargetLevel: req.TargetLevel,
+					Capacity: req.Capacity,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "batch": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.RemedialBatchRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown remedial batch"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedRemedialBatches(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RemedialDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/registrations", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Co-curricular Registration (seat cap + FIFO waitlist). GET ?scope=<org> → scoped dashboard; ?list=1&
+		// status= → the scoped event list; ?id= → one event. POST { action, ... }: create { id,org_unit,name,
+		// category,seat_cap,event_date } opens an event; register { id,student_id } confirms or waitlists;
+		// withdraw { id,student_id } withdraws (auto-promoting the earliest waitlisted on a vacated seat); close
+		// { id } closes registration.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Name      string `json:"name"`
+				Category  string `json:"category"`
+				SeatCap   int    `json:"seat_cap"`
+				EventDate string `json:"event_date"`
+				StudentID string `json:"student_id"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "register":
+				out, err := s.p.RegisterStudent(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawStudent(req.ID, req.StudentID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			case "close":
+				out, err := s.p.CloseActivityEvent(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			default: // create
+				out, err := s.p.CreateActivityEvent(integration.ActivityEvent{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					SeatCap: req.SeatCap, EventDate: req.EventDate,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "event": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			e, ok := s.p.ActivityEventRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown event"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, e, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedActivityEvents(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RegistrationDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/clinic", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Health Clinic / sick-room register. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped visit list; ?id= → one visit. POST { action, ... }: open { id,org_unit,student_id,complaint }
+		// records a visit (rejecting a second concurrent open visit); treat { id,note } records first-aid; close
+		// { id,outcome,destination } closes with an outcome (gated — outcome required; a referral needs a
+		// destination).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Complaint   string `json:"complaint"`
+				Note        string `json:"note"`
+				Outcome     string `json:"outcome"`
+				Destination string `json:"destination"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "treat":
+				out, err := s.p.TreatClinicVisit(req.ID, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			case "close":
+				out, err := s.p.CloseClinicVisit(req.ID, req.Outcome, req.Destination)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			default: // open
+				out, err := s.p.OpenClinicVisit(integration.ClinicVisit{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Complaint: req.Complaint,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "visit": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.ClinicVisitRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown clinic visit"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedClinicVisits(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ClinicDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/imprest", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Petty Cash / Imprest book (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the
+		// scoped book list; ?id= → one book. POST { action, ... }: open { id,org_unit,sanctioned_paise } opens a
+		// float; spend { id,voucher_id,payee,purpose,amount_paise } books a voucher (rejecting an overspend);
+		// replenish { id,amount_paise } reimburses (rejecting a top-up beyond the float); settle { id } settles a
+		// balanced book (gated — cash must equal the sanctioned float).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				SanctionedPaise int64  `json:"sanctioned_paise"`
+				VoucherID       string `json:"voucher_id"`
+				Payee           string `json:"payee"`
+				Purpose         string `json:"purpose"`
+				AmountPaise     int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "spend":
+				out, err := s.p.SpendImprest(req.ID, integration.Voucher{
+					ID: req.VoucherID, Payee: req.Payee, Purpose: req.Purpose, AmountPaise: req.AmountPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			case "replenish":
+				out, err := s.p.ReplenishImprest(req.ID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			case "settle":
+				out, err := s.p.SettleImprest(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			default: // open
+				out, err := s.p.OpenImprest(integration.ImprestBook{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), SanctionedPaise: req.SanctionedPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "book": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			b, ok := s.p.ImprestBookRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown imprest book"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, b, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedImprestBooks(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ImprestDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/disciplinary", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Disciplinary / Vigilance. GET ?scope=<org> → scoped dashboard; ?list=1&stage= → the scoped case
+		// list; ?id= → one case. POST { action, ... }: charge { id,org_unit,employee_id,charge } opens a case;
+		// inquiry { id,findings } records the inquiry; decide { id,penalty } imposes a penalty (gated — requires
+		// an inquiry + a sanctioned penalty); appeal { id,grounds } appeals a decided case; close { id } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				EmployeeID string `json:"employee_id"`
+				Charge     string `json:"charge"`
+				Findings   string `json:"findings"`
+				Penalty    string `json:"penalty"`
+				Grounds    string `json:"grounds"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "inquiry":
+				out, err := s.p.HoldInquiry(req.ID, req.Findings)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "decide":
+				out, err := s.p.DecideCase(req.ID, req.Penalty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "appeal":
+				out, err := s.p.AppealCase(req.ID, req.Grounds)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			case "close":
+				out, err := s.p.CloseCase(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			default: // charge
+				out, err := s.p.IssueCharge(integration.DisciplinaryCase{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), EmployeeID: req.EmployeeID, Charge: req.Charge,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "case": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			c, ok := s.p.DisciplinaryCaseRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown disciplinary case"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, c, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedDisciplinaryCases(scope, q.Get("stage")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.DisciplinaryDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/library-fines", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Library Fine Ledger (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1 → the scoped ledger
+		// list; ?id= → one ledger. POST { action, ... }: open { id,org_unit,member_id,block_threshold_paise }
+		// opens a ledger; accrue { id,fine_id,book,days_overdue,rate_paise } books an overdue fine; pay { id,
+		// fine_id,amount_paise } pays it (rejecting an overpay/re-settle); waive { id,fine_id } waives it; borrow
+		// { id,book } enforces the borrow-block gate.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action              string `json:"action"`
+				ID                  string `json:"id"`
+				OrgUnit             string `json:"org_unit"`
+				MemberID            string `json:"member_id"`
+				BlockThresholdPaise int64  `json:"block_threshold_paise"`
+				FineID              string `json:"fine_id"`
+				Book                string `json:"book"`
+				DaysOverdue         int    `json:"days_overdue"`
+				RatePaise           int64  `json:"rate_paise"`
+				AmountPaise         int64  `json:"amount_paise"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "accrue":
+				out, err := s.p.AccrueFine(req.ID, req.FineID, req.Book, req.DaysOverdue, req.RatePaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "pay":
+				out, err := s.p.PayFine(req.ID, req.FineID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "waive":
+				out, err := s.p.WaiveFine(req.ID, req.FineID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			case "borrow":
+				out, err := s.p.RequestBorrow(req.ID, req.Book)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			default: // open
+				out, err := s.p.OpenFineLedger(integration.MemberFines{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), MemberID: req.MemberID, BlockThresholdPaise: req.BlockThresholdPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ledger": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			m, ok := s.p.FineLedgerRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown fine ledger"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, m, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedFineLedgers(scope), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LibraryFineDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/savings", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Bank / Student Savings (money in paise). GET ?scope=<org> → scoped dashboard; ?list=1&status= →
+		// the scoped account list; ?id= → one account. POST { action, ... }: open { id,org_unit,student_id } opens
+		// a passbook; deposit { id,txn_id,amount_paise } credits; withdraw { id,txn_id,amount_paise } debits
+		// (rejecting an overdraw); freeze { id,frozen } sets/lifts a hold; close { id } closes a zero-balance book.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				TxnID       string `json:"txn_id"`
+				AmountPaise int64  `json:"amount_paise"`
+				Frozen      bool   `json:"frozen"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "deposit":
+				out, err := s.p.Deposit(req.ID, req.TxnID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "withdraw":
+				out, err := s.p.Withdraw(req.ID, req.TxnID, req.AmountPaise)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "freeze":
+				out, err := s.p.SetFreeze(req.ID, req.Frozen)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			case "close":
+				out, err := s.p.CloseSavingsAccount(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			default: // open
+				out, err := s.p.OpenSavingsAccount(integration.SavingsAccount{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "account": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			a, ok := s.p.SavingsAccountRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown savings account"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, a, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedSavingsAccounts(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.SavingsDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/vehicle-fitness", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Vehicle Fitness / Transport-Safety. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// vehicle list; ?id= → one vehicle. POST { action, ... }: register { id,org_unit,reg_no } records a
+		// vehicle; record { id,kind,valid,expiry } upserts a statutory document (auto-grounding on a critical
+		// lapse); clear { id } clears the vehicle for service (gated — every required document must be valid).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action  string `json:"action"`
+				ID      string `json:"id"`
+				OrgUnit string `json:"org_unit"`
+				RegNo   string `json:"reg_no"`
+				Kind    string `json:"kind"`
+				Valid   bool   `json:"valid"`
+				Expiry  string `json:"expiry"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordDoc(req.ID, req.Kind, req.Valid, req.Expiry)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			case "clear":
+				out, err := s.p.ClearVehicle(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			default: // register
+				out, err := s.p.RegisterVehicle(integration.FitnessVehicle{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), RegNo: req.RegNo,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.VehicleRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown vehicle"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedVehicles(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.VehicleFitnessDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/indent", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Textbook / Uniform Indent. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped indent
+		// list; ?id= → one indent. POST { action, ... }: raise { id,org_unit,item,entitled_qty,indented_qty }
+		// raises an indent (rejecting an over-indent beyond entitlement); approve { id,approved_qty } approves a
+		// quantity (≤ indented); supply { id,qty } books a supply (cumulative ≤ approved); reject { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Item        string `json:"item"`
+				EntitledQty int    `json:"entitled_qty"`
+				IndentedQty int    `json:"indented_qty"`
+				ApprovedQty int    `json:"approved_qty"`
+				Qty         int    `json:"qty"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "approve":
+				out, err := s.p.ApproveIndent(req.ID, req.ApprovedQty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			case "supply":
+				out, err := s.p.SupplyIndent(req.ID, req.Qty)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			case "reject":
+				out, err := s.p.RejectIndent(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			default: // raise
+				out, err := s.p.RaiseIndent(integration.TextbookIndent{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Item: req.Item, EntitledQty: req.EntitledQty, IndentedQty: req.IndentedQty,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "indent": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			in, ok := s.p.IndentRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown indent"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, in, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedIndents(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.IndentDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/invigilation", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Exam Invigilation Duty Roster. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped session
+		// list; ?id= → one session. POST { action, ... }: create { id,org_unit,exam,date,slot,hall,
+		// required_invigilators } opens a session; assign { id,teacher } rosters an invigilator (rejecting a
+		// same-slot clash / over-capacity / duplicate); unassign { id,teacher } removes one; close { id }
+		// finalises a fully-staffed session.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action               string `json:"action"`
+				ID                   string `json:"id"`
+				OrgUnit              string `json:"org_unit"`
+				Exam                 string `json:"exam"`
+				Date                 string `json:"date"`
+				Slot                 string `json:"slot"`
+				Hall                 string `json:"hall"`
+				RequiredInvigilators int    `json:"required_invigilators"`
+				Teacher              string `json:"teacher"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "assign":
+				out, err := s.p.AssignInvigilator(req.ID, req.Teacher)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			case "unassign":
+				out, err := s.p.UnassignInvigilator(req.ID, req.Teacher)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			case "close":
+				out, err := s.p.CloseDutySession(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			default: // create
+				out, err := s.p.CreateDutySession(integration.DutySession{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Exam: req.Exam, Date: req.Date, Slot: req.Slot,
+					Hall: req.Hall, RequiredInvigilators: req.RequiredInvigilators,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			d, ok := s.p.DutySessionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown duty session"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, d, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedDutySessions(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InvigilationDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/government-order", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Government Order (GO) register — the L1 State-Secretariat instrument. GET ?scope=<org> → scoped
+		// dashboard; ?list=1&status= → the scoped GO list; ?id= → one GO. POST { action, ... }: draft
+		// { id,org_unit,department,category,subject,amount_paise } opens a draft; vet { id,by } records legal
+		// vetting (draft→vetted); approve { id,by } records competent-authority approval (vetted→approved); issue
+		// { id,number } assigns a gazette number and issues (approved→issued, duplicate live numbers rejected);
+		// publish { id } gazettes it (issued→published); withdraw { id,reason } rescinds at any stage.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Department  string `json:"department"`
+				Category    string `json:"category"`
+				Subject     string `json:"subject"`
+				AmountPaise int64  `json:"amount_paise"`
+				Number      string `json:"number"`
+				By          string `json:"by"`
+				Reason      string `json:"reason"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "vet":
+				out, err := s.p.VetGO(req.ID, req.By)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "approve":
+				out, err := s.p.ApproveGO(req.ID, req.By)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "issue":
+				out, err := s.p.IssueGO(req.ID, req.Number)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "publish":
+				out, err := s.p.PublishGO(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawGO(req.ID, req.Reason)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			default: // draft
+				out, err := s.p.DraftGO(integration.GovernmentOrder{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Department: req.Department, Category: req.Category,
+					Subject: req.Subject, AmountPaise: req.AmountPaise,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "order": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			o, ok := s.p.GovernmentOrderRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown government order"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, o, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedGovernmentOrders(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GovernmentOrderDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,
+		// target_lang } opens a job; translate { id,actor,machine_assisted } records a (Bhashini-assisted) draft;
+		// review { id,actor } reviews it; publish { id } publishes (quality gate — must be reviewed); reject
+		// { id,note } rejects it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Title           string `json:"title"`
+				Domain          string `json:"domain"`
+				SourceLang      string `json:"source_lang"`
+				TargetLang      string `json:"target_lang"`
+				Actor           string `json:"actor"`
+				MachineAssisted bool   `json:"machine_assisted"`
+				Note            string `json:"note"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "translate", "review", "publish", "reject":
+				out, err := s.p.AdvanceTranslation(req.ID, req.Action, req.Actor, req.MachineAssisted, req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "job": out}, nil)
+			default: // request
+				out, err := s.p.RequestTranslation(integration.TranslationJob{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Domain: req.Domain,
+					SourceLang: req.SourceLang, TargetLang: req.TargetLang,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "job": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			j, ok := s.p.TranslationRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown translation job"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, j, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedTranslations(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LanguageLabDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/inspection", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Inspection & Monitoring. GET ?scope=<org> → scoped oversight dashboard; ?list=1&status= → the
+		// scoped inspection list; ?id= → one inspection. POST { action, ... }: file { id,org_unit,type,
+		// inspector_id,visited_on,compliance_score,findings } records a visit (rejecting a duplicate open
+		// inspection of the same type); action { id,note } records an action; close { id,on } closes it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Type            string `json:"type"`
+				InspectorID     string `json:"inspector_id"`
+				VisitedOn       string `json:"visited_on"`
+				ComplianceScore int    `json:"compliance_score"`
+				Findings        string `json:"findings"`
+				Note            string `json:"note"`
+				On              string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "action":
+				out, err := s.p.AdvanceInspection(req.ID, "action", req.Note)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			case "close":
+				out, err := s.p.AdvanceInspection(req.ID, "close", req.On)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			default: // file
+				out, err := s.p.FileInspection(integration.Inspection{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Type: req.Type, InspectorID: req.InspectorID,
+					VisitedOn: orDefault(req.VisitedOn, "2026-06-22"), ComplianceScore: req.ComplianceScore, Findings: req.Findings,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "inspection": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			in, ok := s.p.InspectionRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown inspection"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, in, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedInspections(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InspectionDashboard(scope), nil)
 	}))
 	mux.HandleFunc("/access-explain", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// verify ANY access decision for a directory user — the reverse "why can/can't this person do X" lookup,
@@ -439,6 +2212,878 @@ func (s *server) routes() http.Handler {
 		}
 		d, _ := s.p.ExamSheet(req.ExamID)
 		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "sheet": d}, nil)
+	}))
+	mux.HandleFunc("/leave", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Leave & Approval — the workflow the Next.js app drives over HTTP.
+		// GET ?scope=<org>&status=&as=<role> → scoped requests (or the role's approval inbox when as= is set).
+		// POST { id,employee,type,from_date,to_date,reason,org_unit } files a new request and routes it into its
+		// dynamic multi-level chain (principal → +BEO >5d → +DEO >15d).
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID       string `json:"id"`
+				Employee string `json:"employee"`
+				Type     string `json:"type"`
+				From     string `json:"from_date"`
+				To       string `json:"to_date"`
+				Reason   string `json:"reason"`
+				OrgUnit  string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "LV-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			out, err := s.p.FileLeave(req.ID, req.Employee, req.Type, req.From, req.To, req.Reason, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "request": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		scope := orDefault(q.Get("scope"), "TN")
+		if role := q.Get("as"); role != "" {
+			s.writeJSON(w, s.p.LeaveInboxFor(scope, role), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LeaveScopedBy(scope, q.Get("status")), nil)
+	}))
+	mux.HandleFunc("/leave/decide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act at a leave request's CURRENT approval level. POST { id, approve, role, actor, note }.
+		var req struct {
+			ID      string `json:"id"`
+			Approve bool   `json:"approve"`
+			Role    string `json:"role"`
+			Actor   string `json:"actor"`
+			Note    string `json:"note"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		out, err := s.p.DecideLeave(req.ID, req.Approve, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "request": out}, nil)
+	}))
+	mux.HandleFunc("/access-decide", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// decide an access request for an EXPLICIT subject against the unified five-model PDP — the seam the
+		// Next.js access guard delegates to. POST { role, org_unit, attributes, suspended, action, resource_org,
+		// resource_attributes, emergency, threat }.
+		var req struct {
+			Role          string            `json:"role"`
+			OrgUnit       string            `json:"org_unit"`
+			Attributes    map[string]string `json:"attributes"`
+			Suspended     bool              `json:"suspended"`
+			Action        string            `json:"action"`
+			ResourceOrg   string            `json:"resource_org"`
+			ResourceAttrs map[string]string `json:"resource_attributes"`
+			Emergency     bool              `json:"emergency"`
+			Threat        string            `json:"threat"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		u := directory.User{Role: req.Role, OrgUnit: req.OrgUnit, Attributes: req.Attributes, Suspended: req.Suspended}
+		res := directory.Resource{OrgUnit: req.ResourceOrg, Attributes: req.ResourceAttrs}
+		ctx := directory.Context{Emergency: req.Emergency, ThreatLevel: req.Threat}
+		s.writeJSON(w, s.p.EvaluateAccess(u, req.Action, res, ctx), nil)
+	}))
+	mux.HandleFunc("/admissions", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the durable admission applications register. GET ?tenant=TN/Chennai → dashboard (by stage/category);
+		// ?id=<applicant> → a single persisted application record.
+		if id := r.URL.Query().Get("id"); id != "" {
+			a, ok := s.p.AdmissionApplicationRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown application"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, a, nil)
+			return
+		}
+		s.writeJSON(w, s.p.AdmissionDashboard(r.URL.Query().Get("tenant")), nil)
+	}))
+	mux.HandleFunc("/admissions/finalise", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// a scoped officer finalises a pending-approval admission. POST { request_id, approve, officer }.
+		var req struct {
+			RequestID string `json:"request_id"`
+			Approve   bool   `json:"approve"`
+			Officer   string `json:"officer"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		app, err := s.p.FinaliseAdmission(r.Context(), req.RequestID, req.Approve, orDefault(req.Officer, "G6-Compliance"))
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "application": app}, nil)
+	}))
+	mux.HandleFunc("/grievance-case", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Grievance Redressal cases. GET ?scope=<org>&status= → scoped dashboard (or list with &list=1).
+		// POST { id,complainant,category,subject,org_unit } lodges a case (dynamic SLA + escalation chain).
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID          string `json:"id"`
+				Complainant string `json:"complainant"`
+				Category    string `json:"category"`
+				Subject     string `json:"subject"`
+				OrgUnit     string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "GRV-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			g, err := s.p.FileGrievanceCase(req.ID, req.Complainant, req.Category, req.Subject, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+			return
+		}
+		q := r.URL.Query()
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.GrievanceCasesScopedBy(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.GrievanceCaseDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/grievance-case/act", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act on a case at its current tier. POST { id, action: resolve|reject|escalate, role, actor, note }.
+		var req struct {
+			ID     string `json:"id"`
+			Action string `json:"action"`
+			Role   string `json:"role"`
+			Actor  string `json:"actor"`
+			Note   string `json:"note"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		g, err := s.p.HandleGrievanceCase(req.ID, req.Action, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": g}, nil)
+	}))
+	mux.HandleFunc("/timetable", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Timetable. GET ?scope=<org> → scoped timetabling dashboard (teacher loads, overloads);
+		// ?org=&class= → a class grid; ?teacher= → a teacher's periods. POST { org_unit,class,day,period,
+		// subject,teacher_id } assigns a slot (rejects a teacher clash).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var slot timetable.Slot
+			if !decode(w, r, &slot) {
+				return
+			}
+			out, err := s.p.SetTimetableSlot(slot)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "slot": out}, nil)
+			return
+		}
+		if teacher := q.Get("teacher"); teacher != "" {
+			s.writeJSON(w, s.p.TeacherTimetable(teacher), nil)
+			return
+		}
+		if class := q.Get("class"); class != "" {
+			s.writeJSON(w, s.p.ClassTimetable(orDefault(q.Get("org"), "TN"), class), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TimetableDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/substitution", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Timetable Substitution (the durable port of /timetable's substitution feature). GET ?scope=<org>&status= →
+		// the scoped substitution list. POST { action, ... }: assign { id,org_unit,class,day,period,date,
+		// substitute_teacher,reason } assigns a substitute (rejecting an unscheduled period or a busy substitute);
+		// cancel { id } cancels it.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action            string `json:"action"`
+				ID                string `json:"id"`
+				OrgUnit           string `json:"org_unit"`
+				Class             string `json:"class"`
+				Day               string `json:"day"`
+				Period            int    `json:"period"`
+				Date              string `json:"date"`
+				SubstituteTeacher string `json:"substitute_teacher"`
+				Reason            string `json:"reason"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "cancel" {
+				out, err := s.p.CancelSubstitution(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "substitution": out}, nil)
+				return
+			}
+			out, err := s.p.AssignSubstitution(integration.Substitution{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Class: req.Class, Day: req.Day, Period: req.Period,
+				Date: req.Date, SubstituteTeacher: req.SubstituteTeacher, Reason: req.Reason,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "substitution": out}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.ScopedSubstitutions(orDefault(q.Get("scope"), "TN"), q.Get("status")), nil)
+	}))
+	mux.HandleFunc("/library", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Library circulation. GET ?scope=<org> → scoped circulation dashboard (active/overdue/lost);
+		// ?member= → a member's loan history. POST { action, ... }: issue { org_unit,book_id,title,copy_id,
+		// member_id,issued_on }; return { id,on }; renew { id }; lost { id }.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action   string `json:"action"`
+				ID       string `json:"id"`
+				OrgUnit  string `json:"org_unit"`
+				BookID   string `json:"book_id"`
+				Title    string `json:"title"`
+				CopyID   string `json:"copy_id"`
+				MemberID string `json:"member_id"`
+				IssuedOn string `json:"issued_on"`
+				On       string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			var out library.Loan
+			var err error
+			switch req.Action {
+			case "return":
+				out, err = s.p.ReturnBook(req.ID, orDefault(req.On, "2026-06-22"))
+			case "renew":
+				out, err = s.p.RenewBook(req.ID)
+			case "lost":
+				out, err = s.p.ReportBookLost(req.ID)
+			default: // issue
+				if req.ID == "" {
+					req.ID = "LOAN-" + fmt.Sprintf("%d", time.Now().UnixNano())
+				}
+				var l library.Loan
+				l, err = library.NewLoan(req.ID, orDefault(req.OrgUnit, "TN"), req.BookID, req.Title, req.CopyID, req.MemberID, orDefault(req.IssuedOn, "2026-06-22"))
+				if err == nil {
+					out, err = s.p.IssueBook(l)
+				}
+			}
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "loan": out}, nil)
+			return
+		}
+		if member := q.Get("member"); member != "" {
+			s.writeJSON(w, s.p.MemberLoans(member), nil)
+			return
+		}
+		s.writeJSON(w, s.p.LibraryDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/transport", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Transport route-safety. GET ?scope=<org> → scoped safety+utilisation dashboard (unserviceable
+		// roster); ?roster=<routeID> → a route's manifest. POST { action, ... }: route { id,org_unit,name,
+		// vehicle_no,capacity,fitness_valid_till,driver_name,licence_valid_till,status } registers a route;
+		// allot { id,route_id,org_unit,student_id,stop } seats a student; withdraw { id } releases a seat.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action           string `json:"action"`
+				ID               string `json:"id"`
+				OrgUnit          string `json:"org_unit"`
+				Name             string `json:"name"`
+				VehicleNo        string `json:"vehicle_no"`
+				Capacity         int    `json:"capacity"`
+				FitnessValidTill string `json:"fitness_valid_till"`
+				DriverName       string `json:"driver_name"`
+				LicenceValidTill string `json:"licence_valid_till"`
+				Status           string `json:"status"`
+				RouteID          string `json:"route_id"`
+				StudentID        string `json:"student_id"`
+				Stop             string `json:"stop"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "allot":
+				out, err := s.p.AllotSeat(transport.Allotment{
+					ID: req.ID, RouteID: req.RouteID, OrgUnit: orDefault(req.OrgUnit, "TN"),
+					StudentID: req.StudentID, Stop: req.Stop, Status: transport.Allotted,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "allotment": out}, nil)
+			case "withdraw":
+				out, err := s.p.WithdrawSeat(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "allotment": out}, nil)
+			default: // route
+				out, err := s.p.RegisterRoute(transport.Route{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, VehicleNo: req.VehicleNo,
+					Capacity: req.Capacity, FitnessValidTill: req.FitnessValidTill, DriverName: req.DriverName,
+					LicenceValidTill: req.LicenceValidTill, Status: orDefault(req.Status, transport.RouteActive),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "route": out}, nil)
+			}
+			return
+		}
+		if roster := q.Get("roster"); roster != "" {
+			s.writeJSON(w, s.p.RouteRoster(roster), nil)
+			return
+		}
+		s.writeJSON(w, s.p.TransportDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/mdm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Mid-Day Meal (PM-POSHAN). GET ?scope=<org> → scoped coverage + foodgrain-stock dashboard (low-stock
+		// roster); ?register=<org> → a school's meal register. POST { action, ... }: receive { id,org_unit,date,
+		// grain_grams,note } records a foodgrain receipt; serve { id,org_unit,date,meals_served,enrolment,
+		// grain_grams } records a day's service (rejects an over-draw of stock or meals > enrolment).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				Date        string `json:"date"`
+				GrainGrams  int64  `json:"grain_grams"`
+				Note        string `json:"note"`
+				MealsServed int    `json:"meals_served"`
+				Enrolment   int    `json:"enrolment"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "serve" {
+				out, err := s.p.ServeMeal(mdm.MealDay{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Date: orDefault(req.Date, "2026-06-22"),
+					MealsServed: req.MealsServed, Enrolment: req.Enrolment, GrainGrams: req.GrainGrams,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "meal": out}, nil)
+				return
+			}
+			out, err := s.p.ReceiveFoodgrain(mdm.LedgerEntry{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Date: orDefault(req.Date, "2026-06-22"),
+				Kind: mdm.Receipt, GrainGrams: req.GrainGrams, Note: req.Note,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "receipt": out}, nil)
+			return
+		}
+		if reg := q.Get("register"); reg != "" {
+			s.writeJSON(w, s.p.SchoolMealRegister(reg), nil)
+			return
+		}
+		s.writeJSON(w, s.p.MDMDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/infra", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Infrastructure & Asset Register. GET ?scope=<org> → scoped estate dashboard (condition/status, open
+		// backlog by severity, needs-attention roster); ?tickets=<assetID> → an asset's ticket history. POST
+		// { action, ... }: asset { id,org_unit,name,category,condition,status,acquired_on } registers an asset;
+		// ticket { id,asset_id,org_unit,issue,severity,raised_on } raises a maintenance ticket; assign/resolve/
+		// close { id,assignee|on } walk a ticket; decommission/return { id,condition } move an asset.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action     string `json:"action"`
+				ID         string `json:"id"`
+				OrgUnit    string `json:"org_unit"`
+				Name       string `json:"name"`
+				Category   string `json:"category"`
+				Condition  string `json:"condition"`
+				Status     string `json:"status"`
+				AcquiredOn string `json:"acquired_on"`
+				AssetID    string `json:"asset_id"`
+				Issue      string `json:"issue"`
+				Severity   string `json:"severity"`
+				RaisedOn   string `json:"raised_on"`
+				Assignee   string `json:"assignee"`
+				On         string `json:"on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "ticket":
+				out, err := s.p.RaiseMaintenanceTicket(infra.Ticket{
+					ID: req.ID, AssetID: req.AssetID, OrgUnit: orDefault(req.OrgUnit, "TN"), Issue: req.Issue,
+					Severity: orDefault(req.Severity, infra.SevMedium), RaisedOn: orDefault(req.RaisedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "assign":
+				out, err := s.p.AdvanceTicket(req.ID, "assign", req.Assignee)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "resolve":
+				out, err := s.p.AdvanceTicket(req.ID, "resolve", orDefault(req.On, "2026-06-22"))
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "close":
+				out, err := s.p.AdvanceTicket(req.ID, "close", "")
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "ticket": out}, nil)
+			case "decommission":
+				out, err := s.p.DecommissionAsset(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			case "return":
+				out, err := s.p.ReturnAssetToService(req.ID, req.Condition)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			default: // asset
+				out, err := s.p.RegisterAsset(infra.Asset{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Name: req.Name, Category: req.Category,
+					Condition: orDefault(req.Condition, infra.Good), Status: orDefault(req.Status, infra.InService), AcquiredOn: req.AcquiredOn,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "asset": out}, nil)
+			}
+			return
+		}
+		if tickets := q.Get("tickets"); tickets != "" {
+			s.writeJSON(w, s.p.AssetTickets(tickets), nil)
+			return
+		}
+		s.writeJSON(w, s.p.InfraDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/fees", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Fee & Finance Ledger (money in paise). GET ?scope=<org> → scoped collection dashboard (demanded/
+		// collected/outstanding, defaulter roster); ?student=&org= → a student's demands + payments. POST
+		// { action, ... }: demand { id,org_unit,student_id,category,term,amount_paise,due_on } raises a demand;
+		// payment { id,demand_id,amount_paise,mode,reference,paid_on } collects (rejects an overpayment); waive
+		// { id } grants a concession.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action      string `json:"action"`
+				ID          string `json:"id"`
+				OrgUnit     string `json:"org_unit"`
+				StudentID   string `json:"student_id"`
+				Category    string `json:"category"`
+				Term        string `json:"term"`
+				AmountPaise int64  `json:"amount_paise"`
+				DueOn       string `json:"due_on"`
+				DemandID    string `json:"demand_id"`
+				Mode        string `json:"mode"`
+				Reference   string `json:"reference"`
+				PaidOn      string `json:"paid_on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "payment":
+				out, err := s.p.CollectFeePayment(fees.Payment{
+					ID: req.ID, DemandID: req.DemandID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					AmountPaise: req.AmountPaise, Mode: orDefault(req.Mode, fees.UPI), Reference: req.Reference,
+					PaidOn: orDefault(req.PaidOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "payment": out}, nil)
+			case "waive":
+				out, err := s.p.WaiveFeeDemand(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "demand": out}, nil)
+			default: // demand
+				out, err := s.p.RaiseFeeDemand(fees.Demand{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Category: req.Category,
+					Term: req.Term, AmountPaise: req.AmountPaise, Status: fees.Pending, DueOn: orDefault(req.DueOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "demand": out}, nil)
+			}
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			dems, pays := s.p.StudentFeeLedger(q.Get("org"), student)
+			s.writeJSON(w, map[string]any{"demands": dems, "payments": pays}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.FeeDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/immunisation", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// School Health Immunisation. GET ?scope=<org> → scoped coverage dashboard (+ officer worklist);
+		// ?student= → a student's immunisation card; ?schedule=1 → the UIP school-health schedule. POST
+		// { id,student_id,org_unit,vaccine,dose_number,administered_on,batch } records a dose (rejecting an
+		// out-of-sequence or off-schedule dose).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var rec immunisation.DoseRecord
+			if !decode(w, r, &rec) {
+				return
+			}
+			if rec.OrgUnit == "" {
+				rec.OrgUnit = "TN"
+			}
+			out, err := s.p.RecordImmunisation(rec)
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "dose": out}, nil)
+			return
+		}
+		if q.Get("schedule") == "1" {
+			s.writeJSON(w, immunisation.Schedule(), nil)
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			s.writeJSON(w, s.p.StudentImmunisationCard(student), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ImmunisationDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/ptm", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Parent-Teacher Meeting. GET ?scope=<org> → scoped parent-engagement dashboard (fill + turnout, low-
+		// turnout roster); ?sheet=<sessionID> → a session's attendance sheet. POST { action, ... }: session
+		// { id,org_unit,title,date,slots,status } schedules a session; book { id,session_id,student_id,guardian,
+		// slot } books a slot (rejecting an overbooking/double-booking); attend/noshow/cancel { id } mark
+		// attendance.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action    string `json:"action"`
+				ID        string `json:"id"`
+				OrgUnit   string `json:"org_unit"`
+				Title     string `json:"title"`
+				Date      string `json:"date"`
+				Slots     int    `json:"slots"`
+				Status    string `json:"status"`
+				SessionID string `json:"session_id"`
+				StudentID string `json:"student_id"`
+				Guardian  string `json:"guardian"`
+				Slot      string `json:"slot"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "book":
+				out, err := s.p.BookPTM(ptm.Booking{
+					ID: req.ID, SessionID: req.SessionID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					Guardian: req.Guardian, Status: ptm.Booked, Slot: req.Slot,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "booking": out}, nil)
+			case "attend", "noshow", "cancel":
+				out, err := s.p.MarkPTMAttendance(req.ID, req.Action)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "booking": out}, nil)
+			default: // session
+				out, err := s.p.SchedulePTM(ptm.Session{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Title: req.Title, Date: orDefault(req.Date, "2026-06-22"),
+					Slots: req.Slots, Status: orDefault(req.Status, ptm.Scheduled),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "session": out}, nil)
+			}
+			return
+		}
+		if sheet := q.Get("sheet"); sheet != "" {
+			s.writeJSON(w, s.p.SessionBookings(sheet), nil)
+			return
+		}
+		s.writeJSON(w, s.p.PTMDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/entitlement", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Free-Supply Entitlement Distribution. GET ?scope=<org> → scoped fulfilment dashboard (+ shortfall
+		// worklist); ?student=&org= → a student's entitlements + issues. POST { action, ... }: grant { id,
+		// org_unit,student_id,item,entitled_qty,term } grants an entitlement; issue { id,entitlement_id,qty,
+		// issued_on,reference } distributes against it (rejecting an over-issue).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action        string `json:"action"`
+				ID            string `json:"id"`
+				OrgUnit       string `json:"org_unit"`
+				StudentID     string `json:"student_id"`
+				Item          string `json:"item"`
+				EntitledQty   int    `json:"entitled_qty"`
+				Term          string `json:"term"`
+				EntitlementID string `json:"entitlement_id"`
+				Qty           int    `json:"qty"`
+				IssuedOn      string `json:"issued_on"`
+				Reference     string `json:"reference"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.Action == "issue" {
+				out, err := s.p.IssueSupply(entitlement.Issue{
+					ID: req.ID, EntitlementID: req.EntitlementID, OrgUnit: req.OrgUnit, StudentID: req.StudentID,
+					Qty: req.Qty, IssuedOn: orDefault(req.IssuedOn, "2026-06-22"), Reference: req.Reference,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "issue": out}, nil)
+				return
+			}
+			out, err := s.p.GrantEntitlement(entitlement.Entitlement{
+				ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), StudentID: req.StudentID, Item: req.Item,
+				EntitledQty: req.EntitledQty, Term: req.Term, Status: entitlement.Pending,
+			})
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "entitlement": out}, nil)
+			return
+		}
+		if student := q.Get("student"); student != "" {
+			ents, issues := s.p.StudentEntitlements(q.Get("org"), student)
+			s.writeJSON(w, map[string]any{"entitlements": ents, "issues": issues}, nil)
+			return
+		}
+		s.writeJSON(w, s.p.EntitlementDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/establishment", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Staff Establishment & Sanctioned-Post Register. GET ?scope=<org> → scoped staffing dashboard (sanctioned
+		// vs filled, vacancy roster); ?roster=<establishmentID> → a cadre's appointments. POST { action, ... }:
+		// sanction { id,org_unit,cadre,sanctioned,status } sets a sanctioned-post line; appoint { id,
+		// establishment_id,employee_id,name,appointed_on } fills a post (rejecting an over-appointment); vacate
+		// { id } frees a post.
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action          string `json:"action"`
+				ID              string `json:"id"`
+				OrgUnit         string `json:"org_unit"`
+				Cadre           string `json:"cadre"`
+				Sanctioned      int    `json:"sanctioned"`
+				Status          string `json:"status"`
+				EstablishmentID string `json:"establishment_id"`
+				EmployeeID      string `json:"employee_id"`
+				Name            string `json:"name"`
+				AppointedOn     string `json:"appointed_on"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "appoint":
+				out, err := s.p.AppointStaff(establishment.Appointment{
+					ID: req.ID, EstablishmentID: req.EstablishmentID, OrgUnit: req.OrgUnit, EmployeeID: req.EmployeeID,
+					Name: req.Name, Status: establishment.Filled, AppointedOn: orDefault(req.AppointedOn, "2026-06-22"),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "appointment": out}, nil)
+			case "vacate":
+				out, err := s.p.VacatePost(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "appointment": out}, nil)
+			default: // sanction
+				out, err := s.p.SanctionPosts(establishment.Establishment{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), Cadre: req.Cadre, Sanctioned: req.Sanctioned,
+					Status: orDefault(req.Status, establishment.Active),
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "establishment": out}, nil)
+			}
+			return
+		}
+		if roster := q.Get("roster"); roster != "" {
+			s.writeJSON(w, s.p.EstablishmentRoster(roster), nil)
+			return
+		}
+		s.writeJSON(w, s.p.EstablishmentDashboard(orDefault(q.Get("scope"), "TN")), nil)
+	}))
+	mux.HandleFunc("/rbsk", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// RBSK child-health screening. GET ?scope=<org> → scoped dashboard (?referrals=1 → the active-referral
+		// worklist); ?id= → one screening. POST { id,student_id,org_unit,screened_on,findings:[...] } files a
+		// screening (auto-referring any finding).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID         string   `json:"id"`
+				StudentID  string   `json:"student_id"`
+				OrgUnit    string   `json:"org_unit"`
+				ScreenedOn string   `json:"screened_on"`
+				Findings   []string `json:"findings"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "RBSK-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			sc, err := s.p.RecordScreening(req.ID, req.StudentID, orDefault(req.OrgUnit, "TN"), orDefault(req.ScreenedOn, "2026-06-05"), req.Findings)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "screening": sc}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			sc, ok := s.p.RBSKScreening(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown screening"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, sc, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("referrals") == "1" {
+			s.writeJSON(w, s.p.RBSKReferralsScopedBy(scope), nil)
+			return
+		}
+		s.writeJSON(w, s.p.RBSKDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/rbsk/referral", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// advance a referral. POST { id, action: treat|close, outcome }.
+		var req struct {
+			ID      string `json:"id"`
+			Action  string `json:"action"`
+			Outcome string `json:"outcome"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		sc, err := s.p.AdvanceReferral(req.ID, req.Action, req.Outcome)
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "screening": sc}, nil)
+	}))
+	mux.HandleFunc("/cpd", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Teacher CPD (NEP 2020 compliance). GET ?scope=<org>&year= → scoped compliance dashboard; ?teacher=&year=
+		// → a teacher's hours + compliance. POST { id,teacher_id,org_unit,course,provider,hours,year,status,
+		// completed_on } records a completion.
+		q := r.URL.Query()
+		year := 2026
+		if v := q.Get("year"); v != "" {
+			fmt.Sscanf(v, "%d", &year)
+		}
+		if r.Method == http.MethodPost {
+			var rec cpd.Record
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.RecordCPD(rec)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "record": out}, nil)
+			return
+		}
+		if teacher := q.Get("teacher"); teacher != "" {
+			s.writeJSON(w, s.p.TeacherCPDProfile(teacher, year), nil)
+			return
+		}
+		s.writeJSON(w, s.p.CPDDashboard(orDefault(q.Get("scope"), "TN"), year), nil)
+	}))
+	mux.HandleFunc("/scholarship", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Scholarship / DBT. GET ?scope=<org>&status= → scoped DBT dashboard (or list with &list=1); ?id= → one
+		// case. POST { id,student_id,scheme,amount_paise,org_unit } files a disbursement (amount-driven sanction
+		// chain).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				ID          string `json:"id"`
+				StudentID   string `json:"student_id"`
+				Scheme      string `json:"scheme"`
+				AmountPaise int64  `json:"amount_paise"`
+				OrgUnit     string `json:"org_unit"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			if req.ID == "" {
+				req.ID = "SCH-" + fmt.Sprintf("%d", time.Now().UnixNano())
+			}
+			d, err := s.p.FileScholarship(req.ID, req.StudentID, req.Scheme, req.AmountPaise, orDefault(req.OrgUnit, "TN"))
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": d}, nil)
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			d, ok := s.p.ScholarshipCase(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown case"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, d, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScholarshipScopedBy(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.ScholarshipDashboard(scope), nil)
+	}))
+	mux.HandleFunc("/scholarship/act", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// act on a disbursement. POST { id, action: sanction|disburse|reconcile, approve, matched, role, actor,
+		// note, payment_ref }.
+		var req struct {
+			ID         string `json:"id"`
+			Action     string `json:"action"`
+			Approve    bool   `json:"approve"`
+			Matched    bool   `json:"matched"`
+			Role       string `json:"role"`
+			Actor      string `json:"actor"`
+			Note       string `json:"note"`
+			PaymentRef string `json:"payment_ref"`
+		}
+		if !decode(w, r, &req) {
+			return
+		}
+		var out any
+		var err error
+		switch req.Action {
+		case "sanction":
+			out, err = s.p.SanctionScholarship(req.ID, req.Approve, req.Role, orDefault(req.Actor, "officer"), req.Note)
+		case "disburse":
+			out, err = s.p.DisburseScholarship(req.ID, req.PaymentRef)
+		case "reconcile":
+			out, err = s.p.ReconcileScholarship(req.ID, req.Matched)
+		default:
+			http.Error(w, `{"error":"action must be sanction, disburse or reconcile"}`, http.StatusBadRequest)
+			return
+		}
+		em := ""
+		if err != nil {
+			em = err.Error()
+		}
+		s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "case": out}, nil)
+	}))
+	mux.HandleFunc("/attendance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Student Attendance. GET ?scope=<org>&date=YYYY-MM-DD → scoped daily dashboard + chronic-absentee
+		// roll-up; ?student=<id> → a learner's attendance rate + chronic flag. POST { student_id, org_unit,
+		// date, status, source } marks attendance.
+		if r.Method == http.MethodPost {
+			var rec attendance.Record
+			if !decode(w, r, &rec) {
+				return
+			}
+			out, err := s.p.MarkAttendance(rec)
+			em := ""
+			if err != nil {
+				em = err.Error()
+			}
+			s.writeJSON(w, map[string]any{"ok": err == nil, "error": em, "record": out}, nil)
+			return
+		}
+		q := r.URL.Query()
+		if student := q.Get("student"); student != "" {
+			s.writeJSON(w, s.p.StudentAttendanceProfile(student), nil)
+			return
+		}
+		s.writeJSON(w, s.p.AttendanceDashboard(orDefault(q.Get("scope"), "TN"), orDefault(q.Get("date"), "2026-06-10")), nil)
+	}))
+	mux.HandleFunc("/tenancy/resolve", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// resolve a governance hint to a real tenancy node id (the identity-plane bridge uses this to anchor a
+		// district/block officer). GET ?node=&district=&directorate=.
+		q := r.URL.Query()
+		id, ok := s.p.ResolveTenancyNode(struct{ Node, District, Directorate string }{q.Get("node"), q.Get("district"), q.Get("directorate")})
+		s.writeJSON(w, map[string]any{"resolved": ok, "node": id}, nil)
+	}))
+	mux.HandleFunc("/track/grievance", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// PUBLIC, unauthenticated, PII-suppressed grievance ticket tracker. GET ?id=<ticket>. Returns only the
+		// status/tier/dates — never the complainant identity or the complaint text.
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, `{"error":"id required"}`, http.StatusBadRequest)
+			return
+		}
+		v := s.p.GrievancePublicStatus(id)
+		if !v.Found {
+			http.Error(w, `{"error":"no such ticket"}`, http.StatusNotFound)
+			return
+		}
+		s.writeJSON(w, v, nil)
+	}))
+	mux.HandleFunc("/grievance-case/sweep", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// the SLA sweep: auto-escalate every open case past its deadline.
+		escalated := s.p.EscalateOverdueCases()
+		s.writeJSON(w, map[string]any{"escalated": escalated, "count": len(escalated)}, nil)
 	}))
 	mux.HandleFunc("/council", s.count(func(w http.ResponseWriter, r *http.Request) {
 		udise := r.URL.Query().Get("udise")
@@ -905,6 +3550,14 @@ func orDefault(v, d string) string {
 	return v
 }
 
+// errStr returns an error's message, or "" if nil (for JSON {ok,error} envelopes).
+func errStr(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
 // handleDBT runs a scheme-DBT delivery end-to-end: it first records the §7 subsidy lawful basis for the
 // beneficiary (so the disbursement is DPDP-lawful), then delivers — G-tier sanction → fund release →
 // verifiable receipt, all audited.
@@ -1060,10 +3713,28 @@ func (s *server) metrics(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "# HELP vasa_tutor_total Tutor workflows run.\n# TYPE vasa_tutor_total counter\nvasa_tutor_total %d\n", s.tutor.Load())
 	fmt.Fprintf(w, "# HELP vasa_refused_total Requests refused by policy/guardrails/residency.\n# TYPE vasa_refused_total counter\nvasa_refused_total %d\n", s.refused.Load())
 	fmt.Fprintf(w, "# HELP vasa_errors_total Workflow errors.\n# TYPE vasa_errors_total counter\nvasa_errors_total %d\n", s.errors.Load())
+	fmt.Fprintf(w, "# HELP vasa_grievance_sla_escalations_total Grievance cases auto-escalated by the SLA sweeper.\n# TYPE vasa_grievance_sla_escalations_total counter\nvasa_grievance_sla_escalations_total %d\n", s.swept.Load())
 	fmt.Fprintf(w, "# HELP vasa_audit_records Records in the immutable audit chain.\n# TYPE vasa_audit_records gauge\nvasa_audit_records %d\n", s.p.Audit.Len())
 	fmt.Fprintf(w, "# HELP vasa_notary_blocks Blocks in the notary ledger.\n# TYPE vasa_notary_blocks gauge\nvasa_notary_blocks %d\n", s.p.Notary.Len())
 	fmt.Fprintf(w, "# HELP vasa_slo_success_rate Rolling SLO success rate.\n# TYPE vasa_slo_success_rate gauge\nvasa_slo_success_rate %g\n", h.SLO.SuccessRate)
 	fmt.Fprintf(w, "# HELP vasa_platform_disabled Off-switch engaged (1=disabled).\n# TYPE vasa_platform_disabled gauge\nvasa_platform_disabled %d\n", disabled)
+
+	// ── Durable operational gauges (backlogs ops can alert on), sourced live from the persisted stores ──
+	ops := s.p.Operations()
+	durable := 0
+	if ops.Durable {
+		durable = 1
+	}
+	fmt.Fprintf(w, "# HELP vasa_store_durable Workflow stores are persisted to a database (1) vs in-memory (0).\n# TYPE vasa_store_durable gauge\nvasa_store_durable %d\n", durable)
+	fmt.Fprintf(w, "# HELP vasa_admissions Admission applications on record.\n# TYPE vasa_admissions gauge\nvasa_admissions %d\n", ops.Admissions)
+	fmt.Fprintf(w, "# HELP vasa_admissions_pending_review Admissions awaiting HITL finalisation.\n# TYPE vasa_admissions_pending_review gauge\nvasa_admissions_pending_review %d\n", ops.AdmissionsPending)
+	fmt.Fprintf(w, "# HELP vasa_grievance_cases Grievance redressal cases on record.\n# TYPE vasa_grievance_cases gauge\nvasa_grievance_cases %d\n", ops.GrievanceCases)
+	fmt.Fprintf(w, "# HELP vasa_grievance_overdue Open grievance cases past their SLA deadline.\n# TYPE vasa_grievance_overdue gauge\nvasa_grievance_overdue %d\n", ops.GrievanceOverdue)
+	fmt.Fprintf(w, "# HELP vasa_leave_requests Staff leave requests on record.\n# TYPE vasa_leave_requests gauge\nvasa_leave_requests %d\n", ops.LeaveRequests)
+	fmt.Fprintf(w, "# HELP vasa_leave_pending Staff leave requests awaiting approval.\n# TYPE vasa_leave_pending gauge\nvasa_leave_pending %d\n", ops.LeavePending)
+	fmt.Fprintf(w, "# HELP vasa_exam_sheets Examination marks sheets on record.\n# TYPE vasa_exam_sheets gauge\nvasa_exam_sheets %d\n", ops.ExamSheets)
+	fmt.Fprintf(w, "# HELP vasa_calendar_entries Academic calendar entries on record.\n# TYPE vasa_calendar_entries gauge\nvasa_calendar_entries %d\n", ops.CalendarEntries)
+	fmt.Fprintf(w, "# HELP vasa_directory_users Directory users on record.\n# TYPE vasa_directory_users gauge\nvasa_directory_users %d\n", ops.DirectoryUsers)
 
 	// ── Governance / conformance / civic gauges, sourced live from the registers ──
 	conf := s.p.Conformance()

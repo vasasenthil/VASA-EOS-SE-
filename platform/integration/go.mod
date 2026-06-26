@@ -12,8 +12,11 @@ require (
 	github.com/vasa-eos-se-tn/platform/cutover v0.0.0
 	github.com/vasa-eos-se-tn/platform/dataplane v0.0.0
 	github.com/vasa-eos-se-tn/platform/dr v0.0.0
+	github.com/vasa-eos-se-tn/platform/entitlement v0.0.0
+	github.com/vasa-eos-se-tn/platform/establishment v0.0.0
 	github.com/vasa-eos-se-tn/platform/evaluation v0.0.0
 	github.com/vasa-eos-se-tn/platform/exams v0.0.0
+	github.com/vasa-eos-se-tn/platform/fees v0.0.0
 	github.com/vasa-eos-se-tn/platform/hitl v0.0.0
 	github.com/vasa-eos-se-tn/platform/kms v0.0.0
 	github.com/vasa-eos-se-tn/platform/knowledgegraph v0.0.0
@@ -41,19 +44,27 @@ require (
 require (
 	github.com/vasa-eos-se-tn/platform/agents v0.0.0
 	github.com/vasa-eos-se-tn/platform/alignments v0.0.0
+	github.com/vasa-eos-se-tn/platform/attendance v0.0.0
 	github.com/vasa-eos-se-tn/platform/catalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/civic v0.0.0
 	github.com/vasa-eos-se-tn/platform/consent v0.0.0
+	github.com/vasa-eos-se-tn/platform/cpd v0.0.0
 	github.com/vasa-eos-se-tn/platform/dao v0.0.0
 	github.com/vasa-eos-se-tn/platform/directory v0.0.0
 	github.com/vasa-eos-se-tn/platform/edge v0.0.0
 	github.com/vasa-eos-se-tn/platform/engines v0.0.0
 	github.com/vasa-eos-se-tn/platform/escrow-agent v0.0.0
 	github.com/vasa-eos-se-tn/platform/govtiers v0.0.0
+	github.com/vasa-eos-se-tn/platform/grievance v0.0.0
 	github.com/vasa-eos-se-tn/platform/guardrails v0.0.0
 	github.com/vasa-eos-se-tn/platform/i18n v0.0.0
+	github.com/vasa-eos-se-tn/platform/immunisation v0.0.0
+	github.com/vasa-eos-se-tn/platform/infra v0.0.0
 	github.com/vasa-eos-se-tn/platform/iot v0.0.0
+	github.com/vasa-eos-se-tn/platform/leave v0.0.0
+	github.com/vasa-eos-se-tn/platform/library v0.0.0
 	github.com/vasa-eos-se-tn/platform/loop v0.0.0
+	github.com/vasa-eos-se-tn/platform/mdm v0.0.0
 	github.com/vasa-eos-se-tn/platform/modelregistry v0.0.0
 	github.com/vasa-eos-se-tn/platform/modulecatalogue v0.0.0
 	github.com/vasa-eos-se-tn/platform/ndears v0.0.0
@@ -61,11 +72,16 @@ require (
 	github.com/vasa-eos-se-tn/platform/onboarding v0.0.0
 	github.com/vasa-eos-se-tn/platform/population v0.0.0
 	github.com/vasa-eos-se-tn/platform/portals v0.0.0
+	github.com/vasa-eos-se-tn/platform/ptm v0.0.0
 	github.com/vasa-eos-se-tn/platform/quality v0.0.0
+	github.com/vasa-eos-se-tn/platform/rbsk v0.0.0
 	github.com/vasa-eos-se-tn/platform/resilience v0.0.0 // indirect
 	github.com/vasa-eos-se-tn/platform/retrieval v0.0.0
+	github.com/vasa-eos-se-tn/platform/scholarship v0.0.0
 	github.com/vasa-eos-se-tn/platform/seed v0.0.0
 	github.com/vasa-eos-se-tn/platform/tenancy v0.0.0
+	github.com/vasa-eos-se-tn/platform/timetable v0.0.0
+	github.com/vasa-eos-se-tn/platform/transport v0.0.0
 	github.com/vasa-eos-se-tn/platform/tokens v0.0.0
 	github.com/vasa-eos-se-tn/platform/volumes v0.0.0
 	github.com/vasa-eos-se-tn/platform/workflow v0.0.0
@@ -123,11 +139,19 @@ replace github.com/vasa-eos-se-tn/platform/agents => ../L9-agents/agents
 
 replace github.com/vasa-eos-se-tn/platform/engines => ../L8-engines/engines
 
+replace github.com/vasa-eos-se-tn/platform/entitlement => ../L6-platform-services/entitlement
+
+replace github.com/vasa-eos-se-tn/platform/establishment => ../L6-platform-services/establishment
+
 replace github.com/vasa-eos-se-tn/platform/escrow-agent => ../L1-foundation/escrow-agent
 
 replace github.com/vasa-eos-se-tn/platform/workflow => ../L6-platform-services/workflow
 
 replace github.com/vasa-eos-se-tn/platform/i18n => ../L6-platform-services/i18n
+
+replace github.com/vasa-eos-se-tn/platform/immunisation => ../L6-platform-services/immunisation
+
+replace github.com/vasa-eos-se-tn/platform/infra => ../L6-platform-services/infra
 
 replace github.com/vasa-eos-se-tn/platform/notify => ../L6-platform-services/notify
 
@@ -152,6 +176,8 @@ replace github.com/vasa-eos-se-tn/platform/modelregistry => ../L8-engines/modelr
 replace github.com/vasa-eos-se-tn/platform/consent => ../L3-data-fabric/consent
 
 replace github.com/vasa-eos-se-tn/platform/population => ../L3-data-fabric/population
+
+replace github.com/vasa-eos-se-tn/platform/ptm => ../L6-platform-services/ptm
 
 replace github.com/vasa-eos-se-tn/platform/tenancy => ../L6-platform-services/tenancy
 
@@ -178,3 +204,25 @@ replace github.com/vasa-eos-se-tn/platform/directory => ../L5-security/directory
 replace github.com/vasa-eos-se-tn/platform/calendar => ../L6-platform-services/calendar
 
 replace github.com/vasa-eos-se-tn/platform/exams => ../L6-platform-services/exams
+
+replace github.com/vasa-eos-se-tn/platform/fees => ../L6-platform-services/fees
+
+replace github.com/vasa-eos-se-tn/platform/leave => ../L6-platform-services/leave
+
+replace github.com/vasa-eos-se-tn/platform/mdm => ../L6-platform-services/mdm
+
+replace github.com/vasa-eos-se-tn/platform/library => ../L6-platform-services/library
+
+replace github.com/vasa-eos-se-tn/platform/grievance => ../L12-civic/grievance
+
+replace github.com/vasa-eos-se-tn/platform/attendance => ../L6-platform-services/attendance
+
+replace github.com/vasa-eos-se-tn/platform/scholarship => ../L6-platform-services/scholarship
+
+replace github.com/vasa-eos-se-tn/platform/cpd => ../L6-platform-services/cpd
+
+replace github.com/vasa-eos-se-tn/platform/rbsk => ../L12-civic/rbsk
+
+replace github.com/vasa-eos-se-tn/platform/timetable => ../L6-platform-services/timetable
+
+replace github.com/vasa-eos-se-tn/platform/transport => ../L6-platform-services/transport

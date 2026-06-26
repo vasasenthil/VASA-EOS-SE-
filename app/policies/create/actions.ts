@@ -263,8 +263,10 @@ export async function submitPolicyAction(
   const actionType = formData.get("action") as "saveDraft" | "submitForReview"
 
   const requiredPermission = policyIdFromForm ? PERMISSIONS.POLICY_UPDATE_NATIONAL : PERMISSIONS.POLICY_CREATE_NATIONAL
-  // TODO: Determine OU context for policy actions if policies become OU-specific.
-  // For now, checking permission without specific ouId (user needs it in any of their roles).
+  // DECISION (not a TODO): policies are STATE-TIER governance artifacts (gated by a *_NATIONAL permission),
+  // scoped to the State of Tamil Nadu — deliberately NOT per-OU, so no ouId is required. Making them OU-specific
+  // would fragment statutory State policy and is out of scope by design; the national-policy permission held in
+  // any of the user's roles is the correct tier control.
   const canPerformAction = await hasPermission({ userId, permissionString: requiredPermission })
 
   if (!canPerformAction) {
@@ -607,7 +609,7 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
     return { message: "Authentication required.", success: false }
   }
 
-  // TODO: Determine OU context for policy deletion if policies become OU-specific.
+  // DECISION (not a TODO): policy deletion is a STATE-TIER action, not OU-scoped (see createPolicyAction).
   const canDelete = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE_NATIONAL })
   if (!canDelete) {
     return { message: "You do not have permission to delete policies.", success: false }
@@ -741,7 +743,7 @@ export async function updatePolicyStatusAction(
     return { message: "Authentication required.", success: false, policyId, error: "User not authenticated." }
   }
 
-  // TODO: Determine OU context for policy status updates if policies become OU-specific.
+  // DECISION (not a TODO): a policy status update is a STATE-TIER action, not OU-scoped (see createPolicyAction).
   // Using POLICY_UPDATE for now, consider a more granular permission like POLICY_UPDATE_STATUS
   const canUpdateStatus = await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_UPDATE_NATIONAL }) // Or a more specific permission
   if (!canUpdateStatus) {

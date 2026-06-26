@@ -2,7 +2,7 @@
 --
 -- Run this ONCE in your Supabase / Postgres SQL editor to provision the entire schema: all tables,
 -- indexes and deny-by-default row-level security. Idempotent — safe to re-run.
--- Generated from 79 migrations. Regenerate with: node scripts/build-bootstrap.mjs
+-- Generated from 99 migrations. Regenerate with: node scripts/build-bootstrap.mjs
 --
 -- After this runs, set NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY and the app goes live.
 
@@ -3725,5 +3725,492 @@ begin
     execute format('alter table public.%I enable row level security;', r.tablename);
   end loop;
 end $$;
+
+-- ==== 081-create-calendar-entries-table.sql ====
+-- VASA-EOS(SE) TN — Academic Calendar durable store (L6 calendar service / platformd).
+-- Backs platform/integration/calendar_pg.go. Entries plan the academic year (terms, exams, holidays, PTM,
+-- events) and carry their dynamic multi-level approval chain as JSONB. Applied automatically by the adapter's
+-- ensureSchema() on first connect; kept here as the canonical migration of record.
+CREATE TABLE IF NOT EXISTS calendar_entries (
+    id            TEXT PRIMARY KEY,
+    title         TEXT NOT NULL,
+    type          TEXT NOT NULL,                       -- term | exam | holiday | ptm | event
+    start_date    TEXT NOT NULL,                       -- YYYY-MM-DD (inclusive)
+    end_date      TEXT NOT NULL,                       -- YYYY-MM-DD (inclusive)
+    org_unit      TEXT NOT NULL,                       -- tenant node the entry applies to
+    academic_year TEXT NOT NULL DEFAULT '',
+    description   TEXT NOT NULL DEFAULT '',
+    status        TEXT NOT NULL DEFAULT 'draft',       -- draft | pending | approved | rejected
+    current_step  INT  NOT NULL DEFAULT 0,
+    chain         JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered approval steps (G-tier/role/scope/decision)
+    created_at    TEXT NOT NULL,
+    updated_at    TEXT NOT NULL,
+    synthetic     BOOLEAN NOT NULL DEFAULT false
+);
+CREATE INDEX IF NOT EXISTS calendar_entries_type_idx ON calendar_entries (type);
+CREATE INDEX IF NOT EXISTS calendar_entries_org_idx  ON calendar_entries (org_unit);
+CREATE INDEX IF NOT EXISTS calendar_entries_date_idx ON calendar_entries (start_date);
+
+-- ==== 082-create-exam-sheets-tables.sql ====
+-- VASA-EOS(SE) TN — Examinations & Results durable store (L6 exams service / platformd).
+-- Backs platform/integration/exams_pg.go. A marks sheet per examination and one row per student result.
+-- Applied automatically by the adapter's ensureSchema() on first connect; kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS exam_sheets (
+    exam_id   TEXT PRIMARY KEY,
+    org_unit  TEXT NOT NULL,                  -- the school (T6) the exam belongs to
+    subject   TEXT NOT NULL,
+    class     TEXT NOT NULL,
+    max_marks INT  NOT NULL,
+    status    TEXT NOT NULL DEFAULT 'open'    -- open | submitted | published | returned
+);
+
+CREATE TABLE IF NOT EXISTS exam_results (
+    exam_id    TEXT NOT NULL REFERENCES exam_sheets(exam_id) ON DELETE CASCADE,
+    student_id TEXT NOT NULL,                 -- APAAR-anchored learner id (synthetic in demo)
+    marks      INT  NOT NULL,
+    grade      TEXT NOT NULL DEFAULT '',      -- A1..E, computed on submit
+    pass       BOOLEAN NOT NULL DEFAULT false,
+    seq        BIGSERIAL,                     -- preserves entry order
+    PRIMARY KEY (exam_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS exam_sheets_org_idx ON exam_sheets (org_unit);
+
+-- ==== 083-create-leave-requests-table.sql ====
+-- VASA-EOS(SE) TN — Staff Leave & Approval durable store (L6 leave service / platformd).
+-- Backs platform/integration/leave_pg.go. The Next.js leave-approval flow (app/leave-approvals) calls platformd
+-- which persists here. The dynamic multi-level approval chain (principal → +BEO over 5 days → +DEO over 15 days)
+-- is stored as JSONB. Applied automatically by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS leave_requests (
+    id           TEXT PRIMARY KEY,
+    employee     TEXT NOT NULL,
+    type         TEXT NOT NULL,                       -- casual | medical | earned | maternity | duty
+    from_date    TEXT NOT NULL,                       -- YYYY-MM-DD
+    to_date      TEXT NOT NULL,                       -- YYYY-MM-DD
+    days         INT  NOT NULL,
+    reason       TEXT NOT NULL DEFAULT '',
+    org_unit     TEXT NOT NULL,                       -- the school the request is filed at
+    status       TEXT NOT NULL DEFAULT 'pending',     -- pending | approved | rejected
+    chain        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered approval steps (role/decision/decided_by/...)
+    current_step INT  NOT NULL DEFAULT 0,
+    created_at   TEXT NOT NULL,
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS leave_requests_org_idx    ON leave_requests (org_unit);
+CREATE INDEX IF NOT EXISTS leave_requests_status_idx ON leave_requests (status);
+
+-- ==== 084-create-audit-chain-table.sql ====
+-- VASA-EOS(SE) TN — durable tamper-evident audit hash-chain (L5 audit / platformd).
+-- Backs platform/integration/audit_pg.go (the audit.Sink). Append-only: the seq primary key and the UNIQUE
+-- hash mean any insertion, reordering, or truncation is detectable, and each prev_hash links to the prior
+-- record's hash. On startup the platform reloads this table and RE-VERIFIES the chain, refusing to run on a
+-- tampered history. Applied automatically by the sink's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS audit_chain (
+    seq       BIGINT PRIMARY KEY,
+    ts        TEXT NOT NULL DEFAULT '',
+    actor     TEXT NOT NULL DEFAULT '',
+    action    TEXT NOT NULL,
+    resource  TEXT NOT NULL DEFAULT '',
+    effect    TEXT NOT NULL DEFAULT '',   -- permit | deny | require-approval | executed
+    detail    TEXT NOT NULL DEFAULT '',
+    prev_hash TEXT NOT NULL,
+    hash      TEXT NOT NULL UNIQUE        -- sha256 over the canonical payload (incl. prev_hash)
+);
+
+-- ==== 085-create-grievance-cases-table.sql ====
+-- VASA-EOS(SE) TN — Grievance Redressal case store (L12 grievance service / platformd).
+-- Backs platform/integration/grievance_case_pg.go. A citizen grievance becomes a durable case handled by a
+-- tier of officers under an SLA; the escalation chain (by category) is stored as JSONB, and a case past its
+-- due_at is auto-escalated by the platform's SLA sweep. Applied by the adapter's ensureSchema(); migration of record.
+CREATE TABLE IF NOT EXISTS grievance_cases (
+    id           TEXT PRIMARY KEY,
+    complainant  TEXT NOT NULL,
+    category     TEXT NOT NULL,                       -- academic | infrastructure | safety | financial | service
+    subject      TEXT NOT NULL DEFAULT '',
+    org_unit     TEXT NOT NULL,                       -- the school/office the grievance concerns
+    status       TEXT NOT NULL DEFAULT 'open',        -- open | resolved | rejected | escalated
+    chain        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered handler tiers (role/decision/decided_by/...)
+    current_tier INT  NOT NULL DEFAULT 0,
+    filed_at     TEXT NOT NULL,
+    due_at       TEXT NOT NULL,                       -- SLA deadline for the current tier
+    resolution   TEXT NOT NULL DEFAULT '',
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS grievance_cases_org_idx    ON grievance_cases (org_unit);
+CREATE INDEX IF NOT EXISTS grievance_cases_status_idx ON grievance_cases (status);
+
+-- ==== 086-create-admission-applications-table.sql ====
+-- VASA-EOS(SE) TN — durable admission applications register (admission workflow / platformd).
+-- Backs platform/integration/admission_pg.go. Records the decision for each RTE admission application — stage,
+-- governing reasons, HITL request id, anchored credential id — WITHOUT cleartext PII (the applicant's name is
+-- sealed under the tenant KEK during the workflow; only a pii_sealed flag is kept here). Applied by the
+-- adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS admission_applications (
+    id            TEXT PRIMARY KEY,                  -- applicant id (APAAR-anchored; synthetic in demo)
+    category      TEXT NOT NULL DEFAULT '',          -- GEN | OBC | SC | ST | EWS | DG
+    age           INT  NOT NULL DEFAULT 0,
+    tenant        TEXT NOT NULL DEFAULT '',
+    region        TEXT NOT NULL DEFAULT '',
+    decision      TEXT NOT NULL DEFAULT '',          -- requested: admit | reject
+    stage         TEXT NOT NULL DEFAULT '',          -- admitted | denied | pending-approval | residency
+    effect        TEXT NOT NULL DEFAULT '',          -- permit | deny | require-approval (from the Rego PDP)
+    reasons       TEXT NOT NULL DEFAULT '',          -- governing rule ids
+    request_id    TEXT NOT NULL DEFAULT '',          -- HITL request id when pending approval
+    credential_id TEXT NOT NULL DEFAULT '',          -- anchored admission credential id on admit
+    pii_sealed    BOOLEAN NOT NULL DEFAULT false,    -- PII was enveloped under the tenant KEK
+    decided_at    TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS admission_applications_tenant_idx ON admission_applications (tenant);
+CREATE INDEX IF NOT EXISTS admission_applications_stage_idx  ON admission_applications (stage);
+
+-- ==== 087-create-attendance-records-table.sql ====
+-- VASA-EOS(SE) TN — Student Attendance durable store (L6 attendance service / platformd).
+-- Backs platform/integration/attendance_pg.go. One row per student per day (upserted, so re-marking corrects
+-- rather than duplicates). Feeds the RTE chronic-absentee early-warning analytics. Applied by the adapter's
+-- ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS attendance_records (
+    student_id TEXT NOT NULL,                 -- APAAR-anchored learner id (synthetic in demo)
+    org_unit   TEXT NOT NULL,                 -- the school (T6 tenancy node)
+    date       TEXT NOT NULL,                 -- YYYY-MM-DD
+    status     TEXT NOT NULL,                 -- present | absent | late | excused
+    source     TEXT NOT NULL DEFAULT '',      -- biometric | manual | rfid
+    marked_by  TEXT NOT NULL DEFAULT '',
+    marked_at  TEXT NOT NULL DEFAULT '',
+    PRIMARY KEY (student_id, date)
+);
+CREATE INDEX IF NOT EXISTS attendance_org_date_idx ON attendance_records (org_unit, date);
+CREATE INDEX IF NOT EXISTS attendance_student_idx  ON attendance_records (student_id);
+
+-- ==== 088-create-scholarship-disbursements-table.sql ====
+-- VASA-EOS(SE) TN — Scholarship / DBT durable store (L6 scholarship service / platformd).
+-- Backs platform/integration/scholarship_pg.go. A scholarship is sanctioned through an amount-driven multi-level
+-- fund-approval chain (PFMS/GFR, stored as JSONB), disbursed with a payment reference, then reconciled against
+-- the rail (unmatched = a leakage flag). Money is held in paise (BIGINT) — never floats. Applied by the
+-- adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS scholarship_disbursements (
+    id           TEXT PRIMARY KEY,
+    student_id   TEXT NOT NULL,                       -- APAAR-anchored learner id
+    scheme       TEXT NOT NULL,                       -- pre-matric | post-matric | merit | maintenance
+    amount_paise BIGINT NOT NULL,                     -- money in paise (Rs 1 = 100 paise)
+    org_unit     TEXT NOT NULL,                       -- the school the beneficiary belongs to
+    status       TEXT NOT NULL DEFAULT 'pending',     -- pending|sanctioned|disbursed|reconciled|flagged|rejected
+    chain        JSONB NOT NULL DEFAULT '[]'::jsonb,  -- ordered sanction tiers (role/decision/decided_by/...)
+    current_step INT  NOT NULL DEFAULT 0,
+    payment_ref  TEXT NOT NULL DEFAULT '',            -- PFMS/treasury transaction reference on disbursement
+    filed_at     TEXT NOT NULL,
+    updated_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS scholarship_org_idx    ON scholarship_disbursements (org_unit);
+CREATE INDEX IF NOT EXISTS scholarship_status_idx ON scholarship_disbursements (status);
+
+-- ==== 089-create-cpd-records-table.sql ====
+-- VASA-EOS(SE) TN — Teacher CPD durable store (L6 cpd service / platformd).
+-- Backs platform/integration/cpd_pg.go. The record of in-service training (NISHTHA/SCERT/DIET/DIKSHA) a teacher
+-- completes, feeding the NEP 2020 compliance analytics (>=50 hours/year). Applied by the adapter's
+-- ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS cpd_records (
+    id           TEXT PRIMARY KEY,
+    teacher_id   TEXT NOT NULL,                 -- HRMS employee id (synthetic in demo)
+    org_unit     TEXT NOT NULL,                 -- the teacher's school (T6 tenancy node)
+    course       TEXT NOT NULL DEFAULT '',
+    provider     TEXT NOT NULL,                 -- NISHTHA | SCERT | DIET | DIKSHA
+    hours        INT  NOT NULL DEFAULT 0,
+    year         INT  NOT NULL,
+    status       TEXT NOT NULL,                 -- enrolled | completed | certified
+    completed_on TEXT NOT NULL DEFAULT '',      -- YYYY-MM-DD
+    recorded_at  TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS cpd_teacher_year_idx ON cpd_records (teacher_id, year);
+CREATE INDEX IF NOT EXISTS cpd_org_year_idx     ON cpd_records (org_unit, year);
+
+-- ==== 090-create-rbsk-screenings-table.sql ====
+-- VASA-EOS(SE) TN — RBSK child-health screening durable store (L12 rbsk service / platformd).
+-- Backs platform/integration/rbsk_pg.go. Every student is screened for the four Ds; any finding (stored as
+-- JSONB) is auto-referred to the DEIC and tracked to closure. Applied by the adapter's ensureSchema(); kept
+-- here as the migration of record.
+CREATE TABLE IF NOT EXISTS rbsk_screenings (
+    id             TEXT PRIMARY KEY,
+    student_id     TEXT NOT NULL,                      -- APAAR-anchored learner id (synthetic in demo)
+    org_unit       TEXT NOT NULL,                      -- the school (T6 tenancy node)
+    screened_on    TEXT NOT NULL,                      -- YYYY-MM-DD
+    findings       JSONB NOT NULL DEFAULT '[]'::jsonb, -- subset of: defect | disease | deficiency | disability
+    status         TEXT NOT NULL,                      -- healthy | referred | under-treatment | closed
+    referred_to    TEXT NOT NULL DEFAULT '',           -- DEIC on a finding
+    closed_outcome TEXT NOT NULL DEFAULT '',
+    updated_at     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS rbsk_org_idx    ON rbsk_screenings (org_unit);
+CREATE INDEX IF NOT EXISTS rbsk_status_idx ON rbsk_screenings (status);
+
+-- ==== 091-create-timetable-slots-table.sql ====
+-- VASA-EOS(SE) TN — School Timetable durable store (L6 timetable service / platformd).
+-- Backs platform/integration/timetable_pg.go. One subject+teacher per (class, day, period); the teacher-clash
+-- invariant (a teacher can never be in two classes at once) is enforced by the adapter before each upsert.
+-- Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS timetable_slots (
+    org_unit   TEXT NOT NULL,                 -- the school (T6 tenancy node)
+    class      TEXT NOT NULL,                 -- e.g. "Grade 8-A"
+    day        TEXT NOT NULL,                 -- monday..saturday
+    period     INT  NOT NULL,                 -- 1..8
+    subject    TEXT NOT NULL,
+    teacher_id TEXT NOT NULL,
+    PRIMARY KEY (org_unit, class, day, period)
+);
+CREATE INDEX IF NOT EXISTS timetable_teacher_idx ON timetable_slots (teacher_id, day, period);
+
+-- ==== 092-create-library-loans-table.sql ====
+-- VASA-EOS(SE) TN — School Library circulation durable store (L6 library service / platformd).
+-- Backs platform/integration/library_pg.go. Each row is a circulation record (a physical copy issued to a
+-- member). The one-copy-one-borrower invariant — a single physical copy can be on loan to at most one member
+-- at a time — is enforced both by the adapter's pre-insert existence check AND by the partial unique index
+-- below. Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS library_loans (
+    id          TEXT PRIMARY KEY,              -- loan id
+    org_unit    TEXT NOT NULL,                 -- the school library (T6 tenancy node)
+    book_id     TEXT NOT NULL,                 -- catalogue id / ISBN
+    title       TEXT NOT NULL DEFAULT '',
+    copy_id     TEXT NOT NULL,                 -- the physical copy barcode (unique within a library)
+    member_id   TEXT NOT NULL,                 -- borrower (synthetic student/teacher id)
+    issued_on   TEXT NOT NULL,                 -- YYYY-MM-DD
+    due_on      TEXT NOT NULL,                 -- YYYY-MM-DD (issued + 14 days, extended on renewal)
+    returned_on TEXT NOT NULL DEFAULT '',      -- YYYY-MM-DD when returned
+    status      TEXT NOT NULL,                 -- on_loan | returned | lost
+    renewals    INT  NOT NULL DEFAULT 0        -- capped at 2
+);
+CREATE INDEX IF NOT EXISTS library_member_idx ON library_loans (member_id);
+-- at most one active loan per physical copy (the one-copy-one-borrower invariant, enforced in the schema).
+CREATE UNIQUE INDEX IF NOT EXISTS library_copy_active_idx ON library_loans (org_unit, copy_id) WHERE status='on_loan';
+
+-- ==== 093-create-transport-tables.sql ====
+-- VASA-EOS(SE) TN — School Transport route-safety durable store (L6 transport service / platformd).
+-- Backs platform/integration/transport_pg.go. Two tables: bus routes (vehicle + driver with statutory validity
+-- dates) and the student seat allotments on them. The two hard safety invariants — a route can never exceed its
+-- seating capacity, and no student may be allotted to an UNSERVICEABLE vehicle (lapsed fitness certificate or
+-- driver licence) — are enforced by the adapter against the durable state before each insert; the
+-- one-active-seat-per-student-per-route rule is backstopped by the partial unique index below. Applied by the
+-- adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS transport_routes (
+    id                 TEXT PRIMARY KEY,
+    org_unit           TEXT NOT NULL,                 -- the school (T6 tenancy node)
+    name               TEXT NOT NULL DEFAULT '',
+    vehicle_no         TEXT NOT NULL,
+    capacity           INT  NOT NULL,                 -- seating capacity (the hard ceiling)
+    fitness_valid_till TEXT NOT NULL,                 -- vehicle FC expiry (YYYY-MM-DD)
+    driver_name        TEXT NOT NULL DEFAULT '',
+    licence_valid_till TEXT NOT NULL,                 -- driver licence expiry (YYYY-MM-DD)
+    status             TEXT NOT NULL                  -- active | suspended
+);
+CREATE TABLE IF NOT EXISTS transport_allotments (
+    id         TEXT PRIMARY KEY,
+    route_id   TEXT NOT NULL,
+    org_unit   TEXT NOT NULL,
+    student_id TEXT NOT NULL,
+    stop       TEXT NOT NULL DEFAULT '',
+    status     TEXT NOT NULL                          -- allotted | withdrawn
+);
+CREATE INDEX IF NOT EXISTS transport_allot_route_idx ON transport_allotments (route_id, status);
+-- at most one active seat per student per route.
+CREATE UNIQUE INDEX IF NOT EXISTS transport_allot_unique_idx ON transport_allotments (route_id, student_id) WHERE status='allotted';
+
+-- ==== 094-create-mdm-tables.sql ====
+-- VASA-EOS(SE) TN — Mid-Day Meal (PM-POSHAN) durable store (L6 mdm service / platformd).
+-- Backs platform/integration/mdm_pg.go. Two tables: the per-school foodgrain stock ledger (receipts in,
+-- consumptions out) and the daily meal-service register. Foodgrain is tracked in GRAMS (BIGINT, never floats),
+-- mirroring the money-in-paise discipline. The core accountability invariant — stock can never go negative (a
+-- day can never cook more grain than is on hand) — is enforced by the adapter against the durable balance INSIDE
+-- the same transaction that writes the meal + its matching consumption ledger entry, so service and draw-down
+-- are atomic. Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS mdm_ledger (
+    id          TEXT PRIMARY KEY,
+    org_unit    TEXT   NOT NULL,                  -- the school (T6 tenancy node)
+    date        TEXT   NOT NULL,                  -- YYYY-MM-DD
+    kind        TEXT   NOT NULL,                  -- receipt | consumption
+    grain_grams BIGINT NOT NULL,                  -- positive movement size in grams
+    note        TEXT   NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS mdm_meals (
+    id           TEXT PRIMARY KEY,
+    org_unit     TEXT   NOT NULL,
+    date         TEXT   NOT NULL,
+    meals_served INT    NOT NULL,                 -- <= enrolment (data-quality gate)
+    enrolment    INT    NOT NULL,
+    grain_grams  BIGINT NOT NULL                  -- grain cooked for this day's service
+);
+CREATE INDEX IF NOT EXISTS mdm_ledger_org_idx ON mdm_ledger (org_unit, kind);
+CREATE INDEX IF NOT EXISTS mdm_meals_org_idx  ON mdm_meals (org_unit, date);
+
+-- ==== 095-create-infra-tables.sql ====
+-- VASA-EOS(SE) TN — Infrastructure & Asset Register durable store (L6 infra service / platformd).
+-- Backs platform/integration/infra_pg.go. Two tables: the school asset register (rooms/ICT/furniture/sanitation
+-- with a condition grade) and the maintenance tickets raised against them. The register invariants — a ticket
+-- may only be raised against a known, non-decommissioned asset; a ticket walks open → in_progress → resolved →
+-- closed; and an asset can never be decommissioned (or returned to service) while it still has open tickets — are
+-- enforced by the adapter against the durable state (a critical ticket's auto-flip to under_maintenance is
+-- written in the same transaction as the ticket). Applied by the adapter's ensureSchema(); kept here as the
+-- migration of record.
+CREATE TABLE IF NOT EXISTS infra_assets (
+    id          TEXT PRIMARY KEY,
+    org_unit    TEXT NOT NULL,                 -- the school (T6 tenancy node)
+    name        TEXT NOT NULL,
+    category    TEXT NOT NULL,                 -- room | furniture | equipment | ict | sanitation | ...
+    condition   TEXT NOT NULL,                 -- good | fair | poor | unusable
+    status      TEXT NOT NULL,                 -- in_service | under_maintenance | decommissioned
+    acquired_on TEXT NOT NULL DEFAULT ''       -- YYYY-MM-DD
+);
+CREATE TABLE IF NOT EXISTS infra_tickets (
+    id          TEXT PRIMARY KEY,
+    asset_id    TEXT NOT NULL,
+    org_unit    TEXT NOT NULL,
+    issue       TEXT NOT NULL,
+    severity    TEXT NOT NULL,                 -- low | medium | high | critical
+    status      TEXT NOT NULL,                 -- open | in_progress | resolved | closed
+    raised_on   TEXT NOT NULL,
+    assignee    TEXT NOT NULL DEFAULT '',
+    resolved_on TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS infra_assets_org_idx    ON infra_assets (org_unit, status);
+CREATE INDEX IF NOT EXISTS infra_tickets_asset_idx ON infra_tickets (asset_id, status);
+
+-- ==== 096-create-fee-tables.sql ====
+-- VASA-EOS(SE) TN — Fee & Finance Ledger durable store (L6 fees service / platformd).
+-- Backs platform/integration/fees_pg.go. Two tables: fee demands raised against students and the payments
+-- collected against them. Every amount is in PAISE (BIGINT, never floats), mirroring the money-in-paise
+-- discipline used across the platform's finance verticals. The no-overpayment invariant — a payment can never
+-- take the collected total above the amount demanded — is enforced by the adapter against the durable collected
+-- total INSIDE the same transaction that writes the payment and recomputes the demand status (pending → partial
+-- → paid), so collection and status are atomic. Applied by the adapter's ensureSchema(); kept here as the
+-- migration of record.
+CREATE TABLE IF NOT EXISTS fee_demands (
+    id           TEXT PRIMARY KEY,
+    org_unit     TEXT   NOT NULL,                -- the school (T6 tenancy node)
+    student_id   TEXT   NOT NULL,
+    category     TEXT   NOT NULL,                -- exam | hostel | special | ...
+    term         TEXT   NOT NULL DEFAULT '',
+    amount_paise BIGINT NOT NULL,                -- gross amount due, in paise
+    status       TEXT   NOT NULL,                -- pending | partial | paid | waived | cancelled
+    due_on       TEXT   NOT NULL                 -- YYYY-MM-DD
+);
+CREATE TABLE IF NOT EXISTS fee_payments (
+    id           TEXT PRIMARY KEY,
+    demand_id    TEXT   NOT NULL,
+    org_unit     TEXT   NOT NULL,
+    student_id   TEXT   NOT NULL,
+    amount_paise BIGINT NOT NULL,                -- collection amount, in paise
+    mode         TEXT   NOT NULL,                -- cash | online | upi | dd | cheque
+    reference    TEXT   NOT NULL DEFAULT '',
+    paid_on      TEXT   NOT NULL                 -- YYYY-MM-DD
+);
+CREATE INDEX IF NOT EXISTS fee_demands_org_idx     ON fee_demands (org_unit, status);
+CREATE INDEX IF NOT EXISTS fee_payments_demand_idx ON fee_payments (demand_id);
+
+-- ==== 097-create-immunisation-table.sql ====
+-- VASA-EOS(SE) TN — School Health Immunisation durable store (L6 immunisation service / platformd).
+-- Backs platform/integration/immunisation_pg.go. Each row is one vaccine dose administered to a student under
+-- the school-health schedule (UIP / RBSK school-age vaccines). The clinical invariants — a dose may only be
+-- recorded in SEQUENCE (dose N requires doses 1..N-1 already given), a vaccine can never exceed its scheduled
+-- dose count, and a dose cannot be future-dated — are enforced by the adapter against the durable doses before
+-- the upsert; the partial unique index below backstops the no-duplicate-dose-slot rule. Health data is
+-- sensitive: aggregate coverage is surfaced publicly, the per-child worklist only to the governing officer.
+-- Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS immunisation_doses (
+    id              TEXT PRIMARY KEY,
+    student_id      TEXT NOT NULL,
+    org_unit        TEXT NOT NULL,                 -- the school (T6 tenancy node)
+    vaccine         TEXT NOT NULL,                 -- schedule code (Td10 | Td16 | MR | JE | VitA | Albendazole)
+    dose_number     INT  NOT NULL,                 -- 1..required for the vaccine
+    administered_on TEXT NOT NULL,                 -- YYYY-MM-DD (never future-dated)
+    batch           TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS immunisation_student_idx ON immunisation_doses (student_id, vaccine);
+CREATE INDEX IF NOT EXISTS immunisation_org_idx     ON immunisation_doses (org_unit);
+-- a student can hold a given vaccine dose number at most once (backstops the no-duplicate-slot invariant).
+CREATE UNIQUE INDEX IF NOT EXISTS immunisation_dose_slot_idx ON immunisation_doses (student_id, vaccine, dose_number);
+
+-- ==== 098-create-ptm-tables.sql ====
+-- VASA-EOS(SE) TN — Parent-Teacher Meeting durable store (L6 ptm service / platformd).
+-- Backs platform/integration/ptm_pg.go. Two tables: scheduled PTM sessions (with a fixed slot count) and the
+-- guardian bookings against them. The capacity-checked booking invariants — a session can never be OVERBOOKED
+-- beyond its slots, a guardian can never double-book the same session, a cancelled session takes no bookings,
+-- and a booking walks booked → attended | no_show (a cancellation frees its slot) — are enforced by the adapter
+-- against the durable bookings; the partial unique index below backstops the no-double-booking rule. Applied by
+-- the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS ptm_sessions (
+    id       TEXT PRIMARY KEY,
+    org_unit TEXT NOT NULL,                       -- the school (T6 tenancy node)
+    title    TEXT NOT NULL,
+    date     TEXT NOT NULL,                        -- YYYY-MM-DD
+    slots    INT  NOT NULL,                        -- booking capacity (the hard ceiling)
+    status   TEXT NOT NULL                         -- scheduled | cancelled
+);
+CREATE TABLE IF NOT EXISTS ptm_bookings (
+    id         TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    org_unit   TEXT NOT NULL,
+    student_id TEXT NOT NULL,
+    guardian   TEXT NOT NULL DEFAULT '',
+    status     TEXT NOT NULL,                      -- booked | attended | no_show | cancelled
+    slot       TEXT NOT NULL DEFAULT ''            -- optional time-slot label
+);
+CREATE INDEX IF NOT EXISTS ptm_bookings_session_idx ON ptm_bookings (session_id, status);
+-- a student holds at most one active (non-cancelled) booking per session.
+CREATE UNIQUE INDEX IF NOT EXISTS ptm_bookings_active_idx ON ptm_bookings (session_id, student_id) WHERE status<>'cancelled';
+
+-- ==== 099-create-entitlement-tables.sql ====
+-- VASA-EOS(SE) TN — Free-Supply Entitlement Distribution durable store (L6 entitlement service / platformd).
+-- Backs platform/integration/entitlement_pg.go. Two tables: the per-student entitlements under TN's free-supply
+-- schemes (textbooks/uniforms/notebooks/…) and the issues (distribution events) made against them. The
+-- accountability invariant — a student can never be issued MORE than their entitlement (the over-issue/leakage
+-- gate) — is enforced by the adapter against the durable issued total INSIDE the same transaction that writes
+-- the issue and recomputes the entitlement status (pending → partial → fulfilled), so the distribution and
+-- status are atomic. Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS entitlements (
+    id           TEXT PRIMARY KEY,
+    org_unit     TEXT NOT NULL,                    -- the school (T6 tenancy node)
+    student_id   TEXT NOT NULL,
+    item         TEXT NOT NULL,                    -- textbook | notebook | uniform | shoes | bag | cycle | ...
+    entitled_qty INT  NOT NULL,                    -- units owed
+    term         TEXT NOT NULL DEFAULT '',
+    status       TEXT NOT NULL                     -- pending | partial | fulfilled | cancelled
+);
+CREATE TABLE IF NOT EXISTS entitlement_issues (
+    id             TEXT PRIMARY KEY,
+    entitlement_id TEXT NOT NULL,
+    org_unit       TEXT NOT NULL,
+    student_id     TEXT NOT NULL,
+    qty            INT  NOT NULL,                  -- units issued in this distribution event
+    issued_on      TEXT NOT NULL,                  -- YYYY-MM-DD
+    reference      TEXT NOT NULL DEFAULT ''        -- goods-received-note / acknowledgement ref
+);
+CREATE INDEX IF NOT EXISTS entitlements_org_idx       ON entitlements (org_unit, status);
+CREATE INDEX IF NOT EXISTS entitlement_issues_ent_idx ON entitlement_issues (entitlement_id);
+
+-- ==== 100-create-establishment-tables.sql ====
+-- VASA-EOS(SE) TN — Staff Establishment & Sanctioned-Post Register durable store (L6 establishment service /
+-- platformd). Backs platform/integration/establishment_pg.go. Two tables: the sanctioned-post lines (a cadre at
+-- a school with a sanctioned strength) and the appointments made against them. The accountability invariant —
+-- the FILLED posts of a cadre can never exceed its SANCTIONED strength (the over-appointment gate) — is enforced
+-- by the adapter against the durable filled count before each insert; the partial unique index below backstops
+-- the one-filled-post-per-employee-per-establishment rule. A vacated post frees its slot; vacancy (sanctioned −
+-- filled) is derived. Applied by the adapter's ensureSchema(); kept here as the migration of record.
+CREATE TABLE IF NOT EXISTS establishments (
+    id         TEXT PRIMARY KEY,
+    org_unit   TEXT NOT NULL,                      -- the school (T6 tenancy node)
+    cadre      TEXT NOT NULL,                       -- e.g. Graduate Teacher (BT) | Headmaster | Office Assistant
+    sanctioned INT  NOT NULL,                       -- sanctioned strength (the hard ceiling)
+    status     TEXT NOT NULL                        -- active | frozen
+);
+CREATE TABLE IF NOT EXISTS establishment_appointments (
+    id               TEXT PRIMARY KEY,
+    establishment_id TEXT NOT NULL,
+    org_unit         TEXT NOT NULL,
+    employee_id      TEXT NOT NULL,
+    name             TEXT NOT NULL DEFAULT '',
+    status           TEXT NOT NULL,                 -- filled | vacated
+    appointed_on     TEXT NOT NULL                  -- YYYY-MM-DD
+);
+CREATE INDEX IF NOT EXISTS establishments_org_idx        ON establishments (org_unit, status);
+CREATE INDEX IF NOT EXISTS estab_appts_establishment_idx ON establishment_appointments (establishment_id, status);
+-- an employee holds at most one filled post per establishment.
+CREATE UNIQUE INDEX IF NOT EXISTS estab_appts_emp_idx ON establishment_appointments (establishment_id, employee_id) WHERE status='filled';
 
 commit;

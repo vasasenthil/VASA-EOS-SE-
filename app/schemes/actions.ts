@@ -1,7 +1,7 @@
 "use server" // This directive is crucial
 
 import { unstable_noStore as noStore, revalidatePath } from "next/cache"
-import { createClient, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { createClient, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { schemeDemoData } from "@/lib/schemes/demo"
 import { hasPermission } from "@/app/governance/rbac" // Ensure this file is correct
 import { PERMISSIONS } from "@/app/governance/types" // Ensure this file is correct (no "use server")
@@ -43,7 +43,7 @@ function isUnfilteredSchemes(p: GetSchemesParams): boolean {
 export async function getSchemesAction(params: GetSchemesParams): Promise<GetSchemesResult> {
   noStore()
   // No database configured — demonstrate with representative TN welfare schemes.
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     return schemesDemoResult()
   }
   try {
@@ -125,7 +125,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
   // No database — resolve the demo scheme so list -> detail navigation works.
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     return schemeDemoData().find((s) => s.id === id) ?? null
   }
   try {

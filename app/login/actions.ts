@@ -6,7 +6,7 @@ import { redirect } from "next/navigation"
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { PORTALS, type PortalRole } from "@/config/portals"
 import { demoAuthenticate, isUnreachableError, DEMO_COOKIE } from "@/lib/demo-auth"
-import { isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { isDemoModeEnabled } from "@/lib/supabase/server"
 
 // Demo-login fallback: used only when Supabase Auth is unconfigured or unreachable
 // (the "fetch failed" case). A reachable Supabase always takes precedence. Returns a
@@ -28,7 +28,7 @@ async function tryDemo(email: string, password: string): Promise<LoginState | nu
 // required and this redirects to the password login instead of granting a session.
 export async function demoLoginAction(formData: FormData): Promise<void> {
   const role = String(formData.get("role") ?? "").toUpperCase()
-  if (isSupabaseAdminConfigured()) redirect("/login?message=Use+your+credentials+to+sign+in.")
+  if (!isDemoModeEnabled()) redirect("/login?message=Use+your+credentials+to+sign+in.")
   const portal = PORTALS[role as PortalRole]
   if (!portal) redirect("/login?error=unknown_role")
   const cookieStore = await cookies()
@@ -124,9 +124,11 @@ export async function loginAction(prevState: LoginState, formData: FormData): Pr
 
   const { email, password } = validatedFields.data
 
-  // No Supabase configured → demo-login fallback (walkthrough mode).
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Supabase not configured; using demo-login fallback.")
+  // Demo mode (NEXT_PUBLIC_DEMO_MODE=true, or no real admin DB) OR Supabase not configured →
+  // demo-login fallback (walkthrough mode). This never touches Supabase, so a stale/paused
+  // Supabase URL on a demo deployment can't surface "unable to reach the sign-in service".
+  if (isDemoModeEnabled() || !supabaseUrl || !supabaseAnonKey) {
+    console.warn("Demo mode (or Supabase not configured); using demo-login fallback.")
     return (await tryDemo(email, password)) ?? INVALID_CREDS
   }
 

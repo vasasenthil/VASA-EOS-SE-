@@ -174,7 +174,10 @@ func New(cfg Config, decider pep.Decider, gate serving.Gate) (*Platform, error) 
 	if err != nil {
 		return nil, err
 	}
-	auditLog := audit.New()
+	auditLog, err := newAuditLog()
+	if err != nil {
+		return nil, err
+	}
 
 	pe, err := pep.New("app", decider)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -209,9 +210,26 @@ func TestMetricsReflectActivity(t *testing.T) {
 		// governance / conformance / civic gauges sourced from the live registers
 		"vasa_conformance_headlines_match 1", "vasa_functional_modules 391", "vasa_model_card_coverage 1",
 		"vasa_tenancy_nodes 73232", "vasa_tenancy_valid 1", "vasa_grievances_open", "vasa_grievance_queue_pending",
+		// durable operational backlog gauges
+		"vasa_store_durable", "vasa_admissions ", "vasa_admissions_pending_review", "vasa_grievance_cases",
+		"vasa_grievance_overdue", "vasa_leave_pending", "vasa_exam_sheets", "vasa_directory_users",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("metrics missing %q in:\n%s", want, body)
 		}
+	}
+}
+
+func TestGrievanceSweeperConfig(t *testing.T) {
+	s := &server{}
+	// no env → the sweeper is off (no goroutine, no platform access).
+	os.Unsetenv("GRIEVANCE_SWEEP_SECONDS")
+	if got := s.startGrievanceSweeper(); got != "off" {
+		t.Fatalf("sweeper must be off by default, got %q", got)
+	}
+	// a non-positive value is also off.
+	t.Setenv("GRIEVANCE_SWEEP_SECONDS", "0")
+	if got := s.startGrievanceSweeper(); got != "off" {
+		t.Fatalf("zero interval must be off, got %q", got)
 	}
 }
