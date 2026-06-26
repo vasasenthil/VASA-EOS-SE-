@@ -1748,6 +1748,56 @@ func (s *server) routes() http.Handler {
 		}
 		s.writeJSON(w, s.p.SavingsDashboard(scope), nil)
 	}))
+	mux.HandleFunc("/vehicle-fitness", s.count(func(w http.ResponseWriter, r *http.Request) {
+		// Vehicle Fitness / Transport-Safety. GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
+		// vehicle list; ?id= → one vehicle. POST { action, ... }: register { id,org_unit,reg_no } records a
+		// vehicle; record { id,kind,valid,expiry } upserts a statutory document (auto-grounding on a critical
+		// lapse); clear { id } clears the vehicle for service (gated — every required document must be valid).
+		q := r.URL.Query()
+		if r.Method == http.MethodPost {
+			var req struct {
+				Action  string `json:"action"`
+				ID      string `json:"id"`
+				OrgUnit string `json:"org_unit"`
+				RegNo   string `json:"reg_no"`
+				Kind    string `json:"kind"`
+				Valid   bool   `json:"valid"`
+				Expiry  string `json:"expiry"`
+			}
+			if !decode(w, r, &req) {
+				return
+			}
+			switch req.Action {
+			case "record":
+				out, err := s.p.RecordDoc(req.ID, req.Kind, req.Valid, req.Expiry)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			case "clear":
+				out, err := s.p.ClearVehicle(req.ID)
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			default: // register
+				out, err := s.p.RegisterVehicle(integration.FitnessVehicle{
+					ID: req.ID, OrgUnit: orDefault(req.OrgUnit, "TN"), RegNo: req.RegNo,
+				})
+				s.writeJSON(w, map[string]any{"ok": err == nil, "error": errStr(err), "vehicle": out}, nil)
+			}
+			return
+		}
+		if id := q.Get("id"); id != "" {
+			v, ok := s.p.VehicleRecord(id)
+			if !ok {
+				http.Error(w, `{"error":"unknown vehicle"}`, http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, v, nil)
+			return
+		}
+		scope := orDefault(q.Get("scope"), "TN")
+		if q.Get("list") == "1" {
+			s.writeJSON(w, s.p.ScopedVehicles(scope, q.Get("status")), nil)
+			return
+		}
+		s.writeJSON(w, s.p.VehicleFitnessDashboard(scope), nil)
+	}))
 	mux.HandleFunc("/language-lab", s.count(func(w http.ResponseWriter, r *http.Request) {
 		// Native AI Language Lab (multilingual). GET ?scope=<org> → scoped dashboard; ?list=1&status= → the scoped
 		// job list; ?id= → one job. POST { action, ... }: request { id,org_unit,title,domain,source_lang,

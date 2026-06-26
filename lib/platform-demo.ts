@@ -85,6 +85,8 @@ import type {
   PlatformMemberFines,
   PlatformSavingsDashboard,
   PlatformSavingsAccount,
+  PlatformVehicleFitnessDashboard,
+  PlatformFitnessVehicle,
 } from "@/lib/platform-client"
 
 const SCOPE = "TN-DIST-Chennai"
@@ -1085,5 +1087,25 @@ export const demoSavingsDashboard: PlatformSavingsDashboard = {
   withdrawn_paise: 600_00,
   frozen: 4,
   frozen_list: [demoSavingsAccounts[1]],
+  synthetic: true,
+}
+
+// ── Vehicle Fitness / Transport-Safety ───────────────────────────────────────────────────────────────────
+const FIT_DOCS = (overrides: Record<string, boolean> = {}): PlatformFitnessVehicle["documents"] =>
+  ["fitness", "insurance", "permit", "puc", "driver_licence"].map((kind) => ({
+    kind, valid: overrides[kind] ?? true, expiry: "2027-03-31", updated_on: "2026-06-25",
+  }))
+
+export const demoFitnessVehicles: PlatformFitnessVehicle[] = [
+  { id: "VEH-CHN", org_unit: "33030004181", reg_no: "SYN-TN-CHN-0001", status: "cleared", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", documents: FIT_DOCS() },
+  { id: "VEH-CBE", org_unit: "33030004182", reg_no: "SYN-TN-CBE-0001", status: "grounded", created_on: "2026-06-01", updated_at: "2026-06-25T00:00:00Z", documents: FIT_DOCS({ insurance: false }) },
+]
+
+export const demoVehicleFitnessDashboard: PlatformVehicleFitnessDashboard = {
+  scope: SCOPE,
+  vehicles: 4,
+  cleared: 1,
+  grounded: 3,
+  grounds: [demoFitnessVehicles[1]],
   synthetic: true,
 }

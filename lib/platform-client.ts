@@ -3583,3 +3583,70 @@ export async function platformSetFreeze(id: string, frozen: boolean): Promise<{ 
 export async function platformCloseSavingsAccount(id: string): Promise<{ ok: boolean; error: string; account?: PlatformSavingsAccount }> {
   return postJSON("/savings", { action: "close", id })
 }
+
+// ── Vehicle Fitness / Transport-Safety: roadworthiness clearance gate + auto-ground on lapse ──────────────
+// Every school vehicle keeps a register of statutory documents (fitness, insurance, permit, PUC, driver licence)
+// and is cleared for service only when all are valid; lapsing a required document on a cleared vehicle auto-
+// grounds it. Embedded documents. Scoped.
+
+export interface PlatformComplianceDoc {
+  kind: string // fitness | insurance | permit | puc | driver_licence
+  valid: boolean
+  expiry?: string
+  updated_on: string
+}
+
+export interface PlatformFitnessVehicle {
+  id: string
+  org_unit: string
+  reg_no: string
+  documents?: PlatformComplianceDoc[]
+  status: string // grounded | cleared
+  created_on: string
+  updated_at: string
+}
+
+export interface PlatformVehicleFitnessDashboard {
+  scope: string
+  vehicles: number
+  cleared: number
+  grounded: number
+  grounds?: PlatformFitnessVehicle[]
+  synthetic: boolean
+}
+
+/** Jurisdiction-scoped vehicle-fitness dashboard from the backbone (null when not configured). */
+export async function platformVehicleFitnessDashboard(scope = "TN"): Promise<PlatformVehicleFitnessDashboard | null> {
+  if (!platformConfigured()) return demo.demoVehicleFitnessDashboard
+  return getOrDemo(`/vehicle-fitness?scope=${encodeURIComponent(scope)}`, demo.demoVehicleFitnessDashboard)
+}
+
+/** The scoped vehicle list (optionally filtered by status). */
+export async function platformScopedVehicles(scope = "TN", status = ""): Promise<PlatformFitnessVehicle[]> {
+  if (!platformConfigured()) return demo.demoFitnessVehicles
+  return getOrDemo(`/vehicle-fitness?scope=${encodeURIComponent(scope)}&list=1&status=${encodeURIComponent(status)}`, demo.demoFitnessVehicles)
+}
+
+/** Register a vehicle (status grounded). */
+export async function platformRegisterVehicle(input: {
+  id: string
+  org_unit: string
+  reg_no: string
+}): Promise<{ ok: boolean; error: string; vehicle?: PlatformFitnessVehicle }> {
+  return postJSON("/vehicle-fitness", { action: "register", ...input })
+}
+
+/** Record a statutory document — auto-grounds on a critical lapse. */
+export async function platformRecordDoc(input: {
+  id: string
+  kind: string
+  valid: boolean
+  expiry?: string
+}): Promise<{ ok: boolean; error: string; vehicle?: PlatformFitnessVehicle }> {
+  return postJSON("/vehicle-fitness", { action: "record", ...input })
+}
+
+/** Clear a vehicle for service — rejected while any required document is invalid. */
+export async function platformClearVehicle(id: string): Promise<{ ok: boolean; error: string; vehicle?: PlatformFitnessVehicle }> {
+  return postJSON("/vehicle-fitness", { action: "clear", id })
+}

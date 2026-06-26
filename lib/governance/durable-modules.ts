@@ -67,6 +67,7 @@ export const DURABLE_MODULES: DurableModule[] = [
   { route: "staff-disciplinary", label: "Staff Disciplinary / Vigilance", service: "/disciplinary", invariant: "natural justice — no penalty without an inquiry + penalty must be from the sanctioned schedule + appeal only against a decided case; staged charge→inquiry→decided→closed" },
   { route: "library-fines", label: "Library Fine Ledger", service: "/library-fines", invariant: "money in paise — no overpay beyond a fine's outstanding + no re-settling a paid/waived fine + borrow-block gate (member over the dues threshold cannot be issued a book)" },
   { route: "student-savings", label: "School Bank / Student Savings", service: "/savings", invariant: "money in paise — no negative balance (withdrawal ≤ balance) + no transaction on a frozen/closed passbook + no close with a balance (settle to zero first)" },
+  { route: "vehicle-fitness", label: "Vehicle Fitness / Transport Safety", service: "/vehicle-fitness", invariant: "roadworthiness clearance gate — cannot clear a vehicle for service while any required document (fitness/insurance/permit/PUC/driver licence) is invalid + auto-ground on a required-document lapse" },
 ]
 
 /** Count of genuinely deep, durable, backbone-wired modules. */
