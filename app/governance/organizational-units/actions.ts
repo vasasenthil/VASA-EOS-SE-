@@ -124,7 +124,7 @@ export async function getOrganizationalUnitsAction(params?: {
   includeUserCount?: boolean
   includeParentOU?: boolean // New param to optionally join parent OU details
 }): Promise<OUActionState<OrganizationalUnit[]>> {
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     // Demo walkthrough (no database): show the representative demo hierarchy so the page renders.
     return { success: true, message: "No database configured — showing demo units.", data: demoOrganizationalUnits() }
   }

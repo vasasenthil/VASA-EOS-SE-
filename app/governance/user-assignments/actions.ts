@@ -166,8 +166,10 @@ export async function getUserAssignmentsAction(params?: {
   page?: number
   pageSize?: number
 }): Promise<UserAssignmentActionState<UserOUAssignment[]>> {
-  if (!isSupabaseAdminConfigured()) {
-    return { success: false, message: CRITICAL_DB_ERROR_MSG, data: [] }
+  // Demo walkthrough (no DB, or NEXT_PUBLIC_DEMO_MODE): render the assignments screen
+  // with an empty set rather than a "database not configured" error.
+  if (isDemoModeEnabled()) {
+    return { success: true, message: "Demo mode — no assignments to show.", data: [] }
   }
 
   try {

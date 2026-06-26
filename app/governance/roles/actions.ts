@@ -120,7 +120,7 @@ export async function getRolesAction(params?: {
   includePermissionsCount?: boolean
   includeAssignedUserCount?: boolean
 }): Promise<RoleActionState<Role[]>> {
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     // Demo walkthrough (no database): show the representative demo role set so the page renders.
     return { success: true, message: "No database configured — showing demo roles.", data: demoRoles() }
   }

@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { createClient, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 
 export interface StudentCourse {
   id: string
@@ -24,7 +24,7 @@ function demoCourses(): StudentCourse[] {
 
 export async function getEnrolledCourses(): Promise<{ courses?: StudentCourse[]; error?: string; demo?: boolean }> {
   // No database configured — show the representative walkthrough courses.
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     return { courses: demoCourses(), demo: true }
   }
 

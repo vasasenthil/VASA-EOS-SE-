@@ -1,6 +1,6 @@
 "use server"
 
-import { supabaseAdmin, isSupabaseAdminConfigured } from "@/lib/supabase/server"
+import { supabaseAdmin, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { ImplementationChallenge, ImplementationChallengeInput } from "../challenges/types"
 import type {
@@ -91,7 +91,7 @@ const CRITICAL_DB_ERROR_MSG =
 
 // ... (getTrackerDashboardData, seed actions, challenge CRUD actions, getImplementationStatusByIdAction remain unchanged) ...
 export async function getTrackerDashboardData(filters?: DashboardFiltersType): Promise<TrackerDashboardData> {
-  if (!isSupabaseAdminConfigured()) {
+  if (isDemoModeEnabled()) {
     // No database configured — demonstrate the tracker with representative NEP-2020
     // implementation data instead of an empty, error-only dashboard.
     return trackerDemoData()
