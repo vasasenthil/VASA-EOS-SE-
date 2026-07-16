@@ -7,7 +7,7 @@ export const SCHEME_APPROVAL_WORKFLOW = workflowDefinitionSchema.parse({
   steps: [
     { stepName: "Secretary Review", requiredRole: "SECRETARY", slaDurationSeconds: 3 * 24 * 60 * 60, compensateAction: "notify-stakeholders-of-rejection" },
     { stepName: "Minister Approval", requiredRole: "MINISTER", slaDurationSeconds: 5 * 24 * 60 * 60, compensateAction: "notify-stakeholders-of-rejection" },
-    { stepName: "Cabinet Note", requiredRole: "CABINET", slaDurationSeconds: 7 * 24 * 60 * 60, compensateAction: "notify-stakeholders-of-rejection" },
+    { stepName: "Cabinet Note", requiredRole: "CABINET", slaDurationSeconds: 7 * 24 * 60 * 60, compensateAction: "notify-stakeholders-of-rejection", when: { field: "budget", operator: "gt", value: SCHEME_CABINET_THRESHOLD } },
     { stepName: "Budget Allocation", requiredRole: "SYSTEM", slaDurationSeconds: 24 * 60 * 60, compensateAction: "reverse-budget-allocation" },
     { stepName: "Scheme Activation", requiredRole: "SYSTEM", slaDurationSeconds: 24 * 60 * 60, compensateAction: "notify-stakeholders-of-rejection" },
   ],

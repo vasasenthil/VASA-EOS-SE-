@@ -9,6 +9,7 @@ import type { OutboxEventRecord } from "@/lib/events/outbox-publisher"
 import { outboxEventsPending, outboxEventsProcessed, renderPrometheusMetrics, resetMetricsForTests } from "@/lib/observability/metrics"
 import { recordWorkerHeartbeat, getWorkerHealth, resetWorkerHealthForTests } from "@/lib/observability/health"
 import { loadManifest, validateManifest } from "../scripts/migrations/run"
+import { nextRunnableStepIndex, workflowDefinitionFor } from "@/lib/workflow-runtime/schema"
 
 function jwt(payload: Record<string, unknown>): string {
   const enc = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
@@ -68,4 +69,11 @@ test("observability metrics and worker health render production signals", () => 
   assert.match(metrics, /outbox_events_pending 7/)
   assert.match(metrics, /outbox_events_processed_total 3/)
   assert.equal(getWorkerHealth("outbox-dispatcher").status, "running")
+})
+
+
+test("scheme workflow conditional routing skips Cabinet below budget threshold", () => {
+  const definition = workflowDefinitionFor("scheme-approval")
+  assert.equal(nextRunnableStepIndex(definition, 2, { budget: 100_000_000 }), 3)
+  assert.equal(nextRunnableStepIndex(definition, 2, { budget: 600_000_000 }), 2)
 })

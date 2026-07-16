@@ -10,11 +10,18 @@ export const compensateActionSchema = z.enum([
 
 export type CompensateAction = z.infer<typeof compensateActionSchema>
 
+export const workflowConditionSchema = z.object({
+  field: z.string().min(1),
+  operator: z.enum(["eq", "neq", "gt", "gte", "lt", "lte"]),
+  value: z.union([z.string(), z.number(), z.boolean()]),
+})
+
 export const workflowStepDefinitionSchema = z.object({
   stepName: z.string().min(1),
   requiredRole: z.string().min(1),
   slaDurationSeconds: z.number().int().positive(),
   compensateAction: compensateActionSchema.optional(),
+  when: workflowConditionSchema.optional(),
 })
 
 export const workflowDefinitionSchema = z.object({
@@ -39,6 +46,7 @@ export const workflowRuntimePayloadSchema = z.object({
   })).default([]),
 })
 
+export type WorkflowCondition = z.infer<typeof workflowConditionSchema>
 export type WorkflowStepDefinition = z.infer<typeof workflowStepDefinitionSchema>
 export type WorkflowDefinition = z.infer<typeof workflowDefinitionSchema>
 export type WorkflowRuntimePayload = z.infer<typeof workflowRuntimePayloadSchema>
@@ -102,7 +110,7 @@ export const WORKFLOW_RUNTIME_DEFINITIONS = new Map<string, WorkflowDefinition>(
     steps: [
       { stepName: "Secretary Review", requiredRole: "SECRETARY", slaDurationSeconds: 259_200, compensateAction: "notify-stakeholders-of-rejection" },
       { stepName: "Minister Approval", requiredRole: "MINISTER", slaDurationSeconds: 432_000, compensateAction: "notify-stakeholders-of-rejection" },
-      { stepName: "Cabinet Note", requiredRole: "CABINET", slaDurationSeconds: 604_800, compensateAction: "notify-stakeholders-of-rejection" },
+      { stepName: "Cabinet Note", requiredRole: "CABINET", slaDurationSeconds: 604_800, compensateAction: "notify-stakeholders-of-rejection", when: { field: "budget", operator: "gt", value: 500000000 } },
       { stepName: "Budget Allocation", requiredRole: "SYSTEM", slaDurationSeconds: 86_400, compensateAction: "reverse-budget-allocation" },
       { stepName: "Scheme Activation", requiredRole: "SYSTEM", slaDurationSeconds: 86_400, compensateAction: "notify-stakeholders-of-rejection" },
     ],
@@ -117,4 +125,24 @@ export function workflowDefinitionFor(workflowType: string): WorkflowDefinition 
 
 export function parseWorkflowPayload(input: unknown): WorkflowRuntimePayload {
   return workflowRuntimePayloadSchema.parse(input ?? {})
+}
+
+
+export function shouldRunWorkflowStep(step: WorkflowStepDefinition, context: Record<string, unknown>): boolean {
+  if (!step.when) return true
+  const actual = context[step.when.field]
+  const expected = step.when.value
+  if (step.when.operator === "eq") return actual === expected
+  if (step.when.operator === "neq") return actual !== expected
+  if (typeof actual !== "number" || typeof expected !== "number") return false
+  if (step.when.operator === "gt") return actual > expected
+  if (step.when.operator === "gte") return actual >= expected
+  if (step.when.operator === "lt") return actual < expected
+  return actual <= expected
+}
+
+export function nextRunnableStepIndex(definition: WorkflowDefinition, startIndex: number, context: Record<string, unknown>): number {
+  let index = startIndex
+  while (index < definition.steps.length && !shouldRunWorkflowStep(definition.steps[index], context)) index += 1
+  return index
 }

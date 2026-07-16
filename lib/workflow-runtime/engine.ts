@@ -2,7 +2,7 @@ import { subscribeToPlatformEvents } from "@/lib/events/outbox-dispatcher"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
 import { getWorkflowInstance, saveWorkflowInstance } from "./store"
-import { parseWorkflowPayload, workflowDefinitionFor } from "./schema"
+import { nextRunnableStepIndex, parseWorkflowPayload, workflowDefinitionFor } from "./schema"
 import { compensateWorkflowFromEvent } from "./compensation"
 
 type EngineEvent = Extract<PlatformEvent, { eventType: "WorkflowStepAdvanced" | "WorkflowCompleted" | "WorkflowRejected" | "WorkflowStepTimedOut" }>
@@ -36,9 +36,10 @@ export async function processWorkflowEvent(event: PlatformEvent): Promise<void> 
   if (instance.status !== "running") return
   const previousStepIndex = Math.max(0, event.payload.stepIndex - 1)
   const previousStep = definition.steps[previousStepIndex]
-  const nextStep = definition.steps[event.payload.stepIndex]
+  const resolvedNextStepIndex = nextRunnableStepIndex(definition, event.payload.stepIndex, payload.context)
+  const nextStep = definition.steps[resolvedNextStepIndex]
   if (!previousStep) return
-  if (event.payload.stepIndex <= instance.currentStepIndex) return
+  if (resolvedNextStepIndex <= instance.currentStepIndex) return
 
   const events: PlatformEvent[] = []
   await commitWithEvents(async () => {
@@ -50,7 +51,7 @@ export async function processWorkflowEvent(event: PlatformEvent): Promise<void> 
       compensateAction: previousStep.compensateAction,
     })
     if (!nextStep) {
-      await saveWorkflowInstance({ ...instance, status: "completed", currentStepIndex: event.payload.stepIndex, payload })
+      await saveWorkflowInstance({ ...instance, status: "completed", currentStepIndex: resolvedNextStepIndex, payload })
       events.push(createEventEnvelope({
         eventType: "WorkflowCompleted",
         aggregateType: "workflow",
@@ -70,7 +71,7 @@ export async function processWorkflowEvent(event: PlatformEvent): Promise<void> 
     }
     await saveWorkflowInstance({
       ...instance,
-      currentStepIndex: event.payload.stepIndex,
+      currentStepIndex: resolvedNextStepIndex,
       payload,
       currentStepStartedAt: event.occurredAt,
     })

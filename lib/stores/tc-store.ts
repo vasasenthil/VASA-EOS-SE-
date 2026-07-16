@@ -1,7 +1,9 @@
-import { currentStep, type Decision } from "@/lib/workflow"
+import { currentStep, startInstance, type Decision } from "@/lib/workflow"
 import { TC_ISSUANCE } from "@/lib/workflow/definitions"
 import { actOnTc, fileTc, listTcs, type NewTc, type TcFlowRecord } from "@/lib/tcflow/store"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
+import { getDb } from "@/lib/persistence"
+import { tcFileWithOutboxRpc } from "@/lib/events/atomic-rpc"
 import { createWorkflowInstance } from "@/lib/workflow-runtime/store"
 import { stableWorkflowInstanceId } from "@/lib/workflow-runtime/ids"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
@@ -112,6 +114,26 @@ function workflowDecisionEvents(before: TcFlowRecord, after: TcFlowRecord, input
 }
 
 export async function fileTcWithOutbox(input: NewTc): Promise<TcFlowRecord> {
+  const db = getDb()
+  if (db) {
+    const record: TcFlowRecord = {
+      id: `TC-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      student: input.student,
+      instance: startInstance(TC_ISSUANCE, { needsCountersign: input.needsCountersign }),
+      details: input.details,
+    }
+    const events = [workflowCreatedEvent(record), tcFiledEvent(record)]
+    await tcFileWithOutboxRpc({
+      id: record.id,
+      student: record.student,
+      instance: record.instance,
+      context: record.instance.context,
+      details: record.details ?? {},
+      workflowId: workflowIdFor(record),
+    }, events)
+    return record
+  }
+
   const events: PlatformEvent[] = []
   return commitWithEvents(async () => {
     const record = await fileTc(input)

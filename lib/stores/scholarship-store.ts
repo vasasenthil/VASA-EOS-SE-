@@ -1,5 +1,5 @@
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
-import { currentStep, type Decision } from "@/lib/workflow"
+import { currentStep, startInstance, type Decision } from "@/lib/workflow"
 import { SCHOLARSHIP_SANCTION } from "@/lib/workflow/definitions"
 import {
   actOnScholarship,
@@ -9,6 +9,8 @@ import {
   type ScholarshipFlowRecord,
 } from "@/lib/scholarshipflow/store"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
+import { getDb } from "@/lib/persistence"
+import { scholarshipFileWithOutboxRpc } from "@/lib/events/atomic-rpc"
 import { createWorkflowInstance } from "@/lib/workflow-runtime/store"
 import { stableWorkflowInstanceId } from "@/lib/workflow-runtime/ids"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
@@ -122,6 +124,32 @@ function workflowDecisionEvents(before: ScholarshipFlowRecord, after: Scholarshi
 }
 
 export async function fileScholarshipWithOutbox(input: NewScholarship): Promise<ScholarshipFlowRecord> {
+  const db = getDb()
+  if (db) {
+    const record: ScholarshipFlowRecord = {
+      id: `SCH-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      student: input.student,
+      scheme: input.scheme,
+      amount: input.amount,
+      instance: startInstance(SCHOLARSHIP_SANCTION, { amount: input.amount }),
+      details: input.details,
+      tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
+    }
+    const events = [workflowCreatedEvent(record), scholarshipFiledEvent(record)]
+    await scholarshipFileWithOutboxRpc({
+      id: record.id,
+      student: record.student,
+      scheme: record.scheme,
+      amount: record.amount,
+      instance: record.instance,
+      context: record.instance.context,
+      details: record.details ?? {},
+      tenantId: record.tenantId,
+      workflowId: workflowIdFor(record),
+    }, events)
+    return record
+  }
+
   const events: PlatformEvent[] = []
   return commitWithEvents(async () => {
     const record = await fileScholarship(input)

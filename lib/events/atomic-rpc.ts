@@ -2,9 +2,11 @@ import { getDb } from "@/lib/persistence"
 import type { PlatformEvent } from "@/lib/events/schemas"
 
 export class AtomicOutboxRpcError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
+  readonly cause?: unknown
+  constructor(message: string, cause?: unknown) {
     super(message)
     this.name = "AtomicOutboxRpcError"
+    this.cause = cause
   }
 }
 
