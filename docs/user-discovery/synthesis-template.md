@@ -112,6 +112,17 @@ Common categories to check:
 | Pilot scope recommendation |  |
 | Procurement / ownership clue |  |
 
+
+## Pilot Fit
+
+- In-scope pilot district/block/school fit: `[Yes/No/Unknown]`
+- In-scope integration dependencies mentioned: `[PFMS / DBT/APBS / APAAR / DigiLocker / SMS / Email]`
+- Estimated eligible pilot students: `[Count]`
+- Schemes suitable for pilot: `[Names/codes]`
+- Biggest pilot adoption risk: `[Risk]`
+- Biggest data-quality risk: `[Risk]`
+- Manual operational continuity path required? `[Yes/No]`
+
 ## Go / No-Go Assessment
 
 - Proceed to prototype? `[Yes/No/More discovery needed]`

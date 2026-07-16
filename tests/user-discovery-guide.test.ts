@@ -5,6 +5,7 @@ import assert from "node:assert/strict"
 const guide = readFileSync("docs/user-discovery/interview-guide.md", "utf8")
 const synthesis = readFileSync("docs/user-discovery/synthesis-template.md", "utf8")
 const docsIndex = readFileSync("docs/README.md", "utf8")
+const pilotPlan = readFileSync("docs/user-discovery/scholarship-pilot-plan.md", "utf8")
 
 const requiredStakeholders = [
   "District Education Officers",
@@ -65,4 +66,24 @@ test("user discovery synthesis template captures per-interview evidence and reco
   assert.ok(synthesis.includes("Payment cycle time"))
   assert.ok(synthesis.includes("Error / failed-payment rate"))
   assert.ok(synthesis.includes("Reconciliation time"))
+})
+
+
+test("scholarship pilot plan captures integrations scope success criteria and risks", () => {
+  for (const integration of ["PFMS", "DBT/APBS", "APAAR", "DigiLocker", "SMS Gateway", "Email Service"]) {
+    assert.ok(pilotPlan.includes(integration), `${integration} missing from pilot plan`)
+  }
+  for (const scope of ["One district", "2–3 blocks", "20–30 schools", "1,000–2,000 students", "8–12 weeks"]) {
+    assert.ok(pilotPlan.includes(scope), `${scope} missing from pilot scope`)
+  }
+  for (const criterion of ["50–80%", "90%", "80%", "95%+", "48 hours", "80%+"]) {
+    assert.ok(pilotPlan.includes(criterion), `${criterion} success criterion missing`)
+  }
+  for (const risk of ["PFMS integration delays", "Low user adoption", "Data quality issues", "Technical bugs"]) {
+    assert.ok(pilotPlan.includes(risk), `${risk} mitigation missing`)
+  }
+})
+
+test("documentation index links the scholarship pilot plan", () => {
+  assert.ok(docsIndex.includes("user-discovery/scholarship-pilot-plan.md"))
 })

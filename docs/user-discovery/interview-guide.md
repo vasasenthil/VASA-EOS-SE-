@@ -14,6 +14,18 @@ Scholarship reconciliation is the best first production wedge if interviews prov
 4. Government officers need auditable, dynamic reports for escalation and accountability.
 5. A vertical slice can reduce cycle time, failed-payment resolution time, and manual reconciliation effort by at least **10x** for one pilot jurisdiction.
 
+
+## Pilot Design Hypothesis
+
+Use discovery to validate this initial pilot frame before committing engineering capacity:
+
+- **Integration points:** PFMS for payment initiation/status/reconciliation, DBT/APBS for disbursement status and settlement callbacks, APAAR for student ID verification, DigiLocker for scholarship certificate issuance, SMS Gateway for beneficiary notifications, and Email Service for operator notifications and reports.
+- **Pilot scope:** one district such as Chennai, 2–3 blocks, 20–30 schools, 1,000–2,000 students, 2–3 scholarship schemes, and an 8–12 week pilot duration.
+- **Success criteria:** 50–80% faster payment cycle time, 90% lower error rate, 80% less reconciliation time, 95%+ operator adoption, exception resolution under 48 hours, and 80%+ user satisfaction.
+- **Primary risks:** PFMS integration delays, low user adoption, data quality issues, and technical bugs; each must have a named mitigation before go-live.
+
+The detailed pilot worksheet is maintained in [`scholarship-pilot-plan.md`](scholarship-pilot-plan.md).
+
 ## Target Interviewees
 
 | Stakeholder | Target count | Why this stakeholder matters |
