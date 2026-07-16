@@ -140,6 +140,8 @@ For every interview, capture the actual process in this format:
 
 ## Post-Interview Synthesis Template
 
+Use the standalone synthesis worksheet at [`synthesis-template.md`](synthesis-template.md) after every interview. A compact inline template is also provided below for quick capture.
+
 Create one synthesis note per interview:
 
 ```markdown
