@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { predictionMadeSchema, outcomeObservedSchema, driftDetectedSchema, retrainingTriggeredSchema, modelTrainedSchema, modelPromotedSchema, modelRolledBackSchema } from "@/lib/ml/events"
 
 const isoDateTime = z.string().datetime({ offset: true })
 const uuid = z.string().uuid()
@@ -183,6 +184,13 @@ export const platformEventSchema = z.discriminatedUnion("eventType", [
   fundsUtilizedSchema,
   beneficiaryAddedSchema,
   outcomeRecordedSchema,
+  predictionMadeSchema,
+  outcomeObservedSchema,
+  driftDetectedSchema,
+  retrainingTriggeredSchema,
+  modelTrainedSchema,
+  modelPromotedSchema,
+  modelRolledBackSchema,
 ])
 
 export type WorkflowInstanceCreated = z.infer<typeof workflowInstanceCreatedSchema>
@@ -209,6 +217,13 @@ export type FundsReleased = z.infer<typeof fundsReleasedSchema>
 export type FundsUtilized = z.infer<typeof fundsUtilizedSchema>
 export type BeneficiaryAdded = z.infer<typeof beneficiaryAddedSchema>
 export type OutcomeRecorded = z.infer<typeof outcomeRecordedSchema>
+export type PredictionMade = z.infer<typeof predictionMadeSchema>
+export type OutcomeObserved = z.infer<typeof outcomeObservedSchema>
+export type DriftDetected = z.infer<typeof driftDetectedSchema>
+export type RetrainingTriggered = z.infer<typeof retrainingTriggeredSchema>
+export type ModelTrained = z.infer<typeof modelTrainedSchema>
+export type ModelPromoted = z.infer<typeof modelPromotedSchema>
+export type ModelRolledBack = z.infer<typeof modelRolledBackSchema>
 export type PlatformEvent = z.infer<typeof platformEventSchema>
 export type PlatformEventType = PlatformEvent["eventType"]
 

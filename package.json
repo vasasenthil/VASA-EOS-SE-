@@ -13,7 +13,8 @@
     "db:seed:users": "tsx scripts/seed-users.ts",
     "db:seed:auth": "tsx scripts/seed-auth-users.ts",
     "db:verify": "tsx scripts/verify-schema.ts",
-    "seed:schemes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-schemes.ts"
+    "seed:schemes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-schemes.ts",
+    "seed:ml": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-ml.ts"
   },
   "pnpm": {
     "allowed-build-scripts": [
