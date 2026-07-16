@@ -16,10 +16,11 @@ export interface EnvValidationResult {
   issues: EnvValidationIssue[]
 }
 
-const REQUIRED_CUTOVER_VARS = ["OUTBOX_WORKER_ENABLED", "SLA_MONITOR_WORKER_ENABLED"] as const
+const REQUIRED_CUTOVER_VARS = ["OUTBOX_WORKER_ENABLED", "SLA_MONITOR_WORKER_ENABLED", "ENABLE_OUTBOX_DISPATCHER_WORKER", "ENABLE_SLA_MONITOR_WORKER"] as const
 const RECOMMENDED_OBSERVABILITY_VARS = ["OTEL_EXPORTER_OTLP_ENDPOINT", "SENTRY_DSN"] as const
 const URL_VARS = [
   "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_URL",
   "DATABASE_URL",
   "SUPABASE_DB_URL",
   "OTEL_EXPORTER_OTLP_ENDPOINT",
@@ -36,16 +37,22 @@ const URL_VARS = [
   "EXAMS_BASE_URL",
   "RETRIEVAL_BASE_URL",
   "AGENTS_API_URL",
+  "NDEAR_BASE_URL",
   "PUBLIC_BASE_URL",
 ] as const
 const SECRET_OR_KEY_VARS = [
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
   "PFMS_API_KEY",
+  "PFMS_API_SECRET",
   "DBT_API_KEY",
   "APAAR_API_KEY",
   "DIGILOCKER_API_KEY",
+  "DIGILOCKER_CLIENT_ID",
+  "DIGILOCKER_CLIENT_SECRET",
   "BHASHINI_API_KEY",
+  "BHASHINI_USER_ID",
   "AADHAAR_API_KEY",
   "UDISE_API_KEY",
   "EMIS_API_KEY",
@@ -53,15 +60,16 @@ const SECRET_OR_KEY_VARS = [
   "EXAMS_API_KEY",
   "RETRIEVAL_API_KEY",
   "AGENTS_API_KEY",
+  "NDEAR_API_KEY",
   "ENCRYPTION_MASTER_KEY",
   "AUDIT_SIGNING_KEY",
 ] as const
 const LIVE_INTEGRATIONS: Record<string, readonly string[]> = {
-  INTEGRATION_PFMS: ["PFMS_BASE_URL"],
+  INTEGRATION_PFMS: ["PFMS_BASE_URL", "PFMS_API_KEY", "PFMS_API_SECRET"],
   INTEGRATION_DBT: ["DBT_BASE_URL", "DBT_API_KEY"],
   INTEGRATION_APAAR: ["APAAR_BASE_URL", "APAAR_API_KEY"],
-  INTEGRATION_DIGILOCKER: ["DIGILOCKER_BASE_URL", "DIGILOCKER_API_KEY"],
-  INTEGRATION_BHASHINI: ["BHASHINI_INFERENCE_URL", "BHASHINI_API_KEY"],
+  INTEGRATION_DIGILOCKER: ["DIGILOCKER_BASE_URL", "DIGILOCKER_CLIENT_ID", "DIGILOCKER_CLIENT_SECRET"],
+  INTEGRATION_BHASHINI: ["BHASHINI_INFERENCE_URL", "BHASHINI_API_KEY", "BHASHINI_USER_ID"],
   INTEGRATION_AADHAAR: ["AADHAAR_BASE_URL", "AADHAAR_API_KEY"],
   INTEGRATION_UDISE: ["UDISE_BASE_URL"],
   INTEGRATION_EMIS: ["EMIS_BASE_URL", "EMIS_API_KEY"],
@@ -69,6 +77,7 @@ const LIVE_INTEGRATIONS: Record<string, readonly string[]> = {
   INTEGRATION_EXAMS: ["EXAMS_BASE_URL", "EXAMS_API_KEY"],
   INTEGRATION_RETRIEVAL: ["RETRIEVAL_BASE_URL", "RETRIEVAL_API_KEY"],
   INTEGRATION_AGENTS: ["AGENTS_API_KEY"],
+  INTEGRATION_NDEAR: ["NDEAR_BASE_URL", "NDEAR_API_KEY"],
 }
 
 function parseEnvFile(path: string): Record<string, string> {
@@ -120,6 +129,8 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
     if (isPlaceholder(env[item.name])) add(issues, "error", item.name, `${item.name} is required: ${item.purpose}.`)
   }
   if (isPlaceholder(env.SUPABASE_SERVICE_ROLE_KEY)) add(issues, "error", "SUPABASE_SERVICE_ROLE_KEY", "Server-side service-role key is required for durable production persistence.")
+  if (isPlaceholder(env.NEXT_PUBLIC_SUPABASE_URL) && isPlaceholder(env.SUPABASE_URL)) add(issues, "error", "SUPABASE_URL", "Set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL for Supabase project access.")
+  if (isPlaceholder(env.NEXT_PUBLIC_SUPABASE_ANON_KEY) && isPlaceholder(env.SUPABASE_ANON_KEY)) add(issues, "error", "SUPABASE_ANON_KEY", "Set SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY for browser auth.")
   if (isPlaceholder(env.DATABASE_URL) && isPlaceholder(env.SUPABASE_DB_URL)) add(issues, "error", "DATABASE_URL", "Set DATABASE_URL or SUPABASE_DB_URL so migrations can connect to Postgres.")
   if (env.DEMO_PASSWORD && !isPlaceholder(env.DEMO_PASSWORD)) add(issues, "error", "DEMO_PASSWORD", "Remove DEMO_PASSWORD before production cutover.")
 
