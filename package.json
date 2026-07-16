@@ -17,7 +17,8 @@
     "seed:ml": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-ml.ts",
     "migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts",
     "migrate:status": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts status",
-    "production:cutover": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/production-cutover.ts"
+    "production:cutover": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/production-cutover.ts",
+    "validate:env": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/validate-env.ts"
   },
   "pnpm": {
     "allowed-build-scripts": [
