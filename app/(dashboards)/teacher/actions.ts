@@ -52,7 +52,7 @@ export async function getTeacherDashboardData(): Promise<TeacherDashboardData> {
 
   try {
     const [attendance, assignments, timetable, flaggedStudents, notices] = await Promise.all([
-      getTeacherAttendanceSummary(teacherId, schoolId, today),
+      getTeacherAttendanceSummary(teacherId, schoolId ?? "", today),
       getTeacherAssignments(teacherId, schoolId),
       getTeacherTimetable(teacherId, schoolId, today),
       getFlaggedStudentsForTeacher(teacherId, schoolId),

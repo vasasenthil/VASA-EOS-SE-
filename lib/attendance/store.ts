@@ -6,7 +6,7 @@
 // class on a new day supersedes the old figure without losing the audit history.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { getDb } from "@/lib/db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { CLASS_ORDER, type ClassDay } from "./class-day"
 
@@ -153,18 +153,18 @@ interface TeacherAttendanceRow {
   status: string | null
 }
 
-export async function getTeacherAttendanceSummary(_teacherId: string, schoolId?: string, today: Date = new Date()): Promise<TeacherAttendanceSummary> {
+export async function getTeacherAttendanceSummary(teacherId: string, schoolId: string, date: Date): Promise<TeacherAttendanceSummary> {
   const db = getDb()
-  if (!db || !schoolId) {
+  if (!db) {
     return { present: 0, absent: 0, late: 0, total: 0, percentage: 0 }
   }
 
   const { data, error } = await db
     .from("attendance")
     .select("status")
-    .eq("teacher_id", _teacherId)
+    .eq("teacher_id", teacherId)
     .eq("school_id", schoolId)
-    .eq("date", today.toISOString().split("T")[0])
+    .eq("date", date.toISOString().split("T")[0])
 
   if (error) throw error
 
