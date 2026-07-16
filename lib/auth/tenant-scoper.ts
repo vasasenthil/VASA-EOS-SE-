@@ -1,4 +1,4 @@
-import type { VasaSession } from "./session"
+import { getSession, type VasaSession } from "./session"
 
 export interface TenantContext {
   subject: string
@@ -8,12 +8,14 @@ export interface TenantContext {
   stateId?: string
 }
 
-export function getTenantContext(session: VasaSession): TenantContext {
+export async function getTenantContext(session?: VasaSession): Promise<TenantContext> {
+  const current = session ?? await getSession()
+  if (!current) return { subject: "anonymous" }
   return {
-    subject: session.subject,
-    schoolId: session.tenant.schoolId,
-    blockId: session.tenant.blockId,
-    districtId: session.tenant.districtId,
-    stateId: session.tenant.stateId,
+    subject: current.subject,
+    schoolId: current.tenant.schoolId,
+    blockId: current.tenant.blockId,
+    districtId: current.tenant.districtId,
+    stateId: current.tenant.stateId,
   }
 }

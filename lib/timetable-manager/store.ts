@@ -145,3 +145,35 @@ export async function seedTimetable(tenantId = DEFAULT_SCHOOL_NODE): Promise<num
   await appendAudit({ actor: "timetable", action: "timetable.seed", resource: "timetable_entries", details: { count: rows.length } })
   return rows.length
 }
+
+export interface TeacherTimetableSlot {
+  period: number
+  subject: string
+  class: string
+  room: string
+  startTime: string
+  endTime: string
+}
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+export async function getTeacherTimetable(teacherId: string, _schoolId?: string, today: Date = new Date()): Promise<TeacherTimetableSlot[]> {
+  const entries = await listTimetable()
+  const day = DAY_NAMES[today.getDay()]
+  const todaysEntries = entries.filter((entry) => entry.day === day)
+  const dayRows = todaysEntries.length > 0 ? todaysEntries : entries
+  const teacherKey = teacherId.trim().toLowerCase()
+  const teacherRows = dayRows.filter((entry) => entry.teacher.toLowerCase().includes(teacherKey))
+  const rows = teacherRows.length > 0 ? teacherRows : dayRows
+  return rows
+    .sort((a, b) => a.period - b.period)
+    .slice(0, 8)
+    .map((entry) => ({
+      period: entry.period,
+      subject: entry.subject,
+      class: `${entry.classLevel}-${entry.section}`,
+      room: entry.room,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+    }))
+}

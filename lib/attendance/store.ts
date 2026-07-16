@@ -140,3 +140,29 @@ export async function listClassAttendance(udiseCode: string = DEMO_UDISE): Promi
     return (ia < 0 ? CLASS_ORDER.length : ia) - (ib < 0 ? CLASS_ORDER.length : ib)
   })
 }
+
+export interface TeacherAttendanceSummary {
+  present: number
+  absent: number
+  late: number
+  total: number
+  percentage: number
+}
+
+function resolveSchoolUdise(schoolId?: string): string {
+  return /^\d{11}$/.test(schoolId ?? "") ? schoolId! : DEMO_UDISE
+}
+
+export async function getTeacherAttendanceSummary(_teacherId: string, schoolId?: string, _today: Date = new Date()): Promise<TeacherAttendanceSummary> {
+  const records = await listClassAttendance(resolveSchoolUdise(schoolId))
+  const present = records.reduce((sum, record) => sum + record.present, 0)
+  const total = records.reduce((sum, record) => sum + record.enrolled, 0)
+  const absent = Math.max(total - present, 0)
+  return {
+    present,
+    absent,
+    late: 0,
+    total,
+    percentage: total > 0 ? Math.round((present / total) * 1000) / 10 : 0,
+  }
+}
