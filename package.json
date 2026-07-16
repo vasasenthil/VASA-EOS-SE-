@@ -14,7 +14,9 @@
     "db:seed:auth": "tsx scripts/seed-auth-users.ts",
     "db:verify": "tsx scripts/verify-schema.ts",
     "seed:schemes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-schemes.ts",
-    "seed:ml": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-ml.ts"
+    "seed:ml": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-ml.ts",
+    "migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts",
+    "migrate:status": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts status"
   },
   "pnpm": {
     "allowed-build-scripts": [

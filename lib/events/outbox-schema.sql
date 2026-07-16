@@ -126,3 +126,10 @@ begin
   where id = event_id and status = 'pending' and locked_by = worker_id;
 end;
 $$;
+
+create table if not exists public.worker_heartbeats (
+  worker_name text primary key,
+  status text not null,
+  last_heartbeat_at timestamptz not null default now(),
+  details jsonb not null default '{}'::jsonb
+);
