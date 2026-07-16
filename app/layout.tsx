@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
@@ -14,8 +13,6 @@ import { CommandPaletteProvider } from "@/components/command-palette"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { RouteAnnouncer } from "@/components/route-announcer"
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help"
-
-const inter = Inter({ subsets: ["latin"] })
 
 // Applies saved accessibility preferences before first paint (no flash), independent
 // of React hydration. Mirrors lib/accessibility (keep the storage key in sync).
@@ -35,7 +32,7 @@ export default async function RootLayout({
   const headerUser = await getHeaderUser()
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className="font-sans">
         <script dangerouslySetInnerHTML={{ __html: A11Y_BOOT_SCRIPT }} /> {/* sast-ignore: static app-controlled boot script, no user input */}
         <a
           href="#main-content"

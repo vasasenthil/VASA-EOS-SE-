@@ -1,0 +1,13 @@
+import { commitWithEvents } from "@/lib/events/outbox-publisher"
+import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
+import { beneficiarySchema, outcomeMetricSchema, schemeOutcomeSchema, type Beneficiary, type OutcomeMetric, type SchemeOutcome, type SchemeOutcomeReport } from "@/lib/schemes/schemas"
+import { getScheme } from "./scheme-store"
+
+const beneficiaries = new Map<string, Beneficiary[]>()
+const outcomes = new Map<string, SchemeOutcome[]>()
+const now = () => new Date().toISOString()
+function event(type: PlatformEvent["eventType"], schemeId: string, payload: Record<string, unknown>): PlatformEvent { return createEventEnvelope({ eventType: type as any, aggregateType: "scheme", aggregateId: schemeId, idempotencyKey: `scheme:${schemeId}:${type}:${crypto.randomUUID()}`, payload: { schemeId, ...payload } } as any) }
+export function resetSchemeOutcomeStore(): void { beneficiaries.clear(); outcomes.clear() }
+export async function recordBeneficiary(schemeId: string, beneficiary: Beneficiary): Promise<void> { if (!(await getScheme(schemeId))) throw new Error(`Scheme not found: ${schemeId}`); const row = beneficiarySchema.parse({ ...beneficiary, id: beneficiary.id ?? crypto.randomUUID(), schemeId, addedAt: beneficiary.addedAt ?? now() }); await commitWithEvents(async () => { beneficiaries.set(schemeId, [...(beneficiaries.get(schemeId) ?? []), row]) }, [event("BeneficiaryAdded", schemeId, { beneficiaryId: row.beneficiaryId, benefitType: row.benefitType, amount: row.amount })]) }
+export async function recordOutcome(schemeId: string, outcome: OutcomeMetric): Promise<void> { if (!(await getScheme(schemeId))) throw new Error(`Scheme not found: ${schemeId}`); const metric = outcomeMetricSchema.parse(outcome); const existing = outcomes.get(schemeId) ?? []; const row = schemeOutcomeSchema.parse({ schemeId, beneficiaries: (beneficiaries.get(schemeId) ?? []).length, impactMetrics: { [metric.metricName]: metric.value }, evaluation: metric.evaluation, recordedAt: now() }); await commitWithEvents(async () => { outcomes.set(schemeId, [...existing, row]) }, [event("OutcomeRecorded", schemeId, { metricName: metric.metricName, value: metric.value }), event("SchemeOutcomeRecorded", schemeId, { metricName: metric.metricName, value: metric.value })]) }
+export async function getOutcomeReport(schemeId: string): Promise<SchemeOutcomeReport> { const bs = beneficiaries.get(schemeId) ?? []; const os = outcomes.get(schemeId) ?? []; return { schemeId, beneficiaries: structuredClone(bs), outcomes: structuredClone(os), latestMetrics: Object.assign({}, ...os.map((o) => o.impactMetrics)) } }
