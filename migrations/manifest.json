@@ -4,6 +4,7 @@
     { "id": "002_outbox_dead_letters", "path": "lib/events/rpc/dead_letters.sql" },
     { "id": "003_rpc_insert_with_outbox", "path": "lib/events/rpc/insert_with_outbox.sql" },
     { "id": "004_rpc_update_with_outbox", "path": "lib/events/rpc/update_with_outbox.sql" },
+    { "id": "004a_rpc_generic_atomic", "path": "lib/events/rpc/generic_atomic.sql" },
     { "id": "005_rpc_scholarship_file", "path": "lib/events/rpc/scholarship_file_with_outbox.sql" },
     { "id": "006_rpc_tc_file", "path": "lib/events/rpc/tc_file_with_outbox.sql" },
     { "id": "007_workflow_schema", "path": "lib/workflow-runtime/workflow-schema.sql" },

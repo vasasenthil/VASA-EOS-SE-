@@ -20,6 +20,19 @@ async function callRpc<T>(name: string, params: Record<string, unknown>): Promis
   return data as T
 }
 
+export const genericAtomicCommitRpc = <T extends Record<string, unknown>>(
+  targetTable: string,
+  rowData: Record<string, unknown>,
+  events: PlatformEvent[],
+  tenantContext: Record<string, unknown> = {},
+) =>
+  callRpc<T>("platform_generic_atomic_commit", {
+    p_table_name: targetTable,
+    p_row_data: rowData,
+    p_events: eventsToJson(events),
+    p_tenant_context: tenantContext,
+  })
+
 export const insertWithOutboxRpc = (targetTable: string, rowData: Record<string, unknown>, events: PlatformEvent[]) =>
   callRpc<string>("insert_with_outbox", { target_table: targetTable, row_data: rowData, events: eventsToJson(events) })
 
