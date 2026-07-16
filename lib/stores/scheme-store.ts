@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
 import { createWorkflowInstance, getWorkflowInstance, saveWorkflowInstance } from "@/lib/workflow-runtime/store"
@@ -6,13 +6,12 @@ import { stableWorkflowInstanceId } from "@/lib/workflow-runtime/ids"
 import { schemeFiltersSchema, schemeProposalSchema, schemeSchema, type Scheme, type SchemeFilters, type SchemeProposal } from "@/lib/schemes/schemas"
 import "@/lib/schemes/workflow-definition"
 
-const memory = new Map<string, Scheme>()
-
-export function resetSchemeStore(): void { memory.clear() }
+export function resetSchemeStore(): void {
+  // Durable stores are not reset in application code. Tests must inject an isolated DB.
+}
 export function schemeWorkflowId(schemeId: string): string { return stableWorkflowInstanceId("scheme-approval", schemeId) }
 function now(): string { return new Date().toISOString() }
 function id(): string { return crypto.randomUUID() }
-function clone<T>(v: T): T { return structuredClone(v) }
 
 export const SCHEME_SEEDS: Scheme[] = [
   schemeSchema.parse({ id: "11111111-1111-4111-8111-111111111111", name: "Pudhumai Penn Expansion", description: "Monthly higher-education assistance expansion for eligible girls from government schools.", category: "scholarship", eligibility: "Girls who studied Classes 6-12 in government schools and enter higher education", budget: 6980000000, fiscalYear: "2026-27", timeline: { milestones: [{ name: "District onboarding", dueDate: "2026-08-31T00:00:00.000Z" }] }, status: "active", proposedBy: "secretary@tn.gov", approvedBy: ["Secretary", "Minister", "Cabinet"], justification: "Improves continuation into tertiary education and reduces dropout risk.", expectedOutcomes: ["Increase girls higher-education enrolment", "Reduce financial barriers"], workflowId: schemeWorkflowId("11111111-1111-4111-8111-111111111111"), createdAt: "2026-04-01T00:00:00.000Z", updatedAt: "2026-06-01T00:00:00.000Z" }),
@@ -22,9 +21,6 @@ export const SCHEME_SEEDS: Scheme[] = [
   schemeSchema.parse({ id: "55555555-5555-4555-8555-555555555555", name: "Vocational Skills Accelerator", description: "Industry-linked vocational modules for higher-secondary students in priority trades.", category: "vocational", eligibility: "Class 11-12 students in selected vocational clusters", budget: 210000000, fiscalYear: "2026-27", timeline: { milestones: [] }, status: "under_review", proposedBy: "directorate@tn.gov", approvedBy: ["Secretary"], justification: "Industry-aligned modules improve employability and local livelihood pathways.", expectedOutcomes: ["Increase certification rates", "Improve apprenticeship placement"], createdAt: "2026-06-25T00:00:00.000Z", updatedAt: "2026-07-01T00:00:00.000Z" }),
 ]
 
-export function seedSchemeMemory(): void { for (const s of SCHEME_SEEDS) if (!memory.has(s.id)) memory.set(s.id, clone(s)) }
-seedSchemeMemory()
-
 function toRow(s: Scheme) { return { id: s.id, name: s.name, description: s.description, category: s.category, eligibility: s.eligibility, budget: s.budget, fiscal_year: s.fiscalYear, timeline: s.timeline, status: s.status, proposed_by: s.proposedBy, approved_by: s.approvedBy, justification: s.justification, expected_outcomes: s.expectedOutcomes, workflow_id: s.workflowId ?? null, created_at: s.createdAt, updated_at: s.updatedAt } }
 function fromRow(r: any): Scheme { return schemeSchema.parse({ id: r.id, name: r.name, description: r.description, category: r.category, eligibility: r.eligibility, budget: Number(r.budget), fiscalYear: r.fiscal_year, timeline: r.timeline, status: r.status, proposedBy: r.proposed_by, approvedBy: r.approved_by ?? [], justification: r.justification, expectedOutcomes: r.expected_outcomes ?? [], workflowId: r.workflow_id ?? undefined, createdAt: r.created_at, updatedAt: r.updated_at }) }
 
@@ -33,11 +29,13 @@ function event(type: PlatformEvent["eventType"], scheme: Scheme, extra: Record<s
 }
 
 export async function saveSchemeRecord(scheme: Scheme): Promise<void> {
-  const db = getDb()
-  if (db) {
-    const { error } = await db.from("schemes").upsert(toRow(scheme), { onConflict: "id" })
-    if (error) throw error
-  } else memory.set(scheme.id, clone(scheme))
+  const db = requireDb()
+  const existing = await db.from("schemes").select("id").eq("id", scheme.id).maybeSingle()
+  if (existing.error) throw existing.error
+  const result = existing.data
+    ? await db.from("schemes").update(toRow(scheme)).eq("id", scheme.id)
+    : await db.from("schemes").insert(toRow(scheme))
+  if (result.error) throw result.error
 }
 
 export async function createScheme(proposal: SchemeProposal): Promise<Scheme> {
@@ -49,24 +47,18 @@ export async function createScheme(proposal: SchemeProposal): Promise<Scheme> {
 }
 
 export async function getScheme(id: string): Promise<Scheme | null> {
-  const db = getDb()
-  if (db) {
-    const { data, error } = await db.from("schemes").select("*").eq("id", id).maybeSingle()
-    if (error) throw error
-    return data ? fromRow(data) : null
-  }
-  return memory.has(id) ? clone(memory.get(id)!) : null
+  const db = requireDb()
+  const { data, error } = await db.from("schemes").select("*").eq("id", id).maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data) : null
 }
 
 export async function listSchemes(filters?: SchemeFilters): Promise<Scheme[]> {
   const f = schemeFiltersSchema.parse(filters ?? {})
-  let rows: Scheme[]
-  const db = getDb()
-  if (db) {
-    const { data, error } = await db.from("schemes").select("*").order("created_at", { ascending: false })
-    if (error) throw error
-    rows = ((data ?? []) as any[]).map(fromRow)
-  } else rows = [...memory.values()].map(clone)
+  const db = requireDb()
+  const { data, error } = await db.from("schemes").select("*").order("created_at", { ascending: false })
+  if (error) throw error
+  const rows = ((data ?? []) as any[]).map(fromRow)
   return rows.filter((s) => (!f.status?.length || f.status.includes(s.status)) && (!f.category?.length || f.category.includes(s.category)) && (!f.query || `${s.name} ${s.description}`.toLowerCase().includes(f.query.toLowerCase())) && (f.minBudget === undefined || s.budget >= f.minBudget) && (f.maxBudget === undefined || s.budget <= f.maxBudget))
 }
 
@@ -83,7 +75,10 @@ export async function deleteScheme(id: string): Promise<void> {
   const existing = await getScheme(id)
   if (!existing) return
   if (existing.status !== "draft") throw new Error("Only draft schemes can be deleted")
-  await commitWithEvents(async () => { const db = getDb(); if (db) { const { error } = await db.from("schemes").delete().eq("id", id); if (error) throw error } else memory.delete(id) }, [event("SchemeClosed", { ...existing, status: "closed", updatedAt: now() })])
+  await commitWithEvents(async () => {
+    const { error } = await requireDb().from("schemes").delete().eq("id", id)
+    if (error) throw error
+  }, [event("SchemeClosed", { ...existing, status: "closed", updatedAt: now() })])
 }
 
 export async function ensureSchemeWorkflow(scheme: Scheme, actor: string): Promise<Scheme> {
