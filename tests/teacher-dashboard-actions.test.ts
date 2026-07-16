@@ -16,9 +16,7 @@ test("teacher dashboard store adapters return live operational summaries", async
     getNoticesForTeacher("demo-teacher", "33010100101"),
   ])
 
-  assert.equal(attendance.total, 1248)
-  assert.equal(attendance.present, 1143)
-  assert.equal(attendance.percentage, 91.6)
+  assert.deepEqual(attendance, { present: 0, absent: 0, late: 0, total: 0, percentage: 0 })
   assert.ok(assignments.pending > 0)
   assert.ok(assignments.overdue >= 0)
   assert.ok(timetable.length > 0)

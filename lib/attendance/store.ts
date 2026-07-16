@@ -149,20 +149,31 @@ export interface TeacherAttendanceSummary {
   percentage: number
 }
 
-function resolveSchoolUdise(schoolId?: string): string {
-  return /^\d{11}$/.test(schoolId ?? "") ? schoolId! : DEMO_UDISE
+interface TeacherAttendanceRow {
+  status: string | null
 }
 
-export async function getTeacherAttendanceSummary(_teacherId: string, schoolId?: string, _today: Date = new Date()): Promise<TeacherAttendanceSummary> {
-  const records = await listClassAttendance(resolveSchoolUdise(schoolId))
-  const present = records.reduce((sum, record) => sum + record.present, 0)
-  const total = records.reduce((sum, record) => sum + record.enrolled, 0)
-  const absent = Math.max(total - present, 0)
-  return {
-    present,
-    absent,
-    late: 0,
-    total,
-    percentage: total > 0 ? Math.round((present / total) * 1000) / 10 : 0,
+export async function getTeacherAttendanceSummary(_teacherId: string, schoolId?: string, today: Date = new Date()): Promise<TeacherAttendanceSummary> {
+  const db = getDb()
+  if (!db || !schoolId) {
+    return { present: 0, absent: 0, late: 0, total: 0, percentage: 0 }
   }
+
+  const { data, error } = await db
+    .from("attendance")
+    .select("status")
+    .eq("teacher_id", _teacherId)
+    .eq("school_id", schoolId)
+    .eq("date", today.toISOString().split("T")[0])
+
+  if (error) throw error
+
+  const rows = ((data as TeacherAttendanceRow[] | null) ?? []).map((row) => String(row.status ?? "").toLowerCase())
+  const present = rows.filter((status) => status === "present").length
+  const absent = rows.filter((status) => status === "absent").length
+  const late = rows.filter((status) => status === "late").length
+  const total = rows.length
+  const percentage = total > 0 ? ((present + late) / total) * 100 : 0
+
+  return { present, absent, late, total, percentage }
 }
