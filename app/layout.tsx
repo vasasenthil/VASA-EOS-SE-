@@ -13,6 +13,7 @@ import { CommandPaletteProvider } from "@/components/command-palette"
 import { Breadcrumbs } from "@/components/breadcrumbs"
 import { RouteAnnouncer } from "@/components/route-announcer"
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help"
+import { OfflineServiceWorker } from "@/components/offline-service-worker"
 
 // Applies saved accessibility preferences before first paint (no flash), independent
 // of React hydration. Mirrors lib/accessibility (keep the storage key in sync).
@@ -55,6 +56,7 @@ export default async function RootLayout({
                   </div>
                   <RouteAnnouncer />
                   <KeyboardShortcutsHelp />
+                  <OfflineServiceWorker />
                   <Toaster />
                 </TooltipProvider>
               </I18nProvider>
