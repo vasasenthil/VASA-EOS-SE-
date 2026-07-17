@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/persistence"
+import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { parseWorkflowPayload, workflowDefinitionFor, type WorkflowRuntimePayload } from "./schema"
 
 export type WorkflowRuntimeStatus = "running" | "completed" | "rejected" | "compensating" | "failed"
@@ -56,6 +57,7 @@ function toRow(record: WorkflowRuntimeInstance): Row {
 }
 
 const memory = new Map<string, WorkflowRuntimeInstance>()
+function allowMemory(): void { assertNonProductionMemoryAdapter("workflow-runtime-store") }
 
 export function resetWorkflowRuntimeStore(): void {
   memory.clear()
@@ -80,6 +82,7 @@ export async function createWorkflowInstance(input: { id: string; workflowType: 
     const { error } = await db.from("workflow_instances").upsert(toRow(record), { onConflict: "id" })
     if (error) throw error
   } else {
+    allowMemory()
     memory.set(record.id, record)
   }
   return record
@@ -92,6 +95,7 @@ export async function getWorkflowInstance(id: string): Promise<WorkflowRuntimeIn
     if (error) throw error
     return data ? toRecord(data as Row) : undefined
   }
+  allowMemory()
   const record = memory.get(id)
   return record ? structuredClone(record) : undefined
 }
@@ -109,6 +113,7 @@ export async function saveWorkflowInstance(record: WorkflowRuntimeInstance): Pro
     }).eq("id", updated.id)
     if (error) throw error
   } else {
+    allowMemory()
     memory.set(updated.id, structuredClone(updated))
   }
   return updated
@@ -121,6 +126,7 @@ export async function listWorkflowInstances(): Promise<WorkflowRuntimeInstance[]
     if (error) throw error
     return ((data as Row[] | null) ?? []).map(toRecord)
   }
+  allowMemory()
   return [...memory.values()].map((record) => structuredClone(record))
 }
 

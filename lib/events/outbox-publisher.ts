@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/persistence"
+import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { type PlatformEvent, parsePlatformEvent } from "./schemas"
 
 export type OutboxStatus = "pending" | "processed" | "failed"
@@ -68,11 +69,13 @@ function eventFromRow(row: OutboxRow): PlatformEvent {
 }
 
 class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
+  private allowMemory(): void { assertNonProductionMemoryAdapter("transactional-outbox") }
   private rows = new Map<string, OutboxEventRecord>()
   private keys = new Set<string>()
   private queue: Promise<unknown> = Promise.resolve()
 
   async commitWithEvents<T>(domainOperation: () => Promise<T>, events: PlatformEvent[]): Promise<T> {
+    this.allowMemory()
     return this.serial(async () => {
       const result = await domainOperation()
       const valid = validateEvents(events)
@@ -88,6 +91,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
   }
 
   async claimPending(workerId: string, batchSize: number): Promise<OutboxEventRecord[]> {
+    this.allowMemory()
     return this.serial(async () => {
       const limit = Math.max(1, batchSize)
       const rows = [...this.rows.values()]
@@ -104,6 +108,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
   }
 
   async markProcessed(id: string, workerId: string): Promise<void> {
+    this.allowMemory()
     await this.serial(async () => {
       const row = this.rows.get(id)
       if (row && row.status === "pending" && row.locked_by === workerId) {
@@ -117,6 +122,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
   }
 
   async markFailed(id: string, workerId: string, error: string): Promise<void> {
+    this.allowMemory()
     await this.serial(async () => {
       const row = this.rows.get(id)
       if (row && row.status === "pending" && row.locked_by === workerId) {
@@ -130,6 +136,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
   }
 
   async list(): Promise<OutboxEventRecord[]> {
+    this.allowMemory()
     return [...this.rows.values()].map((row) => ({ ...row, event: row.event }))
   }
 
@@ -148,10 +155,10 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
 
 class SupabaseOutboxAdapter implements TransactionalOutboxAdapter {
   async commitWithEvents<T>(domainOperation: () => Promise<T>, events: PlatformEvent[]): Promise<T> {
+    const db = getDb()
+    if (!db) return memoryAdapter.commitWithEvents(domainOperation, events)
     const result = await domainOperation()
     const valid = validateEvents(events)
-    const db = getDb()
-    if (!db) return memoryAdapter.commitWithEvents(async () => result, valid)
     const { error } = await db.rpc("platform_commit_outbox_events", { events: valid })
     if (error) throw error
     return result

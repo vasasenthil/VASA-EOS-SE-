@@ -12,7 +12,7 @@ const rows: IntegrationStatus[] = [
 ].map((key) => ({ key, label: key.toUpperCase(), port: key, note: "", flag: `INTEGRATION_${key.toUpperCase()}`, mode: "live", env: [], liveReady: true }))
 
 const checkedAt = "2026-07-16T00:00:00.000Z"
-const runtimeChecks = { dbReady: true, migrationsApplied: true, auditSinkWritable: true }
+const runtimeChecks = { dbReady: true, migrationsApplied: true, auditSinkWritable: true, routeAuthCoverage: true, memoryFallbacksBlocked: true, tenantRlsVerified: true }
 
 const readyEnv = {
   NODE_ENV: "production",
@@ -34,6 +34,7 @@ const readyEnv = {
   MIGRATIONS_FULLY_APPLIED: "true",
   VAULT_ADDR: "https://vault.tn.gov.in",
   AUDIT_SINK_WRITABLE: "true",
+  TENANT_RLS_VERIFIED: "true",
 }
 
 test("production cutover passes when core env, live integrations and workers are ready", () => {
@@ -78,7 +79,7 @@ test("production cutover blocks stale heartbeats and missing sovereign runtime d
 })
 
 test("production cutover returns database blocker instead of throwing when requireDb fails", () => {
-  const report = buildCutoverReport(readyEnv, rows, () => checkedAt, { migrationsApplied: true, auditSinkWritable: true })
+  const report = buildCutoverReport(readyEnv, rows, () => checkedAt, { migrationsApplied: true, auditSinkWritable: true, routeAuthCoverage: true, memoryFallbacksBlocked: true, tenantRlsVerified: true })
   assert.equal(report.ready, false)
   assert.ok(report.gates.some((gate) => gate.id === "runtime:database" && gate.status === "fail"))
 })
