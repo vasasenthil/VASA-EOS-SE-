@@ -68,4 +68,7 @@ test("P0 readiness report combines route and memory guard evidence", () => {
   const report = buildP0ReadinessReport(process.cwd())
   assert.equal(report.memoryFallbacks.ok, true)
   assert.equal(report.routePolicies.ok, true)
+  assert.equal(report.tenantRls.ok, true)
+  assert.equal(report.tenantRls.blanketTenantPolicyMigration, true)
+  assert.deepEqual(report.tenantRls.missingTenantPolicyTables, [])
 })

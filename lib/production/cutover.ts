@@ -135,12 +135,12 @@ function runtimeDependencyGate(env: Record<string, string | undefined>, checks: 
 function p0SafetyGate(env: Record<string, string | undefined>, checks: CutoverRuntimeChecks): CutoverGate[] {
   const routeAuthCoverage = safeResolveCheck(checks.routeAuthCoverage, () => buildP0ReadinessReport().routePolicies.ok)
   const memoryFallbacksBlocked = safeResolveCheck(checks.memoryFallbacksBlocked, () => buildP0ReadinessReport().memoryFallbacks.ok)
-  const tenantRlsVerified = safeResolveCheck(checks.tenantRlsVerified, () => boolEnv(env.TENANT_RLS_VERIFIED))
+  const tenantRlsVerified = safeResolveCheck(checks.tenantRlsVerified, () => boolEnv(env.TENANT_RLS_VERIFIED) && buildP0ReadinessReport().tenantRls.ok)
 
   return [
     gate("p0:route-auth-coverage", "Universal API route authorization", routeAuthCoverage ? "pass" : "fail", "blocker", routeAuthCoverage ? "Every protected API route is classified and guarded." : "Protected API routes must be classified and guarded before cutover."),
     gate("p0:memory-fallbacks", "Production memory fallback guard", memoryFallbacksBlocked ? "pass" : "fail", "blocker", memoryFallbacksBlocked ? "Critical runtime memory adapters are guarded from production use." : "Critical runtime memory adapters must be blocked in production."),
-    gate("p0:tenant-rls", "Tenant RLS policy verification", tenantRlsVerified ? "pass" : "fail", "blocker", tenantRlsVerified ? "Tenant RLS verification is marked complete." : "TENANT_RLS_VERIFIED=true is required after tenant RLS policy tests pass."),
+    gate("p0:tenant-rls", "Tenant RLS policy verification", tenantRlsVerified ? "pass" : "fail", "blocker", tenantRlsVerified ? "Tenant RLS verification is marked complete and static RLS coverage is clean." : "TENANT_RLS_VERIFIED=true and clean tenant RLS policy coverage are required before cutover."),
   ]
 }
 

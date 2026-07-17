@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs"
 import path from "node:path"
 import { scanApiRoutePolicies, type ApiRoutePolicyReport } from "@/lib/auth/route-policy"
+import { verifyTenantRlsReadiness, type TenantRlsReadinessReport } from "@/lib/production/tenant-rls-readiness"
 
 export interface MemoryFallbackGuardReport {
   ok: boolean
@@ -11,6 +12,7 @@ export interface MemoryFallbackGuardReport {
 export interface P0ReadinessReport {
   routePolicies: ApiRoutePolicyReport
   memoryFallbacks: MemoryFallbackGuardReport
+  tenantRls: TenantRlsReadinessReport
 }
 
 const CRITICAL_MEMORY_FALLBACK_FILES = [
@@ -42,5 +44,6 @@ export function buildP0ReadinessReport(rootDir = process.cwd()): P0ReadinessRepo
   return {
     routePolicies: scanApiRoutePolicies(rootDir),
     memoryFallbacks: scanProductionMemoryFallbackGuards(rootDir),
+    tenantRls: verifyTenantRlsReadiness(rootDir),
   }
 }
