@@ -21,6 +21,10 @@ Start at the repo [README](../README.md), then use this index.
 | [STATUS](STATUS.md) | Completion & pending register — the full delivery timeline and what's done vs pending against the master document. |
 | [REQUIREMENTS](REQUIREMENTS.md) | What's needed to go fully live — every real credential, MoU, and infrastructure dependency, one by one. |
 | [EVALUATION](EVALUATION.md) | Investor-lens readiness review (Altman/YC questions): the wedge, the scorecard, and the pilot-readiness checklist. |
+| [USER DISCOVERY — Scholarship Reconciliation](user-discovery/interview-guide.md) | Interview guide and 10x validation framework for the scholarship reconciliation wedge. |
+| [USER DISCOVERY SYNTHESIS TEMPLATE](user-discovery/synthesis-template.md) | Per-interview synthesis worksheet for scholarship reconciliation discovery evidence, metrics, quotes, red flags, and go/no-go recommendations. |
+| [SCHOLARSHIP PILOT PLAN](user-discovery/scholarship-pilot-plan.md) | Pilot integration points, scope, success criteria, risks, and readiness checklist for the scholarship reconciliation vertical slice. |
+| [MODULE 10X VALUE PLAN](user-discovery/module-10x-value-plan.md) | Module-by-module 10x targets, features, and metrics for the scholarship reconciliation vertical slice. |
 | [CREDENTIALS](CREDENTIALS.md) | User categories, the governance hierarchy, per-role IAM (RBAC/ReBAC/ABAC/PBAC/CABAC), and demo login credentials. |
 
 ### Suggested reading order
