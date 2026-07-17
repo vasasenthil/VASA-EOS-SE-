@@ -1,8 +1,8 @@
 // VASA-EOS(SE) — outcome instrumentation persistence (server-only). Ingest + query.
-// Durable in Supabase when configured; in-memory seeded fallback otherwise. Every ingest audited.
+// Durable Supabase persistence only; missing database configuration fails closed. Every ingest audited.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { OutcomeRecord, OutcomeInput, SchoolCategory, Area, Gender, SocialCategory } from "./index"
 
@@ -73,51 +73,41 @@ function seed(): OutcomeRecord[] {
   }))
 }
 
-const store: OutcomeRecord[] = seed()
 
 export async function listOutcomes(): Promise<OutcomeRecord[]> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("outcome_records").select("*").order("district", { ascending: true })
-      const rows = ((data as Row[] | null) ?? []).map(fromRow)
-      return rows.length > 0 ? rows : seed()
-    } catch {
-      return seed()
-    }
-  }
-  return [...store]
+  const { data, error } = await requireDb().from("outcome_records").select("*").order("district", { ascending: true })
+  if (error) throw error
+  return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
 export async function createOutcome(input: OutcomeInput, tenantId = DEFAULT_SCHOOL_NODE): Promise<OutcomeRecord> {
   const r: OutcomeRecord = { id: id(), ...input }
-  const db = getDb()
-  if (db) await db.from("outcome_records").insert(toRow(r, tenantId))
-  else store.unshift(r)
+  const { error } = await requireDb().from("outcome_records").insert(toRow(r, tenantId))
+  if (error) throw error
   await appendAudit({ actor: "analytics", action: "outcome.ingest", resource: r.id, details: { district: r.district, cohort: r.cohortSize } })
   return r
 }
 
 export async function deleteOutcome(rid: string): Promise<boolean> {
-  const db = getDb()
-  if (db) {
-    await db.from("outcome_records").delete().eq("id", rid)
-  } else {
-    const i = store.findIndex((r) => r.id === rid)
-    if (i < 0) return false
-    store.splice(i, 1)
-  }
+  const existing = await requireDb().from("outcome_records").select("id").eq("id", rid).maybeSingle()
+  if (existing.error) throw existing.error
+  if (!existing.data) return false
+  const { error } = await requireDb().from("outcome_records").delete().eq("id", rid)
+  if (error) throw error
   await appendAudit({ actor: "analytics", action: "outcome.delete", resource: rid })
   return true
 }
 
 export async function seedOutcomes(tenantId = DEFAULT_SCHOOL_NODE): Promise<number> {
   const rows = seed()
-  const db = getDb()
-  if (db) {
-    for (const r of rows) await db.from("outcome_records").upsert(toRow(r, tenantId))
-  } else {
-    for (const r of rows) if (!store.some((s) => s.id === r.id)) store.push(r)
+  const db = requireDb()
+  for (const r of rows) {
+    const existing = await db.from("outcome_records").select("id").eq("id", r.id).maybeSingle()
+    if (existing.error) throw existing.error
+    const result = existing.data
+      ? await db.from("outcome_records").update(toRow(r, tenantId)).eq("id", r.id)
+      : await db.from("outcome_records").insert(toRow(r, tenantId))
+    if (result.error) throw result.error
   }
   await appendAudit({ actor: "analytics", action: "outcome.seed", resource: "outcome_records", details: { count: rows.length } })
   return rows.length
