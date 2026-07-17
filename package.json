@@ -18,7 +18,11 @@
     "migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts",
     "migrate:status": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/migrations/run.ts status",
     "production:cutover": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/production-cutover.ts",
-    "validate:env": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/validate-env.ts"
+    "validate:env": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/validate-env.ts",
+    "deploy:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/deploy/migrate.ts",
+    "deploy:workers": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/deploy/workers.ts",
+    "deploy:verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/deploy/verify.ts",
+    "deploy:all": "npm run deploy:migrate && npm run deploy:workers && npm run deploy:verify"
   },
   "pnpm": {
     "allowed-build-scripts": [
