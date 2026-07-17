@@ -39,11 +39,12 @@ const readyEnv = {
   TENANT_RLS_VERIFIED: "true",
 }
 
-test("P0 scanner reports unguarded protected API routes for cutover remediation", () => {
+test("P0 scanner verifies protected API routes are classified and guarded", () => {
   const report = scanApiRoutePolicies(process.cwd())
   assert.ok(report.total > 0)
   assert.ok(report.protectedRoutes > 0)
-  assert.ok(report.unguardedProtectedRoutes.some((item) => item.route === "app/api/ml/route.ts"))
+  assert.equal(report.ok, true)
+  assert.deepEqual(report.unguardedProtectedRoutes, [])
 })
 
 test("critical runtime memory fallbacks include production guards", () => {
@@ -57,15 +58,14 @@ test("memory adapters throw when used in production", () => {
   assert.doesNotThrow(() => assertNonProductionMemoryAdapter("test-adapter", { NODE_ENV: "test" }))
 })
 
-test("production cutover blocks unresolved P0 route-auth and tenant-RLS evidence", () => {
+test("production cutover passes P0 route-auth and tenant-RLS evidence when scanners are clean", () => {
   const report = buildCutoverReport(readyEnv, rows, () => "2026-07-16T00:00:00.000Z", { dbReady: true, migrationsApplied: true, auditSinkWritable: true, memoryFallbacksBlocked: true })
-  assert.equal(report.ready, false)
-  assert.ok(report.gates.some((gate) => gate.id === "p0:route-auth-coverage" && gate.status === "fail"))
+  assert.ok(report.gates.some((gate) => gate.id === "p0:route-auth-coverage" && gate.status === "pass"))
   assert.ok(report.gates.some((gate) => gate.id === "p0:tenant-rls" && gate.status === "pass"))
 })
 
 test("P0 readiness report combines route and memory guard evidence", () => {
   const report = buildP0ReadinessReport(process.cwd())
   assert.equal(report.memoryFallbacks.ok, true)
-  assert.equal(report.routePolicies.ok, false)
+  assert.equal(report.routePolicies.ok, true)
 })

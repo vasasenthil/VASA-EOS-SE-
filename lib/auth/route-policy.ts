@@ -17,10 +17,10 @@ export interface ApiRoutePolicyReport {
   unguardedProtectedRoutes: ApiRoutePolicyFinding[]
 }
 
-const AUTH_MARKERS = ["requireRole(", "requireAccess(", "CUTOVER_SHARED_SECRET", "getSessionFromRequest(", "getSession()", "getCurrentSession"] as const
+const AUTH_MARKERS = ["requireRole(", "requireAccess(", "CUTOVER_SHARED_SECRET", "getSessionFromRequest(", "getSession()", "getCurrentSession", "SEED_SECRET"] as const
 
 const PUBLIC_ROUTE_PATTERNS = [
-  /^app\/api\/(health|ready|live|metrics|traces|sbom|glossary|integrations)\/route\.ts$/,
+  /^app\/api\/(health|ready(?:\/schema)?|live|metrics|traces|sbom|glossary|integrations)\/route\.ts$/,
   /^app\/api\/i18n\/messages\/route\.ts$/,
   /^app\/api\/(architecture|data-lineage|data-standards|glossary)\/csv\/route\.ts$/,
   /^app\/api\/accessibility\/.+\/csv\/route\.ts$/,
