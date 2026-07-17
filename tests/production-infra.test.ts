@@ -71,9 +71,29 @@ test("observability metrics and worker health render production signals", () => 
   assert.equal(getWorkerHealth("outbox-dispatcher").status, "running")
 })
 
-
 test("scheme workflow conditional routing skips Cabinet below budget threshold", () => {
   const definition = workflowDefinitionFor("scheme-approval")
   assert.equal(nextRunnableStepIndex(definition, 2, { budget: 100_000_000 }), 3)
   assert.equal(nextRunnableStepIndex(definition, 2, { budget: 600_000_000 }), 2)
+})
+
+test("production cutover API accepts deploy shared secret and still rejects anonymous callers", async () => {
+  const previous = process.env.CUTOVER_SHARED_SECRET
+  process.env.CUTOVER_SHARED_SECRET = "deploy-secret"
+  const { GET } = await import("@/app/api/production/cutover/route")
+
+  try {
+    const anonymous = await GET(new NextRequest("https://example.test/api/production/cutover"))
+    assert.equal(anonymous.status, 401)
+
+    const automated = await GET(new NextRequest("https://example.test/api/production/cutover", { headers: { "x-cutover-secret": "deploy-secret" } }))
+    assert.notEqual(automated.status, 401)
+    assert.notEqual(automated.status, 403)
+  } finally {
+    if (previous === undefined) {
+      delete process.env.CUTOVER_SHARED_SECRET
+    } else {
+      process.env.CUTOVER_SHARED_SECRET = previous
+    }
+  }
 })
