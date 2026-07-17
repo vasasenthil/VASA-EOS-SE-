@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vasa-app
+  labels:
+    app.kubernetes.io/name: vasa-eos-se-tn
+    app.kubernetes.io/component: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vasa-eos-se-tn
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vasa-eos-se-tn
+        app.kubernetes.io/component: web
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "vasa-app"
+        vault.hashicorp.com/agent-inject-secret-runtime.env: "kv/data/vasa-eos-se/runtime"
+        vault.hashicorp.com/agent-inject-template-runtime.env: |
+          {{- with secret "kv/data/vasa-eos-se/runtime" -}}
+          {{- range $key, $value := .Data.data }}
+          {{ $key }}={{ $value }}
+          {{- end }}
+          {{- end }}
+    spec:
+      serviceAccountName: vasa-app
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: sovereign.registry.tn.gov.in/vasa/vasa-app:CHANGE_ME
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+          envFrom:
+            - secretRef:
+                name: vasa-runtime-secrets
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /api/production/cutover
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /offline
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vasa-app
+spec:
+  selector:
+    app.kubernetes.io/name: vasa-eos-se-tn
+    app.kubernetes.io/component: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
