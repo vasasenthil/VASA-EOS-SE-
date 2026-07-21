@@ -6,7 +6,7 @@
 // class on a new day supersedes the old figure without losing the audit history.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { getDb } from "@/lib/db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import { CLASS_ORDER, type ClassDay } from "./class-day"
 
@@ -139,4 +139,41 @@ export async function listClassAttendance(udiseCode: string = DEMO_UDISE): Promi
     const ib = CLASS_ORDER.indexOf(b.cls as (typeof CLASS_ORDER)[number])
     return (ia < 0 ? CLASS_ORDER.length : ia) - (ib < 0 ? CLASS_ORDER.length : ib)
   })
+}
+
+export interface TeacherAttendanceSummary {
+  present: number
+  absent: number
+  late: number
+  total: number
+  percentage: number
+}
+
+interface TeacherAttendanceRow {
+  status: string | null
+}
+
+export async function getTeacherAttendanceSummary(teacherId: string, schoolId: string, date: Date): Promise<TeacherAttendanceSummary> {
+  const db = getDb()
+  if (!db) {
+    return { present: 0, absent: 0, late: 0, total: 0, percentage: 0 }
+  }
+
+  const { data, error } = await db
+    .from("attendance")
+    .select("status")
+    .eq("teacher_id", teacherId)
+    .eq("school_id", schoolId)
+    .eq("date", date.toISOString().split("T")[0])
+
+  if (error) throw error
+
+  const rows = ((data as TeacherAttendanceRow[] | null) ?? []).map((row) => String(row.status ?? "").toLowerCase())
+  const present = rows.filter((status) => status === "present").length
+  const absent = rows.filter((status) => status === "absent").length
+  const late = rows.filter((status) => status === "late").length
+  const total = rows.length
+  const percentage = total > 0 ? ((present + late) / total) * 100 : 0
+
+  return { present, absent, late, total, percentage }
 }
