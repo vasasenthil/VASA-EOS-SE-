@@ -34,11 +34,11 @@ test("built/partial elements cite real on-disk evidence; pending cite nothing (n
   }
 })
 
-test("Edge compute is honestly pending by design; the four built pillars are partial analogues", () => {
-  assert.equal(elementById("EDGE")!.status, "pending")
-  assert.ok(elementById("EDGE")!.pendingAspects.some((p) => /offline|edge/i.test(p)))
-  // the pillars built this session are present and at least partial
-  for (const id of ["IOT", "CHAIN", "NFT", "DAO", "RAGMCP"]) {
+test("Edge compute now has offline-read runtime but still discloses edge inference gaps", () => {
+  assert.equal(elementById("EDGE")!.status, "partial")
+  assert.ok(elementById("EDGE")!.repoRefs.includes("public/sw.js"))
+  assert.ok(elementById("EDGE")!.pendingAspects.some((p) => /edge inference/i.test(p)))
+  for (const id of ["IOT", "CHAIN", "NFT", "DAO", "RAGMCP", "EDGE"]) {
     assert.notEqual(elementById(id)!.status, "pending", `${id} should be at least partial`)
   }
 })

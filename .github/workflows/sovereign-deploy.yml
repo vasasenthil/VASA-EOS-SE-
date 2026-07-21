@@ -1,0 +1,152 @@
+name: sovereign-deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Sovereign environment to deploy
+        type: choice
+        default: staging
+        options: [staging, production]
+
+concurrency:
+  group: sovereign-deploy-${{ github.ref }}-${{ inputs.environment || 'staging' }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 22.x
+  IMAGE_TAG: ${{ github.sha }}
+  K8S_NAMESPACE: vasa-eos-se
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm test
+      - run: pnpm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --audit-level=high
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: security-scan
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to sovereign registry
+        run: echo "${{ secrets.SOVEREIGN_REGISTRY_PASSWORD }}" | docker login "${{ secrets.SOVEREIGN_REGISTRY }}" -u "${{ secrets.SOVEREIGN_REGISTRY_USER }}" --password-stdin
+      - name: Build app image
+        run: docker build -t "${{ secrets.SOVEREIGN_REGISTRY }}/vasa-app:${IMAGE_TAG}" .
+      - name: Build worker image
+        run: docker build -f docker/workers.Dockerfile -t "${{ secrets.SOVEREIGN_REGISTRY }}/vasa-workers:${IMAGE_TAG}" .
+      - name: Push images
+        run: |
+          docker push "${{ secrets.SOVEREIGN_REGISTRY }}/vasa-app:${IMAGE_TAG}"
+          docker push "${{ secrets.SOVEREIGN_REGISTRY }}/vasa-workers:${IMAGE_TAG}"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: sovereign-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.SOVEREIGN_STAGING_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+      - name: Run DB migrations
+        run: pnpm run deploy:migrate
+        env:
+          PRODUCTION_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      - name: Deploy app and workers to staging K8s
+        run: |
+          kubectl -n ${K8S_NAMESPACE} apply -f infra/k8s/vasa-app-deployment.yaml
+          pnpm run deploy:workers
+        env:
+          SOVEREIGN_REGISTRY: ${{ secrets.SOVEREIGN_REGISTRY }}
+          KUBE_CONTEXT: ${{ secrets.SOVEREIGN_STAGING_KUBE_CONTEXT }}
+      - name: Smoke tests
+        run: pnpm run deploy:verify
+        env:
+          PRODUCTION_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          CUTOVER_SHARED_SECRET: ${{ secrets.STAGING_CUTOVER_SHARED_SECRET }}
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.environment == 'production' }}
+    environment: sovereign-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.SOVEREIGN_PRODUCTION_KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+      - name: Run production DB migrations
+        run: pnpm run deploy:migrate
+        env:
+          PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      - name: Deploy production K8s workloads
+        run: |
+          kubectl -n ${K8S_NAMESPACE} apply -f infra/k8s/vasa-app-deployment.yaml
+          pnpm run deploy:workers
+        env:
+          SOVEREIGN_REGISTRY: ${{ secrets.SOVEREIGN_REGISTRY }}
+          KUBE_CONTEXT: ${{ secrets.SOVEREIGN_PRODUCTION_KUBE_CONTEXT }}
+      - name: Verify production cutover
+        run: pnpm run deploy:verify
+        env:
+          PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          CUTOVER_SHARED_SECRET: ${{ secrets.PRODUCTION_CUTOVER_SHARED_SECRET }}
