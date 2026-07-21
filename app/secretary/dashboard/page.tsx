@@ -53,6 +53,7 @@ export default async function SecretaryDashboardPage() {
         { label: "Brochure Coverage Map (honest)", href: "/governance/brochure-coverage" },
         { label: "The Eight AI Engines (advisory)", href: "/ai-engines" },
         { label: "AI Register 71.1 (public model cards)", href: "/governance/ai-register" },
+        { label: "AI Transparency 71.3 + Bias Audit", href: "/governance/ai-transparency" },
         { label: "The Native-AI Fabric (pillars · engines · agents)", href: "/ai-fabric" },
         { label: "NDEAR-S 29 Building Blocks", href: "/governance/ndear-s" },
         { label: "State-Scale Validation (1.27 Cr)", href: "/governance/scale" },
