@@ -2,6 +2,7 @@ import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import { summarise, ON_TRACK_PCT, type SyllabusProgress } from "@/lib/syllabus"
 import { addSyllabusSubject, setSyllabusPct, listSyllabus, DEMO_UDISE } from "@/lib/syllabus/store"
@@ -48,11 +49,8 @@ test("a subject's completion can be updated (DB path)", async () => {
   __setTestDb(undefined)
 })
 
-test("in-memory fallback is seeded and scoped; updating a missing id is false", async () => {
+test("missing durable DB fails closed for syllabus progress", async () => {
   __setTestDb(null)
-  const got = await listSyllabus(DEMO_UDISE)
-  assert.equal(got.length, 5)
-  assert.equal(got[0].subject, "Social Studies") // lowest completion leads (74)
-  assert.equal(await setSyllabusPct("SYL-NONE", 50), false)
-  assert.equal((await listSyllabus("00000000000")).length, 0)
+  await assert.rejects(() => listSyllabus(DEMO_UDISE), ProductionDatabaseError)
+  await assert.rejects(() => setSyllabusPct("SYL-NONE", 50), ProductionDatabaseError)
 })
