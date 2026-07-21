@@ -56,7 +56,7 @@ test("summary keeps catalogue context and weights coverage honestly", () => {
   assert.equal(s.built, s.mapped)
   assert.equal(s.partial, 0)
   assert.equal(s.pending, 0)
-  assert.ok(s.mapped < s.catalogueTotal, "honest: this maps a representative subset, not all 312")
+  assert.ok(s.mapped < s.catalogueTotal, "honest: this maps a representative subset, not all 392")
 })
 
 test("CSV has a header plus one row per mapped module", () => {

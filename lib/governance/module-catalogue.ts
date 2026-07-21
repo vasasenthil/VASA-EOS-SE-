@@ -1,9 +1,9 @@
 // VASA-EOS(SE) — Unified Module Catalogue v3.0 coverage map (the attachment, honestly mapped to the repo).
 //
-// The "VASA Infotech Unified Module Catalogue v3.0" specifies ~312 core modules across 7 operational tiers
+// The "VASA Infotech Unified Module Catalogue v3.0" specifies 392 modules (337 core + 55 TN-specific) across 7 operational tiers
 // (National → State → Directorate → District → Block → Cluster → School) plus a cross-cutting Platform tier.
 // This register maps a representative, grounded subset of those modules to the in-repo evidence that delivers
-// them, with an honest built / partial / pending status. It is NOT a verbatim transcription of all 312 (the
+// them, with an honest built / partial / pending status. It is NOT a verbatim transcription of all 392 (the
 // source .pages is binary, and many entries are variants/sub-features); it is an honest coverage picture of the
 // named modules against the codebase. Every built/partial repoRef is asserted to exist on disk; pending entries
 // reference nothing — so the map cannot overstate how much of the catalogue is built. Pure + client-safe.
@@ -13,7 +13,7 @@ import { csvField } from "@/lib/csv"
 import { type CapabilityStatus } from "@/lib/governance/role-capabilities"
 
 /** Catalogue headline figures (from the attachment), for honest context. */
-export const CATALOGUE_TOTAL_MODULES = 312
+export const CATALOGUE_TOTAL_MODULES = 392
 export const CATALOGUE_TIERS_TEXT = "7 operational tiers + Platform"
 
 export type ModuleStatus = CapabilityStatus
@@ -226,8 +226,8 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Adaptive Learning Paths", repoRef: "lib/adaptive/index.ts", status: "built" },
 
   // Platform tier (cross-cutting)
-  { tier: "Platform", name: "Six AI Engines (Native-AI L8)", repoRef: "lib/ai/engines/index.ts", status: "built" },
-  { tier: "Platform", name: "Six AI Agents (Native-AI L9)", repoRef: "lib/ai/agents/index.ts", status: "built" },
+  { tier: "Platform", name: "Eight AI Engines (Native-AI L8)", repoRef: "lib/ai/engines/index.ts", status: "built" },
+  { tier: "Platform", name: "Eight AI Agents (Native-AI L9)", repoRef: "lib/ai/agents/index.ts", status: "built" },
   { tier: "Platform", name: "Knowledge Graph", repoRef: "lib/knowledge-graph/index.ts", status: "built" },
   { tier: "Platform", name: "Crisis / Emergency Centre", repoRef: "lib/emergency/index.ts", status: "built" },
   { tier: "Platform", name: "ESG / Green-School Index", repoRef: "lib/esg/index.ts", status: "built" },
