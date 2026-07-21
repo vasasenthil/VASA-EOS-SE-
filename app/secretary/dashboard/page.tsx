@@ -44,6 +44,7 @@ export default async function SecretaryDashboardPage() {
         { label: "Assembly Q&A Briefing Pack", href: "/governance/assembly-briefing" },
         { label: "Budget Sanction & Re-appropriation — scrutinise (Finance)", href: "/budget-approvals" },
         { label: "Scheme Fund Flow (PFMS) — sanction → release → utilisation", href: "/governance/fund-flow" },
+        { label: "Statutory Reports 66.3 + RTI Surface", href: "/governance/statutory-reports" },
         { label: "Inter-departmental & CSR Coordination", href: "/governance/coordination" },
         { label: "Cabinet Note Drafting", href: "/governance/cabinet-note" },
         { label: "State-tier Grievance Disposal", href: "/governance/grievance-disposal" },
