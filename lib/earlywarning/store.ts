@@ -122,3 +122,24 @@ export async function deleteCase(cid: string): Promise<boolean> {
   await appendAudit({ actor: "ews", action: "ews.case.delete", resource: cid })
   return true
 }
+
+export interface TeacherFlaggedStudent {
+  studentId: string
+  studentName: string
+  riskScore: number
+  reason: string
+}
+
+export async function getFlaggedStudentsForTeacher(_teacherId: string, _schoolId?: string): Promise<TeacherFlaggedStudent[]> {
+  const cases = await listCases()
+  return cases
+    .filter((caseRecord) => caseRecord.status !== "Resolved")
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map((caseRecord) => ({
+      studentId: caseRecord.apaarId || caseRecord.id,
+      studentName: caseRecord.student,
+      riskScore: caseRecord.score,
+      reason: caseRecord.factors,
+    }))
+}
