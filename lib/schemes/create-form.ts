@@ -1,4 +1,4 @@
-import { schemeProposalSchema, type SchemeCategory, type SchemeProposal } from "@/lib/schemes/schemas"
+import { schemeProposalSchema, type Scheme, type SchemeCategory, type SchemeProposal } from "@/lib/schemes/schemas"
 
 export const SCHEME_CREATE_CATEGORIES: { value: SchemeCategory; label: string }[] = [
   { value: "scholarship", label: "Scholarship / beneficiary support" },
@@ -50,4 +50,20 @@ export function schemeCreationErrorMessage(error: unknown): string {
     return "A durable scheme database is required before schemes can be created. Run the scheme migrations and configure the Supabase service-role credentials."
   }
   return message || "Scheme creation failed."
+}
+
+
+export function schemeUpdatesFromFormData(formData: FormData): Pick<Scheme, "name" | "description" | "category" | "eligibility" | "budget" | "fiscalYear" | "timeline" | "justification" | "expectedOutcomes"> {
+  const proposal = schemeProposalFromFormData(formData, "secretariat")
+  return {
+    name: proposal.name,
+    description: proposal.description,
+    category: proposal.category,
+    eligibility: proposal.eligibility,
+    budget: proposal.budget,
+    fiscalYear: proposal.fiscalYear,
+    timeline: proposal.timeline,
+    justification: proposal.justification,
+    expectedOutcomes: proposal.expectedOutcomes,
+  }
 }
