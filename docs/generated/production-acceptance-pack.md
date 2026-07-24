@@ -1,12 +1,12 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-24T06:42:39.671Z
+Generated: 2026-07-24T06:54:12.729Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1381 artefacts inventoried; 473 routes; 109 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1382 artefacts inventoried; 473 routes; 109 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
 | cutover-gate | Production cutover gate | warn | Sovereign Ops | 18 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
@@ -48,7 +48,7 @@ Generated: 2026-07-24T06:42:39.671Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-24T06:42:39.671Z
+Generated: 2026-07-24T06:54:12.729Z
 
 ## Summary
 
@@ -61,13 +61,13 @@ Generated: 2026-07-24T06:42:39.671Z
 | platform-module | 70 |
 | policy | 24 |
 | route | 473 |
-| test | 355 |
+| test | 356 |
 
 ## Readiness
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1368 | 4 | 9 | 1381 |
+| 1369 | 4 | 9 | 1382 |
 
 ## Critical inventory sample
 
