@@ -1,0 +1,5 @@
+import { commitWithEvents } from "@/lib/events/outbox-publisher"
+import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
+import { listModels, saveModel } from "../store"
+import type { MLModelType } from "../types"
+export async function rollbackModel(modelType:MLModelType, rollbackReason:string): Promise<void> { const models=await listModels(modelType); const active=models.find(m=>m.status==="active"); const previous=models.find(m=>m.status==="deprecated"); if(!active||!previous) throw new Error(`Rollback target unavailable for ${modelType}`); const events:PlatformEvent[]=[createEventEnvelope({eventType:"ModelRolledBack",aggregateType:"ml",aggregateId:active.id,idempotencyKey:`ml:${modelType}:${active.version}:rolled-back:${previous.version}`,payload:{modelType,modelVersion:active.version,rollbackReason,previousVersion:previous.version}} as any)]; await commitWithEvents(async()=>{ await saveModel({...active,status:"rolled_back"}); await saveModel({...previous,status:"active",promotedAt:new Date().toISOString()}) },events) }
