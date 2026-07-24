@@ -29,6 +29,12 @@ export default function AcceptancePackPage() {
               Inventory CSV
             </a>
           </Button>
+          <Button asChild variant="outline">
+            <a href="/api/governance/acceptance-pack/manifest">
+              <Download className="mr-2 h-4 w-4" />
+              Hash manifest
+            </a>
+          </Button>
         </PageHeaderActions>
       </PageHeader>
       <div className="mb-6 grid gap-4 md:grid-cols-4">

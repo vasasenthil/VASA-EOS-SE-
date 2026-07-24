@@ -1,12 +1,12 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-24T04:09:42.681Z
+Generated: 2026-07-24T06:23:05.659Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1379 artefacts inventoried; 473 routes; 108 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1380 artefacts inventoried; 473 routes; 109 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
 | cutover-gate | Production cutover gate | warn | Sovereign Ops | 18 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
@@ -48,13 +48,13 @@ Generated: 2026-07-24T04:09:42.681Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-24T04:09:42.681Z
+Generated: 2026-07-24T06:23:05.659Z
 
 ## Summary
 
 | Kind | Count |
 | --- | ---: |
-| api | 108 |
+| api | 109 |
 | document | 42 |
 | migration | 100 |
 | module | 208 |
@@ -67,7 +67,7 @@ Generated: 2026-07-24T04:09:42.681Z
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1366 | 4 | 9 | 1379 |
+| 1367 | 4 | 9 | 1380 |
 
 ## Critical inventory sample
 
@@ -87,6 +87,7 @@ Generated: 2026-07-24T04:09:42.681Z
 | api | `app/api/export/reports/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/glossary/csv/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/glossary/route.ts` | built | Module Owner | internal | yes |
+| api | `app/api/governance/acceptance-pack/manifest/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/acceptance-pack/markdown/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/acceptance-pack/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/access-matrix/csv/route.ts` | built | Governance Secretariat | confidential | yes |
@@ -322,5 +323,4 @@ Generated: 2026-07-24T04:09:42.681Z
 | module | `lib/cooks` | built | Module Owner | internal | no |
 | module | `lib/council` | built | Module Owner | internal | no |
 | module | `lib/courses` | built | Module Owner | internal | no |
-| module | `lib/coverflow` | built | Module Owner | internal | no |
 

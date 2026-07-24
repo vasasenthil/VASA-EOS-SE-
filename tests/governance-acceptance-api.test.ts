@@ -40,3 +40,24 @@ test("production acceptance pack JSON and Markdown exports include sections and 
   assert.match(markdown, /## Cutover gates/)
   assert.match(markdown, /## Critical inventory sample/)
 })
+
+
+test("production acceptance manifest publishes SHA-256 custody evidence for every export", async () => {
+  const manifestRoute = await import("@/app/api/governance/acceptance-pack/manifest/route")
+  const response = await manifestRoute.GET()
+  assert.equal(response.status, 200)
+  assert.match(response.headers.get("cache-control") ?? "", /no-store/)
+  const manifest = await response.json()
+  assert.equal(manifest.algorithm, "sha256")
+  assert.equal(manifest.custodyOwner, "CISO Office")
+  assert.equal(manifest.retentionClass, "sovereign-production-acceptance")
+  assert.deepEqual(
+    manifest.artifacts.map((artifact: { id: string }) => artifact.id).sort(),
+    ["acceptance-pack-json", "acceptance-pack-markdown", "inventory-ledger-csv", "inventory-ledger-json"],
+  )
+  for (const artifact of manifest.artifacts as Array<{ sha256: string; bytes: number; path: string }>) {
+    assert.match(artifact.sha256, /^[a-f0-9]{64}$/)
+    assert.ok(artifact.bytes > 0)
+    assert.match(artifact.path, /^\/api\/governance\//)
+  }
+})
