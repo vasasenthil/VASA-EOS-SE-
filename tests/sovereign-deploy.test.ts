@@ -30,6 +30,7 @@ test("package exposes sovereign deploy commands", () => {
   assert.match(pkg.scripts["deploy:migrate"], /scripts\/deploy\/migrate\.ts/)
   assert.match(pkg.scripts["deploy:workers"], /scripts\/deploy\/workers\.ts/)
   assert.match(pkg.scripts["deploy:verify"], /scripts\/deploy\/verify\.ts/)
+  assert.match(pkg.scripts["governance:verify-acceptance"], /verify-acceptance-manifest\.ts/)
   assert.match(pkg.scripts["deploy:all"], /deploy:migrate/)
 })
 
@@ -47,4 +48,14 @@ test("Kubernetes and observability artifacts target sovereign operations", () =>
   const runbook = readFileSync("docs/operations/dr-backup-runbook.md", "utf8")
   assert.match(runbook, /TN SDC, NIC or MeitY-approved Kubernetes/)
   assert.doesNotMatch(runbook, /Vercel\/demo hosting paths are supported/)
+})
+
+
+test("sovereign CI verifies governance acceptance evidence before building", () => {
+  const workflow = readFileSync(".github/workflows/sovereign-deploy.yml", "utf8")
+  assert.match(workflow, /Generate and verify governance acceptance evidence/)
+  assert.match(workflow, /pnpm run governance:acceptance-pack/)
+  assert.match(workflow, /pnpm run governance:verify-acceptance/)
+  assert.ok(workflow.indexOf("pnpm test") < workflow.indexOf("pnpm run governance:verify-acceptance"))
+  assert.ok(workflow.indexOf("pnpm run governance:verify-acceptance") < workflow.indexOf("pnpm run build"))
 })

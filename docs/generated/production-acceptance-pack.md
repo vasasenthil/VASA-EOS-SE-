@@ -1,6 +1,6 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-24T06:54:12.729Z
+Generated: 2026-07-24T07:12:56.774Z
 
 ## Acceptance sections
 
@@ -48,7 +48,7 @@ Generated: 2026-07-24T06:54:12.729Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-24T06:54:12.729Z
+Generated: 2026-07-24T07:12:56.774Z
 
 ## Summary
 
