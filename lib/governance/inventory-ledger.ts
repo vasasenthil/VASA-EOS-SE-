@@ -109,6 +109,26 @@ export function buildInventoryLedger(root = DEFAULT_ROOT, generatedAt = new Date
   return { generatedAt, summary, readiness, items }
 }
 
+function csvCell(value: string | number | boolean): string {
+  const text = String(value)
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
+export function inventoryLedgerToCsv(ledger: InventoryLedger): string {
+  const header = ["id", "kind", "path", "status", "owner", "dataClassification", "tenantScoped", "notes"]
+  const rows = ledger.items.map((item) => [
+    item.id,
+    item.kind,
+    item.path,
+    item.status,
+    item.owner,
+    item.dataClassification,
+    item.tenantScoped,
+    item.notes,
+  ].map(csvCell).join(","))
+  return [header.join(","), ...rows].join("\n") + "\n"
+}
+
 export function inventoryLedgerToMarkdown(ledger: InventoryLedger): string {
   const summaryRows = Object.entries(ledger.summary).sort(([a], [b]) => a.localeCompare(b)).map(([kind, count]) => `| ${kind} | ${count} |`).join("\n")
   const criticalRows = ledger.items

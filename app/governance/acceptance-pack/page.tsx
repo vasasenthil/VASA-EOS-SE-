@@ -1,8 +1,10 @@
 import { Shell } from "@/components/shell"
-import { PageHeader, PageHeaderDescription, PageHeaderHeading } from "@/components/page-header"
+import { PageHeader, PageHeaderActions, PageHeaderDescription, PageHeaderHeading } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 import { buildProductionAcceptancePack } from "@/lib/governance/production-acceptance"
 
 export default function AcceptancePackPage() {
@@ -14,6 +16,20 @@ export default function AcceptancePackPage() {
         <PageHeaderDescription>
           CISO-ready release evidence: inventory ledger, cutover blockers, scheme-regression evidence and governance hierarchy evidence.
         </PageHeaderDescription>
+        <PageHeaderActions>
+          <Button asChild variant="outline">
+            <a href="/api/governance/acceptance-pack/markdown">
+              <Download className="mr-2 h-4 w-4" />
+              Download pack
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <a href="/api/governance/inventory-ledger/csv">
+              <Download className="mr-2 h-4 w-4" />
+              Inventory CSV
+            </a>
+          </Button>
+        </PageHeaderActions>
       </PageHeader>
       <div className="mb-6 grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="text-2xl font-semibold">{pack.inventory.readiness.total}</div><p className="text-sm text-muted-foreground">Inventory artefacts</p></CardContent></Card>

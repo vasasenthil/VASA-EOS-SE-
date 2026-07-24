@@ -1,14 +1,14 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-23T12:05:38.455Z
+Generated: 2026-07-24T04:09:42.681Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1374 artefacts inventoried; 473 routes; 104 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1379 artefacts inventoried; 473 routes; 108 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
-| cutover-gate | Production cutover gate | warn | Sovereign Ops | 17 blockers; 3 warnings; Route/RPC/RLS checks included |
+| cutover-gate | Production cutover gate | warn | Sovereign Ops | 18 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
 | acceptance-pack | Production acceptance pack | pass | CISO Office | Cutover report embedded; Inventory ledger embedded; Governance hierarchy embedded |
 
@@ -33,7 +33,7 @@ Generated: 2026-07-23T12:05:38.455Z
 | runtime:migrations | fail | blocker | MIGRATIONS_FULLY_APPLIED=true is required after deploy:migrate verification. |
 | runtime:secret-manager | fail | blocker | VAULT_ADDR or KMS_KEY_URI is required for sovereign secret management. |
 | runtime:audit-sink | fail | blocker | AUDIT_SINK_WRITABLE=true is required before cutover. |
-| p0:route-auth-coverage | pass | blocker | Every protected API route is classified and guarded. |
+| p0:route-auth-coverage | fail | blocker | Protected API routes must be classified and guarded before cutover. |
 | p0:memory-fallbacks | pass | blocker | Critical runtime memory adapters are guarded from production use. |
 | p0:tenant-rls | fail | blocker | TENANT_RLS_VERIFIED=true and clean tenant RLS policy coverage are required before cutover. |
 | scheme:routes | pass | blocker | Scheme lifecycle routes and APIs are present. |
@@ -48,26 +48,26 @@ Generated: 2026-07-23T12:05:38.455Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-23T12:05:38.455Z
+Generated: 2026-07-24T04:09:42.681Z
 
 ## Summary
 
 | Kind | Count |
 | --- | ---: |
-| api | 104 |
+| api | 108 |
 | document | 42 |
 | migration | 100 |
 | module | 208 |
 | platform-module | 70 |
 | policy | 24 |
 | route | 473 |
-| test | 353 |
+| test | 354 |
 
 ## Readiness
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1361 | 4 | 9 | 1374 |
+| 1366 | 4 | 9 | 1379 |
 
 ## Critical inventory sample
 
@@ -87,6 +87,8 @@ Generated: 2026-07-23T12:05:38.455Z
 | api | `app/api/export/reports/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/glossary/csv/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/glossary/route.ts` | built | Module Owner | internal | yes |
+| api | `app/api/governance/acceptance-pack/markdown/route.ts` | built | Governance Secretariat | confidential | yes |
+| api | `app/api/governance/acceptance-pack/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/access-matrix/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/ai-guardrails/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/ai-register/csv/route.ts` | built | Governance Secretariat | confidential | yes |
@@ -118,6 +120,8 @@ Generated: 2026-07-23T12:05:38.455Z
 | api | `app/api/governance/green-school/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/grievance-disposal/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/hostel-allocation/csv/route.ts` | built | Governance Secretariat | confidential | yes |
+| api | `app/api/governance/inventory-ledger/csv/route.ts` | built | Governance Secretariat | confidential | yes |
+| api | `app/api/governance/inventory-ledger/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/launch-readiness/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/leakage/csv/route.ts` | built | Governance Secretariat | confidential | yes |
 | api | `app/api/governance/legal-cases/csv/route.ts` | built | Governance Secretariat | confidential | yes |
@@ -319,8 +323,4 @@ Generated: 2026-07-23T12:05:38.455Z
 | module | `lib/council` | built | Module Owner | internal | no |
 | module | `lib/courses` | built | Module Owner | internal | no |
 | module | `lib/coverflow` | built | Module Owner | internal | no |
-| module | `lib/cpd` | built | Module Owner | internal | no |
-| module | `lib/credentials` | built | Module Owner | internal | no |
-| module | `lib/cwsn` | built | Module Owner | sensitive | no |
-| module | `lib/dashboards` | built | Module Owner | internal | no |
 
