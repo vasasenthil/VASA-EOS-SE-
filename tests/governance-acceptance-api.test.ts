@@ -2,7 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import { NextRequest } from "next/server"
 
-function governanceRequest(roles: string[] = ["ADMIN"]) {
+function governanceRequest(roles: string[] = ["ADMIN"], path = "/api/governance/acceptance-pack") {
   const payload = Buffer.from(
     JSON.stringify({
       sub: "governance-test-user",
@@ -10,7 +10,7 @@ function governanceRequest(roles: string[] = ["ADMIN"]) {
       app_metadata: { roles },
     }),
   ).toString("base64url")
-  return new NextRequest("https://vasa-eos.tn.gov.in/api/governance/acceptance-pack", {
+  return new NextRequest(`https://vasa-eos.tn.gov.in${path}`, {
     headers: { authorization: `Bearer test.${payload}.signature` },
   })
 }
@@ -19,13 +19,15 @@ test("governance inventory ledger JSON and CSV exports are machine-readable", as
   const jsonRoute = await import("@/app/api/governance/inventory-ledger/route")
   const csvRoute = await import("@/app/api/governance/inventory-ledger/csv/route")
 
-  const jsonResponse = await jsonRoute.GET()
+  const jsonResponse = await jsonRoute.GET(governanceRequest(["ADMIN"], "/api/governance/inventory-ledger"))
   assert.equal(jsonResponse.status, 200)
   const ledger = await jsonResponse.json()
   assert.ok(ledger.readiness.total > 0)
   assert.ok(ledger.items.some((item: { path: string }) => item.path === "app/governance/acceptance-pack/page.tsx"))
 
-  const csvResponse = await csvRoute.GET()
+  const csvResponse = await csvRoute.GET(
+    governanceRequest(["SECRETARY"], "/api/governance/inventory-ledger/csv"),
+  )
   assert.equal(csvResponse.status, 200)
   assert.match(csvResponse.headers.get("content-type") ?? "", /text\/csv/)
   assert.match(csvResponse.headers.get("content-disposition") ?? "", /governance-inventory-ledger\.csv/)
@@ -84,5 +86,20 @@ test("production acceptance exports require governance roles", async () => {
   assert.equal(anonymous.status, 401)
 
   const teacher = await jsonRoute.GET(governanceRequest(["TEACHER"]))
+  assert.equal(teacher.status, 403)
+})
+
+test("governance inventory exports reject anonymous and non-governance roles", async () => {
+  const jsonRoute = await import("@/app/api/governance/inventory-ledger/route")
+  const csvRoute = await import("@/app/api/governance/inventory-ledger/csv/route")
+
+  const anonymous = await jsonRoute.GET(
+    new NextRequest("https://vasa-eos.tn.gov.in/api/governance/inventory-ledger"),
+  )
+  assert.equal(anonymous.status, 401)
+
+  const teacher = await csvRoute.GET(
+    governanceRequest(["TEACHER"], "/api/governance/inventory-ledger/csv"),
+  )
   assert.equal(teacher.status, 403)
 })
