@@ -13,6 +13,13 @@ export const mlOutcomeSchema = z.object({ id: z.string().uuid(), predictionId: z
 export const mlDriftReportSchema = z.object({ id: z.string().uuid(), modelId: z.string().uuid(), modelType: mlModelTypeSchema, modelVersion: z.string().min(1), driftType: driftTypeSchema, magnitude: z.number().nonnegative(), threshold: z.number().positive(), severity: driftSeveritySchema, detectedAt: z.string().datetime({ offset: true }) })
 export const mlTrainingRunSchema = z.object({ id: z.string().uuid(), modelType: mlModelTypeSchema, version: z.string().min(1), metrics: metricsSchema, datasetHash: z.string().min(1), durationSeconds: z.number().nonnegative(), createdAt: z.string().datetime({ offset: true }) })
 export const mlFeatureSnapshotSchema = z.object({ id: z.string().uuid(), modelType: mlModelTypeSchema, datasetHash: z.string().min(1), featureDistributions: z.record(z.array(z.number())).default({}), createdAt: z.string().datetime({ offset: true }) })
+export const mlModelPromotionRequestSchema = z.object({
+  version: z.string().trim().min(1).max(128),
+  approvalReason: z.string().trim().min(10).max(2_000),
+}).strict()
+export const mlModelRollbackRequestSchema = z.object({
+  rollbackReason: z.string().trim().min(10).max(2_000),
+}).strict()
 export type MLModelType = z.infer<typeof mlModelTypeSchema>
 export type MLModelStatus = z.infer<typeof mlModelStatusSchema>
 export type DriftType = z.infer<typeof driftTypeSchema>
@@ -26,3 +33,5 @@ export type MLOutcome = z.infer<typeof mlOutcomeSchema>
 export type MLDriftReport = z.infer<typeof mlDriftReportSchema>
 export type MLTrainingRun = z.infer<typeof mlTrainingRunSchema>
 export type MLFeatureSnapshot = z.infer<typeof mlFeatureSnapshotSchema>
+export type MLModelPromotionRequest = z.infer<typeof mlModelPromotionRequestSchema>
+export type MLModelRollbackRequest = z.infer<typeof mlModelRollbackRequestSchema>
