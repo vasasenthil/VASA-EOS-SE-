@@ -1,0 +1,4 @@
+import type { NumericVector } from "../types"
+export interface StudentFeatureInput { attendancePct: number; assessmentAverage: number; assignmentCompletionPct?: number; feeDefaultDays?: number; consecutiveAbsences?: number; engagementEvents?: number }
+const clamp=(n:number,min=0,max=100)=>Math.min(max,Math.max(min,Number.isFinite(n)?n:0))
+export function extractStudentFeatures(input: StudentFeatureInput): NumericVector { return { attendancePct: clamp(input.attendancePct)/100, assessmentAverage: clamp(input.assessmentAverage)/100, assignmentCompletionPct: clamp(input.assignmentCompletionPct ?? 100)/100, feeDefaultDays: Math.max(0,input.feeDefaultDays ?? 0)/365, consecutiveAbsences: Math.max(0,input.consecutiveAbsences ?? 0)/60, engagementEvents: Math.max(0,input.engagementEvents ?? 0)/100 } }
