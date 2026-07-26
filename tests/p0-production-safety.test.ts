@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 
-import { scanApiRoutePolicies } from "@/lib/auth/route-policy"
+import { classifyApiRoute, scanApiRoutePolicies } from "@/lib/auth/route-policy"
 import { buildP0ReadinessReport, scanProductionMemoryFallbackGuards } from "@/lib/production/p0-readiness"
 import { buildCutoverReport } from "@/lib/production/cutover"
 import { ProductionRuntimeGuardError, assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
@@ -45,6 +45,13 @@ test("P0 scanner verifies protected API routes are classified and guarded", () =
   assert.ok(report.protectedRoutes > 0)
   assert.equal(report.ok, true)
   assert.deepEqual(report.unguardedProtectedRoutes, [])
+})
+
+test("new governance exports fail closed unless explicitly declared public", () => {
+  assert.equal(classifyApiRoute("app/api/governance/public-communication/csv/route.ts"), "public")
+  assert.equal(classifyApiRoute("app/api/governance/inventory-ledger/csv/route.ts"), "protected")
+  assert.equal(classifyApiRoute("app/api/governance/new-child-risk-export/csv/route.ts"), "protected")
+  assert.equal(classifyApiRoute("app/api/governance/new-policy-pack/markdown/route.ts"), "protected")
 })
 
 test("critical runtime memory fallbacks include production guards", () => {
