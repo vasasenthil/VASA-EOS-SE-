@@ -16,9 +16,9 @@ export interface A11yRule {
 }
 
 export const A11Y_RULES: A11yRule[] = [
-  { id: "img-no-alt", severity: "high", wcag: "1.1.1 Non-text Content", description: "<img> without alt text", pattern: /<img(?![^>]*\balt=)[^>]*>/ },
-  { id: "positive-tabindex", severity: "medium", wcag: "2.4.3 Focus Order", description: "Positive tabIndex breaks focus order", pattern: /tabIndex=\{?\s*['"]?[1-9]/ },
-  { id: "autofocus", severity: "low", wcag: "2.4.3 Focus Order", description: "autoFocus can disorient AT users", pattern: /\bautoFocus\b/ },
+  { id: "img-no-alt", severity: "high", wcag: "1.1.1 Non-text Content", description: "<img> without alt text", pattern: /<img(?![^>]*\balt\s*=)[^>]*>/i },
+  { id: "positive-tabindex", severity: "medium", wcag: "2.4.3 Focus Order", description: "Positive tabIndex breaks focus order", pattern: /\btabIndex\s*=\s*\{?\s*['"]?[1-9]/i },
+  { id: "autofocus", severity: "low", wcag: "2.4.3 Focus Order", description: "autoFocus can disorient AT users", pattern: /\bautoFocus\b/i },
 ]
 
 // target="_blank" without rel="noopener" is element-level (the rel attribute is often
@@ -76,7 +76,7 @@ export function scanA11y(files: ScanFile[]): A11yFinding[] {
     // target="_blank" that lacks a rel attribute anywhere in the same tag.
     for (const m of f.content.matchAll(/<(?:a|Link)\b[^>]*>/g)) {
       const tag = m[0]
-      if (/target=["']_blank["']/.test(tag) && !/\brel=/.test(tag) && !/\ba11y-ignore\b/.test(tag)) {
+      if (/\btarget\s*=\s*["']_blank["']/i.test(tag) && !/\brel\s*=/i.test(tag) && !/\ba11y-ignore\b/.test(tag)) {
         findings.push({
           path: f.path,
           line: lineAt(f.content, m.index ?? 0),
