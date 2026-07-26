@@ -58,8 +58,18 @@ test("route policy scanner only accepts executable authorization controls", () =
   assert.equal(routeHasAuthGuard('const note = "requireRole(request, [ADMIN])"'), false)
   assert.equal(routeHasAuthGuard("// requireRole(request, ['ADMIN'])\nexport function GET() {}"), false)
   assert.equal(routeHasAuthGuard("/* getSessionFromRequest(request) */\nexport function GET() {}"), false)
-  assert.equal(routeHasAuthGuard("const auth = await requireRole(request, ['ADMIN'])"), true)
-  assert.equal(routeHasAuthGuard("const configured = process.env.CUTOVER_SHARED_SECRET"), true)
+  assert.equal(routeHasAuthGuard("const auth = await requireRole(request, ['ADMIN'])"), false)
+  assert.equal(routeHasAuthGuard("const configured = process.env.CUTOVER_SHARED_SECRET"), false)
+  assert.equal(
+    routeHasAuthGuard("const auth = await requireRole(request, ['ADMIN']); if (!auth.ok) return auth.response"),
+    true,
+  )
+  assert.equal(
+    routeHasAuthGuard(
+      "const session = await getSessionFromRequest(request); if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })",
+    ),
+    true,
+  )
 })
 
 test("critical runtime memory fallbacks include production guards", () => {

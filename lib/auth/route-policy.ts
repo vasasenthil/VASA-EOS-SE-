@@ -17,16 +17,6 @@ export interface ApiRoutePolicyReport {
   unguardedProtectedRoutes: ApiRoutePolicyFinding[]
 }
 
-const AUTH_PATTERNS = [
-  /\brequireRole\s*\(/,
-  /\brequireAccess\s*\(/,
-  /\bgetSessionFromRequest\s*\(/,
-  /\bgetSession\s*\(/,
-  /\bgetCurrentSession\s*\(/,
-  /\bCUTOVER_SHARED_SECRET\b/,
-  /\bSEED_SECRET\b/,
-] as const
-
 // Governance exports are public only by explicit declaration. Never replace this
 // set with a catch-all pattern: a newly added CSV/Markdown route must default to
 // protected until its fields, cohort suppression and disclosure purpose are reviewed.
@@ -200,7 +190,37 @@ function executableSource(source: string): string {
 
 export function routeHasAuthGuard(source: string): boolean {
   const executable = executableSource(source)
-  return AUTH_PATTERNS.some((pattern) => pattern.test(executable))
+
+  const roleCheck = executable.match(
+    /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+requireRole\s*\([^;]+\)\s*;?/,
+  )
+  if (roleCheck) {
+    const result = roleCheck[1].replace(/[$]/g, "\\$")
+    const deniedResponse = new RegExp(
+      `\\bif\\s*\\(\\s*!\\s*${result}\\.ok\\s*\\)\\s*(?:\\{\\s*)?return\\s+${result}\\.response`,
+    )
+    if (deniedResponse.test(executable)) return true
+  }
+
+  const sessionCheck = executable.match(
+    /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+(?:getSessionFromRequest|getSession|getCurrentSession)\s*\([^;]*\)\s*;?/,
+  )
+  if (sessionCheck) {
+    const session = sessionCheck[1].replace(/[$]/g, "\\$")
+    const missingSessionResponse = new RegExp(
+      `\\bif\\s*\\(\\s*!\\s*${session}\\s*\\)\\s*(?:\\{\\s*)?return\\s+NextResponse\\.json`,
+    )
+    if (missingSessionResponse.test(executable)) return true
+  }
+
+  const accessGuard = /\bawait\s+requireAccess\s*\(/.test(executable)
+  if (accessGuard) return true
+
+  const seedSecretGuard = /\bSEED_SECRET\b/.test(executable)
+    && /\bsecretMatches\s*\(/.test(executable)
+    && /\bif\s*\(\s*!\s*secretMatches\s*\(/.test(executable)
+    && /return\s+NextResponse\.json/.test(executable)
+  return seedSecretGuard
 }
 
 export function scanApiRoutePolicies(rootDir = process.cwd()): ApiRoutePolicyReport {
