@@ -1,5 +1,6 @@
-const CACHE_NAME = "vasa-eos-offline-v1"
-const PRECACHE_URLS = ["/offline", "/", "/today", "/attendance", "/students", "/schemes"]
+const CACHE_NAME = "vasa-eos-public-offline-v2"
+const PRECACHE_URLS = ["/offline", "/glossary", "/school-structure", "/accessibility", "/security"]
+const CACHEABLE_PATHS = new Set(PRECACHE_URLS)
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).then(() => self.skipWaiting()))
@@ -16,18 +17,26 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  const cacheable = url.search === "" && !url.pathname.startsWith("/api/") && CACHEABLE_PATHS.has(url.pathname)
+  if (!cacheable && request.mode !== "navigate") return
+
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok) {
+        const cacheControl = response.headers.get("cache-control") ?? ""
+        const contentType = response.headers.get("content-type") ?? ""
+        const permitsStorage = !/no-store|private/i.test(cacheControl) && /text\/html/i.test(contentType)
+        if (cacheable && response.ok && permitsStorage) {
           const copy = response.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy))
         }
         return response
       })
       .catch(async () => {
-        const cached = await caches.match(request)
-        if (cached) return cached
+        if (cacheable) {
+          const cached = await caches.match(request)
+          if (cached) return cached
+        }
         if (request.mode === "navigate") return caches.match("/offline")
         return new Response("Offline", { status: 503, statusText: "Offline" })
       }),

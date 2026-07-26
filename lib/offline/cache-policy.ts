@@ -2,19 +2,23 @@ export interface OfflineRoutePolicy {
   route: string
   strategy: "network-first" | "cache-first" | "stale-while-revalidate"
   maxAgeSeconds: number
+  dataClass: "public"
 }
 
-export const OFFLINE_CACHE_NAME = "vasa-eos-offline-v1"
+export const OFFLINE_CACHE_NAME = "vasa-eos-public-offline-v2"
 export const OFFLINE_FALLBACK_URL = "/offline"
 
 export const OFFLINE_ROUTE_POLICIES: OfflineRoutePolicy[] = [
-  { route: "/", strategy: "network-first", maxAgeSeconds: 86_400 },
-  { route: "/today", strategy: "network-first", maxAgeSeconds: 21_600 },
-  { route: "/attendance", strategy: "network-first", maxAgeSeconds: 21_600 },
-  { route: "/students", strategy: "network-first", maxAgeSeconds: 21_600 },
-  { route: "/schemes", strategy: "network-first", maxAgeSeconds: 21_600 },
-  { route: "/offline", strategy: "cache-first", maxAgeSeconds: 2_592_000 },
+  { route: "/offline", strategy: "cache-first", maxAgeSeconds: 2_592_000, dataClass: "public" },
+  { route: "/glossary", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
+  { route: "/school-structure", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
+  { route: "/accessibility", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
+  { route: "/security", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
 ]
+
+export function isOfflineCacheablePath(pathname: string): boolean {
+  return OFFLINE_ROUTE_POLICIES.some((policy) => policy.dataClass === "public" && policy.route === pathname)
+}
 
 export function precacheUrls(policies: OfflineRoutePolicy[] = OFFLINE_ROUTE_POLICIES): string[] {
   return [...new Set([OFFLINE_FALLBACK_URL, ...policies.map((p) => p.route)])]
