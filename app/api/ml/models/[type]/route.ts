@@ -10,7 +10,14 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   if (!auth.ok) return auth.response
 
   const { type } = await ctx.params
-  const modelType = mlModelTypeSchema.parse(type)
-  const model = await getActiveModel(modelType)
-  return model ? NextResponse.json({ model }) : NextResponse.json({ error: "No active model" }, { status: 404 })
+  const modelType = mlModelTypeSchema.safeParse(type)
+  if (!modelType.success) {
+    return NextResponse.json({ error: "Invalid model type" }, { status: 400 })
+  }
+
+  const headers = { "cache-control": "private, no-store" }
+  const model = await getActiveModel(modelType.data)
+  return model
+    ? NextResponse.json({ model }, { headers })
+    : NextResponse.json({ error: "No active model" }, { status: 404, headers })
 }
