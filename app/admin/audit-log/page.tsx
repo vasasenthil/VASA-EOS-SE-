@@ -26,6 +26,7 @@ import {
   PageHeaderDescription,
 } from "@/components/page-header"
 import { getAuditLogs } from "@/lib/audit/log"
+import { createAuditAnchorProof } from "@/lib/audit/trail"
 
 // Colour-code different action types
 const ACTION_COLORS: Record<string, string> = {
@@ -72,6 +73,7 @@ for (const log of MOCK_LOGS) {
 
 export default async function AuditLogPage() {
   const logs = await getAuditLogs({ limit: 200 })
+  const anchor = await createAuditAnchorProof("2026-07-21T00:00:00.000Z")
   const displayLogs = logs.length > 0 ? logs : MOCK_LOGS
 
   const actionCounts: Record<string, number> = {}
@@ -103,6 +105,24 @@ export default async function AuditLogPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-emerald-600" />
+            Permissioned-ledger anchor proof
+          </CardTitle>
+          <CardDescription>
+            Hash-chain checkpoint for external audit anchoring; export this proof to the state-operated ledger.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-4">
+          <div><p className="text-xs text-muted-foreground">Status</p><Badge variant={anchor.verificationStatus === "verified" ? "default" : "destructive"}>{anchor.verificationStatus}</Badge></div>
+          <div><p className="text-xs text-muted-foreground">Entries</p><p className="font-mono text-sm">{anchor.entryCount}</p></div>
+          <div><p className="text-xs text-muted-foreground">Sequence</p><p className="font-mono text-sm">{anchor.fromSeq} → {anchor.toSeq}</p></div>
+          <div><p className="text-xs text-muted-foreground">Anchor hash</p><p className="break-all font-mono text-xs">{anchor.anchorHash}</p></div>
+        </CardContent>
+      </Card>
 
       {/* Log Table */}
       <Card>

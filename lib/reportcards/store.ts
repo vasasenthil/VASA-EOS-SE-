@@ -1,9 +1,9 @@
 // VASA-EOS(SE) — Report-card persistence (server-only). Full CRUD.
-// Durable in Supabase when configured (subjects as JSONB); in-memory seeded fallback otherwise.
+// Durable database persistence is mandatory; missing DB configuration fails closed.
 // Every mutation audited.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { ReportCard, ReportCardInput, SubjectResult } from "./index"
 
@@ -78,42 +78,33 @@ function seed(): ReportCard[] {
   ]
 }
 
-const store: ReportCard[] = seed()
 
-export async function listReportCards(): Promise<ReportCard[]> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("report_cards").select("*").order("created_at", { ascending: false })
-      const rows = ((data as Row[] | null) ?? []).map(fromRow)
-      return rows.length > 0 ? rows : seed()
-    } catch {
-      return seed()
-    }
-  }
-  return [...store]
+export async function listReportCards(tenantId = DEFAULT_SCHOOL_NODE): Promise<ReportCard[]> {
+  const { data, error } = await requireDb()
+    .from("report_cards")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .order("created_at", { ascending: false })
+  if (error) throw error
+  return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
-export async function getReportCard(cid: string): Promise<ReportCard | undefined> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("report_cards").select("*").eq("id", cid).maybeSingle()
-      if (data) return fromRow(data as Row)
-    } catch {
-      /* fall through */
-    }
-    return seed().find((c) => c.id === cid)
-  }
-  return store.find((c) => c.id === cid)
+export async function getReportCard(cid: string, tenantId = DEFAULT_SCHOOL_NODE): Promise<ReportCard | undefined> {
+  const { data, error } = await requireDb()
+    .from("report_cards")
+    .select("*")
+    .eq("id", cid)
+    .eq("tenant_id", tenantId)
+    .maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as Row) : undefined
 }
 
 export async function createReportCard(input: ReportCardInput, tenantId = DEFAULT_SCHOOL_NODE): Promise<ReportCard> {
   const now = new Date().toISOString()
   const c: ReportCard = { id: id(), ...input, createdAt: now, updatedAt: now }
-  const db = getDb()
-  if (db) await db.from("report_cards").insert(toRow(c, tenantId))
-  else store.unshift(c)
+  const { error } = await requireDb().from("report_cards").insert(toRow(c, tenantId))
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "reportcard.create", resource: c.id, details: { student: c.student, status: c.status } })
   return c
 }
@@ -122,41 +113,31 @@ export async function updateReportCard(cid: string, input: ReportCardInput): Pro
   const existing = await getReportCard(cid)
   if (!existing) return undefined
   const updated: ReportCard = { ...existing, ...input, updatedAt: new Date().toISOString() }
-  const db = getDb()
-  if (db) {
-    await db.from("report_cards").update({
-      student: updated.student, apaar_id: updated.apaarId, class_level: updated.classLevel, term: updated.term,
-      subjects: updated.subjects, attendance_pct: updated.attendancePct, remarks: updated.remarks,
-      status: updated.status, updated_at: updated.updatedAt,
-    }).eq("id", cid)
-  } else {
-    const i = store.findIndex((c) => c.id === cid)
-    if (i >= 0) store[i] = updated
-  }
+  const { error } = await requireDb().from("report_cards").update({
+    student: updated.student, apaar_id: updated.apaarId, class_level: updated.classLevel, term: updated.term,
+    subjects: updated.subjects, attendance_pct: updated.attendancePct, remarks: updated.remarks,
+    status: updated.status, updated_at: updated.updatedAt,
+  }).eq("id", cid).eq("tenant_id", DEFAULT_SCHOOL_NODE)
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "reportcard.update", resource: cid, details: { status: updated.status } })
   return updated
 }
 
 export async function deleteReportCard(cid: string): Promise<boolean> {
-  const db = getDb()
-  if (db) {
-    await db.from("report_cards").delete().eq("id", cid)
-  } else {
-    const i = store.findIndex((c) => c.id === cid)
-    if (i < 0) return false
-    store.splice(i, 1)
-  }
+  const existing = await getReportCard(cid)
+  if (!existing) return false
+  const { error } = await requireDb().from("report_cards").delete().eq("id", cid).eq("tenant_id", DEFAULT_SCHOOL_NODE)
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "reportcard.delete", resource: cid })
   return true
 }
 
 export async function seedReportCards(tenantId = DEFAULT_SCHOOL_NODE): Promise<number> {
   const rows = seed()
-  const db = getDb()
-  if (db) {
-    for (const c of rows) await db.from("report_cards").upsert(toRow(c, tenantId))
-  } else {
-    for (const c of rows) if (!store.some((s) => s.id === c.id)) store.push(c)
+  const db = requireDb()
+  for (const c of rows) {
+    const { error } = await db.from("report_cards").upsert(toRow(c, tenantId))
+    if (error) throw error
   }
   await appendAudit({ actor: "academics", action: "reportcard.seed", resource: "report_cards", details: { count: rows.length } })
   return rows.length
