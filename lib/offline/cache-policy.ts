@@ -5,15 +5,11 @@ export interface OfflineRoutePolicy {
   dataClass: "public"
 }
 
-export const OFFLINE_CACHE_NAME = "vasa-eos-public-offline-v2"
-export const OFFLINE_FALLBACK_URL = "/offline"
+export const OFFLINE_CACHE_NAME = "vasa-eos-static-fallback-v3"
+export const OFFLINE_FALLBACK_URL = "/offline.html"
 
 export const OFFLINE_ROUTE_POLICIES: OfflineRoutePolicy[] = [
-  { route: "/offline", strategy: "cache-first", maxAgeSeconds: 2_592_000, dataClass: "public" },
-  { route: "/glossary", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
-  { route: "/school-structure", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
-  { route: "/accessibility", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
-  { route: "/security", strategy: "network-first", maxAgeSeconds: 86_400, dataClass: "public" },
+  { route: OFFLINE_FALLBACK_URL, strategy: "cache-first", maxAgeSeconds: 2_592_000, dataClass: "public" },
 ]
 
 export function isOfflineCacheablePath(pathname: string): boolean {
@@ -28,5 +24,5 @@ export function offlineReadiness(policies: OfflineRoutePolicy[] = OFFLINE_ROUTE_
   const routes = precacheUrls(policies)
   const hasFallback = routes.includes(OFFLINE_FALLBACK_URL)
   const supportsWriteQueue = false
-  return { routes: routes.length, hasFallback, supportsWriteQueue, ready: hasFallback && routes.length >= 3 }
+  return { routes: routes.length, hasFallback, supportsWriteQueue, ready: hasFallback }
 }
