@@ -1,12 +1,12 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-28T11:37:56.235Z
+Generated: 2026-07-28T12:10:31.685Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1405 artefacts inventoried; 475 routes; 117 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1408 artefacts inventoried; 475 routes; 118 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
 | cutover-gate | Production cutover gate | warn | Sovereign Ops | 17 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
@@ -48,26 +48,26 @@ Generated: 2026-07-28T11:37:56.235Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-28T11:37:56.235Z
+Generated: 2026-07-28T12:10:31.685Z
 
 ## Summary
 
 | Kind | Count |
 | --- | ---: |
-| api | 117 |
+| api | 118 |
 | document | 43 |
 | migration | 100 |
-| module | 212 |
+| module | 213 |
 | platform-module | 70 |
 | policy | 24 |
 | route | 475 |
-| test | 364 |
+| test | 365 |
 
 ## Readiness
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1392 | 4 | 9 | 1405 |
+| 1395 | 4 | 9 | 1408 |
 
 ## Critical inventory sample
 
@@ -178,6 +178,7 @@ Generated: 2026-07-28T11:37:56.235Z
 | api | `app/api/notifications/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/ops/runbook/markdown/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/ops/sli/csv/route.ts` | built | Module Owner | internal | yes |
+| api | `app/api/principal/operations-centre/report/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/production/cutover/route.ts` | built | Sovereign Ops | confidential | yes |
 | api | `app/api/ready/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/ready/schema/route.ts` | built | Module Owner | internal | yes |
@@ -322,5 +323,4 @@ Generated: 2026-07-28T11:37:56.235Z
 | module | `lib/cctv` | built | Module Owner | internal | no |
 | module | `lib/certificates` | built | Module Owner | internal | no |
 | module | `lib/circulation` | built | Module Owner | internal | no |
-| module | `lib/cocurricular` | built | Module Owner | internal | no |
 

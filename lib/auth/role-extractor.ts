@@ -21,6 +21,8 @@ const roleAliases: Record<string, VasaRole> = {
   DISTRICT_EDUCATION_OFFICER: "DEO",
   BLOCK_EDUCATION_OFFICER: "BEO",
   SCHOOL_PRINCIPAL: "PRINCIPAL",
+  HEADMASTER: "PRINCIPAL",
+  SCHOOL_HEADMASTER: "PRINCIPAL",
 }
 
 export function extractRoles(session: VasaSession): VasaRole[] {
