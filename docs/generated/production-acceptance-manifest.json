@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-28T13:28:28.328Z",
+  "algorithm": "sha256",
+  "custodyOwner": "CISO Office",
+  "retentionClass": "sovereign-production-acceptance",
+  "reviewCadence": "per-release",
+  "artifacts": [
+    {
+      "id": "acceptance-pack-json",
+      "label": "Production acceptance pack JSON",
+      "path": "/api/governance/acceptance-pack",
+      "mediaType": "application/json",
+      "sha256": "bbbb21b3442695b0e06c713ccaf7ade2d3517116c0af00d7cd1e2725029e8acc",
+      "bytes": 521139
+    },
+    {
+      "id": "acceptance-pack-markdown",
+      "label": "Production acceptance pack Markdown",
+      "path": "/api/governance/acceptance-pack/markdown",
+      "mediaType": "text/markdown",
+      "sha256": "f24d547ff95bc3a49d4df1e56f9f2595386c35cb6adff61f42263827d13ffd53",
+      "bytes": 29144
+    },
+    {
+      "id": "inventory-ledger-json",
+      "label": "Governance inventory ledger JSON",
+      "path": "/api/governance/inventory-ledger",
+      "mediaType": "application/json",
+      "sha256": "b83b32e5b4b2215851459650bcc92cf713e6884a5e3ee6ac151b590e31879530",
+      "bytes": 484623
+    },
+    {
+      "id": "inventory-ledger-csv",
+      "label": "Governance inventory ledger CSV",
+      "path": "/api/governance/inventory-ledger/csv",
+      "mediaType": "text/csv",
+      "sha256": "b1ee1bc93040ae9c819decbdd6a9b87b4440d849acfc9f9433448fb5eb6a165a",
+      "bytes": 244144
+    }
+  ]
+}
