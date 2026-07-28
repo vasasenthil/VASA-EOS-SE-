@@ -1,12 +1,12 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-28T12:10:31.685Z
+Generated: 2026-07-28T12:44:08.211Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1408 artefacts inventoried; 475 routes; 118 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1411 artefacts inventoried; 475 routes; 119 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
 | cutover-gate | Production cutover gate | warn | Sovereign Ops | 17 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
@@ -48,26 +48,26 @@ Generated: 2026-07-28T12:10:31.685Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-28T12:10:31.685Z
+Generated: 2026-07-28T12:44:08.211Z
 
 ## Summary
 
 | Kind | Count |
 | --- | ---: |
-| api | 118 |
+| api | 119 |
 | document | 43 |
 | migration | 100 |
-| module | 213 |
+| module | 214 |
 | platform-module | 70 |
 | policy | 24 |
 | route | 475 |
-| test | 365 |
+| test | 366 |
 
 ## Readiness
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1395 | 4 | 9 | 1408 |
+| 1398 | 4 | 9 | 1411 |
 
 ## Critical inventory sample
 
@@ -88,6 +88,7 @@ Generated: 2026-07-28T12:10:31.685Z
 | api | `app/api/architecture/csv/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/data-lineage/csv/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/data-standards/csv/route.ts` | built | Module Owner | internal | yes |
+| api | `app/api/deo/district-operations/report/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/director/operations-centre/report/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/export/reports/route.ts` | built | Module Owner | internal | yes |
 | api | `app/api/glossary/csv/route.ts` | built | Module Owner | internal | yes |
@@ -322,5 +323,4 @@ Generated: 2026-07-28T12:10:31.685Z
 | module | `lib/career` | built | Module Owner | internal | no |
 | module | `lib/cctv` | built | Module Owner | internal | no |
 | module | `lib/certificates` | built | Module Owner | internal | no |
-| module | `lib/circulation` | built | Module Owner | internal | no |
 
