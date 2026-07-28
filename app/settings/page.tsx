@@ -4,10 +4,9 @@ import { PageHeader, PageHeaderHeading, PageHeaderDescription } from "@/componen
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { LanguageSwitcher } from "@/components/language-switcher"
-import { AccessibilityQuickToggle } from "@/components/accessibility-quick-toggle"
 import { getCurrentRole, getHeaderUser } from "@/lib/auth/current-role"
 import { PORTALS, type PortalRole } from "@/config/portals"
+import { PersonalSettingsForm } from "./personal-settings-form"
 
 export const dynamic = "force-dynamic"
 
@@ -21,8 +20,7 @@ export default async function SettingsPage() {
       <PageHeader>
         <PageHeaderHeading>Settings</PageHeaderHeading>
         <PageHeaderDescription>
-          Your preferences and session. Production SSO/MFA is not wired on this deployment — sign-in uses the demo
-          identity, so account-level changes are limited here.
+          Manage your language, accessibility, notification, and regional preferences without changing platform security or administrative configuration.
         </PageHeaderDescription>
       </PageHeader>
 
@@ -53,30 +51,25 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
 
+        {["ADMIN", "SECRETARY"].includes(role) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Administrative configuration</CardTitle>
+              <CardDescription>Governed, non-secret operational controls are separated from personal preferences.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-2xl text-sm text-muted-foreground">Review immutable proposals, approvals, activation schedules, tenant rollout scope, and rollback history. Secrets and live-integration switches remain deployment controlled.</p>
+              <Button asChild><Link href="/admin/platform-configuration">Open governed configuration</Link></Button>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Preferences</CardTitle>
-            <CardDescription>Language and accessibility apply across the whole console.</CardDescription>
+            <CardTitle className="text-base">Personal preferences</CardTitle>
+            <CardDescription>Review changes before saving them to this device.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Language</p>
-                <p className="text-xs text-muted-foreground">Tamil (TN-first) / English / Hindi complete; others partial.</p>
-              </div>
-              <LanguageSwitcher />
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Accessibility</p>
-                <p className="text-xs text-muted-foreground">Quick toggles (contrast, motion, text size). Full controls at /accessibility.</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <AccessibilityQuickToggle />
-                <Button asChild variant="outline" size="sm"><Link href="/accessibility">Open</Link></Button>
-              </div>
-            </div>
-          </CardContent>
+          <CardContent><PersonalSettingsForm /></CardContent>
         </Card>
 
         <Card>

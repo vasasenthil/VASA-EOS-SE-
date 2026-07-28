@@ -1,0 +1,13 @@
+services:
+  outbox-dispatcher:
+    build:
+      context: .
+      dockerfile: docker/workers.Dockerfile
+    command: ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/outbox-dispatcher-worker.ts"]
+    env_file: .env.local
+  sla-monitor:
+    build:
+      context: .
+      dockerfile: docker/workers.Dockerfile
+    command: ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/sla-monitor-worker.ts"]
+    env_file: .env.local

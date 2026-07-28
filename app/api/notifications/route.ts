@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import { getSessionFromRequest } from "@/lib/auth/session"
 import { createServerClient } from "@supabase/ssr"
 
 async function getSupabase() {
@@ -13,7 +14,10 @@ async function getSupabase() {
 }
 
 /** GET /api/notifications — fetch unread notifications for the current user */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const session = await getSessionFromRequest(request)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
     const supabase = await getSupabase()
     if (!supabase) return NextResponse.json({ notifications: [], unread: 0 })
@@ -39,6 +43,9 @@ export async function GET() {
 
 /** PATCH /api/notifications — mark notifications as read */
 export async function PATCH(request: NextRequest) {
+  const session = await getSessionFromRequest(request)
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   try {
     const supabase = await getSupabase()
     if (!supabase) return NextResponse.json({ success: false })
