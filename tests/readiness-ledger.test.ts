@@ -1,6 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { buildReadinessLedger, readinessLedgerToCsv, readinessLedgerToMarkdown } from "@/lib/governance/readiness-ledger"
@@ -29,4 +29,12 @@ test("readiness ledger exports machine-readable and decision-readable evidence",
   const csv = readinessLedgerToCsv(ledger); const markdown = readinessLedgerToMarkdown(ledger)
   assert.ok(ledger.scannedFiles > 1_000); assert.ok(ledger.findings.length > 0)
   assert.match(csv, /^rank,score,classification,domain,path,reason/m); assert.match(markdown, /Evidence standard: \*\*production proof\*\*/); assert.match(markdown, /Balanced sovereign risk score/); assert.match(markdown, /## Ranked backlog/)
+})
+
+test("governance readiness page provides the ranked, role-protected remediation surface", () => {
+  const source = readFileSync(join(process.cwd(), "app/governance/readiness/page.tsx"), "utf8")
+  assert.match(source, /ADMIN.*SECRETARY.*DIRECTOR/)
+  assert.match(source, /Ranked remediation queue/)
+  assert.match(source, /Download complete CSV/)
+  assert.match(source, /externally gated capability evidence/i)
 })

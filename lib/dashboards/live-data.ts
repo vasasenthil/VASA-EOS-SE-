@@ -24,6 +24,7 @@ export interface LiveDashboardData {
   modules: ModuleEntry[]
   signals: DashboardSignal[]
   sourceSummary: string
+  sourceWarnings?: string[]
 }
 
 function pct(n: number): string {
@@ -122,10 +123,27 @@ export function parentDashboardData(): LiveDashboardData {
   }
 }
 
-export async function governanceDashboardData(): Promise<LiveDashboardData> {
+export interface GovernanceDashboardDependencies {
+  listOutboxEvents: typeof listOutboxEvents
+}
+
+const GOVERNANCE_DEPENDENCIES: GovernanceDashboardDependencies = { listOutboxEvents }
+
+/**
+ * Build the state overview without allowing one operational dependency to take
+ * down the whole governance surface. Unavailable telemetry is rendered as
+ * unavailable (not zero) and accompanied by an operator-visible warning.
+ */
+export async function governanceDashboardData(dependencies: GovernanceDashboardDependencies = GOVERNANCE_DEPENDENCIES): Promise<LiveDashboardData> {
   const r = stateRollup()
   const workflow = stakeholderWorkflowSummary()
-  const pendingOutbox = (await listOutboxEvents()).filter((e) => e.status === "pending").length
+  let pendingOutbox: number | null = null
+  const sourceWarnings: string[] = []
+  try {
+    pendingOutbox = (await dependencies.listOutboxEvents()).filter((event) => event.status === "pending").length
+  } catch {
+    sourceWarnings.push("Event-backbone telemetry is unavailable. Check database connectivity and the platform_outbox migration; the value is not being reported as zero.")
+  }
   return {
     title: "Governance Dashboard",
     description: "Statewide control plane backed by SIS, quality, infrastructure, workflow and event-backbone telemetry.",
@@ -134,7 +152,7 @@ export async function governanceDashboardData(): Promise<LiveDashboardData> {
       { label: "Schools", value: String(r.schools) },
       { label: "Students", value: String(r.students) },
       { label: "Workflow lanes", value: String(workflow.lanes), hint: `${workflow.dynamicWorkflows} dynamic` },
-      { label: "Pending outbox", value: String(pendingOutbox), hint: "event backbone" },
+      { label: "Pending outbox", value: pendingOutbox === null ? "Unavailable" : String(pendingOutbox), hint: pendingOutbox === null ? "source degraded" : "event backbone" },
     ],
     modules: [
       { label: "Stakeholder Workflow Matrix", href: "/workflows/stakeholders" },
@@ -143,13 +161,15 @@ export async function governanceDashboardData(): Promise<LiveDashboardData> {
       { label: "Dead Letters", href: "/admin/dead-letters" },
       { label: "Data Platform", href: "/data-platform" },
       { label: "Audit Trail", href: "/audit-trail" },
+      { label: "Readiness Backlog", href: "/governance/readiness" },
     ],
     signals: [
       { label: "Compliance", value: complianceLabel(r.compliance), tone: r.compliance === "green" ? "good" : "watch" },
       { label: "Infrastructure readiness", value: pct(r.infraReadiness), tone: r.infraReadiness >= 80 ? "good" : "watch" },
       { label: "Active incidents", value: String(r.activeIncidents), tone: r.activeIncidents ? "risk" : "good" },
     ],
-    sourceSummary: "Bound to portal rollups, workflow runtime summary and outbox queue state.",
+    sourceSummary: "Bound to portal rollups and workflow runtime summary; event-backbone telemetry is reported only when its durable source responds.",
+    sourceWarnings,
   }
 }
 

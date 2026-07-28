@@ -33,6 +33,8 @@ export interface PortalDashboardProps {
   signals?: DashboardSignal[]
   /** Names the runtime datasets/stores that fed the page. */
   sourceSummary?: string
+  /** Non-fatal source failures. The dashboard stays available but never presents unavailable data as healthy. */
+  sourceWarnings?: string[]
   children?: React.ReactNode
 }
 
@@ -45,7 +47,7 @@ const SIGNAL_TONE: Record<NonNullable<DashboardSignal["tone"]>, string> = {
 
 // Shared stakeholder portal shell. Server-safe (no client hooks). KPI values and
 // operational signals are supplied by page-level live-data adapters.
-export function PortalDashboard({ title, description, tierLabel, kpis, modules, signals = [], sourceSummary, children }: PortalDashboardProps) {
+export function PortalDashboard({ title, description, tierLabel, kpis, modules, signals = [], sourceSummary, sourceWarnings = [], children }: PortalDashboardProps) {
   return (
     <Shell>
       <PageHeader>
@@ -74,6 +76,17 @@ export function PortalDashboard({ title, description, tierLabel, kpis, modules, 
         <Card className="mb-6 border-blue-100 bg-blue-50/60">
           <CardContent className="pt-4 text-sm text-blue-900">
             <span className="font-medium">Live data binding:</span> {sourceSummary}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {sourceWarnings.length ? (
+        <Card className="mb-6 border-amber-300 bg-amber-50" role="status" aria-live="polite">
+          <CardHeader className="pb-2"><CardTitle className="text-base text-amber-950">Data-source degradation</CardTitle></CardHeader>
+          <CardContent>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-amber-950">
+              {sourceWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+            </ul>
           </CardContent>
         </Card>
       ) : null}

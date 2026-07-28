@@ -33,3 +33,14 @@ test("Phase 5 dashboards expose live data bindings instead of static mock-only p
     assert.ok(dashboard.kpis.every((kpi) => kpi.value.length > 0), `${name} KPI values should be populated`)
   }
 })
+
+test("governance overview remains available and labels outbox telemetry unavailable when its durable source fails", async () => {
+  const dashboard = await governanceDashboardData({
+    listOutboxEvents: async () => { throw new Error("platform_outbox unavailable") },
+  })
+  const outbox = dashboard.kpis.find((kpi) => kpi.label === "Pending outbox")
+  assert.equal(outbox?.value, "Unavailable")
+  assert.equal(outbox?.hint, "source degraded")
+  assert.match(dashboard.sourceWarnings?.[0] ?? "", /not being reported as zero/)
+  assert.ok(dashboard.modules.some((module) => typeof module !== "string" && module.href === "/governance/readiness"))
+})
