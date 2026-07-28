@@ -2,6 +2,7 @@ import { spawnSync } from "child_process"
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs"
 import { dirname, resolve } from "path"
 import { fileURLToPath } from "url"
+import { isPostgresUrl, resolveMigrationDatabaseUrl } from "../../lib/db/environment"
 
 export interface MigrationEntry { id: string; path: string }
 export interface MigrationManifest { migrations: MigrationEntry[] }
@@ -23,8 +24,9 @@ export function validateManifest(manifest: MigrationManifest): void {
 }
 
 function psql(sql: string): string {
-  const databaseUrl = process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL
-  if (!databaseUrl) throw new Error("DATABASE_URL or SUPABASE_DB_URL is required")
+  const databaseUrl = resolveMigrationDatabaseUrl()
+  if (!databaseUrl) throw new Error("A PostgreSQL migration URL is required (DATABASE_URL, SUPABASE_DB_URL, or Vercel POSTGRES_URL_NON_POOLING)")
+  if (!isPostgresUrl(databaseUrl)) throw new Error("Migration database URL must use postgres:// or postgresql:// and include a database name")
   const temp = resolve(root, `.migration-${process.pid}.sql`)
   writeFileSync(temp, sql)
   const result = spawnSync("psql", [databaseUrl, "-v", "ON_ERROR_STOP=1", "-f", temp], { encoding: "utf8" })

@@ -64,6 +64,13 @@ test("validateEnvironment accepts both PostgreSQL connection URI schemes", () =>
   assert.equal(validateEnvironment({ ...validEnv, DATABASE_URL: "postgresql://user:pass@db.example:5432/vasa" }).ok, true)
 })
 
+test("validateEnvironment recognizes Vercel non-pooling PostgreSQL configuration", () => {
+  const { DATABASE_URL, ...withoutCanonical } = validEnv
+  const result = validateEnvironment({ ...withoutCanonical, POSTGRES_URL_NON_POOLING: DATABASE_URL })
+  assert.equal(result.ok, true)
+  assert.ok(!result.issues.some((issue) => issue.variable === "DATABASE_URL"))
+})
+
 test("validateEnvironment warns when browser Supabase aliases are omitted", () => {
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, ...env } = validEnv
   const result = validateEnvironment(env)

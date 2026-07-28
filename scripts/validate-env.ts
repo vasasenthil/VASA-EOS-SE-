@@ -2,6 +2,7 @@
 
 import { readFileSync } from "node:fs"
 import { z } from "zod"
+import { resolveMigrationDatabaseUrl } from "../lib/db/environment"
 
 export type EnvSeverity = "error" | "warning"
 
@@ -60,6 +61,9 @@ export const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: nonPlaceholder("NEXT_PUBLIC_SUPABASE_ANON_KEY").optional(),
   DATABASE_URL: postgresUrl("DATABASE_URL").optional(),
   SUPABASE_DB_URL: postgresUrl("SUPABASE_DB_URL").optional(),
+  POSTGRES_URL: postgresUrl("POSTGRES_URL").optional(),
+  POSTGRES_URL_NON_POOLING: postgresUrl("POSTGRES_URL_NON_POOLING").optional(),
+  POSTGRES_PRISMA_URL: postgresUrl("POSTGRES_PRISMA_URL").optional(),
 
   // PFMS
   PFMS_BASE_URL: urlValue("PFMS_BASE_URL"),
@@ -144,7 +148,7 @@ export function validateEnvironment(env: Record<string, string | undefined>): En
 
   if (!env.NEXT_PUBLIC_SUPABASE_URL && env.SUPABASE_URL) issues.push(warning("NEXT_PUBLIC_SUPABASE_URL", "Set NEXT_PUBLIC_SUPABASE_URL to the same value as SUPABASE_URL for browser auth."))
   if (!env.NEXT_PUBLIC_SUPABASE_ANON_KEY && env.SUPABASE_ANON_KEY) issues.push(warning("NEXT_PUBLIC_SUPABASE_ANON_KEY", "Set NEXT_PUBLIC_SUPABASE_ANON_KEY to the same value as SUPABASE_ANON_KEY for browser auth."))
-  if (!env.DATABASE_URL && !env.SUPABASE_DB_URL) issues.push(warning("DATABASE_URL", "Set DATABASE_URL or SUPABASE_DB_URL before running migrations."))
+  if (!resolveMigrationDatabaseUrl(env)) issues.push(warning("DATABASE_URL", "Set DATABASE_URL, SUPABASE_DB_URL, or Vercel POSTGRES_URL_NON_POOLING before running migrations."))
   if (env.ENABLE_OUTBOX_DISPATCHER_WORKER === "false") issues.push(warning("ENABLE_OUTBOX_DISPATCHER_WORKER", "Outbox worker is disabled; production cutover will fail until enabled."))
   if (env.ENABLE_SLA_MONITOR_WORKER === "false") issues.push(warning("ENABLE_SLA_MONITOR_WORKER", "SLA monitor worker is disabled; production cutover will fail until enabled."))
   if (env.DEMO_PASSWORD) issues.push({ severity: "error", variable: "DEMO_PASSWORD", message: "Remove DEMO_PASSWORD before production cutover." })

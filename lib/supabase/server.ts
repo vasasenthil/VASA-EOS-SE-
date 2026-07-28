@@ -1,11 +1,15 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { createClient as createSupabaseClient, type SupabaseClient } from "@supabase/supabase-js"
+import { resolveSupabaseAnonKey, resolveSupabaseServiceRoleKey, resolveSupabaseUrl } from "@/lib/db/environment"
 
 // This is a flexible, generic server client creator that can be used in various server contexts.
 // It's useful in Route Handlers or other places where you might pass the cookie store explicitly.
 export function createSupabaseServerClient(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  const url = resolveSupabaseUrl()
+  const anonKey = resolveSupabaseAnonKey()
+  if (!url || !anonKey) throw new Error("Supabase browser client is not configured")
+  return createServerClient(url, anonKey, {
     cookies: {
       get(name: string) {
         return cookieStore.get(name)?.value
@@ -41,12 +45,14 @@ export const createClient = async () => {
 // This is a privileged client that uses the service_role key.
 // It should ONLY be used in server-side code for operations that need to bypass RLS.
 let supabaseAdminInstance: SupabaseClient | null = null
+const supabaseUrl = resolveSupabaseUrl()
+const serviceRoleKey = resolveSupabaseServiceRoleKey()
 
-if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+if (supabaseUrl && serviceRoleKey) {
   try {
     supabaseAdminInstance = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      supabaseUrl,
+      serviceRoleKey,
       {
         auth: {
           persistSession: false,
@@ -59,8 +65,8 @@ if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KE
     supabaseAdminInstance = null
   }
 } else {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    console.warn("Supabase admin client: NEXT_PUBLIC_SUPABASE_URL is not set.")
+  if (!supabaseUrl) {
+    console.warn("Supabase admin client: NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL is not set.")
   }
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     console.warn("Supabase admin client: SUPABASE_SERVICE_ROLE_KEY is not set.")

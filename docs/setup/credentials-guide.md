@@ -34,9 +34,10 @@ Steps:
 4. Copy the project URL to `SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL`.
 5. Copy the `service_role` key to `SUPABASE_SERVICE_ROLE_KEY`. This is server-only and must never be exposed to browser code or logs.
 6. Copy the anon key to `SUPABASE_ANON_KEY` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-7. Go to **Project Settings → Database → Connection string** and copy the Postgres URI to `DATABASE_URL` or `SUPABASE_DB_URL`. It must begin with `postgres://` or `postgresql://`; the `https://<project-ref>.supabase.co` project URL is not a database connection string. Prefer the direct connection for migrations, require TLS, and obtain the password through the approved secret channel.
-8. Run `npm run validate:env -- --env-file .env.production` before migration.
-9. Run `npm run migrate` after validation passes.
+7. Go to **Project Settings → Database → Connection string** and copy the Postgres URI to `DATABASE_URL` or `SUPABASE_DB_URL`. It must begin with `postgres://` or `postgresql://`; the `https://<project-ref>.supabase.co` project URL is not a database connection string. On Vercel, the Supabase integration's `POSTGRES_URL_NON_POOLING` is accepted automatically and preferred for migrations; `POSTGRES_URL` and `POSTGRES_PRISMA_URL` are fallback aliases. Require TLS and obtain the password through the approved secret channel.
+8. In Vercel, apply the Supabase variables to **Production, Preview, and Development**, rotate every variable marked **Needs Attention**, and redeploy; changing environment variables does not alter an already-built deployment.
+9. Run `npm run validate:env -- --env-file .env.production` before migration.
+10. Run `npm run migrate` after validation passes.
 
 Official references:
 

@@ -2,6 +2,7 @@ import { readFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
+import { isPostgresUrl, resolveMigrationDatabaseUrl } from "../../lib/db/environment.ts"
 
 type Manifest = { migrations: { id: string; path: string }[] }
 
@@ -10,12 +11,6 @@ class DeployMigrationError extends Error {
     super(message)
     this.name = "DeployMigrationError"
   }
-}
-
-function requireEnv(name: string): string {
-  const value = process.env[name]
-  if (!value) throw new DeployMigrationError(`${name} is required for sovereign production migrations`)
-  return value
 }
 
 function runPsql(databaseUrl: string, sql: string): string {
@@ -66,7 +61,9 @@ function migrationSql(id: string, path: string, sql: string): string {
 }
 
 function main(): void {
-  const databaseUrl = requireEnv("PRODUCTION_DATABASE_URL")
+  const databaseUrl = resolveMigrationDatabaseUrl()
+  if (!databaseUrl) throw new DeployMigrationError("A production PostgreSQL URL is required; Vercel POSTGRES_URL_NON_POOLING is supported")
+  if (!isPostgresUrl(databaseUrl)) throw new DeployMigrationError("Production database URL must be a PostgreSQL URI, not an HTTPS project URL")
   const manifest = loadManifest()
   if (!manifest.migrations.length) throw new DeployMigrationError("migrations/manifest.json has no migrations")
 
