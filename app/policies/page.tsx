@@ -194,8 +194,7 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
           <CardContent>
             {isDemo ? (
               <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                Showing representative <strong>demo policies</strong> — no database is configured. Provision Supabase and
-                seed to manage live policy drafts.
+                Development walkthrough data is enabled. These records are never substituted in production; configure the live database before acceptance.
               </div>
             ) : null}
             <PolicyFilters />
@@ -204,13 +203,13 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
                 <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
                 <h3 className="mt-4 text-xl font-semibold text-red-800">Database Connection Failed</h3>
                 <p className="mt-2 text-md text-red-700">
-                  The application could not connect to the database due to a configuration issue.
+                  {policiesError}
                 </p>
                 <div className="mt-4 text-left bg-red-100 p-4 rounded-lg max-w-2xl mx-auto">
                   <p className="font-semibold text-gray-800">To fix this, please do the following:</p>
                   <ol className="list-decimal list-inside mt-2 text-sm text-gray-700 space-y-1">
                     <li>
-                      Go to your <strong>Vercel Project Settings</strong>.
+                      Configure secrets in your deployment environment or secret manager.
                     </li>
                     <li>
                       Navigate to the <strong>Environment Variables</strong> section.
@@ -220,9 +219,11 @@ export default async function PoliciesListPage({ searchParams }: PoliciesListPag
                       <ul className="list-disc list-inside pl-6 mt-1 font-mono bg-white py-2 px-3 rounded">
                         <li>NEXT_PUBLIC_SUPABASE_URL</li>
                         <li>SUPABASE_SERVICE_ROLE_KEY</li>
+                        <li>DATABASE_URL (must be a postgres:// or postgresql:// migration URI, not the Supabase HTTPS project URL)</li>
                       </ul>
                     </li>
-                    <li>Redeploy the project for the changes to take effect.</li>
+                    <li>Run <code>pnpm run deploy:migrate</code> to create and seed the policy schema.</li>
+                    <li>Redeploy the application so serverless instances load the new secrets.</li>
                   </ol>
                 </div>
                 <p className="mt-4 text-sm text-gray-600">

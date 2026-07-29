@@ -39,6 +39,7 @@ import {
 import { hasPermission } from "@/app/governance/rbac"
 import { PERMISSIONS } from "@/app/governance/types"
 import { getUserIdFromAction } from "@/lib/auth/server"
+import { POLICY_DATABASE_REQUIRED, policyDataMode } from "@/lib/policy/runtime"
 
 interface PolicyImplementationStatusSeed {
   policy_id: string
@@ -75,8 +76,7 @@ export interface DeletePolicyActionState {
   deletedPolicyId?: string
 }
 
-const CRITICAL_DB_ERROR_MSG =
-  "Database client is not initialized. Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are correctly set in your Vercel project."
+const CRITICAL_DB_ERROR_MSG = POLICY_DATABASE_REQUIRED
 
 const generateSeedPolicyDataInline = (count = 30): PolicyDraft[] => {
   const policies: PolicyDraft[] = []
@@ -491,7 +491,7 @@ export interface PaginatedPoliciesResponse {
   currentPage: number
   itemsPerPage: number
   error?: string
-  /** True when the no-database demo dataset is being shown. */
+  /** True only for an explicitly enabled non-production walkthrough or tests. */
   demo?: boolean
 }
 
@@ -511,11 +511,12 @@ export async function getPoliciesAction(params?: {
   createdBefore?: string
 }): Promise<PaginatedPoliciesResponse> {
   const { page = 1, itemsPerPage = params?.itemsPerPage || DEFAULT_ITEMS_PER_PAGE_ACTION } = params || {}
-  if (!isSupabaseAdminConfigured()) {
-    // No database configured — demonstrate with representative TN / NEP-2020 policy drafts.
+  const mode = policyDataMode({ databaseConfigured: isSupabaseAdminConfigured(), nodeEnv: process.env.NODE_ENV, demoEnabled: process.env.NEXT_PUBLIC_DEMO_MODE === "true" })
+  if (mode === "development-demo") {
     const policies = policyDemoData()
     return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
   }
+  if (mode === "unavailable") return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: CRITICAL_DB_ERROR_MSG }
   const {
     sortBy: sortKey = "last_modified",
     sortOrder = "desc",
@@ -560,43 +561,31 @@ export async function getPoliciesAction(params?: {
   query = query.order(dbSortBy, { ascending: sortOrder === "asc" })
   const startIndex = (page - 1) * itemsPerPage
   query = query.range(startIndex, startIndex + itemsPerPage - 1)
-  // Demo dataset shown when the unfiltered first page comes back empty (empty/unseeded DB,
-  // no auth, or a query error) so the page is never blank in a walkthrough; a real
-  // filtered/searched query that returns nothing is respected.
-  const unfiltered =
-    !params?.searchQuery && !params?.filterByStatus && !params?.filterByDomain &&
-    !params?.modifiedAfter && !params?.modifiedBefore && !params?.createdAfter && !params?.createdBefore && page === 1
-  const policiesDemoResponse = (): PaginatedPoliciesResponse => {
-    const policies = policyDemoData()
-    return { policies, totalCount: policies.length, totalPages: 1, currentPage: 1, itemsPerPage, demo: true }
-  }
   try {
     const { data, error, count } = await query
-    if (error) return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: `DB error: ${error.message}` }
+    if (error) return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: `Policy database query failed: ${error.message}` }
     const policies = data ? data.map(mapDbPolicyToPolicyDraft) : []
     const totalCount = count || 0
-    if (totalCount === 0 && unfiltered) return policiesDemoResponse()
     const totalPages = Math.ceil(totalCount / itemsPerPage)
     return { policies, totalCount, totalPages, currentPage: page, itemsPerPage }
   } catch (e) {
-    // Supabase unreachable — fail soft to demo so the page still renders.
-    console.error("getPoliciesAction failed; returning demo result:", e)
-    return unfiltered ? policiesDemoResponse() : { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage }
+    console.error("getPoliciesAction failed", e)
+    return { policies: [], totalCount: 0, totalPages: 0, currentPage: page, itemsPerPage, error: "Policy database is unreachable. No demo records were substituted." }
   }
 }
 
 export async function getPolicyByIdAction(id: string): Promise<PolicyDraft | undefined> {
-  // No database — resolve the demo policy so list -> view navigation works.
-  if (!isSupabaseAdminConfigured()) return policyDemoData().find((p) => p.id === id)
+  const mode = policyDataMode({ databaseConfigured: isSupabaseAdminConfigured(), nodeEnv: process.env.NODE_ENV, demoEnabled: process.env.NEXT_PUBLIC_DEMO_MODE === "true" })
+  if (mode === "development-demo") return policyDemoData().find((p) => p.id === id)
+  if (mode === "unavailable") return undefined
   try {
     const { data, error } = await supabaseAdmin!.from("policies").select("*").eq("id", id).single()
     if (error) {
-      // No row / unseeded — fall back to a demo policy so a demo card opens.
-      if (error.code === "PGRST116") return policyDemoData().find((p) => p.id === id)
+      if (error.code === "PGRST116") return undefined
       console.error("Supabase error fetching policy by ID:", error)
-      return policyDemoData().find((p) => p.id === id)
+      return undefined
     }
-    return data ? mapDbPolicyToPolicyDraft(data) : policyDemoData().find((p) => p.id === id)
+    return data ? mapDbPolicyToPolicyDraft(data) : undefined
   } catch (e) {
     console.error("getPolicyByIdAction failed; returning undefined:", e)
     return undefined
@@ -636,11 +625,8 @@ export async function deletePolicyAction(policyId: string): Promise<DeletePolicy
 }
 
 export async function clearPoliciesAction(): Promise<{ message: string }> {
-  // Potentially add RBAC check here if clearing all policies is a restricted action
-  // const userId = await getUserIdFromAction();
-  // if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_CLEAR_ALL /* example */ }))) {
-  //   return { message: "Permission denied to clear all policies." };
-  // }
+  const userId = await getUserIdFromAction()
+  if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE_NATIONAL }))) return { message: "Permission denied to clear policies." }
 
   if (!isSupabaseAdminConfigured()) return { message: CRITICAL_DB_ERROR_MSG }
   if (IS_SERVER_ENVIRONMENT) {
@@ -668,17 +654,15 @@ export async function clearPoliciesAction(): Promise<{ message: string }> {
 export async function seedPoliciesAction(
   count = 35,
 ): Promise<{ message: string; count: number; success: boolean; error?: string }> {
-  // Potentially add RBAC check here if seeding policies is a restricted action
-  // const userId = await getUserIdFromAction();
-  // if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_SEED /* example */ }))) {
-  //   return { message: "Permission denied to seed policies.", count: 0, success: false };
-  // }
+  const userId = await getUserIdFromAction()
+  if (!userId || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_CREATE_NATIONAL })) || !(await hasPermission({ userId, permissionString: PERMISSIONS.POLICY_DELETE_NATIONAL }))) return { message: "Permission denied to seed policies.", count: 0, success: false, error: "Create and delete policy permissions are required." }
 
   if (!isSupabaseAdminConfigured()) {
     return { message: CRITICAL_DB_ERROR_MSG, count: 0, success: false, error: CRITICAL_DB_ERROR_MSG }
   }
   // Consider if clearPoliciesAction should also be RBAC protected if called from here
-  await clearPoliciesAction()
+  const cleared = await clearPoliciesAction()
+  if (cleared.message !== "All policies cleared.") return { message: cleared.message, count: 0, success: false, error: cleared.message }
   const policiesToSeed = generateSeedPolicyDataInline(count)
   const policiesForDb = policiesToSeed.map((p) => ({
     id: p.id,
