@@ -22,6 +22,14 @@ export const workflowStepDefinitionSchema = z.object({
   slaDurationSeconds: z.number().int().positive(),
   compensateAction: compensateActionSchema.optional(),
   when: workflowConditionSchema.optional(),
+  approval: z.object({
+    mode: z.enum(["any", "all", "quorum"]).default("any"),
+    requiredApprovals: z.number().int().positive().optional(),
+    eligibleRoles: z.array(z.string().min(1)).min(1).optional(),
+    requireDistinctActors: z.boolean().default(true),
+    requireSameJurisdiction: z.boolean().default(true),
+    prohibitInitiator: z.boolean().default(true),
+  }).optional(),
 })
 
 export const workflowDefinitionSchema = z.object({
