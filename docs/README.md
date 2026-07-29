@@ -7,6 +7,12 @@ environment variables — no code change.
 
 Start at the repo [README](../README.md), then use this index.
 
+## Sovereign readiness evidence
+
+- `GET /api/governance/readiness-ledger` provides the ranked JSON inventory of unfinished, partial, placeholder, mock-backed, and externally gated implementation evidence.
+- `GET /api/governance/readiness-ledger/csv` exports the same backlog for CISO, architecture, programme, and departmental review.
+- Ranking uses the agreed balanced sovereign lens, then safety, student equity, and teacher value. A capability is only complete at the production-proof evidence standard.
+
 ## Documentation map
 
 | Doc | What it answers |
@@ -21,6 +27,11 @@ Start at the repo [README](../README.md), then use this index.
 | [STATUS](STATUS.md) | Completion & pending register — the full delivery timeline and what's done vs pending against the master document. |
 | [REQUIREMENTS](REQUIREMENTS.md) | What's needed to go fully live — every real credential, MoU, and infrastructure dependency, one by one. |
 | [EVALUATION](EVALUATION.md) | Investor-lens readiness review (Altman/YC questions): the wedge, the scorecard, and the pilot-readiness checklist. |
+| [360° ECOSYSTEM ANALYSIS](VASA-360-ECOSYSTEM-ANALYSIS.md) | Teacher-first, student-first and equity-first assessment across governance, institutions, HR, pedagogy, technology, assessment, community and research, with framework alignment and a P1–P5 roadmap. |
+| [USER DISCOVERY — Scholarship Reconciliation](user-discovery/interview-guide.md) | Interview guide and 10x validation framework for the scholarship reconciliation wedge. |
+| [USER DISCOVERY SYNTHESIS TEMPLATE](user-discovery/synthesis-template.md) | Per-interview synthesis worksheet for scholarship reconciliation discovery evidence, metrics, quotes, red flags, and go/no-go recommendations. |
+| [SCHOLARSHIP PILOT PLAN](user-discovery/scholarship-pilot-plan.md) | Pilot integration points, scope, success criteria, risks, and readiness checklist for the scholarship reconciliation vertical slice. |
+| [MODULE 10X VALUE PLAN](user-discovery/module-10x-value-plan.md) | Module-by-module 10x targets, features, and metrics for the scholarship reconciliation vertical slice. |
 | [CREDENTIALS](CREDENTIALS.md) | User categories, the governance hierarchy, per-role IAM (RBAC/ReBAC/ABAC/PBAC/CABAC), and demo login credentials. |
 
 ### Suggested reading order

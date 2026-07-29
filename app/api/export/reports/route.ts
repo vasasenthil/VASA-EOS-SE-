@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { requireRole } from "@/lib/auth/require-role"
 import { csvField } from "@/lib/csv"
 
 /** Escape a value for safe interpolation into HTML (defence-in-depth for report data). */
@@ -124,6 +125,9 @@ function toHTML(title: string, headers: string[], rows: string[][]): string {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ["ADMIN", "SECRETARY", "MINISTER", "CABINET", "DIRECTOR", "DEO", "BEO", "PRINCIPAL"])
+  if (!auth.ok) return auth.response
+
   const { searchParams } = new URL(request.url)
   const reportId = searchParams.get("reportId") ?? "annual-education-performance"
   const format = searchParams.get("format") ?? "csv"
