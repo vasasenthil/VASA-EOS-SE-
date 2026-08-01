@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pfms-reconciliation
+  labels:
+    app.kubernetes.io/name: vasa-eos-se-tn
+    app.kubernetes.io/component: reconciliation-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vasa-eos-se-tn
+      app.kubernetes.io/component: reconciliation-worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vasa-eos-se-tn
+        app.kubernetes.io/component: reconciliation-worker
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "vasa-worker"
+    spec:
+      serviceAccountName: vasa-worker
+      containers:
+        - name: reconciliation
+          image: sovereign.registry.tn.gov.in/vasa/vasa-workers:CHANGE_ME
+          command: ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/pfms-reconciliation.worker.ts"]
+          envFrom:
+            - secretRef:
+                name: vasa-runtime-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "750m"
+              memory: "512Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pfms-reconciliation
+spec:
+  minReplicas: 1
+  maxReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pfms-reconciliation
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
