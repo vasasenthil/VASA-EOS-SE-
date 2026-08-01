@@ -1,6 +1,6 @@
-// VASA-EOS(SE) — the six AI Agents (Native-AI Agent Layer, brochure L9).
+// VASA-EOS(SE) — the eight AI Agents (Native-AI Agent Layer, brochure L9).
 //
-// Six purpose-built agents that COMPOSE the six engines into role-facing recommendations,
+// Eight purpose-built agents that COMPOSE the eight engines into role-facing recommendations,
 // every one under human authority. Each agent has the brochure's five-part anatomy:
 //   1. goal        — what it is for
 //   2. perception  — the inputs it reads
@@ -28,7 +28,7 @@ import {
   type EngineId,
 } from "@/lib/ai/engines"
 
-export type AgentId = "policy" | "teacher" | "student" | "governance" | "grievance" | "compliance"
+export type AgentId = "policy" | "teacher" | "student" | "governance" | "grievance" | "compliance" | "parentCommunity" | "inclusion"
 
 export interface AgentSpec {
   id: AgentId
@@ -48,6 +48,8 @@ export const AGENTS: AgentSpec[] = [
   { id: "governance", label: "Governance Agent", goal: "Surface risk in an indicator for an officer.", perception: "An indicator series + optional rules/facts", cognition: ["analytics", "reasoning"], action: "Flags anomalies + derives conclusions", oversight: "The officer investigates and decides", highStakes: false },
   { id: "grievance", label: "Grievance Agent", goal: "Recommend routing and cite the governing policy.", perception: "Grievance facts + a query + corpus", cognition: ["reasoning", "conversational"], action: "Proposes a tier + a cited policy basis", oversight: "The tier officer resolves or escalates", highStakes: false },
   { id: "compliance", label: "Compliance Agent", goal: "Derive compliance findings from school facts.", perception: "School facts + compliance rules", cognition: ["reasoning"], action: "Lists findings (RTE/RPwD/DPDP/POCSO)", oversight: "A compliance officer signs off", highStakes: true },
+  { id: "parentCommunity", label: "Parent & Community Agent", goal: "Explain child progress, consent choices and school services to adults in Tamil/English.", perception: "Adult-facing query + consent state + family engagement context", cognition: ["conversational", "languageSpeech"], action: "Drafts a consent-bound parent/community response or IVR script", oversight: "Adult-facing only; never contacts a child directly", highStakes: true },
+  { id: "inclusion", label: "Inclusion Agent", goal: "Support RPwD-21 accommodations without diagnosing a child.", perception: "Declared support needs + IEP context + accessibility rules", cognition: ["reasoning", "personalisation"], action: "Suggests specialist-reviewable accommodations and classroom supports", oversight: "Specialist-in-the-loop for every IEP action; G6-reviewable", highStakes: true },
 ]
 
 export function agentSpec(id: AgentId): AgentSpec {
@@ -124,6 +126,21 @@ export function runComplianceAgent(input: { facts: Record<string, FactValue>; ru
   const findings = r.conclusions.map((c) => c.conclusion)
   const summary = findings.length ? `${findings.length} finding(s): ${findings.join("; ")}.` : "No compliance issues derived."
   return finalise("compliance", summary, r.explanation, r.confidence)
+}
+
+export function runParentCommunityAgent(input: { question: string; corpus: Doc[]; consentGranted: boolean; language?: string }): AgentRecommendation {
+  if (!input.consentGranted) return finalise("parentCommunity", "Consent required before sharing child-specific guidance.", "Provide a non-child-specific service explanation and route the guardian to the consent workflow.", 1)
+  const answer = converse(input.question, input.corpus)
+  const channel = input.language && input.language !== "en" ? ` via ${input.language} IVR/translation review` : ""
+  return finalise("parentCommunity", answer.grounded ? `Draft parent/community response${channel}.` : "No grounded parent response available.", answer.grounded ? `${answer.answer} [${answer.citations.map((c) => c.source).join(", ")}]` : "Human staff must answer from approved material.", answer.grounded ? answer.confidence : 0.5)
+}
+
+export function runInclusionAgent(input: { facts: Record<string, FactValue>; rules: Rule[]; mastery?: Record<string, number>; syllabus?: Objective[] }): AgentRecommendation {
+  const support = reason({ facts: input.facts, rules: input.rules })
+  const path = input.mastery && input.syllabus ? personalise({ mastery: input.mastery, syllabus: input.syllabus }) : null
+  const supports = support.conclusions.map((c) => c.conclusion).join("; ") || "No automatic support conclusion."
+  const next = path?.recommendations[0]?.label ? ` Next accessible objective: ${path.recommendations[0].label}.` : ""
+  return finalise("inclusion", "Specialist-reviewable accommodation suggestions prepared.", `${supports}.${next} This is support only, never a diagnosis.`, Math.min(support.confidence || 0.6, path?.confidence ?? 1))
 }
 
 export const AGENT_COUNT = AGENTS.length

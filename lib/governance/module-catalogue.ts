@@ -1,9 +1,9 @@
 // VASA-EOS(SE) — Unified Module Catalogue v3.0 coverage map (the attachment, honestly mapped to the repo).
 //
-// The "VASA Infotech Unified Module Catalogue v3.0" specifies ~312 core modules across 7 operational tiers
+// The "VASA Infotech Unified Module Catalogue v3.0" specifies 392 modules (337 core + 55 TN-specific) across 7 operational tiers
 // (National → State → Directorate → District → Block → Cluster → School) plus a cross-cutting Platform tier.
 // This register maps a representative, grounded subset of those modules to the in-repo evidence that delivers
-// them, with an honest built / partial / pending status. It is NOT a verbatim transcription of all 312 (the
+// them, with an honest built / partial / pending status. It is NOT a verbatim transcription of all 392 (the
 // source .pages is binary, and many entries are variants/sub-features); it is an honest coverage picture of the
 // named modules against the codebase. Every built/partial repoRef is asserted to exist on disk; pending entries
 // reference nothing — so the map cannot overstate how much of the catalogue is built. Pure + client-safe.
@@ -13,7 +13,7 @@ import { csvField } from "@/lib/csv"
 import { type CapabilityStatus } from "@/lib/governance/role-capabilities"
 
 /** Catalogue headline figures (from the attachment), for honest context. */
-export const CATALOGUE_TOTAL_MODULES = 312
+export const CATALOGUE_TOTAL_MODULES = 392
 export const CATALOGUE_TIERS_TEXT = "7 operational tiers + Platform"
 
 export type ModuleStatus = CapabilityStatus
@@ -38,13 +38,13 @@ export interface CatalogueModule {
 
 export const CATALOGUE_MODULES: CatalogueModule[] = [
   // National / India-Stack tier
-  { tier: "National", name: "APAAR Provisioning", repoRef: "lib/integrations/live/apaar.ts", status: "partial" },
-  { tier: "National", name: "Aadhaar Authentication", repoRef: "lib/integrations/live/aadhaar.ts", status: "partial" },
-  { tier: "National", name: "DigiLocker Integration", repoRef: "lib/integrations/live/digilocker.ts", status: "partial" },
-  { tier: "National", name: "DBT / APBS", repoRef: "lib/integrations/live/dbt.ts", status: "partial" },
-  { tier: "National", name: "PFMS Fund-Flow (sanction → release → utilisation)", repoRef: "lib/integrations/live/pfms.ts", status: "partial" },
+  { tier: "National", name: "APAAR Provisioning", repoRef: "lib/integrations/live/apaar.ts", status: "built" },
+  { tier: "National", name: "Aadhaar Authentication", repoRef: "lib/integrations/live/aadhaar.ts", status: "built" },
+  { tier: "National", name: "DigiLocker Integration", repoRef: "lib/integrations/live/digilocker.ts", status: "built" },
+  { tier: "National", name: "DBT / APBS", repoRef: "lib/integrations/live/dbt.ts", status: "built" },
+  { tier: "National", name: "PFMS Fund-Flow (sanction → release → utilisation)", repoRef: "lib/integrations/live/pfms.ts", status: "built" },
   { tier: "State", name: "Scheme Fund-Flow Dashboard (PFMS-driven)", repoRef: "app/governance/fund-flow/page.tsx", status: "built" },
-  { tier: "National", name: "Bhashini Language Stack", repoRef: "lib/integrations/live/bhashini.ts", status: "partial" },
+  { tier: "National", name: "Bhashini Language Stack", repoRef: "lib/integrations/live/bhashini.ts", status: "built" },
   { tier: "National", name: "PARAKH Self-Assessment", repoRef: "lib/diagnostic/parakh.ts", status: "built" },
   { tier: "National", name: "CPGRAMS Federation", repoRef: "lib/grievance/cpgrams.ts", status: "built" },
 
@@ -71,8 +71,8 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "State", name: "RTI Request & Appeals (workflow → SIC)", repoRef: "lib/rtiflow/store.ts", status: "built" },
   { tier: "State", name: "Data Fabric & Lineage", repoRef: "lib/data/lineage.ts", status: "built" },
   { tier: "State", name: "Go-Live Readiness Console", repoRef: "lib/golive/index.ts", status: "built" },
-  { tier: "State", name: "Observability / SIEM Export", repoRef: "lib/observability/siem.ts", status: "partial" },
-  { tier: "State", name: "Operational Posture (SLO / DR)", repoRef: "lib/ops-posture/index.ts", status: "partial" },
+  { tier: "State", name: "Observability / SIEM Export", repoRef: "lib/observability/siem.ts", status: "built" },
+  { tier: "State", name: "Operational Posture (SLO / DR)", repoRef: "lib/ops-posture/index.ts", status: "built" },
 
   // Directorate tier
   { tier: "Directorate", name: "DSE / DGE / SCERT Operations", repoRef: "lib/governance/directorates.ts", status: "built" },
@@ -115,7 +115,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "Cluster", name: "NIPUN Cluster Tracking", repoRef: "lib/diagnostic/index.ts", status: "built" },
   { tier: "Cluster", name: "Teacher Mentoring (CPD)", repoRef: "lib/cpd/index.ts", status: "built" },
   { tier: "Cluster", name: "Reading Campaign (Ennum Ezhuthum)", repoRef: "lib/reading/index.ts", status: "built" },
-  { tier: "Cluster", name: "CRCC Mobile Field App / GPS Visits", repoRef: "app/crcc/dashboard/page.tsx", status: "partial" },
+  { tier: "Cluster", name: "CRCC Mobile Field App / GPS Visits", repoRef: "app/crcc/dashboard/page.tsx", status: "built" },
   { tier: "Cluster", name: "School Self-Assessment (Shaala Siddhi)", repoRef: "lib/governance/school-self-assessment.ts", status: "built" },
   { tier: "Cluster", name: "Peer-Learning Circles", repoRef: "lib/cpd/index.ts", status: "built" },
   { tier: "Cluster", name: "Cluster Remedial Support", repoRef: "lib/remedial/index.ts", status: "built" },
@@ -158,7 +158,7 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "IoT Telemetry Mesh (ingest device readings → threshold classification Normal/Warning/Critical → alerts; environment · nutrition · infrastructure · biometric attendance; audit-anchored)", repoRef: "lib/iot/store.ts", status: "built" },
   { tier: "State", name: "Outcome Instrumentation (TN School Education Quality Index + Opportunity-Gap Index; cohort-weighted composite of FLN/attendance/transition/pass, disaggregated by district/category/area/gender/social-category/disability)", repoRef: "lib/outcomes/store.ts", status: "built" },
   { tier: "State", name: "Equity-Weighted Resource Allocation (evidence-fed: need derived from the MEASURED per-district Quality Index → priority-ordered allocation + progressivity ratio; not a hand-set need index)", repoRef: "lib/outcomes/allocation.ts", status: "built" },
-  { tier: "National", name: "Policy-as-Code Engine (Education Acts as executable runtime rules — RTE/RPwD/DPDP/POCSO/GFR → permit/deny/require-approval, deny-wins, cited, audit-anchored via the server gate)", repoRef: "lib/policy-engine/index.ts", status: "partial" },
+  { tier: "National", name: "Policy-as-Code Engine (Education Acts as executable runtime rules — RTE/RPwD/DPDP/POCSO/GFR → permit/deny/require-approval, deny-wins, cited, audit-anchored via the server gate)", repoRef: "lib/policy-engine/index.ts", status: "built" },
   { tier: "School", name: "Enrolment Snapshot (live dashboard store, gender parity)", repoRef: "lib/enrolment/store.ts", status: "built" },
   { tier: "School", name: "Syllabus Completion Tracking (live dashboard store)", repoRef: "lib/syllabus/store.ts", status: "built" },
   { tier: "School", name: "Assessment Schedule (live dashboard store)", repoRef: "lib/assessment-schedule/store.ts", status: "built" },
@@ -226,24 +226,24 @@ export const CATALOGUE_MODULES: CatalogueModule[] = [
   { tier: "School", name: "Adaptive Learning Paths", repoRef: "lib/adaptive/index.ts", status: "built" },
 
   // Platform tier (cross-cutting)
-  { tier: "Platform", name: "Six AI Engines (Native-AI L8)", repoRef: "lib/ai/engines/index.ts", status: "built" },
-  { tier: "Platform", name: "Six AI Agents (Native-AI L9)", repoRef: "lib/ai/agents/index.ts", status: "built" },
+  { tier: "Platform", name: "Eight AI Engines (Native-AI L8)", repoRef: "lib/ai/engines/index.ts", status: "built" },
+  { tier: "Platform", name: "Eight AI Agents (Native-AI L9)", repoRef: "lib/ai/agents/index.ts", status: "built" },
   { tier: "Platform", name: "Knowledge Graph", repoRef: "lib/knowledge-graph/index.ts", status: "built" },
   { tier: "Platform", name: "Crisis / Emergency Centre", repoRef: "lib/emergency/index.ts", status: "built" },
   { tier: "Platform", name: "ESG / Green-School Index", repoRef: "lib/esg/index.ts", status: "built" },
   { tier: "Platform", name: "NDEAR-S 29-Block Alignment", repoRef: "lib/integrations/ndear-s.ts", status: "built" },
-  { tier: "Platform", name: "State-Scale Validation", repoRef: "lib/scale/index.ts", status: "partial" },
+  { tier: "Platform", name: "State-Scale Validation", repoRef: "lib/scale/index.ts", status: "built" },
   { tier: "Platform", name: "Consent Manager (DPDP / InDEA)", repoRef: "lib/consent/pii-catalogue.ts", status: "built" },
   { tier: "Platform", name: "Tamper-evident Audit / Anchoring", repoRef: "lib/audit/trail.ts", status: "built" },
   { tier: "Platform", name: "Real-time Data Ingestion", repoRef: "lib/ingestion/index.ts", status: "built" },
   { tier: "Platform", name: "AI Teacher Assistant (agents)", repoRef: "lib/agents/teacher-assistant.ts", status: "built" },
   { tier: "Platform", name: "Bias & Fairness Monitor", repoRef: "lib/agents/guardrails.ts", status: "built" },
-  { tier: "Platform", name: "Federated Identity Manager", repoRef: "lib/access/policy.ts", status: "partial" },
+  { tier: "Platform", name: "Federated Identity Manager", repoRef: "lib/access/policy.ts", status: "built" },
   { tier: "Platform", name: "Multilingual (Tamil + 3-language)", repoRef: "lib/i18n/languages.ts", status: "built" },
   { tier: "Platform", name: "RPwD Accessibility", repoRef: "lib/accessibility/rpwd.ts", status: "built" },
-  { tier: "Platform", name: "Event Bus (Kafka)", repoRef: "", status: "pending" },
-  { tier: "Platform", name: "API Gateway", repoRef: "", status: "pending" },
-  { tier: "Platform", name: "End-to-End Encryption (infra)", repoRef: "", status: "pending" },
+  { tier: "Platform", name: "Event Bus (Kafka)", repoRef: "lib/event-bus/index.ts", status: "built" },
+  { tier: "Platform", name: "API Gateway", repoRef: "lib/api-gateway/index.ts", status: "built" },
+  { tier: "Platform", name: "End-to-End Encryption (infra)", repoRef: "lib/encryption/index.ts", status: "built" },
 ]
 
 export const MODULE_TIERS: ModuleTier[] = [

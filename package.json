@@ -12,7 +12,20 @@
     "test:coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --experimental-test-coverage --test-coverage-exclude='tests/**' --test-coverage-exclude='scripts/**' --test-coverage-exclude='lib/supabase/**' --test-coverage-lines=95 --test-coverage-branches=80 --test-coverage-functions=88 --import ./scripts/test-register.mjs --test tests/*.test.ts",
     "db:seed:users": "tsx scripts/seed-users.ts",
     "db:seed:auth": "tsx scripts/seed-auth-users.ts",
-    "db:verify": "tsx scripts/verify-schema.ts"
+    "db:verify": "tsx scripts/verify-schema.ts",
+    "seed:schemes": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-schemes.ts",
+    "seed:ml": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/seed-ml.ts",
+    "migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/migrations/run.ts",
+    "migrate:status": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/migrations/run.ts status",
+    "production:cutover": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/production-cutover.ts",
+    "validate:env": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/validate-env.ts",
+    "deploy:migrate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/deploy/migrate.ts",
+    "deploy:workers": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/deploy/workers.ts",
+    "deploy:verify": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types scripts/deploy/verify.ts",
+    "governance:acceptance-pack": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/governance/acceptance-pack.ts",
+    "governance:functional-coverage": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/governance/functional-coverage.ts",
+    "deploy:all": "npm run deploy:migrate && npm run deploy:workers && npm run deploy:verify",
+    "governance:verify-acceptance": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --import ./scripts/test-register.mjs scripts/governance/verify-acceptance-manifest.ts"
   },
   "pnpm": {
     "allowed-build-scripts": [

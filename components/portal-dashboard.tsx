@@ -15,6 +15,12 @@ export interface KpiTile {
 /** A portal module entry — either a plain label or a clickable link to a real route. */
 export type ModuleEntry = string | { label: string; href: string }
 
+export interface DashboardSignal {
+  label: string
+  value: string
+  tone?: "good" | "watch" | "risk" | "neutral"
+}
+
 export interface PortalDashboardProps {
   title: string
   description: string
@@ -23,13 +29,25 @@ export interface PortalDashboardProps {
   kpis: KpiTile[]
   /** Module entries surfaced for this portal (label, or {label, href} to navigate). */
   modules: ModuleEntry[]
+  /** Live operational signals derived by the page-level data adapter. */
+  signals?: DashboardSignal[]
+  /** Names the runtime datasets/stores that fed the page. */
+  sourceSummary?: string
+  /** Non-fatal source failures. The dashboard stays available but never presents unavailable data as healthy. */
+  sourceWarnings?: string[]
   children?: React.ReactNode
 }
 
-// Presentational starter dashboard shared by the stakeholder portals. Server-safe
-// (no client hooks). KPI values are illustrative placeholders until each portal's
-// modules are wired to live data via the integration adapters.
-export function PortalDashboard({ title, description, tierLabel, kpis, modules, children }: PortalDashboardProps) {
+const SIGNAL_TONE: Record<NonNullable<DashboardSignal["tone"]>, string> = {
+  good: "border-green-200 bg-green-50 text-green-800",
+  watch: "border-amber-200 bg-amber-50 text-amber-800",
+  risk: "border-red-200 bg-red-50 text-red-800",
+  neutral: "border-slate-200 bg-slate-50 text-slate-800",
+}
+
+// Shared stakeholder portal shell. Server-safe (no client hooks). KPI values and
+// operational signals are supplied by page-level live-data adapters.
+export function PortalDashboard({ title, description, tierLabel, kpis, modules, signals = [], sourceSummary, sourceWarnings = [], children }: PortalDashboardProps) {
   return (
     <Shell>
       <PageHeader>
@@ -53,6 +71,43 @@ export function PortalDashboard({ title, description, tierLabel, kpis, modules, 
           </Card>
         ))}
       </div>
+
+      {sourceSummary ? (
+        <Card className="mb-6 border-blue-100 bg-blue-50/60">
+          <CardContent className="pt-4 text-sm text-blue-900">
+            <span className="font-medium">Live data binding:</span> {sourceSummary}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {sourceWarnings.length ? (
+        <Card className="mb-6 border-amber-300 bg-amber-50" role="status" aria-live="polite">
+          <CardHeader className="pb-2"><CardTitle className="text-base text-amber-950">Data-source degradation</CardTitle></CardHeader>
+          <CardContent>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-amber-950">
+              {sourceWarnings.map((warning) => <li key={warning}>{warning}</li>)}
+            </ul>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {signals.length ? (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Live Signals</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {signals.map((signal) => (
+                <div key={`${signal.label}-${signal.value}`} className={`rounded-md border px-3 py-2 text-sm ${SIGNAL_TONE[signal.tone ?? "neutral"]}`}>
+                  <div className="text-xs font-medium opacity-80">{signal.label}</div>
+                  <div className="font-semibold">{signal.value}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
