@@ -1,0 +1,29 @@
+groups:
+  - name: vasa-slo-burn-rate
+    rules:
+      - alert: VasaHighErrorBudgetBurn
+        expr: sum(rate(http_requests_total{job="vasa-app",status=~"5.."}[5m])) / sum(rate(http_requests_total{job="vasa-app"}[5m])) > 0.02
+        for: 10m
+        labels:
+          severity: page
+          sovereign_owner: tn-sdc
+        annotations:
+          summary: VASA app is burning error budget too quickly
+          description: More than 2% of app requests are failing over 10 minutes.
+      - alert: VasaWorkerHeartbeatStale
+        expr: time() - max(vasa_worker_heartbeat_timestamp_seconds{worker=~"outbox|sla|reconciliation"}) by (worker) > 120
+        for: 2m
+        labels:
+          severity: page
+          sovereign_owner: tn-sdc
+        annotations:
+          summary: Critical VASA worker heartbeat is stale
+          description: Worker {{ $labels.worker }} has not reported a heartbeat within 2 minutes.
+      - alert: VasaOutboxBacklogGrowing
+        expr: increase(vasa_outbox_pending_total[15m]) > 100
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: VASA outbox backlog is growing
+          description: Pending domain events increased by more than 100 in 15 minutes.

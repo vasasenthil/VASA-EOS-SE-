@@ -9,13 +9,15 @@ import {
   projectPolicy,
   analyse,
   converse,
+  planLanguageSpeech,
+  earlyWarningSignal,
 } from "@/lib/ai/engines"
 
-test("the registry exposes exactly six engines, all advisory", () => {
-  assert.equal(ENGINE_COUNT, 6)
+test("the registry exposes exactly eight engines, all advisory", () => {
+  assert.equal(ENGINE_COUNT, 8)
   assert.deepEqual(
     ENGINES.map((e) => e.id).sort(),
-    ["analytics", "assessment", "conversational", "personalisation", "policy", "reasoning"],
+    ["analytics", "assessment", "conversational", "languageSpeech", "personalisation", "policy", "prediction", "reasoning"],
   )
 })
 
@@ -90,4 +92,24 @@ test("Conversational: grounded answer with citations, honest when nothing matche
   const none = converse("quantum chromodynamics", corpus)
   assert.equal(none.grounded, false)
   assert.equal(none.citations.length, 0)
+})
+
+test("Language & Speech engine blocks minor voice biometrics and routes dialect review", () => {
+  const blocked = planLanguageSpeech({ task: "asr", sourceLanguage: "ta", containsMinorVoice: true, content: "student voice" })
+  assert.equal(blocked.allowed, false)
+  assert.equal(blocked.route, "blocked")
+  assert.match(blocked.guardrail, /no facial, voice or gait biometric capture/)
+
+  const reviewed = planLanguageSpeech({ task: "translate", sourceLanguage: "ta", targetLanguage: "en", dialect: "madurai", content: "பெற்றோர் செய்தி" })
+  assert.equal(reviewed.allowed, true)
+  assert.equal(reviewed.route, "human-review")
+  assert.match(reviewed.guardrail, /Dialect accuracy/)
+})
+
+test("Prediction engine is advisory and always routes early-warning alerts to a named human", () => {
+  const signal = earlyWarningSignal({ attendancePct: 40, assessmentAverage: 28, assignmentCompletionPct: 35, consecutiveAbsences: 10, namedHumanOwner: "Class Teacher T-102" })
+  assert.equal(signal.risk, "High")
+  assert.equal(signal.routedTo, "Class Teacher T-102")
+  assert.equal(signal.action, "counsellor-review")
+  assert.match(signal.guardrail, /Prediction is advisory only/)
 })
