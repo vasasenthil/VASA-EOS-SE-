@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import {
   Users,
   GraduationCap,
@@ -46,6 +47,11 @@ import { summarise as summariseCompliance } from "@/lib/compliance/checklist"
 import { summarise as summariseSyllabus } from "@/lib/syllabus"
 import { currentStep } from "@/lib/workflow"
 import { MAINTENANCE_WORKFLOW } from "@/lib/workflow/definitions"
+import { getSession } from "@/lib/auth/session"
+import { buildSchoolOperationsReport } from "@/lib/principal/operations-centre"
+import { PrincipalAutoRefresh } from "@/components/principal/auto-refresh"
+
+export const dynamic = "force-dynamic"
 
 // --- School Operational Data (Module 70.4) ---
 // Note: every data block on this dashboard — the four headline KPIs, class attendance,
@@ -86,6 +92,11 @@ function RiskBadge({ risk }: { risk: string }) {
 }
 
 export default async function PrincipalDashboardPage() {
+  const session = await getSession()
+  if (!session) redirect("/login")
+  if (!session.roles.some((role) => ["PRINCIPAL", "HEADMASTER", "ADMIN"].includes(role))) redirect("/unauthorized")
+  const schoolId = session.tenant.schoolId
+  if (!schoolId) redirect("/unauthorized")
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     year: "numeric",
@@ -99,14 +110,14 @@ export default async function PrincipalDashboardPage() {
   const [tickets, resolutions, attendanceRows, feeSnapshot, presence, enrolment, dropoutRisk, complianceItems, syllabusCompletion, upcomingAssessments, notices] = await Promise.all([
     listTicketFlowsAction(),
     listResolutionsAction(),
-    listClassAttendanceAction(),
-    latestFeeCollectionAction(),
-    latestTeacherPresenceAction(),
-    latestEnrolmentAction(),
-    listDropoutRiskAction(),
-    listComplianceAction(),
-    listSyllabusAction(),
-    listAssessmentsAction(),
+    listClassAttendanceAction(schoolId),
+    latestFeeCollectionAction(schoolId),
+    latestTeacherPresenceAction(schoolId),
+    latestEnrolmentAction(schoolId),
+    listDropoutRiskAction(schoolId),
+    listComplianceAction(schoolId),
+    listSyllabusAction(schoolId),
+    listAssessmentsAction(schoolId),
     listNoticesAction(),
   ])
   const complianceSummary = summariseCompliance(complianceItems)
@@ -117,6 +128,21 @@ export default async function PrincipalDashboardPage() {
   const adoptedResolutions = resolutions.filter((r) => r.instance.status === "approved").length
   const att = rollup(attendanceRows)
   const fee = feeSnapshot ? viewFor(feeSnapshot) : null
+  const operationsReport = buildSchoolOperationsReport({
+    students: enrolment?.total ?? null,
+    teachersPresent: presence?.present ?? null,
+    teachersTotal: presence?.total ?? null,
+    attendancePct: att.pct,
+    feeCollectionPct: fee?.collectedPct ?? null,
+    dropoutRisk: dropoutRisk.length,
+    highDropoutRisk: dropoutRisk.filter((row) => row.assessment.band === "High").length,
+    compliancePct: complianceSummary.pct,
+    complianceOverdue: complianceSummary.overdue,
+    syllabusPct: syllabusSummary.avgPct,
+    openMaintenance: openTickets.length,
+    pendingSmcResolutions: pendingResolutions,
+    upcomingAssessments: upcomingAssessments.length,
+  }, schoolId)
 
   // KPI cards: all four headline figures are live from durable stores.
   const kpiStats = [
@@ -133,18 +159,22 @@ export default async function PrincipalDashboardPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Principal&apos;s Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Govt. Higher Secondary School, Chennai · {today}
+            School tenant {schoolId} · {today}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/principal/announcements">
             <Bell className="h-4 w-4 mr-1" /> Announcements
+            </Link>
           </Button>
-          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white"><a href="/api/principal/operations-centre/report?format=csv" download>
             <BarChart3 className="h-4 w-4 mr-1" /> Reports
-          </Button>
+          </a></Button>
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2"><PrincipalAutoRefresh /><span className="text-xs text-muted-foreground">Server report: {new Date(operationsReport.generatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST</span></div>
 
       {/* School KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -159,6 +189,11 @@ export default async function PrincipalDashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card><CardHeader><CardTitle className="text-base">Principal intervention queue</CardTitle><CardDescription>Deterministic school-operation alerts; decisions remain with accountable staff.</CardDescription></CardHeader><CardContent className="space-y-2">{operationsReport.interventions.length === 0 ? <p className="text-sm text-muted-foreground">No threshold-based intervention is currently raised.</p> : operationsReport.interventions.map((item) => <Link key={item.id} href={item.href} className="block rounded-lg border p-3 hover:bg-muted"><div className="flex items-center justify-between gap-2"><p className="text-sm font-medium">{item.title}</p><Badge variant={item.severity === "critical" ? "destructive" : item.severity === "high" ? "default" : "secondary"}>{item.severity}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{item.detail}</p></Link>)}</CardContent></Card>
+        <Card><CardHeader><CardTitle className="text-base">Whole-school operating readiness</CardTitle><CardDescription>Derived only from the school-scoped stores shown on this page.</CardDescription></CardHeader><CardContent className="space-y-3">{operationsReport.readiness.map((item) => <Link key={item.domain} href={item.href} className="block"><div className="mb-1 flex justify-between text-xs"><span>{item.domain}</span><span className="font-medium">{item.score}%</span></div><Progress value={item.score} className="h-2" /></Link>)}</CardContent></Card>
       </div>
 
       {/* Quick Actions — initiate a real, audited workflow */}

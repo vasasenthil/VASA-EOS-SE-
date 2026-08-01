@@ -3,6 +3,8 @@
 import { unstable_noStore as noStore, revalidatePath } from "next/cache"
 import { createClient, isSupabaseAdminConfigured, isDemoModeEnabled } from "@/lib/supabase/server"
 import { schemeDemoData } from "@/lib/schemes/demo"
+import { getScheme as getRuntimeScheme, listSchemes as listRuntimeSchemes } from "@/lib/stores/scheme-store"
+import type { Scheme as RuntimeScheme } from "@/lib/schemes/schemas"
 import { hasPermission } from "@/app/governance/rbac" // Ensure this file is correct
 import { PERMISSIONS } from "@/app/governance/types" // Ensure this file is correct (no "use server")
 import { getSupabaseAuthUser } from "@/lib/auth/server"
@@ -24,14 +26,54 @@ import {
   type SchemeStatus,
 } from "./types" // This is app/schemes/types.ts and must NOT have "use server"
 
+
+function runtimeStatusToUi(status: RuntimeScheme["status"]): SchemeStatus {
+  if (status === "active") return "Active"
+  if (status === "closed") return "Completed"
+  if (status === "suspended") return "Inactive"
+  if (status === "draft") return "Proposed"
+  return "Proposed"
+}
+
+function runtimeSchemeToUi(s: RuntimeScheme): Scheme {
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description,
+    objectives: s.expectedOutcomes.join("\n"),
+    scheme_code: s.id.slice(0, 8).toUpperCase(),
+    category_id: null,
+    issuing_authority_ou_id: null,
+    funding_pattern: s.category.replaceAll("_", " "),
+    total_budget: s.budget,
+    budget_year: s.fiscalYear,
+    start_date: s.timeline.startDate ?? s.createdAt,
+    end_date: s.timeline.endDate ?? null,
+    status: runtimeStatusToUi(s.status),
+    target_beneficiaries: s.eligibility,
+    eligibility_criteria: s.eligibility,
+    website_url: null,
+    created_by: s.proposedBy,
+    updated_by: null,
+    created_at: s.createdAt,
+    updated_at: s.updatedAt,
+    category: { id: s.category, name: s.category.replaceAll("_", " "), created_at: s.createdAt, updated_at: s.updatedAt },
+    issuing_authority_ou: null,
+    documents: [],
+    applicable_ou_subtypes: [],
+    target_governance_tiers: [],
+  }
+}
+
 const ITEMS_PER_PAGE = 10
 
 // Representative demo result + an "unfiltered first page" test: the demo dataset is shown
 // whenever the live, unfiltered first page comes back empty (no DB, no auth, empty/unseeded
 // DB, or a query error) so the flagship page is never blank in a walkthrough. A genuine
 // filtered/searched query that returns nothing is respected (no demo).
-function schemesDemoResult(): GetSchemesResult {
-  const schemes = schemeDemoData()
+async function schemesDemoResult(): Promise<GetSchemesResult> {
+  const runtime = await listRuntimeSchemes().catch(() => [])
+  const schemes = runtime.length ? runtime.map(runtimeSchemeToUi) : schemeDemoData()
   return { schemes, totalPages: 1, currentPage: 1, totalCount: schemes.length, demo: true }
 }
 
@@ -44,7 +86,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
   noStore()
   // No database configured — demonstrate with representative TN welfare schemes.
   if (isDemoModeEnabled()) {
-    return schemesDemoResult()
+    return await schemesDemoResult()
   }
   try {
   const supabase = await createClient()
@@ -65,7 +107,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
   if (!canView) {
-    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? await schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: 1, totalCount: 0 }
   }
 
   let queryBuilder = supabase.from("schemes").select(
@@ -97,11 +139,11 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
 
   if (error) {
     console.error("Error fetching schemes (returning empty):", error)
-    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? await schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 
   const totalCount = count ?? 0
-  if (totalCount === 0 && isUnfilteredSchemes(params)) return schemesDemoResult()
+  if (totalCount === 0 && isUnfilteredSchemes(params)) return await schemesDemoResult()
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
 
   const schemes =
@@ -118,7 +160,7 @@ export async function getSchemesAction(params: GetSchemesParams): Promise<GetSch
   } catch (e) {
     // Network/DB unreachable (e.g. Supabase paused on a preview) — fail soft to demo.
     console.error("getSchemesAction failed; returning demo result:", e)
-    return isUnfilteredSchemes(params) ? schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
+    return isUnfilteredSchemes(params) ? await schemesDemoResult() : { schemes: [], totalPages: 0, currentPage: params.page ?? 1, totalCount: 0 }
   }
 }
 
@@ -126,7 +168,7 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   noStore()
   // No database — resolve the demo scheme so list -> detail navigation works.
   if (isDemoModeEnabled()) {
-    return schemeDemoData().find((s) => s.id === id) ?? null
+    return (await getRuntimeScheme(id).catch(() => null)) ? runtimeSchemeToUi((await getRuntimeScheme(id))!) : (schemeDemoData().find((s) => s.id === id) ?? null)
   }
   try {
   const supabase = await createClient()
@@ -135,7 +177,7 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   const canView = user
     ? await hasPermission({ userId: user.id, permissionString: PERMISSIONS.POLICY_READ_NATIONAL })
     : false
-  if (!canView) return schemeDemoData().find((s) => s.id === id) ?? null
+  if (!canView) { const runtime = await getRuntimeScheme(id).catch(() => null); return runtime ? runtimeSchemeToUi(runtime) : (schemeDemoData().find((s) => s.id === id) ?? null) }
 
   const { data, error } = await supabase
     .from("schemes")
@@ -163,9 +205,9 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
 
   if (error) {
     console.error(`Error fetching scheme by ID (${id}) — falling back to demo:`, error)
-    return schemeDemoData().find((s) => s.id === id) ?? null
+    return (await getRuntimeScheme(id).catch(() => null)) ? runtimeSchemeToUi((await getRuntimeScheme(id))!) : (schemeDemoData().find((s) => s.id === id) ?? null)
   }
-  if (!data) return schemeDemoData().find((s) => s.id === id) ?? null
+  if (!data) { const runtime = await getRuntimeScheme(id).catch(() => null); return runtime ? runtimeSchemeToUi(runtime) : (schemeDemoData().find((s) => s.id === id) ?? null) }
 
   // Process joins correctly
   const applicable_ou_subtypes =
@@ -197,7 +239,8 @@ export async function getSchemeByIdAction(id: string): Promise<Scheme | null> {
   return scheme
   } catch (e) {
     console.error(`getSchemeByIdAction failed (${id}); returning null:`, e)
-    return null
+    const runtime = await getRuntimeScheme(id).catch(() => null)
+    return runtime ? runtimeSchemeToUi(runtime) : null
   }
 }
 
