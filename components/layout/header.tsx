@@ -15,6 +15,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell"
 import { AccessibilityQuickToggle } from "@/components/accessibility-quick-toggle"
 import { CommandPaletteTrigger } from "@/components/command-palette"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { SettingsButton } from "@/components/settings-button"
 
 interface HeaderUserData {
   name: string
@@ -88,6 +89,7 @@ export function Header({ userData }: HeaderProps) {
           <CommandPaletteTrigger />
           <LanguageSwitcher />
           <AccessibilityQuickToggle />
+          <SettingsButton />
           <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
