@@ -1,19 +1,15 @@
 "use client"
 
+import Link from "next/link"
 import { Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-// Placeholder component to resolve deployment error.
-// TODO: Implement actual settings functionality.
 export const SettingsButton = () => {
-  const onClick = () => {
-    // In a real implementation, this would likely open a settings modal or navigate to a settings page.
-    console.log("Settings button clicked. Implement functionality.")
-  }
-
   return (
-    <Button variant="ghost" size="icon" onClick={onClick}>
-      <Settings />
+    <Button asChild variant="ghost" size="icon" className="h-10 w-10 rounded-full">
+      <Link href="/settings" aria-label="Personal settings">
+        <Settings className="h-5 w-5" />
+      </Link>
     </Button>
   )
 }

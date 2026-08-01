@@ -7,6 +7,7 @@
 // uses an in-memory store (per server instance) so demo/CI works without a DB.
 
 import { getDb } from "@/lib/persistence"
+import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { incr } from "@/lib/metrics"
 
 export interface AuditEntry {
@@ -18,6 +19,17 @@ export interface AuditEntry {
   details?: Record<string, unknown>
   prevHash: string
   hash: string
+}
+
+export interface AuditAnchorProof {
+  ledger: "permissioned-ledger-anchor"
+  generatedAt: string
+  fromSeq: number
+  toSeq: number
+  entryCount: number
+  rootHash: string
+  anchorHash: string
+  verificationStatus: "verified" | "broken-chain"
 }
 
 // Pure, dependency-free string hash (FNV-1a, 32-bit hex) — safe in any runtime.
@@ -55,6 +67,7 @@ function bodyFor(e: {
 
 // ---- in-memory fallback store ----
 const trail: AuditEntry[] = []
+function allowMemory(): void { assertNonProductionMemoryAdapter("audit-trail") }
 
 interface AuditRow {
   seq: number
@@ -114,6 +127,7 @@ export async function appendAudit(input: {
     return entry
   }
 
+  allowMemory()
   const prev = trail[trail.length - 1]
   const prevHash = prev ? prev.hash : GENESIS
   const seq = trail.length + 1
@@ -128,12 +142,11 @@ export async function getTrail(): Promise<AuditEntry[]> {
     const { data } = await db.from("audit_trail").select("*").order("seq", { ascending: true })
     return ((data as AuditRow[] | null) ?? []).map(fromRow)
   }
+  allowMemory()
   return [...trail]
 }
 
-/** Recompute the chain; returns false if any entry was tampered with. */
-export async function verifyTrail(): Promise<boolean> {
-  const entries = await getTrail()
+function verifyEntries(entries: AuditEntry[]): boolean {
   let prevHash = GENESIS
   for (const e of entries) {
     const recomputed = hash(bodyFor({ ...e, prevHash }))
@@ -141,4 +154,35 @@ export async function verifyTrail(): Promise<boolean> {
     prevHash = e.hash
   }
   return true
+}
+
+/** Recompute the chain; returns false if any entry was tampered with. */
+export async function verifyTrail(): Promise<boolean> {
+  return verifyEntries(await getTrail())
+}
+
+function rootHashFor(entries: AuditEntry[]): string {
+  return entries.reduce((root, entry) => hash(`${root}:${entry.seq}:${entry.hash}`), GENESIS)
+}
+
+export function buildAuditAnchorProof(entries: AuditEntry[], generatedAt = new Date().toISOString()): AuditAnchorProof {
+  const first = entries[0]?.seq ?? 0
+  const last = entries[entries.length - 1]?.seq ?? 0
+  const rootHash = rootHashFor(entries)
+  const verificationStatus = verifyEntries(entries) ? "verified" : "broken-chain"
+  const anchorBody = JSON.stringify({ ledger: "permissioned-ledger-anchor", fromSeq: first, toSeq: last, entryCount: entries.length, rootHash, verificationStatus, generatedAt })
+  return {
+    ledger: "permissioned-ledger-anchor",
+    generatedAt,
+    fromSeq: first,
+    toSeq: last,
+    entryCount: entries.length,
+    rootHash,
+    anchorHash: hash(anchorBody),
+    verificationStatus,
+  }
+}
+
+export async function createAuditAnchorProof(generatedAt?: string): Promise<AuditAnchorProof> {
+  return buildAuditAnchorProof(await getTrail(), generatedAt)
 }
