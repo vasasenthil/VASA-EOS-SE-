@@ -1,0 +1,16 @@
+{
+  "migrations": [
+    { "id": "001_outbox_schema", "path": "lib/events/outbox-schema.sql" },
+    { "id": "002_outbox_dead_letters", "path": "lib/events/rpc/dead_letters.sql" },
+    { "id": "003_rpc_insert_with_outbox", "path": "lib/events/rpc/insert_with_outbox.sql" },
+    { "id": "004_rpc_update_with_outbox", "path": "lib/events/rpc/update_with_outbox.sql" },
+    { "id": "004a_rpc_generic_atomic", "path": "lib/events/rpc/generic_atomic.sql" },
+    { "id": "005_rpc_scholarship_file", "path": "lib/events/rpc/scholarship_file_with_outbox.sql" },
+    { "id": "006_rpc_tc_file", "path": "lib/events/rpc/tc_file_with_outbox.sql" },
+    { "id": "007_workflow_schema", "path": "lib/workflow-runtime/workflow-schema.sql" },
+    { "id": "008_scheme_schema", "path": "lib/schemes/schema.sql" },
+    { "id": "009_rpc_scheme_propose", "path": "lib/events/rpc/scheme_propose_with_outbox.sql" },
+    { "id": "010_ml_schema", "path": "lib/ml/schema.sql" },
+    { "id": "011_governed_configuration", "path": "lib/configuration/schema.sql" }
+  ]
+}
