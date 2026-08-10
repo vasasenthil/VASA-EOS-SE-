@@ -2,6 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import { emptyTimetableEntry, validateTimetable, findClashes, describeClash, queryTimetable, type TimetableEntry, type TimetableInput } from "@/lib/timetable-manager"
 import { listTimetable, getTimetableEntry, createTimetableEntry, updateTimetableEntry, deleteTimetableEntry, seedTimetable } from "@/lib/timetable-manager/store"
@@ -69,10 +70,10 @@ test("store CRUD: create → read → update → delete (DB path)", async () => 
   __setTestDb(undefined)
 })
 
-test("in-memory fallback is seeded; seedTimetable is idempotent", async () => {
-  __setTestDb(null)
-  const before = await listTimetable()
-  assert.ok(before.length >= 6)
+test("seedTimetable writes durable demo rows and missing DB fails closed", async () => {
+  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
   assert.equal(await seedTimetable(), 6)
-  assert.equal((await listTimetable()).length, before.length)
+  assert.equal((await listTimetable()).length, 6)
+  __setTestDb(null)
+  await assert.rejects(() => listTimetable(), ProductionDatabaseError)
 })

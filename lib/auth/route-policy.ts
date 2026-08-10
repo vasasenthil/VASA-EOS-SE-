@@ -1,0 +1,160 @@
+import { existsSync, readFileSync, readdirSync } from "node:fs"
+import path from "node:path"
+
+export type ApiRouteClassification = "public" | "protected" | "unclassified"
+
+export interface ApiRoutePolicyFinding {
+  route: string
+  classification: ApiRouteClassification
+  reason: string
+}
+
+export interface ApiRoutePolicyReport {
+  ok: boolean
+  total: number
+  protectedRoutes: number
+  publicRoutes: number
+  unguardedProtectedRoutes: ApiRoutePolicyFinding[]
+}
+
+const AUTH_MARKERS = ["requireRole(", "requireAccess(", "CUTOVER_SHARED_SECRET", "getSessionFromRequest(", "getSession()", "getCurrentSession", "SEED_SECRET"] as const
+
+// Governance exports are public only by explicit declaration. Never replace this
+// set with a catch-all pattern: a newly added CSV/Markdown route must default to
+// protected until its fields, cohort suppression and disclosure purpose are reviewed.
+const DECLARED_PUBLIC_GOVERNANCE_EXPORTS = new Set([
+  "app/api/governance/access-matrix/csv/route.ts",
+  "app/api/governance/ai-guardrails/csv/route.ts",
+  "app/api/governance/ai-register/csv/route.ts",
+  "app/api/governance/ai-transparency/bias-audit/csv/route.ts",
+  "app/api/governance/architecture-layers/csv/route.ts",
+  "app/api/governance/assembly-briefing/csv/route.ts",
+  "app/api/governance/assurance/csv/route.ts",
+  "app/api/governance/background-verification/csv/route.ts",
+  "app/api/governance/board-prep/csv/route.ts",
+  "app/api/governance/brochure-coverage/csv/route.ts",
+  "app/api/governance/budget-priorities/csv/route.ts",
+  "app/api/governance/budget-sanction/csv/route.ts",
+  "app/api/governance/cabinet-note/csv/route.ts",
+  "app/api/governance/cadre-rationalisation/csv/route.ts",
+  "app/api/governance/compliance/csv/route.ts",
+  "app/api/governance/constituency-grievance/csv/route.ts",
+  "app/api/governance/control-tower/csv/route.ts",
+  "app/api/governance/coordination/csv/route.ts",
+  "app/api/governance/cpgrams/csv/route.ts",
+  "app/api/governance/director-capabilities/csv/route.ts",
+  "app/api/governance/directorates/csv/route.ts",
+  "app/api/governance/dpia/markdown/route.ts",
+  "app/api/governance/equity/csv/route.ts",
+  "app/api/governance/exam-integrity/csv/route.ts",
+  "app/api/governance/financial-transparency/csv/route.ts",
+  "app/api/governance/gem-procurement/csv/route.ts",
+  "app/api/governance/go-live/csv/route.ts",
+  "app/api/governance/grants/csv/route.ts",
+  "app/api/governance/green-school/csv/route.ts",
+  "app/api/governance/grievance-disposal/csv/route.ts",
+  "app/api/governance/hostel-allocation/csv/route.ts",
+  "app/api/governance/launch-readiness/csv/route.ts",
+  "app/api/governance/leakage/csv/route.ts",
+  "app/api/governance/legal-cases/csv/route.ts",
+  "app/api/governance/mental-health/csv/route.ts",
+  "app/api/governance/minister-capabilities/csv/route.ts",
+  "app/api/governance/module-catalogue/csv/route.ts",
+  "app/api/governance/ndear-s/csv/route.ts",
+  "app/api/governance/ndear/csv/route.ts",
+  "app/api/governance/npst/csv/route.ts",
+  "app/api/governance/operations-efficiency/csv/route.ts",
+  "app/api/governance/oversight/csv/route.ts",
+  "app/api/governance/parakh/csv/route.ts",
+  "app/api/governance/pii-catalogue/csv/route.ts",
+  "app/api/governance/principal-capabilities/csv/route.ts",
+  "app/api/governance/public-communication/csv/route.ts",
+  "app/api/governance/recognition-oversight/csv/route.ts",
+  "app/api/governance/regulatory/csv/route.ts",
+  "app/api/governance/resource-allocation/csv/route.ts",
+  "app/api/governance/retention/csv/route.ts",
+  "app/api/governance/rte-entitlements/csv/route.ts",
+  "app/api/governance/safeguarding/csv/route.ts",
+  "app/api/governance/scheme-launch/csv/route.ts",
+  "app/api/governance/school-self-assessment/csv/route.ts",
+  "app/api/governance/school-welfare-ops/csv/route.ts",
+  "app/api/governance/secretary-capabilities/csv/route.ts",
+  "app/api/governance/source-escrow/csv/route.ts",
+  "app/api/governance/sovereignty/csv/route.ts",
+  "app/api/governance/statutory-reports/csv/route.ts",
+  "app/api/governance/teacher-assistant/csv/route.ts",
+  "app/api/governance/tech-fabric/csv/route.ts",
+  "app/api/governance/tenancy/csv/route.ts",
+  "app/api/governance/threat-model/csv/route.ts",
+  "app/api/governance/tier-coverage/csv/route.ts",
+  "app/api/governance/traceability/csv/route.ts",
+  "app/api/governance/wcag/csv/route.ts",
+])
+
+const PUBLIC_ROUTE_PATTERNS = [
+  /^app\/api\/(health|ready(?:\/schema)?|live|metrics|traces|sbom|glossary|integrations)\/route\.ts$/,
+  /^app\/api\/i18n\/messages\/route\.ts$/,
+  /^app\/api\/(architecture|data-lineage|data-standards|glossary)\/csv\/route\.ts$/,
+  /^app\/api\/accessibility\/.+\/csv\/route\.ts$/,
+  /^app\/api\/ai-agents\/catalogue\/csv\/route\.ts$/,
+  /^app\/api\/ops\/(sli\/csv|runbook\/markdown)\/route\.ts$/,
+]
+
+function normalizeRoute(file: string, rootDir: string): string {
+  return path.relative(rootDir, file).replace(/\\/g, "/")
+}
+
+function walkRouteFiles(dir: string): string[] {
+  if (!existsSync(dir)) return []
+  const out: string[] = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...walkRouteFiles(full))
+    else if (entry.isFile() && entry.name === "route.ts") out.push(full)
+  }
+  return out.sort()
+}
+
+export function classifyApiRoute(route: string): ApiRouteClassification {
+  if (!route.startsWith("app/api/")) return "unclassified"
+  if (DECLARED_PUBLIC_GOVERNANCE_EXPORTS.has(route)) return "public"
+  if (PUBLIC_ROUTE_PATTERNS.some((pattern) => pattern.test(route))) return "public"
+  return "protected"
+}
+
+export function routeHasAuthGuard(source: string): boolean {
+  return AUTH_MARKERS.some((marker) => source.includes(marker))
+}
+
+export function scanApiRoutePolicies(rootDir = process.cwd()): ApiRoutePolicyReport {
+  const routes = walkRouteFiles(path.join(rootDir, "app", "api"))
+  const findings: ApiRoutePolicyFinding[] = []
+  let protectedRoutes = 0
+  let publicRoutes = 0
+
+  for (const file of routes) {
+    const route = normalizeRoute(file, rootDir)
+    const classification = classifyApiRoute(route)
+    if (classification === "public") {
+      publicRoutes += 1
+      continue
+    }
+    if (classification === "protected") {
+      protectedRoutes += 1
+      const source = readFileSync(file, "utf8")
+      if (!routeHasAuthGuard(source)) {
+        findings.push({ route, classification, reason: "Protected API route has no recognized auth guard marker." })
+      }
+      continue
+    }
+    findings.push({ route, classification, reason: "API route is not covered by a route policy pattern." })
+  }
+
+  return {
+    ok: findings.length === 0,
+    total: routes.length,
+    protectedRoutes,
+    publicRoutes,
+    unguardedProtectedRoutes: findings,
+  }
+}

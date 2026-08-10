@@ -4,6 +4,7 @@
 //   from(t).select("*").eq(c, v).maybeSingle()
 //   from(t).select("*").order(c, { ascending }).limit(n)
 //   from(t).update(row).eq(c, v)
+//   from(t).upsert(row)
 // Terminal builders are thenable, so `await builder` resolves to { data, error }.
 
 type Row = Record<string, unknown>
@@ -18,7 +19,7 @@ function cmp(a: unknown, b: unknown): number {
 }
 
 class FakeQuery implements PromiseLike<Result> {
-  private op: "select" | "insert" | "update" | "delete" = "select"
+  private op: "select" | "insert" | "upsert" | "update" | "delete" = "select"
   private filters: [string, unknown][] = []
   private orderBy: { col: string; ascending: boolean } | null = null
   private limitN: number | null = null
@@ -35,6 +36,11 @@ class FakeQuery implements PromiseLike<Result> {
   }
   insert(payload: Row): this {
     this.op = "insert"
+    this.payload = payload
+    return this
+  }
+  upsert(payload: Row, _opts?: unknown): this {
+    this.op = "upsert"
     this.payload = payload
     return this
   }
@@ -73,6 +79,16 @@ class FakeQuery implements PromiseLike<Result> {
       this.rows.push({ ...(this.payload ?? {}) })
       return { data: null, error: null }
     }
+    if (this.op === "upsert") {
+      const payload = this.payload ?? {}
+      const existing = this.rows.find((r) =>
+        (payload.id !== undefined && r.id === payload.id) ||
+        (payload.scheme_id !== undefined && payload.fiscal_year !== undefined && r.scheme_id === payload.scheme_id && r.fiscal_year === payload.fiscal_year)
+      )
+      if (existing) Object.assign(existing, payload)
+      else this.rows.push({ ...payload })
+      return { data: null, error: null }
+    }
     if (this.op === "update") {
       for (const r of this.rows) if (this.matches(r)) Object.assign(r, this.payload)
       return { data: null, error: null }
@@ -100,6 +116,26 @@ class FakeQuery implements PromiseLike<Result> {
 
 export interface FakeDb {
   from(name: string): FakeQuery
+  rpc(name: string, args?: Record<string, unknown>): Promise<Result>
+}
+
+function outboxRow(event: Row): Row {
+  const now = String(event.occurredAt ?? new Date().toISOString())
+  return {
+    id: event.id,
+    aggregate_type: event.aggregateType,
+    aggregate_id: event.aggregateId,
+    event_type: event.eventType,
+    payload: event.payload,
+    status: "pending",
+    created_at: now,
+    processed_at: null,
+    retry_count: 0,
+    idempotency_key: event.idempotencyKey,
+    locked_at: null,
+    locked_by: null,
+    last_error: null,
+  }
 }
 
 export function makeFakeDb(): FakeDb {
@@ -107,6 +143,46 @@ export function makeFakeDb(): FakeDb {
   return {
     from(name: string): FakeQuery {
       return new FakeQuery((tables[name] ??= []))
+    },
+    async rpc(name: string, args: Record<string, unknown> = {}): Promise<Result> {
+      const outbox = (tables.platform_outbox ??= [])
+      if (name === "platform_commit_outbox_events") {
+        for (const event of (args.events as Row[] | undefined) ?? []) {
+          if (!outbox.some((row) => row.idempotency_key === event.idempotencyKey)) outbox.push(outboxRow(event))
+        }
+        return { data: null, error: null }
+      }
+      if (name === "platform_claim_outbox_batch") {
+        const workerId = args.worker_id
+        const batchSize = Number(args.batch_size ?? 10)
+        const claimed = outbox.filter((row) => row.status === "pending" && !row.locked_by).slice(0, batchSize)
+        for (const row of claimed) {
+          row.locked_by = workerId
+          row.locked_at = new Date().toISOString()
+        }
+        return { data: claimed, error: null }
+      }
+      if (name === "platform_mark_outbox_processed") {
+        const row = outbox.find((item) => item.id === args.event_id)
+        if (row) {
+          row.status = "processed"
+          row.processed_at = new Date().toISOString()
+          row.locked_by = null
+          row.locked_at = null
+        }
+        return { data: null, error: null }
+      }
+      if (name === "platform_mark_outbox_failed") {
+        const row = outbox.find((item) => item.id === args.event_id)
+        if (row) {
+          row.status = "failed"
+          row.last_error = args.error_message
+          row.locked_by = null
+          row.locked_at = null
+        }
+        return { data: null, error: null }
+      }
+      return { data: null, error: null }
     },
   }
 }

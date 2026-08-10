@@ -10,14 +10,16 @@ import {
   runGovernanceAgent,
   runGrievanceAgent,
   runComplianceAgent,
+  runParentCommunityAgent,
+  runInclusionAgent,
 } from "@/lib/ai/agents"
 
-test("there are six agents, each with the full five-part anatomy", () => {
-  assert.equal(AGENT_COUNT, 6)
+test("there are eight agents, each with the full five-part anatomy", () => {
+  assert.equal(AGENT_COUNT, 8)
   for (const a of AGENTS) {
     assert.ok(a.goal && a.perception && a.cognition.length >= 1 && a.action && a.oversight, `${a.id} missing anatomy`)
   }
-  assert.deepEqual(AGENTS.map((a) => a.id).sort(), ["compliance", "governance", "grievance", "policy", "student", "teacher"])
+  assert.deepEqual(AGENTS.map((a) => a.id).sort(), ["compliance", "governance", "grievance", "inclusion", "parentCommunity", "policy", "student", "teacher"])
 })
 
 test("every recommendation is advisory; high-stakes agents always need human approval", () => {
@@ -61,4 +63,18 @@ test("Governance, Student and Grievance agents return grounded, bounded confiden
   const gr = runGrievanceAgent({ facts: { tier: "block" }, rules: [ { id: "b", when: [{ key: "tier", op: "eq", value: "block" }], then: "Block (BEO)", because: "Block-tier grievance" } ], query: "fee refund policy", corpus: [ { id: "d", text: "Fee refunds are processed within 30 days.", source: "Fee-GO" } ] })
   assert.match(gr.summary, /Block/)
   for (const r of [g, s, gr]) assert.ok(r.confidence >= 0 && r.confidence <= 1)
+})
+
+
+test("Parent/community and inclusion agents preserve consent, child-safety and specialist authority", () => {
+  const p = runParentCommunityAgent({ consentGranted: false, question: "progress", corpus: [] })
+  assert.equal(p.requiresHumanApproval, true)
+  assert.match(p.summary, /Consent required/)
+
+  const inc = runInclusionAgent({
+    facts: { needsLargePrint: true },
+    rules: [{ id: "large-print", when: [{ key: "needsLargePrint", op: "eq", value: true }], then: "Provide large-print material", because: "Declared support need" }],
+  })
+  assert.equal(inc.requiresHumanApproval, true)
+  assert.match(inc.detail, /never a diagnosis/)
 })
