@@ -2,6 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import { emptyLessonPlan, validateLessonPlan, parseList, durationMinutes, isValidUrl, queryLessonPlans, type LessonPlan, type LessonPlanInput } from "@/lib/lessonplans"
 import { listLessonPlans, getLessonPlan, createLessonPlan, updateLessonPlan, deleteLessonPlan, seedLessonPlans } from "@/lib/lessonplans/store"
@@ -69,11 +70,11 @@ test("store CRUD: create → read → update → delete (DB path, arrays + notes
   __setTestDb(undefined)
 })
 
-test("in-memory fallback is seeded; seedLessonPlans is idempotent", async () => {
-  __setTestDb(null)
-  const before = await listLessonPlans()
-  assert.ok(before.length >= 3)
+test("seedLessonPlans writes durable demo rows and missing DB fails closed", async () => {
+  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
   const n = await seedLessonPlans()
   assert.equal(n, 3)
-  assert.equal((await listLessonPlans()).length, before.length)
+  assert.equal((await listLessonPlans()).length, 3)
+  __setTestDb(null)
+  await assert.rejects(() => listLessonPlans(), ProductionDatabaseError)
 })
