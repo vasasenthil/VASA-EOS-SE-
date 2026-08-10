@@ -2,6 +2,7 @@ import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import { assessRisk, type RiskFactors } from "@/lib/dropout"
 import { recordDropoutRisk, listDropoutRisk, DEMO_UDISE } from "@/lib/dropout/store"
@@ -46,11 +47,11 @@ test("listing returns the cohort ordered by risk score, highest first (DB path)"
   __setTestDb(undefined)
 })
 
-test("listing is scoped to the requested school and seeded in-memory", async () => {
+test("missing durable DB fails closed for dropout risk", async () => {
   __setTestDb(null)
-  const cohort = await listDropoutRisk(DEMO_UDISE)
-  assert.equal(cohort.length, 4) // demo cohort
-  assert.equal(cohort.filter((c) => c.assessment.band === "High").length, 2)
-  assert.equal(cohort.filter((c) => c.assessment.band === "Medium").length, 2)
-  assert.equal((await listDropoutRisk("00000000000")).length, 0)
+  await assert.rejects(() => listDropoutRisk(DEMO_UDISE), ProductionDatabaseError)
+  await assert.rejects(
+    () => recordDropoutRisk({ name: "No DB", cls: "IX-A", absences: 1, attendancePct: 95, recentScorePct: 70, feeDefault: false, siblingDropout: false }),
+    ProductionDatabaseError,
+  )
 })

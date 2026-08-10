@@ -1,0 +1,3 @@
+import { predictInspectionPriority } from "@/lib/ml/inference/inspection-priority-service"
+import type { InspectionFeatureInput } from "@/lib/ml/features/inspection-features"
+export async function inspectionPriority(input: InspectionFeatureInput): Promise<{ priority:"normal"|"urgent"; score:number; source:"ml"|"deterministic"; predictionId?:string }> { const ml=await predictInspectionPriority(input); if(ml) return { priority: ml.urgent ? "urgent" : "normal", score: ml.confidence, source:"ml", predictionId:ml.predictionId }; const score=(100-input.infrastructureScore)+(100-input.pastInspectionScore)+input.complianceFindings*3+input.safetyIncidents*5; return { priority: score>120?"urgent":"normal", score:Math.min(1,score/200), source:"deterministic" } }

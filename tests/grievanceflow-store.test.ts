@@ -8,6 +8,7 @@ import { GRIEVANCE_ESCALATION } from "@/lib/workflow/definitions"
 import { fileGrievanceFlow, actOnGrievance, getGrievanceFlow, deleteGrievanceFlow, listGrievanceFlows } from "@/lib/grievanceflow/store"
 import { recordEntry, getEntry, deleteEntry, listEntries } from "@/lib/mdm/store"
 import { addBeneficiary, advanceBeneficiary, deleteBeneficiary, listBeneficiaries } from "@/lib/scholarship/store"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 
 const at = "2026-06-06T00:00:00.000Z"
 
@@ -46,7 +47,7 @@ test("mdm: record daily entry, get, delete (DB path) + in-memory", async () => {
   assert.ok((await listEntries()).some((x) => x.id === e2.id))
 })
 
-test("scholarship: add + advance pipeline; seeded ledger in-memory", async () => {
+test("scholarship: add + advance pipeline; missing DB fails closed", async () => {
   const r = await addBeneficiary({ name: "New Student", scheme: "Pudhumai Penn", amount: 12000 })
   assert.equal(r.status, "eligible")
   assert.equal((await advanceBeneficiary(r.id))?.status, "applied")
@@ -55,5 +56,5 @@ test("scholarship: add + advance pipeline; seeded ledger in-memory", async () =>
   assert.equal(await deleteBeneficiary(r.id), true)
 
   __setTestDb(null)
-  assert.ok((await listBeneficiaries()).length >= 6) // seeded demo ledger
+  await assert.rejects(() => listBeneficiaries(), ProductionDatabaseError)
 })
