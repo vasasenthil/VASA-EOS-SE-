@@ -114,3 +114,28 @@ export async function listNotices(): Promise<Notice[]> {
   }
   return [...store]
 }
+
+export interface TeacherNoticeSummary {
+  id: string
+  title: string
+  date: string
+  priority: "high" | "medium" | "low"
+}
+
+function teacherNoticePriority(notice: Notice): TeacherNoticeSummary["priority"] {
+  if (notice.pinned || notice.category === "Urgent") return "high"
+  if (notice.category === "Examination" || notice.category === "Event") return "medium"
+  return "low"
+}
+
+export async function getNoticesForTeacher(_teacherId: string, schoolId?: string): Promise<TeacherNoticeSummary[]> {
+  const notices = await listNotices()
+  return notices
+    .filter((notice) => (notice.audience === "All" || notice.audience === "Staff") && (!schoolId || notice.tenantId === schoolId || notice.tenantId.startsWith("TN-")))
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : 0
+    })
+    .slice(0, 5)
+    .map((notice) => ({ id: notice.id, title: notice.title, date: notice.date, priority: teacherNoticePriority(notice) }))
+}

@@ -141,3 +141,22 @@ export async function seedAssignments(tenantId = DEFAULT_SCHOOL_NODE): Promise<n
   await appendAudit({ actor: "academics", action: "assignment.seed", resource: "assignments", details: { count: rows.length } })
   return rows.length
 }
+
+export interface TeacherAssignmentSummary {
+  pending: number
+  graded: number
+  overdue: number
+}
+
+export async function getTeacherAssignments(teacherId: string, _schoolId?: string): Promise<TeacherAssignmentSummary> {
+  const assignments = await listAssignments()
+  const teacherKey = teacherId.trim().toLowerCase()
+  const scoped = assignments.filter((assignment) => assignment.teacher.toLowerCase().includes(teacherKey))
+  const rows = scoped.length > 0 ? scoped : assignments
+  const today = new Date().toISOString().slice(0, 10)
+  return {
+    pending: rows.filter((assignment) => assignment.status !== "Closed").length,
+    graded: rows.filter((assignment) => assignment.status === "Closed").length,
+    overdue: rows.filter((assignment) => assignment.status === "Assigned" && assignment.dueDate < today).length,
+  }
+}
