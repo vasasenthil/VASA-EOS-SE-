@@ -31,7 +31,9 @@ import { listHomework } from "@/lib/homework/store"
 import { listEntries as listMdm } from "@/lib/mdm/store"
 import { listResults } from "@/lib/sports/store"
 import { listNotices } from "@/lib/notices/store"
-import { listBeneficiaries } from "@/lib/scholarship/store"
+import { addBeneficiary, listBeneficiaries } from "@/lib/scholarship/store"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { makeFakeDb } from "./helpers/fake-db"
 import { listIndents } from "@/lib/textbooks/store"
 import { listLines } from "@/lib/vacancy/store"
 import { listActivities as listBagless } from "@/lib/bagless/store"
@@ -171,10 +173,9 @@ test("ictlab/vocational/homework/mdm/sports seeds are all scopable", async () =>
   }
 })
 
-test("notices/scholarship/textbooks/vacancy/bagless seeds are all scopable", async () => {
+test("notices/textbooks/vacancy/bagless seeds are all scopable", async () => {
   const lists: Array<() => Promise<{ tenantId: string }[]>> = [
     listNotices,
-    listBeneficiaries,
     listIndents,
     listLines,
     listBagless,
@@ -186,6 +187,18 @@ test("notices/scholarship/textbooks/vacancy/bagless seeds are all scopable", asy
     assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).every((r) => r.tenantId !== "TN-CBE-B1-S1"))
   }
 })
+
+
+
+test("scholarship beneficiaries are scopable on the durable DB path", async () => {
+  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
+  await addBeneficiary({ name: "Chennai Student", scheme: "Pudhumai Penn", amount: 12000, tenantId: "TN-CHN-B1-S1" })
+  await addBeneficiary({ name: "Coimbatore Student", scheme: "Pudhumai Penn", amount: 12000, tenantId: "TN-CBE-B1-S1" })
+  const all = await listBeneficiaries()
+  assert.equal(scopeRecords(SCOPE_TENANTS, "TN", all).length, 2)
+  assert.ok(scopeRecords(SCOPE_TENANTS, "TN-CHN", all).every((r) => r.tenantId !== "TN-CBE-B1-S1"))
+})
+
 
 test("new records default to the demo school node when tenantId is omitted", async () => {
   const inc = await logIncident({ student: "Z", type: "Other", severity: "minor", action: "noted" })

@@ -1,0 +1,54 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: vasa-app
+          scrape_interval: 30s
+          metrics_path: /metrics
+          static_configs:
+            - targets: ["vasa-app.vasa-eos-se.svc.cluster.local:80"]
+
+processors:
+  batch: {}
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 512
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: sovereign
+        action: upsert
+      - key: service.namespace
+        value: vasa-eos-se-tn
+        action: upsert
+
+exporters:
+  otlp/siem:
+    endpoint: ${env:SIEM_OTLP_ENDPOINT}
+    headers:
+      x-api-key: ${env:SIEM_OTLP_API_KEY}
+  prometheusremotewrite:
+    endpoint: ${env:SOVEREIGN_PROMETHEUS_REMOTE_WRITE_URL}
+  logging:
+    verbosity: normal
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/siem]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheusremotewrite]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/siem]

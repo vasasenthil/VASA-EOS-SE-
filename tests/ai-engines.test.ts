@@ -11,11 +11,11 @@ import {
   converse,
 } from "@/lib/ai/engines"
 
-test("the registry exposes exactly six engines, all advisory", () => {
-  assert.equal(ENGINE_COUNT, 6)
+test("the registry exposes exactly eight engines, all advisory", () => {
+  assert.equal(ENGINE_COUNT, 8)
   assert.deepEqual(
     ENGINES.map((e) => e.id).sort(),
-    ["analytics", "assessment", "conversational", "personalisation", "policy", "reasoning"],
+    ["analytics", "assessment", "conversational", "languageSpeech", "personalisation", "policy", "prediction", "reasoning"],
   )
 })
 
