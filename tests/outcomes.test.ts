@@ -2,6 +2,7 @@ import { test } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import {
   qualityIndex, aggregateMetrics, overallIndex, indexByDimension, opportunityGap, outcomeReport,
@@ -86,14 +87,14 @@ test("store: create → list → delete (DB path); seed idempotent surfacing rea
   const created = await createOutcome({ term: "T", district: "Salem", schoolCategory: "Government", area: "Rural", gender: "Male", socialCategory: "SC", pwd: false, flnPct: 60, attendancePct: 85, transitionPct: 88, passPct: 78, cohortSize: 500 })
   assert.match(created.id, /^OUT-/)
   assert.equal(await deleteOutcome(created.id), true)
-  __setTestDb(undefined)
-
-  __setTestDb(null)
+  assert.equal(await seedOutcomes(), 16)
   const all = await listOutcomes()
-  assert.ok(all.length >= 12)
+  assert.ok(all.length >= 16)
   // the seed must actually contain a rural-urban gap to demonstrate the index
   const g = opportunityGap(all, "area")
   assert.ok(g && g.gap > 0, "demo seed should surface a rural-urban opportunity gap")
-  assert.equal(await seedOutcomes(), 16)
+
+  __setTestDb(null)
+  await assert.rejects(() => listOutcomes(), ProductionDatabaseError)
   __setTestDb(undefined)
 })

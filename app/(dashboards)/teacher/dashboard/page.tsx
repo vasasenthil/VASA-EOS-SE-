@@ -1,472 +1,220 @@
-import Link from "next/link"
-import {
-  CalendarDays,
-  Users,
-  ClipboardList,
-  GraduationCap,
-  Clock,
-  AlertTriangle,
-  TrendingDown,
-  TrendingUp,
-  Minus,
-  BookOpen,
-  Brain,
-  Award,
-} from "lucide-react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  PageHeader,
-  PageHeaderHeading,
-  PageHeaderDescription,
-  PageHeaderActions,
-} from "@/components/page-header"
-import { HorizontalBarChart } from "@/components/charts/horizontal-bar-chart"
-import { CHART_COLORS } from "@/components/charts/chart-colors"
+import { Suspense } from "react"
+import { getTeacherDashboardData, type TeacherDashboardData } from "../actions"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle, Users, BookOpen, Calendar, Bell } from "lucide-react"
 
-// ─── Static Mock Data (Module 70.5 — Teacher Level) ──────────────────────────
+async function TeacherDashboardContent() {
+  let data: TeacherDashboardData
 
-const TODAY = "29 March 2026"
-
-const timetable = [
-  { period: 1, time: "8:00–8:45",   cls: "IX-A",   subject: "Maths", room: "R-12", status: "Completed"   },
-  { period: 2, time: "8:45–9:30",   cls: "X-B",    subject: "Maths", room: "R-12", status: "In Progress" },
-  { period: 3, time: "9:30–10:15",  cls: "VIII-C", subject: "Maths", room: "R-14", status: "Upcoming"    },
-  { period: 4, time: "10:30–11:15", cls: "X-A",    subject: "Maths", room: "R-12", status: "Upcoming"    },
-  { period: 5, time: "11:15–12:00", cls: "IX-C",   subject: "Maths", room: "R-15", status: "Upcoming"    },
-  { period: 6, time: "12:00–12:45", cls: "VII-B",  subject: "Maths", room: "R-11", status: "Upcoming"    },
-]
-
-const flaggedStudents = [
-  { name: "Renu Devi",      cls: "IX-A",   issue: "Score dropped 32% in last 3 assessments",  type: "Academic"     },
-  { name: "Mohammed Arif",  cls: "X-B",    issue: "9 consecutive absences",                    type: "Attendance"   },
-  { name: "Seema Yadav",    cls: "VIII-C", issue: "Has not submitted 4 assignments",            type: "Engagement"   },
-  { name: "Prashant Kumar", cls: "X-A",    issue: "Struggling with Quadratic Equations",        type: "Learning Gap" },
-  { name: "Anita Patel",    cls: "IX-C",   issue: "Possible dropout risk",                     type: "AI Predicted" },
-]
-
-const attendanceSummary = [
-  { cls: "IX-A",   present: 42, total: 45, pct: 93.3, label: "Good"  },
-  { cls: "X-B",    present: 38, total: 42, pct: 90.5, label: "Good"  },
-  { cls: "VIII-C", present: 35, total: 41, pct: 85.4, label: "Watch" },
-  { cls: "VII-B",  present: 28, total: 35, pct: 80.0, label: "Watch" },
-]
-
-const pendingAssignments = [
-  { title: "Chapter 3 Test",      cls: "X-B",    submitted: "40/42", due: "Apr 1", type: "Unit Test" },
-  { title: "Linear Equations WS", cls: "IX-A",   submitted: "43/45", due: "Apr 2", type: "Worksheet" },
-  { title: "Trigonometry Quiz",   cls: "X-A",    submitted: "38/42", due: "Apr 3", type: "MCQ Quiz"  },
-  { title: "Geometry Project",    cls: "VIII-C", submitted: "29/41", due: "Apr 5", type: "Project"   },
-]
-
-const lessonPlans = [
-  { cls: "IX-A Maths",   pct: 74 },
-  { cls: "X-B Maths",    pct: 81 },
-  { cls: "VIII-C Maths", pct: 69 },
-  { cls: "X-A Maths",    pct: 78 },
-]
-
-const recentResults = [
-  { student: "Ananya Mishra",  score: "94/100", grade: "A+", trend: "Improving" },
-  { student: "Rajesh Tiwari",  score: "88/100", grade: "A",  trend: "Stable"    },
-  { student: "Neha Sharma",    score: "76/100", grade: "B",  trend: "Declining" },
-  { student: "Mohammed Arif",  score: "42/100", grade: "D",  trend: "Critical"  },
-  { student: "Sunita Devi",    score: "55/100", grade: "C",  trend: "Declining" },
-]
-
-// ─── Helper Components ────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    "Completed":   "bg-green-100 text-green-800 border-green-200",
-    "In Progress": "bg-blue-100 text-blue-800 border-blue-200",
-    "Upcoming":    "bg-gray-100 text-gray-600 border-gray-200",
-    "Good":        "bg-green-100 text-green-800 border-green-200",
-    "Watch":       "bg-yellow-100 text-yellow-800 border-yellow-200",
-    "Critical":    "bg-red-100 text-red-800 border-red-200",
-    "In Progress (CPD)": "bg-blue-100 text-blue-800 border-blue-200",
+  try {
+    data = await getTeacherDashboardData()
+  } catch (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {error instanceof Error ? error.message : "Failed to load dashboard data. Please try again."}
+        </AlertDescription>
+      </Alert>
+    )
   }
+
   return (
-    <Badge className={`text-xs font-medium border ${map[status] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-      {status}
-    </Badge>
-  )
-}
+    <div className="space-y-6">
+      {/* Attendance Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Today's Attendance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div>
+              <div className="text-2xl font-bold text-green-600">{data.attendance.present}</div>
+              <div className="text-sm text-muted-foreground">Present</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">{data.attendance.absent}</div>
+              <div className="text-sm text-muted-foreground">Absent</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-yellow-600">{data.attendance.late}</div>
+              <div className="text-sm text-muted-foreground">Late</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{data.attendance.percentage}%</div>
+              <div className="text-sm text-muted-foreground">Attendance Rate</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-function IssueTypeBadge({ type }: { type: string }) {
-  const map: Record<string, string> = {
-    "Academic":     "bg-orange-100 text-orange-800 border-orange-200",
-    "Attendance":   "bg-red-100 text-red-800 border-red-200",
-    "Engagement":   "bg-purple-100 text-purple-800 border-purple-200",
-    "Learning Gap": "bg-yellow-100 text-yellow-800 border-yellow-200",
-    "AI Predicted": "bg-pink-100 text-pink-800 border-pink-200",
-  }
-  return (
-    <Badge className={`text-xs font-medium border ${map[type] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-      {type}
-    </Badge>
-  )
-}
-
-function GradeBadge({ grade }: { grade: string }) {
-  const map: Record<string, string> = {
-    "A+": "bg-green-100 text-green-800 border-green-200",
-    "A":  "bg-green-100 text-green-700 border-green-200",
-    "B":  "bg-blue-100 text-blue-800 border-blue-200",
-    "C":  "bg-yellow-100 text-yellow-800 border-yellow-200",
-    "D":  "bg-red-100 text-red-800 border-red-200",
-  }
-  return (
-    <Badge className={`text-xs font-semibold border ${map[grade] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-      {grade}
-    </Badge>
-  )
-}
-
-function TrendIcon({ trend }: { trend: string }) {
-  if (trend === "Improving") return <TrendingUp className="h-4 w-4 text-green-600 inline" />
-  if (trend === "Declining" || trend === "Critical") return <TrendingDown className="h-4 w-4 text-red-600 inline" />
-  return <Minus className="h-4 w-4 text-gray-500 inline" />
-}
-
-// ─── Page Component ───────────────────────────────────────────────────────────
-
-export default async function TeacherDashboardPage() {
-  return (
-    <div className="container mx-auto py-6 space-y-8 max-w-7xl">
-
-      {/* ── Header ── */}
-      <PageHeader>
-        <PageHeaderHeading>Teacher Dashboard</PageHeaderHeading>
-        <PageHeaderDescription>
-          Ms. Priya Sharma, B.Sc. B.Ed. | Mathematics | Govt. SSS Delhi | {TODAY}
-        </PageHeaderDescription>
-      </PageHeader>
-
-      {/* ── Section 1: KPI Cards ── */}
-      <section>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                <CalendarDays className="h-4 w-4 text-blue-500" />
-                Classes Today
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">6</p>
-              <p className="text-xs text-muted-foreground mt-1">Periods 1–6</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                <Users className="h-4 w-4 text-green-500" />
-                Students in Charge
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">248</p>
-              <p className="text-xs text-muted-foreground mt-1">Across 4 sections</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-orange-500">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                <ClipboardList className="h-4 w-4 text-orange-500" />
-                Assignments to Grade
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-orange-600">14</p>
-              <p className="text-xs text-muted-foreground mt-1">Pending</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardHeader className="pb-2">
-              <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                <GraduationCap className="h-4 w-4 text-purple-500" />
-                CPD Hours Completed
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600">
-                18 <span className="text-lg font-normal text-muted-foreground">/ 50</span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Annual target</p>
-              <Progress value={36} className="mt-2 h-1.5 [&>div]:bg-purple-500" />
-            </CardContent>
-          </Card>
-
-        </div>
-      </section>
-
-      {/* ── Section 2: Timetable + Flagged Students ── */}
-      <section className="grid gap-6 lg:grid-cols-2">
-
-        {/* Today's Timetable */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="h-5 w-5 text-blue-500" />
-              Today&apos;s Timetable
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12 text-center">Period</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Room</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {timetable.map((row) => (
-                  <TableRow key={row.period} className={row.status === "In Progress" ? "bg-blue-50/40" : ""}>
-                    <TableCell className="font-medium text-center">{row.period}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{row.time}</TableCell>
-                    <TableCell className="font-medium">{row.cls}</TableCell>
-                    <TableCell>{row.subject}</TableCell>
-                    <TableCell className="text-muted-foreground">{row.room}</TableCell>
-                    <TableCell><StatusBadge status={row.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Students Needing Attention */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-5 w-5 text-orange-500" />
-              Students Needing Attention
-              <Badge className="ml-auto bg-orange-100 text-orange-800 border border-orange-200 text-xs">AI-Flagged</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {flaggedStudents.map((s) => (
-              <div key={s.name} className="flex items-start gap-3 rounded-lg border p-3 bg-muted/20">
-                <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{s.name}</span>
-                    <span className="text-xs text-muted-foreground">{s.cls}</span>
-                    <IssueTypeBadge type={s.type} />
+      {/* Flagged Students */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Students at Risk ({data.flaggedStudents.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.flaggedStudents.length === 0 ? (
+            <p className="text-muted-foreground">No students currently flagged</p>
+          ) : (
+            <div className="space-y-2">
+              {data.flaggedStudents.map((student) => (
+                <div key={student.studentId} className="flex items-center justify-between rounded border p-3">
+                  <div>
+                    <div className="font-medium">{student.studentName}</div>
+                    <div className="text-sm text-muted-foreground">{student.reason}</div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{s.issue}</p>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-red-600">{student.riskScore}%</div>
+                    <div className="text-xs text-muted-foreground">Risk Score</div>
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Assignments */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Assignments
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-2xl font-bold">{data.assignments.pending}</div>
+              <div className="text-sm text-muted-foreground">Pending</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">{data.assignments.graded}</div>
+              <div className="text-sm text-muted-foreground">Graded</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-red-600">{data.assignments.overdue}</div>
+              <div className="text-sm text-muted-foreground">Overdue</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Today's Timetable */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Today's Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.timetable.length === 0 ? (
+            <p className="text-muted-foreground">No classes scheduled for today</p>
+          ) : (
+            <div className="space-y-2">
+              {data.timetable.map((slot) => (
+                <div key={slot.period} className="flex items-center justify-between rounded border p-3">
+                  <div>
+                    <div className="font-medium">Period {slot.period}: {slot.subject}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Class {slot.class} • Room {slot.room}
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {slot.startTime} - {slot.endTime}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Notices */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Recent Notices
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.notices.length === 0 ? (
+            <p className="text-muted-foreground">No recent notices</p>
+          ) : (
+            <div className="space-y-2">
+              {data.notices.slice(0, 5).map((notice) => (
+                <div key={notice.id} className="rounded border p-3">
+                  <div className="flex items-start justify-between">
+                    <div className="font-medium">{notice.title}</div>
+                    <div className={`rounded px-2 py-1 text-xs ${
+                      notice.priority === "high" ? "bg-red-100 text-red-800" :
+                      notice.priority === "medium" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-gray-100 text-gray-800"
+                    }`}>
+                      {notice.priority}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-sm text-muted-foreground">{notice.date}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function TeacherDashboardSkeleton() {
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i}>
+                <Skeleton className="mb-2 h-8 w-20" />
+                <Skeleton className="h-4 w-24" />
               </div>
             ))}
-          </CardContent>
-        </Card>
-
-      </section>
-
-      {/* ── Section 3: Attendance + Pending Assignments + Professional Development ── */}
-      <section className="grid gap-6 lg:grid-cols-3">
-
-        {/* Class Attendance Summary */}
-        <Card>
+          </div>
+        </CardContent>
+      </Card>
+      {[...Array(4)].map((_, i) => (
+        <Card key={i}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="h-5 w-5 text-green-500" />
-              Class Attendance — Today
-            </CardTitle>
+            <Skeleton className="h-6 w-48" />
           </CardHeader>
           <CardContent>
-            <HorizontalBarChart
-              data={attendanceSummary.map((a) => ({
-                label: `${a.cls} (${a.present}/${a.total})`,
-                value: a.pct,
-                color: a.label === "Good" ? CHART_COLORS.green : CHART_COLORS.amber,
-              }))}
-              height={200}
-              yAxisWidth={130}
-              unit="%"
-            />
+            <Skeleton className="h-32 w-full" />
           </CardContent>
         </Card>
+      ))}
+    </div>
+  )
+}
 
-        {/* Pending Assignments to Grade */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ClipboardList className="h-5 w-5 text-orange-500" />
-              Pending Assignments to Grade
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Assignment</TableHead>
-                  <TableHead>Class</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Due</TableHead>
-                  <TableHead>Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingAssignments.map((a) => (
-                  <TableRow key={a.title}>
-                    <TableCell className="font-medium text-xs">{a.title}</TableCell>
-                    <TableCell className="text-xs">{a.cls}</TableCell>
-                    <TableCell className="text-xs">{a.submitted}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{a.due}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">{a.type}</Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        {/* Professional Development */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <GraduationCap className="h-5 w-5 text-purple-500" />
-              Professional Development
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">CPD Hours</span>
-                <span className="font-semibold text-purple-600">18 / 50</span>
-              </div>
-              <Progress value={36} className="h-1.5 [&>div]:bg-purple-500" />
-              <p className="text-xs text-muted-foreground">36% of annual target completed</p>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">Modules Completed</span>
-                <span className="font-semibold text-blue-600">4 / 12</span>
-              </div>
-              <Progress value={33} className="h-1.5 [&>div]:bg-blue-500" />
-            </div>
-
-            <div className="rounded-lg border p-3 bg-muted/20 space-y-1">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Next Module</p>
-              <p className="text-sm font-semibold">Competency-Based Assessment</p>
-              <p className="text-xs text-muted-foreground">Due: Apr 15, 2026</p>
-            </div>
-
-            <div className="rounded-lg border p-3 bg-muted/20 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Certification</p>
-              <p className="text-sm font-semibold">NIPUN Maths Facilitator</p>
-              <StatusBadge status="In Progress" />
-            </div>
-
-          </CardContent>
-        </Card>
-
-      </section>
-
-      {/* ── Section 4: Lesson Plan Status + Recent Assessment Results ── */}
-      <section className="grid gap-6 lg:grid-cols-2">
-
-        {/* Lesson Plan Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BookOpen className="h-5 w-5 text-blue-500" />
-              Lesson Plan Status — Syllabus Coverage
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <HorizontalBarChart
-              data={lessonPlans.map((lp) => ({
-                label: lp.cls,
-                value: lp.pct,
-                color: lp.pct >= 80 ? CHART_COLORS.green : lp.pct >= 70 ? CHART_COLORS.blue : CHART_COLORS.amber,
-              }))}
-              height={200}
-              yAxisWidth={120}
-              unit="%"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Recent Assessment Results */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Brain className="h-5 w-5 text-green-500" />
-              Recent Assessment Results
-            </CardTitle>
-            <CardDescription>Class X-B — Last Unit Test</CardDescription>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Score</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Trend</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentResults.map((r) => (
-                  <TableRow
-                    key={r.student}
-                    className={
-                      r.trend === "Critical"
-                        ? "bg-red-50/50"
-                        : r.trend === "Declining"
-                        ? "bg-orange-50/30"
-                        : ""
-                    }
-                  >
-                    <TableCell className="font-medium text-sm">{r.student}</TableCell>
-                    <TableCell className="text-sm">{r.score}</TableCell>
-                    <TableCell><GradeBadge grade={r.grade} /></TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <TrendIcon trend={r.trend} />
-                        <span className="text-xs text-muted-foreground">{r.trend}</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-      </section>
-
+export default function TeacherDashboardPage() {
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="mb-6 text-3xl font-bold">Teacher Dashboard</h1>
+      <Suspense fallback={<TeacherDashboardSkeleton />}>
+        <TeacherDashboardContent />
+      </Suspense>
     </div>
   )
 }

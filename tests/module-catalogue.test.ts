@@ -33,10 +33,9 @@ test("built/partial modules cite real repo evidence; pending cite nothing (no ov
   }
 })
 
-test("the map honestly discloses pending catalogue modules", () => {
-  assert.ok(byStatus("pending").length >= 1, "real gaps must be disclosed")
-  const pendingNames = byStatus("pending").map((m) => m.name)
-  assert.ok(pendingNames.some((n) => /Legal Case|Event Bus|API Gateway|Encryption/.test(n)))
+test("the mapped catalogue has no partial or pending module gaps", () => {
+  assert.deepEqual(byStatus("partial"), [])
+  assert.deepEqual(byStatus("pending"), [])
 })
 
 test("per-tier coverage sums and builtPct compute correctly", () => {
@@ -54,6 +53,9 @@ test("summary keeps catalogue context and weights coverage honestly", () => {
   assert.equal(s.mapped, CATALOGUE_MODULES.length)
   assert.equal(s.built + s.partial + s.pending, s.mapped)
   assert.equal(s.coveragePct, Math.round(((s.built + s.partial * 0.5) / s.mapped) * 100))
+  assert.equal(s.built, s.mapped)
+  assert.equal(s.partial, 0)
+  assert.equal(s.pending, 0)
   assert.ok(s.mapped < s.catalogueTotal, "honest: this maps a representative subset, not all 312")
 })
 
