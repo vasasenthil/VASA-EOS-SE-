@@ -10,6 +10,8 @@ import {
   projectPolicy,
   analyse,
   converse,
+  planLanguageSpeech,
+  earlyWarningSignal,
 } from "@/lib/ai/engines"
 
 // Deterministic worked examples — computed on the server from sample inputs, so the page
@@ -55,15 +57,23 @@ const examples: Record<string, { input: string; output: string }> = {
     ])
     return { input: "“What is the PTR norm?”", output: `${r.answer} [${r.citations.map((c) => c.source).join(", ")}]` }
   })(),
+  languageSpeech: (() => {
+    const r = planLanguageSpeech({ task: "translate", sourceLanguage: "ta", targetLanguage: "en", dialect: "madurai", content: "பெற்றோர் ஒப்புதல் நிலையை விளக்கவும்" })
+    return { input: "Tamil parent message, Madurai dialect", output: `${r.route}: ${r.output} · ${r.guardrail}` }
+  })(),
+  prediction: (() => {
+    const r = earlyWarningSignal({ attendancePct: 62, assessmentAverage: 38, assignmentCompletionPct: 55, consecutiveAbsences: 6, namedHumanOwner: "Class Teacher T-102" })
+    return { input: "Attendance 62%, assessment 38%, 6 consecutive absences", output: `${r.risk} ${(r.score * 100).toFixed(0)}% → ${r.action} routed to ${r.routedTo}; ${r.guardrail}` }
+  })(),
 }
 
 export default function AiEnginesPage() {
   return (
     <Shell>
       <PageHeader>
-        <PageHeaderHeading>The Six AI Engines</PageHeaderHeading>
+        <PageHeaderHeading>The Eight AI Engines</PageHeaderHeading>
         <PageHeaderDescription>
-          The Native-AI Engine Layer. Six purpose-built, <strong>deterministic and explainable</strong> engines that
+          The Native-AI Engine Layer. Eight purpose-built, <strong>deterministic and explainable</strong> engines that
           power the agents and modules — each is pure, auditable, and <strong>advisory</strong> (engines assist, humans
           decide; none performs a side effect). Each card shows a live worked example computed on the server.
         </PageHeaderDescription>

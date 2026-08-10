@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { SECURITY_HEADERS } from "@/lib/security"
+import { requiresNoStore, SENSITIVE_RESPONSE_CACHE_HEADERS } from "@/lib/security/cache-policy"
 
 // Zero-trust: apply hardened security headers to every response (Sec 4C), and
 // propagate a request id for tracing/correlation across logs and responses.
@@ -11,6 +12,15 @@ export function middleware(req: NextRequest) {
   }
   const reqId = req.headers.get("x-request-id") ?? crypto.randomUUID()
   res.headers.set("x-request-id", reqId)
+  if (requiresNoStore({
+    pathname: req.nextUrl.pathname,
+    hasAuthorization: req.headers.has("authorization"),
+    hasCookie: req.headers.has("cookie"),
+  })) {
+    for (const [name, value] of Object.entries(SENSITIVE_RESPONSE_CACHE_HEADERS)) {
+      res.headers.set(name, value)
+    }
+  }
   return res
 }
 

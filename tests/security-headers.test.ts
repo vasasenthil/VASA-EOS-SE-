@@ -1,6 +1,7 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { SECURITY_HEADERS } from "@/lib/security"
+import { requiresNoStore, SENSITIVE_RESPONSE_CACHE_HEADERS } from "@/lib/security/cache-policy"
 
 function header(name: string): string | undefined {
   return SECURITY_HEADERS.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value
@@ -29,4 +30,14 @@ test("a Content-Security-Policy is enforced with the high-value directives", () 
   assert.match(csp!, /base-uri 'self'/) // base-tag injection
   assert.match(csp!, /object-src 'none'/) // plugin XSS
   assert.match(csp!, /form-action 'self'/) // form hijacking / exfiltration
+})
+
+test("API and identity-bearing responses are private and non-cacheable", () => {
+  assert.equal(requiresNoStore({ pathname: "/api/notifications", hasAuthorization: false, hasCookie: false }), true)
+  assert.equal(requiresNoStore({ pathname: "/students", hasAuthorization: true, hasCookie: false }), true)
+  assert.equal(requiresNoStore({ pathname: "/teacher/dashboard", hasAuthorization: false, hasCookie: true }), true)
+  assert.equal(requiresNoStore({ pathname: "/offline.html", hasAuthorization: false, hasCookie: false }), false)
+  assert.match(SENSITIVE_RESPONSE_CACHE_HEADERS["Cache-Control"], /private/)
+  assert.match(SENSITIVE_RESPONSE_CACHE_HEADERS["Cache-Control"], /no-store/)
+  assert.equal(SENSITIVE_RESPONSE_CACHE_HEADERS.Vary, "Authorization, Cookie")
 })

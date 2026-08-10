@@ -1,0 +1,3 @@
+import { predictSchemeImpact } from "@/lib/ml/inference/scheme-impact-service"
+import type { SchemeFeatureInput } from "@/lib/ml/features/scheme-features"
+export async function schemeImpact(input: SchemeFeatureInput): Promise<{ likelyEffective:boolean; score:number; source:"ml"|"deterministic"; predictionId?:string }> { const ml=await predictSchemeImpact(input); if(ml) return { likelyEffective:Boolean(ml.effective), score:ml.confidence, source:"ml", predictionId:ml.predictionId }; const score=input.budgetUtilizationPct*0.25+(input.beneficiaryCount/Math.max(1,input.targetPopulation))*40+input.equityIndex*0.2+input.priorOutcomeScore*0.2; return { likelyEffective:score>=55, score:Math.min(1,score/100), source:"deterministic" } }

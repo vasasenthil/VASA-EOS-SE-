@@ -2,6 +2,7 @@ import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { __setTestDb } from "@/lib/persistence"
+import { ProductionDatabaseError } from "@/lib/db/require-db"
 import { makeFakeDb } from "./helpers/fake-db"
 import { viewFor, type Enrolment } from "@/lib/enrolment"
 import { saveEnrolment, latestEnrolment, DEMO_UDISE } from "@/lib/enrolment/store"
@@ -40,12 +41,10 @@ test("latest is scoped to the requested school (UDISE)", async () => {
   assert.equal((await latestEnrolment("99999999999"))?.total, 300)
 })
 
-test("in-memory fallback is pre-seeded with the demo school's roll (1,248)", async () => {
+test("missing durable DB fails closed for enrolment snapshots", async () => {
   __setTestDb(null)
-  const latest = await latestEnrolment()
-  assert.equal(latest?.total, 1248)
-  assert.equal(latest?.boys, 636)
-  assert.equal(latest?.girls, 612)
+  await assert.rejects(() => latestEnrolment(), ProductionDatabaseError)
+  await assert.rejects(() => saveEnrolment({ asOf: "2026-04-01", total: 1248, boys: 636, girls: 612 }), ProductionDatabaseError)
 })
 
 test("latest is undefined for a school with no snapshots", async () => {
