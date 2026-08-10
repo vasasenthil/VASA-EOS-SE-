@@ -7,7 +7,7 @@ built, tested Go modules in this platform.
 Declarative ground truth.
 - **Rego policy plane** — `policies/` (33 `opa test`): RBAC/ReBAC/ABAC/PBAC + RTE/DPDP/RPwD/POCSO/PFMS/RTI +
   AI safety/bias/drift + data classification/residency/retention; composed in `decision.rego`.
-- **391-module catalogue** — `modules/catalogue.yaml` (+ linter), OpenAPI 3.1 / AsyncAPI 3.0 contracts.
+- **392-module catalogue** — `modules/catalogue.yaml` (+ linter), OpenAPI 3.1 / AsyncAPI 3.0 contracts.
 - **BPMN** — `platform/L6-platform-services/workflow.ToBPMN` exports the approval flow as BPMN 2.0 XML.
 - **Model cards** — `platform/L8-engines/evaluation.ModelCard` (fairness + drift + attestation → deploy gate).
 - CC-SPEC-001 crosswalk + phase plans + ADRs 0001–0015.
@@ -16,7 +16,7 @@ Declarative ground truth.
 Audited iteration under bounded human authority.
 - **Plan-Execute-Verify-Reflect controller** — `platform/L9-agents/loop`: bounded iterations, a critic that
   verifies each step, reflection on failure, and **HITL checkpoints** that pause consequential actions.
-- **6 agents at L9** — `platform/L9-agents/agents` composing the engines; **MCP tool registry** +
+- **8 agents at L9** — `platform/L9-agents/agents` composing the engines; **MCP tool registry** +
   **role-gated HITL queue** + **orchestrator** (auto vs route-to-human). Wired via `Platform.RunLoop` /
   `Advise`, every step audited.
 

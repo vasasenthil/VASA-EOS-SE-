@@ -1,6 +1,6 @@
 // VASA-EOS(SE) — durable-module register (honest deep-build evidence).
 //
-// The brochure markets ~391 (catalogue 312) functional modules. Most are broad reference UI; this register
+// The charter fixes 392 functional modules (337 core + 55 TN-specific). Most are broad reference UI; this register
 // pins down the SUBSET that is genuinely DEEP — a clickable Next.js route whose server actions drive the durable
 // Go backbone (platformd + PostgreSQL) with real workflows, invariants and an audited write path. It exists so
 // the "deep-transactional" count in the brochure register cannot drift or be overstated: a companion test

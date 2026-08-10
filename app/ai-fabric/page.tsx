@@ -12,6 +12,8 @@ import {
   runGovernanceAgent,
   runGrievanceAgent,
   runComplianceAgent,
+  runParentCommunityAgent,
+  runInclusionAgent,
   type AgentId,
   type AgentRecommendation,
 } from "@/lib/ai/agents"
@@ -36,6 +38,8 @@ const runs: Record<AgentId, AgentRecommendation> = {
   governance: runGovernanceAgent({ indicator: [90, 91, 89, 92, 50] }),
   grievance: runGrievanceAgent({ facts: { tier: "block" }, rules: [ { id: "b", when: [{ key: "tier", op: "eq", value: "block" }], then: "Block (BEO)", because: "Block-tier grievance" } ], query: "fee refund policy", corpus: [ { id: "d", text: "Fee refunds are processed within 30 days of a valid request.", source: "Fee-GO" } ] }),
   compliance: runComplianceAgent({ facts: { ptr: 45, toiletsGenderSegregated: false }, rules: [ { id: "ptr", when: [{ key: "ptr", op: "gte", value: 31 }], then: "PTR breach (norm 30:1)", because: "PTR 45 exceeds 30:1" }, { id: "toilet", when: [{ key: "toiletsGenderSegregated", op: "eq", value: false }], then: "No gender-segregated toilets", because: "RTE/RPwD norm" } ] }),
+  parentCommunity: runParentCommunityAgent({ consentGranted: true, language: "ta", question: "How do parents give consent?", corpus: [ { id: "consent", text: "Parents can give, review and withdraw consent for child-specific services through the consent ledger workflow.", source: "DPDP-Consent" } ] }),
+  inclusion: runInclusionAgent({ facts: { needsLargePrint: true }, rules: [ { id: "large-print", when: [{ key: "needsLargePrint", op: "eq", value: true }], then: "Provide large-print material", because: "Declared support need" } ] }),
 }
 
 function PillarRow({ p }: { p: AiPillar }) {
@@ -57,7 +61,7 @@ export default function AiFabricPage() {
       <PageHeader>
         <PageHeaderHeading>The Native-AI Fabric</PageHeaderHeading>
         <PageHeaderDescription>
-          Eight capability pillars, six engines and six agents — every layer <strong>under human authority</strong>.
+          Eight capability pillars, eight engines and eight agents — every layer <strong>under human authority</strong>.
           Agents compose the engines into role-facing recommendations; nothing acts autonomously. Pillar coverage is{" "}
           {ps.coveragePct}% ({ps.built} built · {ps.partial} partial · {ps.pending} pending) — vision/document AI is
           honestly pending.
@@ -72,7 +76,7 @@ export default function AiFabricPage() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Six engines</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Eight engines</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {ENGINES.map((e) => (
               <div key={e.id} className="rounded-md border p-2.5 text-sm">
@@ -85,7 +89,7 @@ export default function AiFabricPage() {
       </div>
 
       <div className="mt-4">
-        <h2 className="mb-2 text-sm font-semibold">Six agents — live worked examples (each requires human authority)</h2>
+        <h2 className="mb-2 text-sm font-semibold">Eight agents — live worked examples (each requires human authority)</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {AGENTS.map((a) => {
             const r = runs[a.id]

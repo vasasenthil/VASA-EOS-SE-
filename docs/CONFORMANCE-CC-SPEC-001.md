@@ -30,8 +30,8 @@ verdict cites a path or a gate. No row is marked done that a test does not back.
 | **L5 Security & Compliance** | Keycloak, OPA, SPIRE, Vault, mTLS, immutable audit, zero-trust | ✅ **Go** (policy+audit) | audit ✅ `L5-security/audit`, kms ✅, pep ✅ over `policies/*.rego`; **Keycloak/SPIRE/mTLS ⛔** (infra) |
 | **L6 Platform Services** | Identity, Workflow (Camunda 8), Notify, Search, Content, Config, i18n | ✅ **Go** (re-authored) | workflow ✅, notify ✅, i18n ✅ (22-lang); **Camunda/OpenSearch** swapped for in-process engines |
 | **L7 AI Knowledge Layer** | curriculum/learner/teacher/school/gov graphs (Neo4j); embeddings (Milvus); TN canon | ✅ **Go** (logic) / ⛔ stores | knowledgegraph ✅, retrieval ✅, notary ✅, credentials ✅; **Neo4j/Milvus ⛔** (B-013) |
-| **L8 AI Engine Layer** | 6 engines on vLLM/Triton + model cards | ✅ **Go** (baselines) / ⛔ GPU | engines ✅ (6), evaluation ✅, guardrails ✅, serving ✅, tokens ✅, **modelregistry ✅** (model cards); **vLLM/GPU serving ⛔** (B-011), models registered-not-deployed |
-| **L9 AI Agent Layer** | 6 agents on LangGraph+MCP, HITL | ✅ **Go** | agents ✅ (6), agentregistry ✅ (MCP tool catalogue), hitl ✅, orchestrator ✅, loop ✅; LangGraph re-authored in Go |
+| **L8 AI Engine Layer** | 8 engines on vLLM/Triton + model cards | ✅ **Go** (baselines) / ⛔ GPU | engines ✅ (8), evaluation ✅, guardrails ✅, serving ✅, tokens ✅, **modelregistry ✅** (model cards); **vLLM/GPU serving ⛔** (B-011), models registered-not-deployed |
+| **L9 AI Agent Layer** | 8 agents on LangGraph+MCP, HITL | ✅ **Go** | agents ✅ (8), agentregistry ✅ (MCP tool catalogue), hitl ✅, orchestrator ✅, loop ✅; LangGraph re-authored in Go |
 | **L10 Experience Layer** | 13 portals (Next.js+RN+PWA); voice/IVR/WhatsApp/SMS | ✅ **Go** (register+scale) / 🟦 TS (UI) | **13 portals register ✅** `L10-surfaces/portals` (`GET /portals`); Go scale side ✅ capacity/loadmodel/ratelimit/volumes/population; the **Next.js portal UIs** remain 🟦 `app/**`; voice/ASR 🟡 |
 | **L11 Governance & Oversight** | G1–G7 workflow; model-card registry; ethics; CAG export | ✅ **Go** *(gap closed)* | `L11-governance/govtiers` — G1–G7 register + 3 AI Control Tower bodies + escalation; `modelregistry` ✅; G3→G5→G7 sanction flow ✅; surfaced at `GET /governance` |
 | **L12 Citizen & Civic** | public dashboards (PII-suppressed); RTI; grievance; CKAN; press API | ✅ **Go** *(gap closed)* | `L12-civic/civic` — PII-suppressed public dashboard (from the real estate), RTI register w/ 30-day clock, grievance tracker, open-data catalogue; surfaced at `GET /civic` |
@@ -160,16 +160,16 @@ is ✅ Go; the **physical** load proof (real cluster, k6 against it) is gated.
 
 ---
 
-## 9 · The 391 modules (Cover p3)
+## 9 · The 392 modules (Cover p3)
 
 | Commitment | Verdict | Evidence |
 |---|---|---|
-| 391 functional modules (329 core + 62 TN) | ✅ **Go** (catalogue) *(gap closed)* | `L11-governance/catalogue` — the 391 modules as families across the 7 tiers + Platform, counts **computed** to 329 core + 62 TN (self-verified); `GET /modules`. The Go mesh now carries both the **48-module infrastructure backbone** *and* the **391-module functional catalogue register** (full per-module UIs remain in `app/**`) |
+| 392 functional modules (337 core + 55 TN-specific) | ✅ **Go** (catalogue) *(gap closed)* | `L11-governance/catalogue` — the 392 modules as families across the 7 tiers + Platform, counts bound to the TN charter; `GET /modules`. The Go mesh now carries both the **48-module infrastructure backbone** *and* the **392-module functional catalogue register** (full per-module UIs remain in `app/**`) |
 
 **Important honesty point:** the Go build is the **sovereign backbone** — 41 deeply-tested infrastructure
-modules (off-switch → data fabric → security → engines → agents → scale). The **391 functional education
+modules (off-switch → data fabric → security → engines → agents → scale). The **392 functional education
 modules** (attendance, admissions, scholarships, CWSN, discipline, …) live in the **TS app**. The two together
-are the platform; neither alone is "391 modules."
+are the platform; neither alone is "392 modules."
 
 ---
 
@@ -191,18 +191,18 @@ through the live workflows (the `/exercise` end-to-end run: onboard → admit �
 | Area | Conformance in the Go mesh |
 |---|---|
 | L1–L10 application **logic** | **High** — every layer has tested Go modules (substrate gated by design) |
-| 6 engines · 6 agents | **Full** |
+| 8 engines · 8 agents | **Full** |
 | 8 pillars | 6 built · 2 partial |
 | Access-control policy models | 4 of 5 (IAM gated) |
 | Indian statutory regimes | 6 fully tested · 3 partial |
 | Scale **analysis** + populated estate | **Full** (physical load proof gated) |
 | Tenancy T0–T6 hierarchy | **Full** in Go *(gap closed — `L6-platform-services/tenancy`, ≈73k nodes, downward governance)* |
-| L11 governance / L12 civic / 13 portals / 391-module catalogue / NDEAR-S / international registers | **Now first-class Go modules** *(gaps closed)* — full per-module UIs remain in `app/**` |
+| L11 governance / L12 civic / 13 portals / 392-module catalogue / NDEAR-S / international registers | **Now first-class Go modules** *(gaps closed)* — full per-module UIs remain in `app/**` |
 | HSM · K8s · 8 datastores · GPU · Besu · IoT · Edge · DAO | **Gated by design** (`BLOCKERS`), honest-pending |
 
 **One-line verdict (updated 2026-06-20):** the Go build now implements the full **L1–L12 sovereign application
 stack** of CC-SPEC-001 — the engines/agents/pillars, the policy + compliance plane, the T0–T6 tenancy, the
-G1–G7 governance + AI Control Tower, the 13-portal register, the 391-module catalogue, NDEAR-S 29/29, the
+G1–G7 governance + AI Control Tower, the 13-portal register, the 392-module catalogue, NDEAR-S 29/29, the
 international alignments, and the L12 civic surface — over a populated, exercised estate. The **physical
 substrate (HSM, K8s, the 8 datastores, GPU, Besu, IoT, Edge) remains gated by design**, and the **rich
 per-module Next.js UIs remain in the TS app**. Nothing marked done lacks a test; nothing gated is hidden.
