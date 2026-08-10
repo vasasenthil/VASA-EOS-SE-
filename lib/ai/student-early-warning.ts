@@ -1,0 +1,3 @@
+import { predictDropoutRisk } from "@/lib/ml/inference/dropout-risk-service"
+import type { StudentFeatureInput } from "@/lib/ml/features/student-features"
+export async function studentEarlyWarning(input: StudentFeatureInput): Promise<{ risk: "Low"|"Medium"|"High"; score:number; source:"ml"|"deterministic"; predictionId?:string }> { const ml=await predictDropoutRisk(input); if(ml) return { risk: ml.risk ? "High" : "Low", score: ml.confidence, source:"ml", predictionId:ml.predictionId }; const score=(100-input.attendancePct)*0.35+(100-input.assessmentAverage)*0.35+(input.consecutiveAbsences??0)*1.5+(input.feeDefaultDays??0)*0.05; return { risk: score>=55?"High":score>=30?"Medium":"Low", score:Math.min(1,score/100), source:"deterministic" } }

@@ -1,4 +1,4 @@
-// VASA-EOS(SE) — the eight Native-AI pillars (brochure: "8 pillars × 6 engines × 6 agents").
+// VASA-EOS(SE) — the eight Native-AI pillars (brochure: "8 pillars × 8 engines × 8 agents").
 //
 // The capability pillars of the Native-AI fabric, each mapped to the in-repo evidence that
 // delivers it, with an honest built / partial / pending status. Five pillars are realised by

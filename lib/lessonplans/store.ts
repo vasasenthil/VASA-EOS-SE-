@@ -1,9 +1,9 @@
 // VASA-EOS(SE) — Lesson Plans persistence (server-only). Full CRUD.
-// Durable in Supabase when configured (arrays + class notes as JSONB); in-memory seeded fallback
-// otherwise. Every mutation audited.
+// Durable database persistence is mandatory; missing DB configuration fails closed.
+// Every mutation audited.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { LessonPlan, LessonPlanInput, ResourceLink } from "./index"
 
@@ -120,42 +120,33 @@ function seed(): LessonPlan[] {
   ]
 }
 
-const store: LessonPlan[] = seed()
 
-export async function listLessonPlans(): Promise<LessonPlan[]> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("lesson_plans").select("*").order("date", { ascending: false })
-      const rows = ((data as Row[] | null) ?? []).map(fromRow)
-      return rows.length > 0 ? rows : seed()
-    } catch {
-      return seed()
-    }
-  }
-  return [...store]
+export async function listLessonPlans(tenantId = DEFAULT_SCHOOL_NODE): Promise<LessonPlan[]> {
+  const { data, error } = await requireDb()
+    .from("lesson_plans")
+    .select("*")
+    .eq("tenant_id", tenantId)
+    .order("date", { ascending: false })
+  if (error) throw error
+  return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
-export async function getLessonPlan(lid: string): Promise<LessonPlan | undefined> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("lesson_plans").select("*").eq("id", lid).maybeSingle()
-      if (data) return fromRow(data as Row)
-    } catch {
-      /* fall through */
-    }
-    return seed().find((p) => p.id === lid)
-  }
-  return store.find((p) => p.id === lid)
+export async function getLessonPlan(lid: string, tenantId = DEFAULT_SCHOOL_NODE): Promise<LessonPlan | undefined> {
+  const { data, error } = await requireDb()
+    .from("lesson_plans")
+    .select("*")
+    .eq("id", lid)
+    .eq("tenant_id", tenantId)
+    .maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as Row) : undefined
 }
 
 export async function createLessonPlan(input: LessonPlanInput, tenantId = DEFAULT_SCHOOL_NODE): Promise<LessonPlan> {
   const now = new Date().toISOString()
   const p: LessonPlan = { id: id(), ...input, createdAt: now, updatedAt: now }
-  const db = getDb()
-  if (db) await db.from("lesson_plans").insert(toRow(p, tenantId))
-  else store.unshift(p)
+  const { error } = await requireDb().from("lesson_plans").insert(toRow(p, tenantId))
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "lessonplan.create", resource: p.id, details: { topic: p.topic, status: p.status } })
   return p
 }
@@ -164,43 +155,33 @@ export async function updateLessonPlan(lid: string, input: LessonPlanInput): Pro
   const existing = await getLessonPlan(lid)
   if (!existing) return undefined
   const updated: LessonPlan = { ...existing, ...input, updatedAt: new Date().toISOString() }
-  const db = getDb()
-  if (db) {
-    await db.from("lesson_plans").update({
-      class_level: updated.classLevel, section: updated.section, subject: updated.subject, teacher: updated.teacher, date: updated.date,
-      period: updated.period, start_time: updated.startTime, end_time: updated.endTime, lesson_type: updated.lessonType, topic: updated.topic,
-      objectives: updated.objectives, previous_topics: updated.previousTopics, further_topics: updated.furtherTopics,
-      materials_to_bring: updated.materialsToBring, homework: updated.homework, lesson_planner_link: updated.lessonPlannerLink,
-      class_notes: updated.classNotes, status: updated.status, updated_at: updated.updatedAt,
-    }).eq("id", lid)
-  } else {
-    const i = store.findIndex((p) => p.id === lid)
-    if (i >= 0) store[i] = updated
-  }
+  const { error } = await requireDb().from("lesson_plans").update({
+    class_level: updated.classLevel, section: updated.section, subject: updated.subject, teacher: updated.teacher, date: updated.date,
+    period: updated.period, start_time: updated.startTime, end_time: updated.endTime, lesson_type: updated.lessonType, topic: updated.topic,
+    objectives: updated.objectives, previous_topics: updated.previousTopics, further_topics: updated.furtherTopics,
+    materials_to_bring: updated.materialsToBring, homework: updated.homework, lesson_planner_link: updated.lessonPlannerLink,
+    class_notes: updated.classNotes, status: updated.status, updated_at: updated.updatedAt,
+  }).eq("id", lid).eq("tenant_id", DEFAULT_SCHOOL_NODE)
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "lessonplan.update", resource: lid, details: { status: updated.status } })
   return updated
 }
 
 export async function deleteLessonPlan(lid: string): Promise<boolean> {
-  const db = getDb()
-  if (db) {
-    await db.from("lesson_plans").delete().eq("id", lid)
-  } else {
-    const i = store.findIndex((p) => p.id === lid)
-    if (i < 0) return false
-    store.splice(i, 1)
-  }
+  const existing = await getLessonPlan(lid)
+  if (!existing) return false
+  const { error } = await requireDb().from("lesson_plans").delete().eq("id", lid).eq("tenant_id", DEFAULT_SCHOOL_NODE)
+  if (error) throw error
   await appendAudit({ actor: "academics", action: "lessonplan.delete", resource: lid })
   return true
 }
 
 export async function seedLessonPlans(tenantId = DEFAULT_SCHOOL_NODE): Promise<number> {
   const rows = seed()
-  const db = getDb()
-  if (db) {
-    for (const p of rows) await db.from("lesson_plans").upsert(toRow(p, tenantId))
-  } else {
-    for (const p of rows) if (!store.some((s) => s.id === p.id)) store.push(p)
+  const db = requireDb()
+  for (const p of rows) {
+    const { error } = await db.from("lesson_plans").upsert(toRow(p, tenantId))
+    if (error) throw error
   }
   await appendAudit({ actor: "academics", action: "lessonplan.seed", resource: "lesson_plans", details: { count: rows.length } })
   return rows.length

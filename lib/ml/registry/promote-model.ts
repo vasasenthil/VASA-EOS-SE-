@@ -1,0 +1,5 @@
+import { commitWithEvents } from "@/lib/events/outbox-publisher"
+import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
+import { listModels, saveModel } from "../store"
+import type { MLModelType } from "../types"
+export async function promoteModel(modelType:MLModelType, version:string, promotedBy:string, approvalReason:string): Promise<void> { const models=await listModels(modelType); const target=models.find(m=>m.version===version); if(!target) throw new Error(`Model version not found: ${modelType}@${version}`); const now=new Date().toISOString(); const events:PlatformEvent[]=[createEventEnvelope({eventType:"ModelPromoted",aggregateType:"ml",aggregateId:target.id,idempotencyKey:`ml:${modelType}:${version}:promoted`,actor:promotedBy,payload:{modelType,modelVersion:version,promotedBy,approvalReason}} as any)]; await commitWithEvents(async()=>{ for(const m of models.filter(m=>m.status==="active")) await saveModel({...m,status:"deprecated"}); await saveModel({...target,status:"active",promotedAt:now}) },events) }

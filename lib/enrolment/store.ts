@@ -1,16 +1,15 @@
 // VASA-EOS(SE) — student enrolment snapshot persistence (server-only).
 //
-// Durable in Supabase when configured; in-memory fallback (seeded with the demo school's roll so
-// the Principal dashboard always renders real, queryable data) otherwise. Every snapshot is
-// audited. latestEnrolment returns the most recent snapshot per school, so saving a new roll
-// supersedes the headline without losing history.
+// Durable persistence is mandatory; missing database configuration fails closed through
+// requireDb(). Every snapshot is audited. latestEnrolment returns the most recent snapshot per
+// school, so saving a new roll supersedes the headline without losing history.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { Enrolment } from "./index"
 
-/** The demo school's UDISE code — the in-memory seed and dashboard default. */
+/** Default UDISE code used by dashboard calls when no school is specified. */
 export const DEMO_UDISE = "33010100101"
 
 export interface EnrolmentRecord extends Enrolment {
@@ -39,19 +38,6 @@ function newId(): string {
   return `ENR-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 }
 
-// Seed mirrors the dashboard's historical headline of 1,248 students, split for gender parity.
-const SEED: EnrolmentRecord = {
-  id: newId(),
-  udiseCode: DEMO_UDISE,
-  asOf: "2026-04-01",
-  total: 1248,
-  boys: 636,
-  girls: 612,
-  tenantId: DEFAULT_SCHOOL_NODE,
-}
-
-const store: EnrolmentRecord[] = [SEED]
-
 export interface NewEnrolment {
   udiseCode?: string
   asOf: string
@@ -71,21 +57,17 @@ export async function saveEnrolment(input: NewEnrolment): Promise<EnrolmentRecor
     girls: input.girls,
     tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
   }
-  const db = getDb()
-  if (db) {
-    await db.from("enrolment_snapshots").insert({
-      id: rec.id,
-      udise_code: rec.udiseCode,
-      as_of: rec.asOf,
-      total: rec.total,
-      boys: rec.boys,
-      girls: rec.girls,
-      tenant_id: rec.tenantId,
-      created_at: new Date().toISOString(),
-    })
-  } else {
-    store.unshift(rec)
-  }
+  const { error } = await requireDb().from("enrolment_snapshots").insert({
+    id: rec.id,
+    udise_code: rec.udiseCode,
+    as_of: rec.asOf,
+    total: rec.total,
+    boys: rec.boys,
+    girls: rec.girls,
+    tenant_id: rec.tenantId,
+    created_at: new Date().toISOString(),
+  })
+  if (error) throw error
   await appendAudit({
     actor: "office",
     action: "enrolment.snapshot",
@@ -96,20 +78,14 @@ export async function saveEnrolment(input: NewEnrolment): Promise<EnrolmentRecor
 }
 
 async function listEnrolment(udiseCode: string): Promise<EnrolmentRecord[]> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db
-        .from("enrolment_snapshots")
-        .select("*")
-        .eq("udise_code", udiseCode)
-        .order("as_of", { ascending: false })
-      return ((data as Row[] | null) ?? []).map(fromRow)
-    } catch {
-      return []
-    }
-  }
-  return store.filter((r) => r.udiseCode === udiseCode).sort((a, b) => (a.asOf < b.asOf ? 1 : -1))
+  const { data, error } = await requireDb()
+    .from("enrolment_snapshots")
+    .select("*")
+    .eq("udise_code", udiseCode)
+    .eq("tenant_id", DEFAULT_SCHOOL_NODE)
+    .order("as_of", { ascending: false })
+  if (error) throw error
+  return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
 /** The most recent enrolment snapshot for a school, or undefined if none. */
