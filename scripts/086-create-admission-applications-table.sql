@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS admission_applications (
     effect        TEXT NOT NULL DEFAULT '',          -- permit | deny | require-approval (from the Rego PDP)
     reasons       TEXT NOT NULL DEFAULT '',          -- governing rule ids
     request_id    TEXT NOT NULL DEFAULT '',          -- HITL request id when pending approval
-    credential_id TEXT NOT NULL DEFAULT '',          -- anchored admission credential id on admit
+    credential_id TEXT NOT NULL DEFAULT '',          -- anchored admission credential id on admission
     pii_sealed    BOOLEAN NOT NULL DEFAULT false,    -- PII was enveloped under the tenant KEK
     decided_at    TEXT NOT NULL DEFAULT ''
 );

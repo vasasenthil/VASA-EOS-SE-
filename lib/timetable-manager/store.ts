@@ -1,8 +1,8 @@
 // VASA-EOS(SE) — Timetable Manager persistence (server-only). Full CRUD.
-// Durable in Supabase when configured; in-memory seeded fallback otherwise. Every mutation audited.
+// Durable Supabase persistence only; missing database configuration fails closed. Every mutation audited.
 
 import { appendAudit } from "@/lib/audit/trail"
-import { getDb } from "@/lib/persistence"
+import { requireDb } from "@/lib/db/require-db"
 import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
 import type { TimetableEntry, TimetableInput } from "./index"
 
@@ -62,42 +62,24 @@ function seed(): TimetableEntry[] {
   ]
 }
 
-const store: TimetableEntry[] = seed()
 
 export async function listTimetable(): Promise<TimetableEntry[]> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("timetable_entries").select("*").order("created_at", { ascending: false })
-      const rows = ((data as Row[] | null) ?? []).map(fromRow)
-      return rows.length > 0 ? rows : seed()
-    } catch {
-      return seed()
-    }
-  }
-  return [...store]
+  const { data, error } = await requireDb().from("timetable_entries").select("*").order("created_at", { ascending: false })
+  if (error) throw error
+  return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
 export async function getTimetableEntry(eid: string): Promise<TimetableEntry | undefined> {
-  const db = getDb()
-  if (db) {
-    try {
-      const { data } = await db.from("timetable_entries").select("*").eq("id", eid).maybeSingle()
-      if (data) return fromRow(data as Row)
-    } catch {
-      /* fall through */
-    }
-    return seed().find((e) => e.id === eid)
-  }
-  return store.find((e) => e.id === eid)
+  const { data, error } = await requireDb().from("timetable_entries").select("*").eq("id", eid).maybeSingle()
+  if (error) throw error
+  return data ? fromRow(data as Row) : undefined
 }
 
 export async function createTimetableEntry(input: TimetableInput, tenantId = DEFAULT_SCHOOL_NODE): Promise<TimetableEntry> {
   const now = new Date().toISOString()
   const e: TimetableEntry = { id: id(), ...input, createdAt: now, updatedAt: now }
-  const db = getDb()
-  if (db) await db.from("timetable_entries").insert(toRow(e, tenantId))
-  else store.unshift(e)
+  const { error } = await requireDb().from("timetable_entries").insert(toRow(e, tenantId))
+  if (error) throw error
   await appendAudit({ actor: "timetable", action: "timetable.create", resource: e.id, details: { class: `${e.classLevel}-${e.section}`, day: e.day, period: e.period } })
   return e
 }
@@ -106,42 +88,68 @@ export async function updateTimetableEntry(eid: string, input: TimetableInput): 
   const existing = await getTimetableEntry(eid)
   if (!existing) return undefined
   const updated: TimetableEntry = { ...existing, ...input, updatedAt: new Date().toISOString() }
-  const db = getDb()
-  if (db) {
-    await db.from("timetable_entries").update({
-      class_level: updated.classLevel, section: updated.section, day: updated.day, period: updated.period,
-      start_time: updated.startTime, end_time: updated.endTime, subject: updated.subject, teacher: updated.teacher,
-      room: updated.room, updated_at: updated.updatedAt,
-    }).eq("id", eid)
-  } else {
-    const i = store.findIndex((e) => e.id === eid)
-    if (i >= 0) store[i] = updated
-  }
+  const { error } = await requireDb().from("timetable_entries").update({
+    class_level: updated.classLevel, section: updated.section, day: updated.day, period: updated.period,
+    start_time: updated.startTime, end_time: updated.endTime, subject: updated.subject, teacher: updated.teacher,
+    room: updated.room, updated_at: updated.updatedAt,
+  }).eq("id", eid)
+  if (error) throw error
   await appendAudit({ actor: "timetable", action: "timetable.update", resource: eid, details: { day: updated.day, period: updated.period } })
   return updated
 }
 
 export async function deleteTimetableEntry(eid: string): Promise<boolean> {
-  const db = getDb()
-  if (db) {
-    await db.from("timetable_entries").delete().eq("id", eid)
-  } else {
-    const i = store.findIndex((e) => e.id === eid)
-    if (i < 0) return false
-    store.splice(i, 1)
-  }
+  const existing = await getTimetableEntry(eid)
+  if (!existing) return false
+  const { error } = await requireDb().from("timetable_entries").delete().eq("id", eid)
+  if (error) throw error
   await appendAudit({ actor: "timetable", action: "timetable.delete", resource: eid })
   return true
 }
 
 export async function seedTimetable(tenantId = DEFAULT_SCHOOL_NODE): Promise<number> {
   const rows = seed()
-  const db = getDb()
-  if (db) {
-    for (const e of rows) await db.from("timetable_entries").upsert(toRow(e, tenantId))
-  } else {
-    for (const e of rows) if (!store.some((s) => s.id === e.id)) store.push(e)
+  const db = requireDb()
+  for (const e of rows) {
+    const existing = await db.from("timetable_entries").select("id").eq("id", e.id).maybeSingle()
+    if (existing.error) throw existing.error
+    const result = existing.data
+      ? await db.from("timetable_entries").update(toRow(e, tenantId)).eq("id", e.id)
+      : await db.from("timetable_entries").insert(toRow(e, tenantId))
+    if (result.error) throw result.error
   }
   await appendAudit({ actor: "timetable", action: "timetable.seed", resource: "timetable_entries", details: { count: rows.length } })
   return rows.length
+}
+
+export interface TeacherTimetableSlot {
+  period: number
+  subject: string
+  class: string
+  room: string
+  startTime: string
+  endTime: string
+}
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+
+export async function getTeacherTimetable(teacherId: string, _schoolId?: string, today: Date = new Date()): Promise<TeacherTimetableSlot[]> {
+  const entries = await listTimetable()
+  const day = DAY_NAMES[today.getDay()]
+  const todaysEntries = entries.filter((entry) => entry.day === day)
+  const dayRows = todaysEntries.length > 0 ? todaysEntries : entries
+  const teacherKey = teacherId.trim().toLowerCase()
+  const teacherRows = dayRows.filter((entry) => entry.teacher.toLowerCase().includes(teacherKey))
+  const rows = teacherRows.length > 0 ? teacherRows : dayRows
+  return rows
+    .sort((a, b) => a.period - b.period)
+    .slice(0, 8)
+    .map((entry) => ({
+      period: entry.period,
+      subject: entry.subject,
+      class: `${entry.classLevel}-${entry.section}`,
+      room: entry.room,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+    }))
 }
