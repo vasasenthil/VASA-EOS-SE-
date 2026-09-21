@@ -9,8 +9,8 @@
 //
 // Honesty contract (tests/tech-fabric.test.ts): eight elements present once each; a built/partial
 // element cites a repoRef that exists on disk; a pending element cites nothing; weighted coverage is a
-// candid mid-range, never 100%. Edge Compute / offline-first is disclosed as pending by design (a
-// deployment/runtime concern, not application code).
+// candid mid-range, never 100%. Edge Compute remains partial: offline-first read access is now
+// implemented in app code, while school-level edge inference is still a deployment/runtime concern.
 
 import { csvField } from "@/lib/csv"
 import { type CapabilityStatus } from "@/lib/governance/role-capabilities"
@@ -37,11 +37,11 @@ export const FABRIC_ELEMENTS: FabricElement[] = [
     id: "ML",
     name: "Machine Learning",
     briefClaim: "Classical ML for forecasting and anomaly detection.",
-    delivered: "Deterministic, explainable analytics + a weighted early-warning risk model (forecasting/anomaly signals) under human authority.",
+    delivered: "Deterministic advisory analytics plus a DB-backed ML lifecycle: feature extraction, logistic training, registry, inference, drift monitoring, outcome feedback and retraining orchestration.",
     status: "partial",
-    note: "The forecasting/anomaly SURFACE is built and tested as deterministic, explainable logic; trained statistical/ML models on live data are a seam — an ML model may refine, not replace, these signals.",
-    repoRefs: ["lib/ai/engines/analytics.ts", "lib/earlywarning/index.ts"],
-    pendingAspects: ["Trained ML models fitted on live state data"],
+    note: "The classical-ML runtime is now built in-repo and testable without external ML platforms. It remains partial until trained on live state data and governed production telemetry rather than synthetic seed data.",
+    repoRefs: ["lib/ai/engines/analytics.ts", "lib/earlywarning/index.ts", "lib/ml/training/logistic.ts", "lib/ml/workers/drift-monitor.worker.ts"],
+    pendingAspects: ["Live state-data training corpus and production calibration"],
   },
   {
     id: "DL",
@@ -97,11 +97,11 @@ export const FABRIC_ELEMENTS: FabricElement[] = [
     id: "EDGE",
     name: "Edge Compute",
     briefClaim: "Edge compute for school-level inference under low-bandwidth, offline-first conditions.",
-    delivered: "Not built in application code — edge inference and an offline-first runtime are a deployment/runtime concern.",
-    status: "pending",
-    note: "School-level edge inference and an offline-first (service-worker/PWA) runtime are deployment and hosting concerns, not application logic, so they are honestly pending. The adjacent low-bandwidth multi-channel delivery (SMS/IVR) is a separate, built capability — not edge compute.",
-    repoRefs: [],
-    pendingAspects: ["School-level edge inference", "Offline-first PWA / service-worker runtime"],
+    delivered: "Offline-first read access for critical routes is built with a service worker, cache policy and offline fallback page; write sync remains online-only.",
+    status: "partial",
+    note: "The PWA/offline-read runtime is implemented in app code and registered globally. School-level edge inference and a durable offline write queue are still not claimed.",
+    repoRefs: ["public/sw.js", "lib/offline/cache-policy.ts", "app/offline/page.tsx"],
+    pendingAspects: ["School-level edge inference", "Durable offline write queue / conflict resolution"],
   },
   {
     id: "RAGMCP",

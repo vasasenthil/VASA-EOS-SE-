@@ -59,8 +59,7 @@ These are real constraints in this codebase — violating them breaks CI:
 ## Adding a feature module
 
 1. `lib/<feature>/index.ts` — constants, types, pure functions (client-safe).
-2. If it persists, `lib/<feature>/store.ts` — async functions using `getDb()` with an
-   **in-memory fallback** when `getDb()` is null, and `appendAudit(...)` for mutations.
+2. If it persists, `lib/<feature>/store.ts` — async functions using `requireDb()` and `appendAudit(...)` for mutations. Production-facing stores must fail closed when the database is unavailable; in-memory fixtures belong only in tests or isolated local seed scripts.
 3. `app/<feature>/page.tsx` (Server Component) + `actions.ts` (server actions) +
    a `"use client"` panel if interactive.
 4. Wire navigation in `config/dashboard-nav.ts`.
