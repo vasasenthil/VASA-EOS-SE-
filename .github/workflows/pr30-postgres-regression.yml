@@ -1,0 +1,36 @@
+name: pr30-postgres-regression
+on:
+  pull_request:
+    paths:
+      - 'migrations/**'
+      - 'lib/events/**'
+      - 'lib/ml/**'
+      - 'scripts/deploy/**'
+      - 'tests/sql/**'
+      - '.github/workflows/pr30-postgres-regression.yml'
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pr30
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pr30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/sql/setup-pr30.sql
+      - run: node --experimental-strip-types tests/sql/migration-runner-check.mjs

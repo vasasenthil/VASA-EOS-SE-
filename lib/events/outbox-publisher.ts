@@ -18,6 +18,7 @@ export interface OutboxRow {
   last_error?: string | null
   locked_at?: string | null
   locked_by?: string | null
+  next_attempt_at?: string
 }
 
 export interface OutboxEventRecord extends OutboxRow {
@@ -95,7 +96,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
     return this.serial(async () => {
       const limit = Math.max(1, batchSize)
       const rows = [...this.rows.values()]
-        .filter((row) => row.status === "pending" && !row.locked_by)
+        .filter((row) => row.status === "pending" && row.retry_count < 5 && (!row.next_attempt_at || Date.parse(row.next_attempt_at) <= Date.now()) && (!row.locked_by || (row.locked_at && Date.parse(row.locked_at) < Date.now() - 300_000)))
         .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
         .slice(0, limit)
       const now = new Date().toISOString()
@@ -126,11 +127,16 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
     await this.serial(async () => {
       const row = this.rows.get(id)
       if (row && row.status === "pending" && row.locked_by === workerId) {
-        row.status = "failed"
         row.retry_count += 1
+        row.status = row.retry_count >= 5 ? "failed" : "pending"
+        row.next_attempt_at = new Date(Date.now() + Math.min(300, 2 ** row.retry_count) * 1000).toISOString()
         row.locked_by = null
         row.locked_at = null
         row.last_error = error.slice(0, 2000)
+        if (row.status === "failed") {
+          const { moveToDeadLetter } = await import("./dead-letters")
+          await moveToDeadLetter(row, row.last_error)
+        }
       }
     })
   }

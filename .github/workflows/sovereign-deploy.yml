@@ -107,7 +107,7 @@ jobs:
           PRODUCTION_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       - name: Deploy app and workers to staging K8s
         run: |
-          kubectl -n ${K8S_NAMESPACE} apply -f infra/k8s/vasa-app-deployment.yaml
+          node --experimental-strip-types scripts/deploy/app.ts
           pnpm run deploy:workers
         env:
           SOVEREIGN_REGISTRY: ${{ secrets.SOVEREIGN_REGISTRY }}
@@ -144,7 +144,7 @@ jobs:
           PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
       - name: Deploy production K8s workloads
         run: |
-          kubectl -n ${K8S_NAMESPACE} apply -f infra/k8s/vasa-app-deployment.yaml
+          node --experimental-strip-types scripts/deploy/app.ts
           pnpm run deploy:workers
         env:
           SOVEREIGN_REGISTRY: ${{ secrets.SOVEREIGN_REGISTRY }}

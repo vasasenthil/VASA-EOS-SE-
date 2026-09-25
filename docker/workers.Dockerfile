@@ -7,4 +7,4 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-CMD ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/outbox-dispatcher-worker.ts"]
+CMD ["node", "--experimental-transform-types", "--import", "./scripts/worker-register.mjs", "scripts/worker-main.ts", "outbox-dispatcher"]

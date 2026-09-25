@@ -1,17 +1,13 @@
+import { installAuthFixture } from "./helpers/auth-fixture"
+const issueToken = installAuthFixture()
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import { NextRequest } from "next/server"
 
 function governanceRequest(roles: string[] = ["ADMIN"], path = "/api/governance/acceptance-pack") {
-  const payload = Buffer.from(
-    JSON.stringify({
-      sub: "governance-test-user",
-      email: "ciso@vasa-eos.tn.gov.in",
-      app_metadata: { roles },
-    }),
-  ).toString("base64url")
+  const token = issueToken({ sub: "governance-test-user", email: "ciso@vasa-eos.tn.gov.in", app_metadata: { roles } })
   return new NextRequest(`https://vasa-eos.tn.gov.in${path}`, {
-    headers: { authorization: `Bearer test.${payload}.signature` },
+    headers: { authorization: `Bearer ${token}` },
   })
 }
 

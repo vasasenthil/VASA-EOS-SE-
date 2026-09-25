@@ -11,5 +11,3 @@ export class SlaMonitorWorker extends WorkerBase {
     structuredLog("info", "sla monitor scanned workflows", { correlationId, ...result })
   }
 }
-
-if (require.main === module) void new SlaMonitorWorker().start()

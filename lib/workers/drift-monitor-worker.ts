@@ -9,5 +9,3 @@ export class DriftMonitorWorker extends WorkerBase {
     structuredLog("info", "drift monitor completed", { correlationId, ...result })
   }
 }
-
-if (require.main === module) void new DriftMonitorWorker().start()

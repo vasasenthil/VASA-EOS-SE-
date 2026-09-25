@@ -1,23 +1,19 @@
+import { installAuthFixture } from "./helpers/auth-fixture"
+const issueToken = installAuthFixture()
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { NextRequest } from "next/server"
 
 function mlRequest(path: string, options: { body?: unknown; roles?: string[] } = {}) {
   const { body, roles = ["ML_ADMIN"] } = options
-  const payload = Buffer.from(
-    JSON.stringify({
-      sub: "ml-admin-test-user",
-      email: "ml-admin@vasa-eos.tn.gov.in",
-      app_metadata: { roles },
-    }),
-  ).toString("base64url")
+  const token = issueToken({ sub: "ml-admin-test-user", email: "ml-admin@vasa-eos.tn.gov.in", app_metadata: { roles } })
 
   return new NextRequest(`https://vasa-eos.tn.gov.in${path}`, body === undefined ? {
-    headers: { authorization: `Bearer test.${payload}.signature` },
+    headers: { authorization: `Bearer ${token}` },
   } : {
     method: "POST",
     headers: {
-      authorization: `Bearer test.${payload}.signature`,
+      authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
     body: JSON.stringify(body),

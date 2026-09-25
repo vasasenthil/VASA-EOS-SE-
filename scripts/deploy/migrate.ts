@@ -4,6 +4,8 @@ import { join, resolve } from "node:path"
 import { spawnSync } from "node:child_process"
 import { isPostgresUrl, resolveMigrationDatabaseUrl } from "../../lib/db/environment.ts"
 
+import { migrationSql } from "./migration-sql.ts"
+
 type Manifest = { migrations: { id: string; path: string }[] }
 
 class DeployMigrationError extends Error {
@@ -17,47 +19,14 @@ function runPsql(databaseUrl: string, sql: string): string {
   const tempDir = mkdtempSync(join(tmpdir(), "vasa-migrate-"))
   const sqlFile = join(tempDir, "migration.sql")
   writeFileSync(sqlFile, sql)
-  const result = spawnSync("psql", [databaseUrl, "-v", "ON_ERROR_STOP=1", "-qAt", "-f", sqlFile], { encoding: "utf8" })
+  const result = spawnSync("psql", ["--no-psqlrc", databaseUrl, "-v", "ON_ERROR_STOP=1", "-qAt", "-f", sqlFile], { encoding: "utf8" })
   rmSync(tempDir, { recursive: true, force: true })
   if (result.status !== 0) throw new DeployMigrationError(result.stderr || result.stdout || "psql failed")
   return result.stdout.trim()
 }
 
-function quote(value: string): string {
-  return value.replace(/'/g, "''")
-}
-
 function loadManifest(): Manifest {
   return JSON.parse(readFileSync(resolve(process.cwd(), "migrations/manifest.json"), "utf8")) as Manifest
-}
-
-function checksum(sql: string): string {
-  let hash = 0
-  for (let i = 0; i < sql.length; i++) hash = (Math.imul(31, hash) + sql.charCodeAt(i)) | 0
-  return `sha32:${(hash >>> 0).toString(16).padStart(8, "0")}`
-}
-
-function ledgerSql(): string {
-  return `
-    create table if not exists platform_schema_migrations (
-      id text primary key,
-      path text not null,
-      checksum text not null,
-      applied_at timestamptz not null default now()
-    );
-  `
-}
-
-function migrationSql(id: string, path: string, sql: string): string {
-  return `
-    do $$
-    begin
-      if not exists (select 1 from platform_schema_migrations where id = '${quote(id)}') then
-        ${sql}
-        insert into platform_schema_migrations (id, path, checksum) values ('${quote(id)}', '${quote(path)}', '${quote(checksum(sql))}');
-      end if;
-    end $$;
-  `
 }
 
 function main(): void {
@@ -67,7 +36,6 @@ function main(): void {
   const manifest = loadManifest()
   if (!manifest.migrations.length) throw new DeployMigrationError("migrations/manifest.json has no migrations")
 
-  runPsql(databaseUrl, ledgerSql())
   for (const migration of manifest.migrations) {
     const sql = readFileSync(resolve(process.cwd(), migration.path), "utf8")
     runPsql(databaseUrl, migrationSql(migration.id, migration.path, sql))

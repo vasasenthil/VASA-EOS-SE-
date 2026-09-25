@@ -14,10 +14,10 @@ spec:
       containers:
         - name: worker
           image: vasa-eos-se-worker:latest
-          command: ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/outbox-dispatcher-worker.ts"]
+          command: ["node", "--experimental-transform-types", "--import", "./scripts/worker-register.mjs", "scripts/worker-main.ts", "outbox-dispatcher"]
           envFrom: [{ secretRef: { name: vasa-runtime-secrets } }]
           resources:
             requests: { cpu: "100m", memory: "128Mi" }
             limits: { cpu: "500m", memory: "512Mi" }
-          livenessProbe: { httpGet: { path: /workers/outbox-dispatcher/health, port: 3000 }, initialDelaySeconds: 20, periodSeconds: 30 }
-          readinessProbe: { httpGet: { path: /workers/outbox-dispatcher/health, port: 3000 }, initialDelaySeconds: 10, periodSeconds: 15 }
+          livenessProbe: { httpGet: { path: /health, port: 3001 }, initialDelaySeconds: 20, periodSeconds: 30 }
+          readinessProbe: { httpGet: { path: /health, port: 3001 }, initialDelaySeconds: 10, periodSeconds: 15 }
