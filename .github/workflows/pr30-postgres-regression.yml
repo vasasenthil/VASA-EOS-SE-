@@ -39,3 +39,23 @@ jobs:
           node-version: '22'
       - run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/sql/setup-pr30.sql
       - run: node --experimental-strip-types tests/sql/migration-runner-check.mjs
+
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm test
+      - run: pnpm run governance:verify-acceptance
+      - run: pnpm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'

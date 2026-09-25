@@ -56,9 +56,9 @@ No review threads are auto-resolved. No merge or deployment has been performed.
 - Full repository suite: **1,771 passed, 0 failed, 0 skipped**.
 - All feature-manifest migrations execute on a clean isolated PostgreSQL-compatible PGlite engine.
 - Access, retry, domain/outbox rollback, command replay, stale-state, ownership-trigger and PFMS transaction assertions pass against that engine, not only a mocked database.
-- PostgreSQL 16 CI setup now executes the new forward migrations and SQL assertions; its remote result must be checked on the published head.
+- PostgreSQL 16 CI executed and passed all SQL access/retry/domain/ownership/PFMS assertions. Its migration-runner check exposed a psql exit-code defect; the mismatch branch now raises a SQL exception so ON_ERROR_STOP produces failure. The final rerun and hosted Node 22 application build are tracked in the PR.
 - Standalone TypeScript typecheck passed. All four worker classes import on Node 22.23.3 with the production loader.
 - The application stores were exercised through real SQL execution for scheme proposal, human approvals, atomic system allocation/activation and event replay; this passed.
 - A legacy ownership fixture was preserved through upgrade and correctly backfilled only after authoritative mappings were supplied.
-- Node 24 builds compiled, type-checked and generated all 388 pages, then failed while removing `.next/export` (`ENOTEMPTY`). The final Node 22 build result is recorded in the PR update; compilation alone is not counted as a successful build.
+- Local Node 22 and Node 24 builds compiled, type-checked and generated all 388 pages, then failed while removing `.next/export` (`ENOTEMPTY`). The hosted Node 22 build result is recorded in the PR update; compilation alone is not counted as a successful build.
 - No live Supabase, Kubernetes, bank/treasury or PFMS deployment was exercised.

@@ -32,7 +32,7 @@ SELECT EXISTS (SELECT 1 FROM public.platform_schema_migrations
 \\if :checksum_matches
 \\else
 \\echo Migration checksum/path mismatch; refusing to continue
-\\quit 1
+DO $migration_guard$ BEGIN RAISE EXCEPTION 'Migration checksum/path mismatch; refusing to continue'; END $migration_guard$;
 \\endif
 \\else
 ${sql}
