@@ -73,6 +73,7 @@ export const schemeSchema = z.object({
   justification: z.string().min(10),
   expectedOutcomes: z.array(z.string().min(1)).default([]),
   workflowId: z.string().min(1).optional(),
+  jurisdictionId: z.string().min(1).optional(),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
 })

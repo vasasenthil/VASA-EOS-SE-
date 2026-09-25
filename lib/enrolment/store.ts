@@ -6,7 +6,8 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { requireDb } from "@/lib/db/require-db"
-import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
+import { resolveSchoolScope } from "@/lib/auth/school-scope"
+import type { VasaSession } from "@/lib/auth/session"
 import type { Enrolment } from "./index"
 
 /** Default UDISE code used by dashboard calls when no school is specified. */
@@ -31,7 +32,7 @@ interface Row {
 }
 
 function fromRow(r: Row): EnrolmentRecord {
-  return { id: r.id, udiseCode: r.udise_code, asOf: r.as_of, total: r.total, boys: r.boys, girls: r.girls, tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE }
+  return { id: r.id, udiseCode: r.udise_code, asOf: r.as_of, total: r.total, boys: r.boys, girls: r.girls, tenantId: r.tenant_id }
 }
 
 function newId(): string {
@@ -47,15 +48,17 @@ export interface NewEnrolment {
   tenantId?: string
 }
 
-export async function saveEnrolment(input: NewEnrolment): Promise<EnrolmentRecord> {
+export async function saveEnrolment(input: NewEnrolment, session?: VasaSession): Promise<EnrolmentRecord> {
+  const scope = await resolveSchoolScope(input.udiseCode, true, session)
+  if (input.tenantId !== undefined && input.tenantId !== scope.tenantId) throw new Error("Tenant override is not permitted")
   const rec: EnrolmentRecord = {
     id: newId(),
-    udiseCode: input.udiseCode ?? DEMO_UDISE,
+    udiseCode: scope.udiseCode,
     asOf: input.asOf,
     total: input.total,
     boys: input.boys,
     girls: input.girls,
-    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
+    tenantId: scope.tenantId,
   }
   const { error } = await requireDb().from("enrolment_snapshots").insert({
     id: rec.id,
@@ -69,7 +72,7 @@ export async function saveEnrolment(input: NewEnrolment): Promise<EnrolmentRecor
   })
   if (error) throw error
   await appendAudit({
-    actor: "office",
+    actor: scope.subject,
     action: "enrolment.snapshot",
     resource: `${rec.udiseCode}/${rec.asOf}`,
     details: { total: rec.total, boys: rec.boys, girls: rec.girls },
@@ -77,19 +80,20 @@ export async function saveEnrolment(input: NewEnrolment): Promise<EnrolmentRecor
   return rec
 }
 
-async function listEnrolment(udiseCode: string): Promise<EnrolmentRecord[]> {
+async function listEnrolment(udiseCode: string | undefined, session?: VasaSession): Promise<EnrolmentRecord[]> {
+  const scope = await resolveSchoolScope(udiseCode, false, session)
   const { data, error } = await requireDb()
     .from("enrolment_snapshots")
     .select("*")
-    .eq("udise_code", udiseCode)
-    .eq("tenant_id", DEFAULT_SCHOOL_NODE)
+    .eq("udise_code", scope.udiseCode)
+    .eq("tenant_id", scope.tenantId)
     .order("as_of", { ascending: false })
   if (error) throw error
   return ((data as Row[] | null) ?? []).map(fromRow)
 }
 
 /** The most recent enrolment snapshot for a school, or undefined if none. */
-export async function latestEnrolment(udiseCode: string = DEMO_UDISE): Promise<EnrolmentRecord | undefined> {
-  const rows = await listEnrolment(udiseCode)
+export async function latestEnrolment(udiseCode?: string, session?: VasaSession): Promise<EnrolmentRecord | undefined> {
+  const rows = await listEnrolment(udiseCode, session)
   return rows[0]
 }

@@ -8,6 +8,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const auth = await requireRole(req, ["SECRETARY", "MINISTER", "CABINET"])
   if (!auth.ok) return auth.response
   const { id } = await ctx.params
-  await proposeScheme(id, auth.session.subject)
+  try {
+  await proposeScheme(id, auth.session)
+  } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Decision failed" }, { status: 409 }) }
   return NextResponse.json({ ok: true })
 }

@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 import { getDb } from "@/lib/persistence"
 import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { parseWorkflowPayload, workflowDefinitionFor, type WorkflowRuntimePayload } from "./schema"
@@ -79,8 +80,7 @@ export async function createWorkflowInstance(input: { id: string; workflowType: 
   }
   const db = getDb()
   if (db) {
-    const { error } = await db.from("workflow_instances").upsert(toRow(record), { onConflict: "id" })
-    if (error) throw error
+    await persistDomainMutation("workflow_instances", "insert", toRow(record))
   } else {
     allowMemory()
     memory.set(record.id, record)
@@ -104,14 +104,10 @@ export async function saveWorkflowInstance(record: WorkflowRuntimeInstance): Pro
   const updated = { ...record, payload: parseWorkflowPayload(record.payload), updatedAt: new Date().toISOString() }
   const db = getDb()
   if (db) {
-    const { error } = await db.from("workflow_instances").update({
-      current_step_index: updated.currentStepIndex,
-      status: updated.status,
-      payload: updated.payload,
-      current_step_started_at: updated.currentStepStartedAt,
-      updated_at: updated.updatedAt,
-    }).eq("id", updated.id)
-    if (error) throw error
+    await persistDomainMutation("workflow_instances", "update", {
+      id: updated.id, current_step_index: updated.currentStepIndex, status: updated.status,
+      payload: updated.payload, current_step_started_at: updated.currentStepStartedAt, updated_at: updated.updatedAt,
+    }, ["id"], { updated_at: record.updatedAt })
   } else {
     allowMemory()
     memory.set(updated.id, structuredClone(updated))

@@ -9,6 +9,9 @@ if (name === "outbox-dispatcher") {
 } else if (name === "drift-monitor") {
   const { DriftMonitorWorker } = await import("../lib/workers/drift-monitor-worker.ts")
   await new DriftMonitorWorker().start()
+} else if (name === "pfms-reconciliation") {
+  const { PfmsReconciliationWorker } = await import("../lib/workers/pfms-reconciliation.worker.ts")
+  await new PfmsReconciliationWorker().start()
 } else {
   throw new Error(`Unknown worker: ${name}`)
 }

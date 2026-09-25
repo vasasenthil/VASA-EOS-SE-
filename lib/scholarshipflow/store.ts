@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 // VASA-EOS(SE) — Scholarship / benefit sanction workflow persistence (server-only).
 // Each application carries a live SCHOLARSHIP_SANCTION instance: Headmaster verifies →
 // BEO sanctions → DEO scrutiny (for ≥ ₹25,000) → DBT release. The DBT account is stored
@@ -119,9 +120,10 @@ export async function actOnScholarship(rid: string, input: ActInput): Promise<Ac
   if (!rec) return { ok: false, reason: "Application not found." }
   const result = act(SCHOLARSHIP_SANCTION, rec.instance, input)
   if (!result.ok) return { ok: false, record: rec, reason: result.reason }
+  const previousInstance = structuredClone(rec.instance)
   rec.instance = result.instance
   const db = getDb()
-  if (db) await db.from("scholarship_flows").update({ instance: rec.instance }).eq("id", rid)
+  if (db) await persistDomainMutation("scholarship_flows", "update", { id: rid, instance: rec.instance }, ["id"], { instance: previousInstance })
   await appendAudit({
     actor: input.actor,
     action: "scholarshipflow.act",

@@ -4,6 +4,7 @@
 // service-role key, and transparently falls back to an in-memory store otherwise
 // (so local/demo and CI builds work without any database).
 
+import { readOnlyDuringTransaction } from "./transaction-context"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
@@ -13,7 +14,8 @@ let testOverride: SupabaseClient | null | undefined
 
 /** The privileged DB client, or null when no service-role key is configured. */
 export function getDb(): SupabaseClient | null {
-  return testOverride !== undefined ? testOverride : supabaseAdmin
+  const db = testOverride !== undefined ? testOverride : supabaseAdmin
+  return db ? readOnlyDuringTransaction(db) : null
 }
 
 /** True when durable persistence is available. */

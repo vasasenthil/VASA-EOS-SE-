@@ -1,3 +1,5 @@
+import type { VasaSession } from "@/lib/auth/session"
+const session: VasaSession = { subject: "school-operator", roles: ["PRINCIPAL"], tenant: { stateId: "TN", schoolId: DEMO_UDISE }, metadata: {} }
 import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -38,10 +40,12 @@ test("very low scores weigh more than merely declining scores", () => {
 })
 
 test("listing returns the cohort ordered by risk score, highest first (DB path)", async () => {
-  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
-  await recordDropoutRisk({ name: "Low One", cls: "VII-A", absences: 1, attendancePct: 95, recentScorePct: 70, feeDefault: false, siblingDropout: false })
-  await recordDropoutRisk({ name: "High One", cls: "IX-B", absences: 14, attendancePct: 60, recentScorePct: 30, feeDefault: true, siblingDropout: false })
-  const cohort = await listDropoutRisk()
+  const db = makeFakeDb()
+  await db.from("school_tenant_bindings").insert({ school_id: DEMO_UDISE, udise_code: DEMO_UDISE, tenant_id: "tenant-school", state_id: "TN" })
+  __setTestDb(db as unknown as SupabaseClient)
+  await recordDropoutRisk({ name: "Low One", cls: "VII-A", absences: 1, attendancePct: 95, recentScorePct: 70, feeDefault: false, siblingDropout: false }, session)
+  await recordDropoutRisk({ name: "High One", cls: "IX-B", absences: 14, attendancePct: 60, recentScorePct: 30, feeDefault: true, siblingDropout: false }, session)
+  const cohort = await listDropoutRisk(undefined, session)
   assert.equal(cohort[0].name, "High One") // highest score leads
   assert.ok(cohort[0].assessment.score >= cohort[cohort.length - 1].assessment.score)
   __setTestDb(undefined)
@@ -49,9 +53,9 @@ test("listing returns the cohort ordered by risk score, highest first (DB path)"
 
 test("missing durable DB fails closed for dropout risk", async () => {
   __setTestDb(null)
-  await assert.rejects(() => listDropoutRisk(DEMO_UDISE), ProductionDatabaseError)
+  await assert.rejects(() => listDropoutRisk(DEMO_UDISE, session), ProductionDatabaseError)
   await assert.rejects(
-    () => recordDropoutRisk({ name: "No DB", cls: "IX-A", absences: 1, attendancePct: 95, recentScorePct: 70, feeDefault: false, siblingDropout: false }),
+    () => recordDropoutRisk({ name: "No DB", cls: "IX-A", absences: 1, attendancePct: 95, recentScorePct: 70, feeDefault: false, siblingDropout: false }, session),
     ProductionDatabaseError,
   )
 })

@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
 import { getDb } from "@/lib/persistence"
@@ -16,8 +17,7 @@ export async function recordBeneficiary(schemeId: string, beneficiary: Beneficia
   await commitWithEvents(async () => {
     const db = getDb()
     if (db) {
-      const { error } = await db.from("scheme_beneficiaries").upsert({ id: row.id, scheme_id: schemeId, beneficiary_id: row.beneficiaryId, beneficiary_name: row.beneficiaryName, benefit_type: row.benefitType, amount: row.amount, district: row.district, added_at: row.addedAt }, { onConflict: "scheme_id,beneficiary_id,benefit_type" })
-      if (error) throw error
+      await persistDomainMutation("scheme_beneficiaries", "upsert", { id: row.id, scheme_id: schemeId, beneficiary_id: row.beneficiaryId, beneficiary_name: row.beneficiaryName, benefit_type: row.benefitType, amount: row.amount, district: row.district, added_at: row.addedAt }, ["scheme_id", "beneficiary_id", "benefit_type"])
     } else {
       beneficiaries.set(schemeId, [...(beneficiaries.get(schemeId) ?? []), row])
     }
@@ -32,8 +32,7 @@ export async function recordOutcome(schemeId: string, outcome: OutcomeMetric): P
   const row = schemeOutcomeSchema.parse({ schemeId, beneficiaries: beneficiaryCount, impactMetrics: { [metric.metricName]: metric.value }, evaluation: metric.evaluation, recordedAt: now() })
   await commitWithEvents(async () => {
     if (db) {
-      const { error } = await db.from("scheme_outcomes").insert({ scheme_id: schemeId, beneficiaries: row.beneficiaries, impact_metrics: row.impactMetrics, evaluation: row.evaluation, recorded_at: row.recordedAt })
-      if (error) throw error
+      await persistDomainMutation("scheme_outcomes", "insert", { scheme_id: schemeId, beneficiaries: row.beneficiaries, impact_metrics: row.impactMetrics, evaluation: row.evaluation, recorded_at: row.recordedAt })
     } else {
       outcomes.set(schemeId, [...(outcomes.get(schemeId) ?? []), row])
     }

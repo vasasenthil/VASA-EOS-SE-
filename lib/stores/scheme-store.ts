@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 import { requireDb } from "@/lib/db/require-db"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
@@ -21,27 +22,21 @@ export const SCHEME_SEEDS: Scheme[] = [
   schemeSchema.parse({ id: "55555555-5555-4555-8555-555555555555", name: "Vocational Skills Accelerator", description: "Industry-linked vocational modules for higher-secondary students in priority trades.", category: "vocational", eligibility: "Class 11-12 students in selected vocational clusters", budget: 210000000, fiscalYear: "2026-27", timeline: { milestones: [] }, status: "under_review", proposedBy: "directorate@tn.gov", approvedBy: ["Secretary"], justification: "Industry-aligned modules improve employability and local livelihood pathways.", expectedOutcomes: ["Increase certification rates", "Improve apprenticeship placement"], createdAt: "2026-06-25T00:00:00.000Z", updatedAt: "2026-07-01T00:00:00.000Z" }),
 ]
 
-function toRow(s: Scheme) { return { id: s.id, name: s.name, description: s.description, category: s.category, eligibility: s.eligibility, budget: s.budget, fiscal_year: s.fiscalYear, timeline: s.timeline, status: s.status, proposed_by: s.proposedBy, approved_by: s.approvedBy, justification: s.justification, expected_outcomes: s.expectedOutcomes, workflow_id: s.workflowId ?? null, created_at: s.createdAt, updated_at: s.updatedAt } }
-function fromRow(r: any): Scheme { return schemeSchema.parse({ id: r.id, name: r.name, description: r.description, category: r.category, eligibility: r.eligibility, budget: Number(r.budget), fiscalYear: r.fiscal_year, timeline: r.timeline, status: r.status, proposedBy: r.proposed_by, approvedBy: r.approved_by ?? [], justification: r.justification, expectedOutcomes: r.expected_outcomes ?? [], workflowId: r.workflow_id ?? undefined, createdAt: r.created_at, updatedAt: r.updated_at }) }
+function toRow(s: Scheme) { return { id: s.id, name: s.name, description: s.description, category: s.category, eligibility: s.eligibility, budget: s.budget, fiscal_year: s.fiscalYear, timeline: s.timeline, status: s.status, proposed_by: s.proposedBy, approved_by: s.approvedBy, justification: s.justification, expected_outcomes: s.expectedOutcomes, workflow_id: s.workflowId ?? null, jurisdiction_id: s.jurisdictionId ?? null, created_at: s.createdAt, updated_at: s.updatedAt } }
+function fromRow(r: any): Scheme { return schemeSchema.parse({ id: r.id, name: r.name, description: r.description, category: r.category, eligibility: r.eligibility, budget: Number(r.budget), fiscalYear: r.fiscal_year, timeline: r.timeline, status: r.status, proposedBy: r.proposed_by, approvedBy: r.approved_by ?? [], justification: r.justification, expectedOutcomes: r.expected_outcomes ?? [], workflowId: r.workflow_id ?? undefined, jurisdictionId: r.jurisdiction_id ?? undefined, createdAt: r.created_at, updatedAt: r.updated_at }) }
 
 function event(type: PlatformEvent["eventType"], scheme: Scheme, extra: Record<string, unknown> = {}): PlatformEvent {
   return createEventEnvelope({ eventType: type as any, aggregateType: "scheme", aggregateId: scheme.id, idempotencyKey: `scheme:${scheme.id}:${type}:${scheme.updatedAt}`, payload: Object.fromEntries(Object.entries({ schemeId: scheme.id, name: scheme.name, status: scheme.status, workflowId: scheme.workflowId, ...extra }).filter(([, value]) => value !== undefined)) } as any)
 }
 
-export async function saveSchemeRecord(scheme: Scheme): Promise<void> {
-  const db = requireDb()
-  const existing = await db.from("schemes").select("id").eq("id", scheme.id).maybeSingle()
-  if (existing.error) throw existing.error
-  const result = existing.data
-    ? await db.from("schemes").update(toRow(scheme)).eq("id", scheme.id)
-    : await db.from("schemes").insert(toRow(scheme))
-  if (result.error) throw result.error
+export async function saveSchemeRecord(scheme: Scheme, expected?: Scheme): Promise<void> {
+  await persistDomainMutation("schemes", "upsert", toRow(scheme), ["id"], expected ? { updated_at: expected.updatedAt, status: expected.status } : undefined)
 }
 
-export async function createScheme(proposal: SchemeProposal): Promise<Scheme> {
+export async function createScheme(proposal: SchemeProposal, jurisdictionId?: string): Promise<Scheme> {
   const parsed = schemeProposalSchema.parse(proposal)
   const t = now()
-  const scheme = schemeSchema.parse({ id: id(), ...parsed, status: "draft", approvedBy: [], createdAt: t, updatedAt: t })
+  const scheme = schemeSchema.parse({ id: id(), ...parsed, jurisdictionId, status: "draft", approvedBy: [], createdAt: t, updatedAt: t })
   const events: PlatformEvent[] = [event("SchemeProposed", { ...scheme, status: "draft" }, { proposedBy: parsed.proposedBy })]
   return commitWithEvents(async () => { await saveSchemeRecord(scheme); return scheme }, events)
 }
@@ -65,8 +60,11 @@ export async function listSchemes(filters?: SchemeFilters): Promise<Scheme[]> {
 export async function updateScheme(id: string, updates: Partial<Scheme>): Promise<Scheme> {
   const existing = await getScheme(id)
   if (!existing) throw new Error(`Scheme not found: ${id}`)
+  if (existing.status !== "draft") throw new Error("Only draft schemes can be edited")
+  const editable = new Set(["name", "description", "category", "eligibility", "budget", "fiscalYear", "timeline", "justification", "expectedOutcomes"])
+  if (Object.keys(updates).some(key => !editable.has(key))) throw new Error("Approval and ownership fields are server-managed")
   const updated = schemeSchema.parse({ ...existing, ...updates, id, updatedAt: now() })
-  return commitWithEvents(async () => { await saveSchemeRecord(updated); return updated }, [event(statusEvent(updated.status), updated)])
+  return commitWithEvents(async () => { await saveSchemeRecord(updated, existing); return updated }, [event(statusEvent(updated.status), updated)])
 }
 
 function statusEvent(status: Scheme["status"]): PlatformEvent["eventType"] { return status === "approved" ? "SchemeApproved" : status === "active" ? "SchemeActivated" : status === "suspended" ? "SchemeSuspended" : status === "closed" ? "SchemeClosed" : "SchemeProposed" }
@@ -76,26 +74,6 @@ export async function deleteScheme(id: string): Promise<void> {
   if (!existing) return
   if (existing.status !== "draft") throw new Error("Only draft schemes can be deleted")
   await commitWithEvents(async () => {
-    const { error } = await requireDb().from("schemes").delete().eq("id", id)
-    if (error) throw error
+    await persistDomainMutation("schemes", "delete", { id }, ["id"], { status: "draft" })
   }, [event("SchemeClosed", { ...existing, status: "closed", updatedAt: now() })])
-}
-
-export async function ensureSchemeWorkflow(scheme: Scheme, actor: string): Promise<Scheme> {
-  const workflowId = scheme.workflowId ?? schemeWorkflowId(scheme.id)
-  if (!(await getWorkflowInstance(workflowId))) await createWorkflowInstance({ id: workflowId, workflowType: "scheme-approval", aggregateId: scheme.id, payload: { context: { budget: scheme.budget, category: scheme.category, proposedBy: actor } } })
-  const updated = await updateScheme(scheme.id, { workflowId, status: "under_review" })
-  return updated
-}
-
-export async function markSchemeApprovalProgress(schemeId: string, approver: string): Promise<Scheme> {
-  const scheme = await getScheme(schemeId)
-  if (!scheme) throw new Error(`Scheme not found: ${schemeId}`)
-  const workflowId = scheme.workflowId ?? schemeWorkflowId(schemeId)
-  const workflow = await getWorkflowInstance(workflowId)
-  const approvedBy = [...new Set([...scheme.approvedBy, approver])]
-  const status = workflow?.status === "completed" || approvedBy.length >= 5 ? "approved" : "under_review"
-  const updated = await updateScheme(schemeId, { approvedBy, status, workflowId })
-  if (workflow?.status === "completed") await saveWorkflowInstance({ ...workflow, status: "completed" })
-  return updated
 }

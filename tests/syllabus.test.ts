@@ -1,3 +1,5 @@
+import type { VasaSession } from "@/lib/auth/session"
+const session: VasaSession = { subject: "school-operator", roles: ["PRINCIPAL"], tenant: { stateId: "TN", schoolId: DEMO_UDISE }, metadata: {} }
 import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -31,26 +33,30 @@ test("the on-track threshold is stable", () => {
 })
 
 test("listing orders subjects by completion, lowest first (DB path)", async () => {
-  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
-  await addSyllabusSubject({ subject: "English", teacher: "V", pct: 91 })
-  await addSyllabusSubject({ subject: "Social Studies", teacher: "K", pct: 74 })
-  await addSyllabusSubject({ subject: "Maths", teacher: "S", pct: 78 })
-  const got = await listSyllabus()
+  const db = makeFakeDb()
+  await db.from("school_tenant_bindings").insert({ school_id: DEMO_UDISE, udise_code: DEMO_UDISE, tenant_id: "tenant-school", state_id: "TN" })
+  __setTestDb(db as unknown as SupabaseClient)
+  await addSyllabusSubject({ subject: "English", teacher: "V", pct: 91 }, session)
+  await addSyllabusSubject({ subject: "Social Studies", teacher: "K", pct: 74 }, session)
+  await addSyllabusSubject({ subject: "Maths", teacher: "S", pct: 78 }, session)
+  const got = await listSyllabus(undefined, session)
   assert.deepEqual(got.map((r) => r.subject), ["Social Studies", "Maths", "English"])
   __setTestDb(undefined)
 })
 
 test("a subject's completion can be updated (DB path)", async () => {
-  __setTestDb(makeFakeDb() as unknown as SupabaseClient)
-  const rec = await addSyllabusSubject({ subject: "Science", teacher: "R", pct: 60 })
-  assert.equal(await setSyllabusPct(rec.id, 85), true)
-  const got = await listSyllabus()
+  const db = makeFakeDb()
+  await db.from("school_tenant_bindings").insert({ school_id: DEMO_UDISE, udise_code: DEMO_UDISE, tenant_id: "tenant-school", state_id: "TN" })
+  __setTestDb(db as unknown as SupabaseClient)
+  const rec = await addSyllabusSubject({ subject: "Science", teacher: "R", pct: 60 }, session)
+  assert.equal(await setSyllabusPct(rec.id, 85, undefined, session), true)
+  const got = await listSyllabus(undefined, session)
   assert.equal(got.find((r) => r.id === rec.id)?.pct, 85)
   __setTestDb(undefined)
 })
 
 test("missing durable DB fails closed for syllabus progress", async () => {
   __setTestDb(null)
-  await assert.rejects(() => listSyllabus(DEMO_UDISE), ProductionDatabaseError)
-  await assert.rejects(() => setSyllabusPct("SYL-NONE", 50), ProductionDatabaseError)
+  await assert.rejects(() => listSyllabus(DEMO_UDISE, session), ProductionDatabaseError)
+  await assert.rejects(() => setSyllabusPct("SYL-NONE", 50, undefined, session), ProductionDatabaseError)
 })

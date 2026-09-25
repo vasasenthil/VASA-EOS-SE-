@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 // VASA-EOS(SE) — immutable audit trail primitive (tamper-evident by hash chaining).
 // Each entry links to the previous via a hash, so any retroactive edit breaks the
 // chain (the in-app analogue of the dossier's blockchain-anchored audit).
@@ -114,7 +115,7 @@ export async function appendAudit(input: {
     const seq = (last?.seq ?? 0) + 1
     const prevHash = last?.hash ?? GENESIS
     const entry: AuditEntry = { seq, ts, ...input, prevHash, hash: hash(bodyFor({ seq, ts, ...input, prevHash })) }
-    await db.from("audit_trail").insert({
+    await persistDomainMutation("audit_trail", "insert", {
       seq: entry.seq,
       ts: entry.ts,
       actor: entry.actor,
@@ -123,7 +124,7 @@ export async function appendAudit(input: {
       details: entry.details ?? null,
       prev_hash: entry.prevHash,
       hash: entry.hash,
-    })
+    }, ["seq"])
     return entry
   }
 

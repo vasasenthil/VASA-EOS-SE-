@@ -1,3 +1,6 @@
+import type { VasaSession } from "@/lib/auth/session"
+const actor = (role: string): VasaSession => ({ subject: role.toLowerCase()+"-reviewer", roles: [role], tenant: { stateId: "TN" }, metadata: {} })
+const proposer: VasaSession = { subject: "proposal-author", roles: ["SECRETARY"], tenant: { stateId: "TN" }, metadata: {} }
 import assert from "node:assert/strict"
 import test from "node:test"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -43,19 +46,19 @@ const proposal = {
 
 test("scheme lifecycle creates, proposes, advances workflow, tracks budget and outcomes", async () => {
   const unsubscribe = wireWorkflowEngineToOutbox()
-  const scheme = await createScheme(proposal)
+  const scheme = await createScheme(proposal, "TN")
   assert.equal((await getScheme(scheme.id))?.status, "draft")
 
-  await proposeScheme(scheme.id, "SECRETARY")
+  await proposeScheme(scheme.id, proposer)
   const workflowId = schemeWorkflowId(scheme.id)
   assert.equal((await getScheme(scheme.id))?.status, "under_review")
   assert.equal((await getWorkflowInstance(workflowId))?.status, "running")
 
-  await approveSchemeStep(workflowId, 0, "SECRETARY", "Policy alignment cleared")
+  await approveSchemeStep(workflowId, 0, actor("SECRETARY"), "Policy alignment cleared")
   await dispatchOutboxBatch({ workerId: "scheme-test", batchSize: 20 })
   assert.equal((await getWorkflowInstance(workflowId))?.currentStepIndex, 1)
 
-  const ministerEvent = (await listOutboxEvents()).find((row) => row.event.eventType === "WorkflowStepAdvanced" && row.event.payload.workflowId === workflowId)?.event
+  const ministerEvent = (await listOutboxEvents()).find((row) => row.event.eventType === "SchemeStepApproved")?.event
   assert.ok(ministerEvent)
   await processWorkflowEvent(ministerEvent)
 
@@ -83,8 +86,8 @@ test("scheme lifecycle creates, proposes, advances workflow, tracks budget and o
 
 test("scheme SLA timeout emits timeout and compensation events", async () => {
   const unsubscribe = wireWorkflowEngineToOutbox()
-  const scheme = await createScheme(proposal)
-  await proposeScheme(scheme.id, "SECRETARY")
+  const scheme = await createScheme(proposal, "TN")
+  await proposeScheme(scheme.id, proposer)
   const workflowId = schemeWorkflowId(scheme.id)
   const workflow = await getWorkflowInstance(workflowId)
   assert.ok(workflow)
@@ -97,10 +100,10 @@ test("scheme SLA timeout emits timeout and compensation events", async () => {
 })
 
 test("scheme rejection emits rejection event and suspends scheme", async () => {
-  const scheme = await createScheme(proposal)
-  await proposeScheme(scheme.id, "SECRETARY")
+  const scheme = await createScheme(proposal, "TN")
+  await proposeScheme(scheme.id, proposer)
   const workflowId = schemeWorkflowId(scheme.id)
-  await rejectSchemeStep(workflowId, 0, "SECRETARY", "Insufficient district readiness evidence")
+  await rejectSchemeStep(workflowId, 0, actor("SECRETARY"), "Insufficient district readiness evidence")
   assert.equal((await getScheme(scheme.id))?.status, "suspended")
   assert.ok((await listOutboxEvents()).some((row) => row.event.eventType === "SchemeStepRejected"))
 })

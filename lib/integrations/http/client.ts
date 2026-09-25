@@ -23,7 +23,9 @@ export interface IntegrationRequestOptions {
 export class SovereignHttpClient {
   private readonly circuit: CircuitBreaker
 
-  constructor(private readonly options: SovereignHttpClientOptions) {
+  private readonly options: SovereignHttpClientOptions
+  constructor(options: SovereignHttpClientOptions) {
+    this.options = options
     if (!options.baseUrl) throw new Error(`${options.serviceName} baseUrl is required`)
     this.circuit = options.circuit ?? new CircuitBreaker()
   }
@@ -40,7 +42,7 @@ export class SovereignHttpClient {
 
     return this.circuit.execute(async () => {
       console.info(JSON.stringify({ level: "info", message: "integration.request", service: this.options.serviceName, path: url.pathname, correlationId: id }))
-      const response = await fetchWithRetry(url, { method: options.method ?? "GET", headers, body }, this.options.retry)
+      const response = await fetchWithRetry(url, { method: options.method ?? "GET", headers, body, signal: AbortSignal.timeout(15_000) }, this.options.retry)
       return jsonOrThrow<T>(response)
     })
   }

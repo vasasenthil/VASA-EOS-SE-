@@ -12,6 +12,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const scheme = await getScheme(id)
   if (!scheme) return NextResponse.json({ error: "Scheme not found" }, { status: 404 })
   const body = await req.json()
-  await approveSchemeStep(scheme.workflowId ?? schemeWorkflowId(id), Number(body.stepIndex ?? 0), auth.session.subject, body.comments ?? "Approved")
+  try {
+  await approveSchemeStep(scheme.workflowId ?? schemeWorkflowId(id), body.stepIndex, auth.session, body.comments ?? "Approved")
+  } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Decision failed" }, { status: 409 }) }
   return NextResponse.json({ ok: true })
 }

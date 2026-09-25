@@ -24,7 +24,23 @@ spec:
       containers:
         - name: reconciliation
           image: sovereign.registry.tn.gov.in/vasa/vasa-workers:CHANGE_ME
-          command: ["node", "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", "--experimental-strip-types", "lib/workers/pfms-reconciliation.worker.ts"]
+          command: ["node", "--experimental-transform-types", "--import", "./scripts/worker-register.mjs", "scripts/worker-main.ts", "pfms-reconciliation"]
+          ports:
+            - name: health
+              containerPort: 3001
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: health
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            failureThreshold: 5
           envFrom:
             - secretRef:
                 name: vasa-runtime-secrets

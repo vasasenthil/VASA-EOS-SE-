@@ -63,6 +63,18 @@
     {
       "id": "015_pr30_outbox_retry",
       "path": "migrations/015_pr30_outbox_retry.sql"
+    },
+    {
+      "id": "016_pr30_domain_transactions",
+      "path": "migrations/016_pr30_domain_transactions.sql"
+    },
+    {
+      "id": "017_pr30_tenant_approval",
+      "path": "migrations/017_pr30_tenant_approval.sql"
+    },
+    {
+      "id": "018_pr30_pfms_reconciliation",
+      "path": "migrations/018_pr30_pfms_reconciliation.sql"
     }
   ]
 }

@@ -140,12 +140,44 @@ function outboxRow(event: Row): Row {
 
 export function makeFakeDb(): FakeDb {
   const tables: Record<string, Row[]> = {}
+  let queue: Promise<unknown> = Promise.resolve()
+  function serial<T>(fn: () => Promise<T>): Promise<T> {
+    const result = queue.then(fn,fn)
+    queue = result.then(()=>undefined,()=>undefined)
+    return result
+  }
   return {
     from(name: string): FakeQuery {
       return new FakeQuery((tables[name] ??= []))
     },
     async rpc(name: string, args: Record<string, unknown> = {}): Promise<Result> {
       const outbox = (tables.platform_outbox ??= [])
+      if (name === "platform_apply_domain_commands") {
+        return serial(async () => {
+        const snapshot = structuredClone(tables)
+        try {
+          for (const command of args.commands as { table: string; mode: "insert" | "update" | "upsert" | "delete"; row: Row; keys: string[]; expected?: Row }[]) {
+            const rows = (tables[command.table] ??= [])
+            const existing = rows.find(row => command.keys.every(key => row[key] === command.row[key]))
+            if (command.expected && (!existing || Object.entries(command.expected).some(([key,value]) => JSON.stringify(existing[key]) !== JSON.stringify(value)))) throw new Error("Domain state changed")
+            if (command.mode === "insert" && existing) throw new Error("Duplicate domain key")
+            if (command.mode === "upsert" && existing) Object.assign(existing, command.row)
+            else {
+              let query = new FakeQuery(rows)
+              query = command.mode === "delete" ? query.delete() : query[command.mode](command.row)
+              if (command.mode === "update" || command.mode === "delete") for (const key of command.keys) query.eq(key, command.row[key])
+              await query
+            }
+          }
+          await this.rpc("platform_commit_outbox_events", { events: args.events })
+          return { data: args.command_result, error: null }
+        } catch (error) {
+          for (const key of Object.keys(tables)) delete tables[key]
+          Object.assign(tables, snapshot)
+          throw error
+        }
+        })
+      }
       if (name === "platform_commit_outbox_events") {
         for (const event of (args.events as Row[] | undefined) ?? []) {
           if (!outbox.some((row) => row.idempotency_key === event.idempotencyKey)) outbox.push(outboxRow(event))

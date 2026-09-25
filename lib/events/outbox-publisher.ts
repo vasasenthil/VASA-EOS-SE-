@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+import { domainTransaction, type DomainMutation } from "@/lib/persistence/transaction-context"
 import { getDb } from "@/lib/persistence"
 import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { type PlatformEvent, parsePlatformEvent } from "./schemas"
@@ -163,11 +165,19 @@ class SupabaseOutboxAdapter implements TransactionalOutboxAdapter {
   async commitWithEvents<T>(domainOperation: () => Promise<T>, events: PlatformEvent[]): Promise<T> {
     const db = getDb()
     if (!db) return memoryAdapter.commitWithEvents(domainOperation, events)
-    const result = await domainOperation()
-    const valid = validateEvents(events)
-    const { error } = await db.rpc("platform_commit_outbox_events", { events: valid })
+    if (domainTransaction.getStore()) throw new Error("Nested domain transaction is not supported")
+    validateEvents(events)
+    const commands: DomainMutation[] = []
+    const result = await domainTransaction.run(commands, domainOperation)
+    const valid = validateEvents(events) // Some callbacks create events from their computed result.
+    const commandId = valid.length
+      ? createHash("sha256").update(JSON.stringify(valid.map(event => event.idempotencyKey).sort())).digest("hex")
+      : crypto.randomUUID()
+    const { data, error } = await db.rpc("platform_apply_domain_commands", {
+      command_id: commandId, commands, events: valid, command_result: result ?? null,
+    })
     if (error) throw error
-    return result
+    return (data === null ? result : data) as T
   }
 
   async claimPending(workerId: string, batchSize: number): Promise<OutboxEventRecord[]> {

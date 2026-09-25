@@ -1,3 +1,6 @@
+import type { VasaSession } from "@/lib/auth/session"
+const actor = (role: string): VasaSession => ({ subject: role.toLowerCase()+"-reviewer", roles: [role], tenant: { stateId: "TN" }, metadata: {} })
+const proposer: VasaSession = { subject: "proposal-author", roles: ["SECRETARY"], tenant: { stateId: "TN" }, metadata: {} }
 import { test } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -29,20 +32,21 @@ test("scheme UI lifecycle is durable from create to detail reload, edit, workflo
   resetWorkflowRuntimeStore()
   resetMemoryOutbox()
   try {
-    const created = await createScheme(schemeProposalFromFormData(form(), "secretary@tn.gov"))
+    const created = await createScheme(schemeProposalFromFormData(form(), "secretary@tn.gov"), "TN")
     assert.equal((await getScheme(created.id))?.name, "Statewide Foundational Literacy Labs")
 
     const updated = await updateScheme(created.id, schemeUpdatesFromFormData(form("Statewide FLN Labs", "760000000")))
     assert.equal(updated.name, "Statewide FLN Labs")
     assert.equal((await getScheme(created.id))?.budget, 760000000)
 
-    await proposeScheme(created.id, "SECRETARY")
+    await proposeScheme(created.id, proposer)
     const proposed = await getScheme(created.id)
     assert.equal(proposed?.status, "under_review")
     assert.ok(proposed?.workflowId)
     assert.ok(await getWorkflowInstance(proposed!.workflowId!))
 
-    for (let step = 0; step <= 4; step++) await approveSchemeStep(proposed!.workflowId!, step, step === 0 ? "SECRETARY" : step === 1 ? "MINISTER" : "SYSTEM", `approved-${step}`)
+    for (const [step, role] of ["SECRETARY", "MINISTER", "CABINET"].entries()) await approveSchemeStep(proposed!.workflowId!, step, actor(role), `approved-${step}`)
+    await assert.rejects(() => approveSchemeStep(proposed!.workflowId!, 4, actor("SYSTEM"), "skip"))
     assert.equal((await getScheme(created.id))?.status, "approved")
   } finally {
     __setTestDb(undefined)

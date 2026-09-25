@@ -7,7 +7,8 @@
 
 import { appendAudit } from "@/lib/audit/trail"
 import { requireDb } from "@/lib/db/require-db"
-import { DEFAULT_SCHOOL_NODE } from "@/lib/access/scope"
+import { resolveSchoolScope } from "@/lib/auth/school-scope"
+import type { VasaSession } from "@/lib/auth/session"
 import { assessRisk, type RiskAssessment, type RiskFactors } from "./index"
 
 /** Default UDISE code used by dashboard calls when no school is specified. */
@@ -51,7 +52,7 @@ function fromRow(r: Row): DropoutRecord {
     recentScorePct: r.recent_score_pct,
     feeDefault: r.fee_default,
     siblingDropout: r.sibling_dropout,
-    tenantId: r.tenant_id ?? DEFAULT_SCHOOL_NODE,
+    tenantId: r.tenant_id,
   }
 }
 
@@ -71,10 +72,12 @@ export interface NewDropout {
   tenantId?: string
 }
 
-export async function recordDropoutRisk(input: NewDropout): Promise<DropoutRecord> {
+export async function recordDropoutRisk(input: NewDropout, session?: VasaSession): Promise<DropoutRecord> {
+  const scope = await resolveSchoolScope(input.udiseCode, true, session)
+  if (input.tenantId !== undefined && input.tenantId !== scope.tenantId) throw new Error("Tenant override is not permitted")
   const rec: DropoutRecord = {
     id: newId(),
-    udiseCode: input.udiseCode ?? DEMO_UDISE,
+    udiseCode: scope.udiseCode,
     name: input.name,
     cls: input.cls,
     absences: input.absences,
@@ -82,7 +85,7 @@ export async function recordDropoutRisk(input: NewDropout): Promise<DropoutRecor
     recentScorePct: input.recentScorePct,
     feeDefault: input.feeDefault,
     siblingDropout: input.siblingDropout,
-    tenantId: input.tenantId ?? DEFAULT_SCHOOL_NODE,
+    tenantId: scope.tenantId,
   }
   const { error } = await requireDb().from("dropout_risk").insert({
     id: rec.id,
@@ -99,7 +102,7 @@ export async function recordDropoutRisk(input: NewDropout): Promise<DropoutRecor
   })
   if (error) throw error
   await appendAudit({
-    actor: "school",
+    actor: scope.subject,
     action: "dropout.flag",
     resource: rec.id,
     details: { cls: rec.cls, band: assessRisk(rec).band },
@@ -108,12 +111,13 @@ export async function recordDropoutRisk(input: NewDropout): Promise<DropoutRecor
 }
 
 /** The school's at-risk cohort with computed risk, highest score first. */
-export async function listDropoutRisk(udiseCode: string = DEMO_UDISE): Promise<DropoutWithRisk[]> {
+export async function listDropoutRisk(udiseCode?: string, session?: VasaSession): Promise<DropoutWithRisk[]> {
+  const scope = await resolveSchoolScope(udiseCode, false, session)
   const { data, error } = await requireDb()
     .from("dropout_risk")
     .select("*")
-    .eq("udise_code", udiseCode)
-    .eq("tenant_id", DEFAULT_SCHOOL_NODE)
+    .eq("udise_code", scope.udiseCode)
+    .eq("tenant_id", scope.tenantId)
     .order("created_at", { ascending: false })
   if (error) throw error
   const rows = ((data as Row[] | null) ?? []).map(fromRow)
