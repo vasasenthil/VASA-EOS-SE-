@@ -7,8 +7,10 @@ export interface CircuitBreakerOptions {
 }
 
 export class CircuitOpenError extends Error {
-  constructor(public readonly openedAt: number) {
+  readonly openedAt: number
+  constructor(openedAt: number) {
     super("integration circuit is open")
+    this.openedAt = openedAt
     this.name = "CircuitOpenError"
   }
 }

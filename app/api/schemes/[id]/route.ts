@@ -9,13 +9,15 @@ export async function GET(req: NextRequest, ctx: Ctx) {
   if (!auth.ok) return auth.response
   const { id } = await ctx.params
   const scheme = await getScheme(id)
-  return scheme ? NextResponse.json({ scheme }) : NextResponse.json({ error: "Scheme not found" }, { status: 404 })
+  return scheme && scheme.jurisdictionId && scheme.jurisdictionId === auth.session.tenant.stateId ? NextResponse.json({ scheme }) : NextResponse.json({ error: "Scheme not found" }, { status: 404 })
 }
 
 export async function PUT(req: NextRequest, ctx: Ctx) {
   const auth = await requireRole(req, ["SECRETARY", "MINISTER", "CABINET"])
   if (!auth.ok) return auth.response
   const { id } = await ctx.params
+  const owned = await getScheme(id)
+  if (!owned?.jurisdictionId || owned.jurisdictionId !== auth.session.tenant.stateId) return NextResponse.json({ error: "Scheme not found" }, { status: 404 })
   try { return NextResponse.json({ scheme: await updateScheme(id, await req.json()) }) } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Update failed" }, { status: 400 }) }
 }
 
@@ -23,5 +25,7 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
   const auth = await requireRole(req, ["SECRETARY"])
   if (!auth.ok) return auth.response
   const { id } = await ctx.params
+  const owned = await getScheme(id)
+  if (!owned?.jurisdictionId || owned.jurisdictionId !== auth.session.tenant.stateId) return NextResponse.json({ error: "Scheme not found" }, { status: 404 })
   try { await deleteScheme(id); return new NextResponse(null, { status: 204 }) } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Delete failed" }, { status: 400 }) }
 }

@@ -1,12 +1,12 @@
 # Production Acceptance Pack
 
-Generated: 2026-07-29T06:36:18.336Z
+Generated: 2026-09-25T13:08:22.519Z
 
 ## Acceptance sections
 
 | ID | Section | Status | Owner | Evidence |
 | --- | --- | --- | --- | --- |
-| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1421 artefacts inventoried; 476 routes; 123 APIs |
+| inventory-ledger | Machine inventory ledger | pass | Governance Secretariat | 1430 artefacts inventoried; 476 routes; 123 APIs |
 | scheme-e2e | Scheme create/edit/workflow regression | pass | Schemes Directorate | Create and edit routes present; Regression tests present; Durable store path exercised |
 | cutover-gate | Production cutover gate | warn | Sovereign Ops | 17 blockers; 3 warnings; Route/RPC/RLS checks included |
 | governance-hierarchy | Governance hierarchy | pass | Secretary Office | 7 tenancy tiers; 7 governance tiers; 3 AI Control Tower bodies; 9 role-scope mappings |
@@ -26,9 +26,9 @@ Generated: 2026-07-29T06:36:18.336Z
 | integration:language | fail | blocker | INTEGRATION_BHASHINI=live is required for production cutover. |
 | worker:outbox_worker_enabled | fail | blocker | OUTBOX_WORKER_ENABLED=true is required so durable background processing is active. |
 | worker:sla_monitor_worker_enabled | fail | blocker | SLA_MONITOR_WORKER_ENABLED=true is required so durable background processing is active. |
-| worker-heartbeat:outbox | fail | blocker | OUTBOX_WORKER_HEARTBEAT_AT must be an ISO timestamp within the last 2 minutes. |
-| worker-heartbeat:sla | fail | blocker | SLA_WORKER_HEARTBEAT_AT must be an ISO timestamp within the last 2 minutes. |
-| worker-heartbeat:reconciliation | fail | blocker | RECONCILIATION_WORKER_HEARTBEAT_AT must be an ISO timestamp within the last 2 minutes. |
+| worker-heartbeat:outbox | fail | blocker | No durable successful OUTBOX heartbeat within the last 2 minutes. |
+| worker-heartbeat:sla | fail | blocker | No durable successful SLA heartbeat within the last 2 minutes. |
+| worker-heartbeat:reconciliation | fail | blocker | No durable successful RECONCILIATION heartbeat within the last 2 minutes. |
 | runtime:database | fail | blocker | requireDb() failed; production must fail closed without a DB. |
 | runtime:migrations | fail | blocker | MIGRATIONS_FULLY_APPLIED=true is required after deploy:migrate verification. |
 | runtime:secret-manager | fail | blocker | VAULT_ADDR or KMS_KEY_URI is required for sovereign secret management. |
@@ -48,26 +48,26 @@ Generated: 2026-07-29T06:36:18.336Z
 
 # Governance Inventory Ledger
 
-Generated: 2026-07-29T06:36:18.336Z
+Generated: 2026-09-25T13:08:22.519Z
 
 ## Summary
 
 | Kind | Count |
 | --- | ---: |
 | api | 123 |
-| document | 44 |
+| document | 45 |
 | migration | 100 |
 | module | 214 |
 | platform-module | 70 |
 | policy | 24 |
 | route | 476 |
-| test | 370 |
+| test | 378 |
 
 ## Readiness
 
 | Built | Partial | Gated | Total |
 | ---: | ---: | ---: | ---: |
-| 1408 | 4 | 9 | 1421 |
+| 1417 | 4 | 9 | 1430 |
 
 ## Critical inventory sample
 

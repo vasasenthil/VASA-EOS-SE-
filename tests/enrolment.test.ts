@@ -1,3 +1,5 @@
+import type { VasaSession } from "@/lib/auth/session"
+const session: VasaSession = { subject: "school-operator", roles: ["PRINCIPAL"], tenant: { stateId: "TN", schoolId: DEMO_UDISE }, metadata: {} }
 import { test, beforeEach, afterEach } from "node:test"
 import assert from "node:assert/strict"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -7,7 +9,11 @@ import { makeFakeDb } from "./helpers/fake-db"
 import { viewFor, type Enrolment } from "@/lib/enrolment"
 import { saveEnrolment, latestEnrolment, DEMO_UDISE } from "@/lib/enrolment/store"
 
-beforeEach(() => __setTestDb(makeFakeDb() as unknown as SupabaseClient))
+beforeEach(async () => {
+  const db = makeFakeDb()
+  for (const code of [DEMO_UDISE,"99999999999","00000000000"]) await db.from("school_tenant_bindings").insert({ school_id: code, udise_code: code, tenant_id: `tenant-${code}`, state_id: "TN" })
+  __setTestDb(db as unknown as SupabaseClient)
+})
 afterEach(() => __setTestDb(undefined))
 
 function roll(): Enrolment {
@@ -27,26 +33,26 @@ test("viewFor is divide-by-zero safe for an empty roll", () => {
 })
 
 test("saving and reading the latest enrolment (DB path), newest snapshot wins", async () => {
-  await saveEnrolment({ asOf: "2026-04-01", total: 1248, boys: 636, girls: 612 })
-  await saveEnrolment({ asOf: "2026-06-01", total: 1262, boys: 640, girls: 622 })
-  const latest = await latestEnrolment()
+  await saveEnrolment({ asOf: "2026-04-01", total: 1248, boys: 636, girls: 612 }, session)
+  await saveEnrolment({ asOf: "2026-06-01", total: 1262, boys: 640, girls: 622 }, session)
+  const latest = await latestEnrolment(undefined, session)
   assert.equal(latest?.asOf, "2026-06-01")
   assert.equal(latest?.total, 1262)
 })
 
 test("latest is scoped to the requested school (UDISE)", async () => {
-  await saveEnrolment({ udiseCode: DEMO_UDISE, asOf: "2026-06-01", total: 1262, boys: 640, girls: 622 })
-  await saveEnrolment({ udiseCode: "99999999999", asOf: "2026-06-01", total: 300, boys: 150, girls: 150 })
-  assert.equal((await latestEnrolment(DEMO_UDISE))?.total, 1262)
-  assert.equal((await latestEnrolment("99999999999"))?.total, 300)
+  await saveEnrolment({ udiseCode: DEMO_UDISE, asOf: "2026-06-01", total: 1262, boys: 640, girls: 622 }, session)
+  await saveEnrolment({ udiseCode: "99999999999", asOf: "2026-06-01", total: 300, boys: 150, girls: 150 }, { ...session, tenant: { schoolId: "99999999999" } })
+  assert.equal((await latestEnrolment(DEMO_UDISE, session))?.total, 1262)
+  assert.equal((await latestEnrolment("99999999999", { ...session, tenant: { schoolId: "99999999999" } }))?.total, 300)
 })
 
 test("missing durable DB fails closed for enrolment snapshots", async () => {
   __setTestDb(null)
-  await assert.rejects(() => latestEnrolment(), ProductionDatabaseError)
-  await assert.rejects(() => saveEnrolment({ asOf: "2026-04-01", total: 1248, boys: 636, girls: 612 }), ProductionDatabaseError)
+  await assert.rejects(() => latestEnrolment(undefined, session), ProductionDatabaseError)
+  await assert.rejects(() => saveEnrolment({ asOf: "2026-04-01", total: 1248, boys: 636, girls: 612 }, session), ProductionDatabaseError)
 })
 
 test("latest is undefined for a school with no snapshots", async () => {
-  assert.equal(await latestEnrolment("00000000000"), undefined)
+  assert.equal(await latestEnrolment("00000000000", { ...session, tenant: { schoolId: "00000000000" } }), undefined)
 })

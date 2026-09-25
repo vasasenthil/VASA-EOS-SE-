@@ -1,3 +1,4 @@
+import { persistDomainMutation } from "@/lib/persistence/domain-mutation"
 // VASA-EOS(SE) — Transfer Certificate (TC) issuance workflow persistence (server-only).
 // Each request carries a live TC_ISSUANCE instance: Academic record & dues clearance (Class
 // Teacher) → Headmaster issues & signs → Block counter-signature (inter-state / duplicate).
@@ -103,9 +104,10 @@ export async function actOnTc(rid: string, input: ActInput): Promise<ActResult> 
   if (!rec) return { ok: false, reason: "Transfer-certificate request not found." }
   const result = act(TC_ISSUANCE, rec.instance, input)
   if (!result.ok) return { ok: false, record: rec, reason: result.reason }
+  const previousInstance = structuredClone(rec.instance)
   rec.instance = result.instance
   const db = getDb()
-  if (db) await db.from("tc_flows").update({ instance: rec.instance }).eq("id", rid)
+  if (db) await persistDomainMutation("tc_flows", "update", { id: rid, instance: rec.instance }, ["id"], { instance: previousInstance })
   await appendAudit({
     actor: input.actor,
     action: "tcflow.act",

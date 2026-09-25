@@ -1,3 +1,4 @@
+import { runSchemeSystemSteps } from "./scheme-system-steps"
 import { subscribeToPlatformEvents } from "@/lib/events/outbox-dispatcher"
 import { commitWithEvents } from "@/lib/events/outbox-publisher"
 import { createEventEnvelope, type PlatformEvent } from "@/lib/events/schemas"
@@ -12,6 +13,7 @@ function isEngineEvent(event: PlatformEvent): event is EngineEvent {
 }
 
 export async function processWorkflowEvent(event: PlatformEvent): Promise<void> {
+  if (event.eventType === "SchemeStepApproved") { await runSchemeSystemSteps(event); return }
   if (!isEngineEvent(event)) return
   if (event.eventType === "WorkflowStepTimedOut" || event.eventType === "WorkflowRejected") {
     await compensateWorkflowFromEvent(event)

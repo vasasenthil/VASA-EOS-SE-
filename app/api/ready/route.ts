@@ -1,25 +1,19 @@
 import { NextResponse } from "next/server"
-import { dbReady } from "@/lib/persistence"
-import { envReport } from "@/lib/env"
-import { buildReadiness, APP_VERSION } from "@/lib/readiness"
+import { getDb } from "@/lib/persistence"
 
-// Readiness probe (k8s readinessProbe / load-balancer health). Reports whether the
-// app is configured and whether persistence is durable. 503 only when required
-// configuration is missing ("unavailable"); "degraded" (in-memory) still serves 200.
 export const dynamic = "force-dynamic"
 
+// Kubelet has no user credentials. Return only a boolean and bound the DB call;
+// authenticated business-cutover diagnostics remain on their protected route.
 export async function GET() {
-  const env = envReport()
-  const report = buildReadiness({
-    dbReady: dbReady(),
-    envOk: env.ok,
-    mode: env.mode,
-    missingRequired: env.missingRequired,
-    version: APP_VERSION,
-    uptimeSec: process.uptime(),
-  })
-  return NextResponse.json(report, {
-    status: report.status === "unavailable" ? 503 : 200,
-    headers: { "cache-control": "no-store" },
-  })
+  let ready = false
+  try {
+    const db = getDb()
+    if (db) {
+      const { error } = await db.from("platform_outbox").select("id").limit(1)
+        .abortSignal(AbortSignal.timeout(2000))
+      ready = !error
+    }
+  } catch { /* dependency failure means not ready */ }
+  return NextResponse.json({ ready }, { status: ready ? 200 : 503, headers: { "cache-control": "no-store" } })
 }

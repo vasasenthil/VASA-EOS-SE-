@@ -27,6 +27,7 @@ export async function decideWorkflowStep(input: {
 }): Promise<{ state: "pending" | "approved" | "rejected"; workflowId: string; stepIndex: number; approved: number; required: number }> {
   const instance = await getWorkflowInstance(input.workflowId)
   if (!instance) throw new WorkflowDecisionError("NOT_FOUND", "Workflow instance not found")
+  if (instance.workflowType === "scheme-approval") throw new WorkflowDecisionError("INVALID_CONTEXT", "Use the governed scheme decision endpoint")
   if (instance.status !== "running") throw new WorkflowDecisionError("NOT_RUNNING", "Workflow instance is not running")
   if (instance.currentStepIndex !== input.expectedStepIndex) throw new WorkflowDecisionError("STEP_MISMATCH", "Workflow step changed; refresh before deciding")
 

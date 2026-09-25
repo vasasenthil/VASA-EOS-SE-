@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const auth = await requireRole(request, ["SECRETARY", "DIRECTOR", "ADMIN"])
     if (!auth.ok) return auth.response
   }
-  const report = productionCutoverReport()
+  const report = await productionCutoverReport()
   return NextResponse.json(report, {
     status: report.ready ? 200 : 503,
     headers: { "cache-control": "no-store" },

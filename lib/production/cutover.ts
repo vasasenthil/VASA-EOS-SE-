@@ -1,3 +1,4 @@
+import { readWorkerHeartbeats, type StoredWorkerHeartbeat } from "@/lib/observability/worker-heartbeats"
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { preflightReport, type PreflightIssue } from "@/lib/env"
@@ -25,6 +26,7 @@ export interface CutoverReport {
 }
 
 export interface CutoverRuntimeChecks {
+  workerHeartbeats?: StoredWorkerHeartbeat[]
   dbReady?: boolean | (() => boolean)
   migrationsApplied?: boolean | (() => boolean)
   auditSinkWritable?: boolean | (() => boolean)
@@ -151,10 +153,15 @@ function workerGate(env: Record<string, string | undefined>): CutoverGate[] {
   })
 }
 
-function workerHeartbeatGate(env: Record<string, string | undefined>, checkedAt: string): CutoverGate[] {
+function workerHeartbeatGate(rows: StoredWorkerHeartbeat[], checkedAt: string): CutoverGate[] {
   const nowMs = Date.parse(checkedAt)
   return CRITICAL_WORKER_HEARTBEATS.map((worker) => {
-    const value = env[`${worker}_WORKER_HEARTBEAT_AT`]
+    const names: Record<string, string> = { OUTBOX: "outbox-dispatcher", SLA: "sla-monitor", RECONCILIATION: "pfms-reconciliation" }
+    // Cutover requires at least one progressing instance for each worker group.
+    // Per-pod probes independently enforce replica health.
+    const value = rows.filter(row => row.status === "running" && row.details.worker === names[worker])
+      .map(row => row.last_heartbeat_at).filter(value => Date.parse(value) <= nowMs)
+      .sort((a, b) => Date.parse(b) - Date.parse(a))[0]
     const ageMs = value ? nowMs - Date.parse(value) : Number.POSITIVE_INFINITY
     const fresh = Number.isFinite(ageMs) && ageMs >= 0 && ageMs <= TWO_MINUTES_MS
     return gate(
@@ -162,7 +169,7 @@ function workerHeartbeatGate(env: Record<string, string | undefined>, checkedAt:
       `${worker} worker heartbeat`,
       fresh ? "pass" : "fail",
       "blocker",
-      fresh ? `Last heartbeat ${Math.round(ageMs / 1000)}s ago.` : `${worker}_WORKER_HEARTBEAT_AT must be an ISO timestamp within the last 2 minutes.`,
+      fresh ? `Last heartbeat ${Math.round(ageMs / 1000)}s ago.` : `No durable successful ${worker} heartbeat within the last 2 minutes.`,
     )
   })
 }
@@ -242,7 +249,7 @@ export function buildCutoverReport(
     ...explicitMockEnvGate(env),
     ...integrationGate(rows),
     ...workerGate(env),
-    ...workerHeartbeatGate(env, checkedAt),
+    ...workerHeartbeatGate(runtimeChecks.workerHeartbeats ?? [], checkedAt),
     ...runtimeDependencyGate(env, runtimeChecks),
     ...p0SafetyGate(env, runtimeChecks),
     ...schemeLifecycleGate(runtimeChecks),
@@ -254,6 +261,7 @@ export function buildCutoverReport(
   return { ready: blockers === 0, blockers, warnings, checkedAt, gates }
 }
 
-export function productionCutoverReport(now?: () => string): CutoverReport {
-  return buildCutoverReport(process.env as Record<string, string | undefined>, integrationStatuses(), now)
+export async function productionCutoverReport(now?: () => string): Promise<CutoverReport> {
+  const workerHeartbeats = await readWorkerHeartbeats()
+  return buildCutoverReport(process.env as Record<string, string | undefined>, integrationStatuses(), now, { workerHeartbeats })
 }

@@ -11,10 +11,8 @@ import { recordWorkerHeartbeat, getWorkerHealth, resetWorkerHealthForTests } fro
 import { loadManifest, validateManifest } from "../scripts/migrations/run"
 import { nextRunnableStepIndex, workflowDefinitionFor } from "@/lib/workflow-runtime/schema"
 
-function jwt(payload: Record<string, unknown>): string {
-  const enc = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
-  return `${enc({ alg: "none" })}.${enc(payload)}.`
-}
+import { installAuthFixture } from "./helpers/auth-fixture"
+const jwt = installAuthFixture()
 
 test("atomic outbox RPC migrations insert domain rows and platform_outbox events", () => {
   for (const file of ["insert_with_outbox", "scholarship_file_with_outbox", "tc_file_with_outbox", "scheme_propose_with_outbox"]) {
@@ -45,8 +43,8 @@ test("session role middleware rejects missing and wrong roles and accepts JWT ro
   assert.equal(allowed.ok, true)
 })
 
-test("JWT session extraction maps tenant metadata", () => {
-  const session = sessionFromJwt(jwt({ sub: "u3", email: "u3@example.test", app_metadata: { roles: ["ADMIN"], district_id: "d1" } }))
+test("verified Auth session maps trusted tenant metadata", async () => {
+  const session = await sessionFromJwt(jwt({ sub: "u3", email: "u3@example.test", app_metadata: { roles: ["ADMIN"], district_id: "d1" } }))
   assert.equal(session?.roles[0], "ADMIN")
   assert.equal(session?.tenant.districtId, "d1")
 })

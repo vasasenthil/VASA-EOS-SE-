@@ -1,3 +1,6 @@
+import { persistWorkerHeartbeat } from "@/lib/observability/worker-heartbeats"
+import type { Server } from "node:http"
+import { startWorkerHealthServer } from "./health-server"
 import { recordWorkerHeartbeat } from "@/lib/observability/health"
 import { structuredLog, newCorrelationId } from "@/lib/observability/traces"
 
@@ -5,7 +8,9 @@ export interface WorkerOptions { name: string; intervalMs?: number; heartbeatMs?
 
 export abstract class WorkerBase {
   private timer?: ReturnType<typeof setTimeout>
-  private heartbeat?: ReturnType<typeof setInterval>
+  private healthServer?: Server
+  private lastSuccessAt = 0
+  private healthStatus = "starting"
   private stopping = false
   private running = false
   protected readonly name: string
@@ -25,7 +30,12 @@ export abstract class WorkerBase {
     this.running = true
     this.stopping = false
     recordWorkerHeartbeat(this.name, "starting")
-    this.heartbeat = setInterval(() => recordWorkerHeartbeat(this.name, this.stopping ? "stopping" : "running"), this.heartbeatMs)
+    const port = Number(process.env.WORKER_HEALTH_PORT ?? "3001")
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("Invalid WORKER_HEALTH_PORT")
+    this.healthServer = await startWorkerHealthServer(
+      () => ({ status: this.healthStatus, lastSuccessAt: this.lastSuccessAt }),
+      port, Math.max(120_000, this.intervalMs + 120_000),
+    )
     process.once("SIGTERM", () => void this.stop())
     process.once("SIGINT", () => void this.stop())
     structuredLog("info", "worker started", { worker: this.name })
@@ -36,8 +46,10 @@ export abstract class WorkerBase {
     if (this.stopping) return
     this.stopping = true
     if (this.timer) clearTimeout(this.timer)
-    if (this.heartbeat) clearInterval(this.heartbeat)
+    this.healthStatus = "stopped"
+    this.healthServer?.close()
     recordWorkerHeartbeat(this.name, "stopped")
+    await persistWorkerHeartbeat(this.name, "stopped").catch(() => undefined)
     structuredLog("info", "worker stopped", { worker: this.name })
     this.running = false
   }
@@ -47,8 +59,16 @@ export abstract class WorkerBase {
     const started = Date.now()
     try {
       await this.tick(correlationId)
-      recordWorkerHeartbeat(this.name, "running", { lastDurationMs: Date.now() - started })
+      if (!this.stopping) {
+        await persistWorkerHeartbeat(this.name, "running")
+        this.lastSuccessAt = Date.now()
+        this.healthStatus = "running"
+        recordWorkerHeartbeat(this.name, "running", { lastDurationMs: Date.now() - started })
+      }
     } catch (error) {
+      await persistWorkerHeartbeat(this.name, "unhealthy").catch(() => undefined)
+      this.healthStatus = "unhealthy"
+      recordWorkerHeartbeat(this.name, "unhealthy")
       this.onError?.(error)
       structuredLog("error", "worker tick failed", { worker: this.name, correlationId, error: error instanceof Error ? error.message : String(error) })
     }

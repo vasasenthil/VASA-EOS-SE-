@@ -12,7 +12,8 @@ const rows: IntegrationStatus[] = [
 ].map((key) => ({ key, label: key.toUpperCase(), port: key, note: "", flag: `INTEGRATION_${key.toUpperCase()}`, mode: "live", env: [], liveReady: true }))
 
 const checkedAt = "2026-07-16T00:00:00.000Z"
-const runtimeChecks = { dbReady: true, migrationsApplied: true, auditSinkWritable: true, routeAuthCoverage: true, memoryFallbacksBlocked: true, tenantRlsVerified: true, schemeRoutesReady: true, schemeRpcReady: true, schemeRlsReady: true, governanceInventoryReady: true, acceptancePackReady: true }
+const workerHeartbeats = ["outbox-dispatcher", "sla-monitor", "pfms-reconciliation"].map(worker => ({ worker_name: `${worker}:test`, status: "running", last_heartbeat_at: "2026-07-15T23:59:30.000Z", details: { worker } }))
+const runtimeChecks = { workerHeartbeats, dbReady: true, migrationsApplied: true, auditSinkWritable: true, routeAuthCoverage: true, memoryFallbacksBlocked: true, tenantRlsVerified: true, schemeRoutesReady: true, schemeRpcReady: true, schemeRlsReady: true, governanceInventoryReady: true, acceptancePackReady: true }
 
 const readyEnv = {
   NODE_ENV: "production",
@@ -91,4 +92,14 @@ test("production cutover blocks missing scheme lifecycle and acceptance-pack gat
   for (const id of ["scheme:routes", "scheme:atomic-rpc", "scheme:tenant-rls", "governance:inventory-ledger", "governance:acceptance-pack"]) {
     assert.ok(report.gates.some((gate) => gate.id === id && gate.status === "fail"), `${id} should block cutover`)
   }
+})
+
+
+test("static environment heartbeats cannot pass the live heartbeat gate", () => {
+  const report = buildCutoverReport(readyEnv, rows, () => checkedAt, { ...runtimeChecks, workerHeartbeats: [] })
+  assert.equal(report.gates.filter(g => g.id.startsWith("worker-heartbeat:") && g.status === "fail").length, 3)
+})
+test("stale durable success does not pass even with fresh configured timestamps", () => {
+  const report = buildCutoverReport(readyEnv, rows, () => "2026-07-16T00:05:00.000Z", runtimeChecks)
+  assert.equal(report.gates.filter(g => g.id.startsWith("worker-heartbeat:") && g.status === "fail").length, 3)
 })

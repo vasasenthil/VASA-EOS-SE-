@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto"
+import { domainTransaction, type DomainMutation } from "@/lib/persistence/transaction-context"
 import { getDb } from "@/lib/persistence"
 import { assertNonProductionMemoryAdapter } from "@/lib/runtime/production-guard"
 import { type PlatformEvent, parsePlatformEvent } from "./schemas"
@@ -18,6 +20,7 @@ export interface OutboxRow {
   last_error?: string | null
   locked_at?: string | null
   locked_by?: string | null
+  next_attempt_at?: string
 }
 
 export interface OutboxEventRecord extends OutboxRow {
@@ -95,7 +98,7 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
     return this.serial(async () => {
       const limit = Math.max(1, batchSize)
       const rows = [...this.rows.values()]
-        .filter((row) => row.status === "pending" && !row.locked_by)
+        .filter((row) => row.status === "pending" && row.retry_count < 5 && (!row.next_attempt_at || Date.parse(row.next_attempt_at) <= Date.now()) && (!row.locked_by || (row.locked_at && Date.parse(row.locked_at) < Date.now() - 300_000)))
         .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
         .slice(0, limit)
       const now = new Date().toISOString()
@@ -126,11 +129,16 @@ class MemoryOutboxAdapter implements TransactionalOutboxAdapter {
     await this.serial(async () => {
       const row = this.rows.get(id)
       if (row && row.status === "pending" && row.locked_by === workerId) {
-        row.status = "failed"
         row.retry_count += 1
+        row.status = row.retry_count >= 5 ? "failed" : "pending"
+        row.next_attempt_at = new Date(Date.now() + Math.min(300, 2 ** row.retry_count) * 1000).toISOString()
         row.locked_by = null
         row.locked_at = null
         row.last_error = error.slice(0, 2000)
+        if (row.status === "failed") {
+          const { moveToDeadLetter } = await import("./dead-letters")
+          await moveToDeadLetter(row, row.last_error)
+        }
       }
     })
   }
@@ -157,11 +165,19 @@ class SupabaseOutboxAdapter implements TransactionalOutboxAdapter {
   async commitWithEvents<T>(domainOperation: () => Promise<T>, events: PlatformEvent[]): Promise<T> {
     const db = getDb()
     if (!db) return memoryAdapter.commitWithEvents(domainOperation, events)
-    const result = await domainOperation()
-    const valid = validateEvents(events)
-    const { error } = await db.rpc("platform_commit_outbox_events", { events: valid })
+    if (domainTransaction.getStore()) throw new Error("Nested domain transaction is not supported")
+    validateEvents(events)
+    const commands: DomainMutation[] = []
+    const result = await domainTransaction.run(commands, domainOperation)
+    const valid = validateEvents(events) // Some callbacks create events from their computed result.
+    const commandId = valid.length
+      ? createHash("sha256").update(JSON.stringify(valid.map(event => event.idempotencyKey).sort())).digest("hex")
+      : crypto.randomUUID()
+    const { data, error } = await db.rpc("platform_apply_domain_commands", {
+      command_id: commandId, commands, events: valid, command_result: result ?? null,
+    })
     if (error) throw error
-    return result
+    return (data === null ? result : data) as T
   }
 
   async claimPending(workerId: string, batchSize: number): Promise<OutboxEventRecord[]> {
